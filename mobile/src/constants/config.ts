@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'https://uninvective-scarcely-yessenia.ngrok-free.dev/api';
+export const API_BASE_URL = 'https://ease-breg3byz4-chizanumdev-langs-projects.vercel.app/api';
 
 export const API_ENDPOINTS = {
     // Auth
