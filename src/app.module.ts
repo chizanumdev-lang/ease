@@ -15,8 +15,6 @@ import { VideosModule } from './videos/videos.module';
 import { CoachModule } from './coach/coach.module';
 import { AiModule } from './ai/ai.module';
 import { VideoModule } from './video/video.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
 import { AudioModule } from './audio/audio.module';
 
 @Module({
@@ -46,14 +44,10 @@ import { AudioModule } from './audio/audio.module';
     ProgressModule,
     AnalyticsModule,
     VideosModule,
-    VideosModule,
     CoachModule,
     AiModule,
     VideoModule,
     AudioModule,
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'public'),
-    }),
   ],
   controllers: [AppController],
   providers: [AppService],
