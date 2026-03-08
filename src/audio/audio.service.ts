@@ -5,14 +5,14 @@ import * as fs from 'fs';
 import * as os from 'os';
 import ffmpeg = require('fluent-ffmpeg');
 import { v2 as cloudinary } from 'cloudinary';
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 
 @Injectable()
 export class AudioService {
     private readonly logger = new Logger(AudioService.name);
     private readonly backgroundsDir = path.join(process.cwd(), 'assets/audio/backgrounds');
     private readonly tempDir = path.join(os.tmpdir(), 'ease-audio');
-    private readonly elevenLabs: ElevenLabsClient;
+    private readonly tts: MsEdgeTTS;
 
     constructor(private configService: ConfigService) {
         // Ensure temp directory exists (writable in Vercel)
@@ -26,9 +26,7 @@ export class AudioService {
             api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET'),
         });
 
-        this.elevenLabs = new ElevenLabsClient({
-            apiKey: this.configService.get<string>('ELEVENLABS_API_KEY'),
-        });
+        this.tts = new MsEdgeTTS();
     }
 
     async generateAudioTrack(script: string, mood: string, filename: string): Promise<string> {
@@ -37,36 +35,26 @@ export class AudioService {
         const backgroundPath = path.join(this.backgroundsDir, `${mood}.mp3`);
 
         try {
-            // 1. TTS using ElevenLabs
-            this.logger.log(`Generating TTS with ElevenLabs for mood: ${mood}`);
-            const audioStream = await this.elevenLabs.textToSpeech.convert(
-                "21m00Tcm4TlvDq8ikWAM", // Rachel
-                {
-                    text: script,
-                    modelId: "eleven_multilingual_v2",
-                    outputFormat: "mp3_44100_128",
-                }
-            );
+            // 1. TTS using Microsoft Edge TTS (Free, Neural)
+            this.logger.log(`Generating TTS with Microsoft Edge TTS for mood: ${mood}`);
 
-            // Write the Web ReadableStream to a temporary file
-            const fileStream = fs.createWriteStream(voicePath);
-            const reader = audioStream.getReader();
+            // Set voice (Ava is high quality, multilingual)
+            await this.tts.setMetadata('en-US-AvaMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    fileStream.write(value);
-                }
-            } finally {
-                reader.releaseLock();
-            }
-            fileStream.end();
-
-            // Wait for file to be fully written
+            // Generate audio to file
             await new Promise((resolve, reject) => {
-                fileStream.on('finish', () => resolve(undefined));
-                fileStream.on('error', reject);
+                const { audioStream } = this.tts.toStream(script);
+                const fileStream = fs.createWriteStream(voicePath);
+
+                audioStream.on('data', (chunk) => fileStream.write(chunk));
+                audioStream.on('end', () => {
+                    fileStream.end();
+                    resolve(undefined);
+                });
+                audioStream.on('error', (err) => {
+                    fileStream.end();
+                    reject(err);
+                });
             });
 
             // 2. Mix narration with background music
