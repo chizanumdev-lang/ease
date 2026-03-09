@@ -2,10 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
-console.log('--- STARTING VERCEL BOOTSTRAP (v1.0.6-MIXING-RESTORED) ---');
+console.log('--- STARTING VERCEL BOOTSTRAP (v1.0.7-VOLUME-ADJUSTED) ---');
 
 async function bootstrap() {
-  console.log('Initializing Nest application (v1.0.6-MIXING-RESTORED)...');
+  console.log('Initializing Nest application (v1.0.7-VOLUME-ADJUSTED)...');
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS

@@ -31,7 +31,7 @@ export class AudioService {
     }
 
     async generateAudioTrack(script: string, mood: string, filename: string): Promise<string> {
-        this.logger.log(`[v1.0.6-MIXING-RESTORED] Generating audio track for filename: ${filename}`);
+        this.logger.log(`[v1.0.7-VOLUME-ADJUSTED] Generating audio track for filename: ${filename}`);
         const voicePath = path.join(this.tempDir, `${filename}_voice.mp3`);
         const outputPath = path.join(this.tempDir, `${filename}.mp3`);
 
@@ -135,8 +135,8 @@ export class AudioService {
 
             const filters: any[] = [];
             if (bgSource) {
-                filters.push({ filter: 'volume', options: '1.0', inputs: '0:a', outputs: 'v' });
-                filters.push({ filter: 'volume', options: '0.2', inputs: '1:a', outputs: 'b' });
+                filters.push({ filter: 'volume', options: '0.4', inputs: '0:a', outputs: 'v' });
+                filters.push({ filter: 'volume', options: '1.0', inputs: '1:a', outputs: 'b' });
                 filters.push({ filter: 'amix', options: { inputs: 2, duration: 'first', dropout_transition: 3 }, inputs: ['v', 'b'], outputs: 'mixed' });
             } else {
                 filters.push({ filter: 'volume', options: '1.0', inputs: '0:a', outputs: 'mixed' });
