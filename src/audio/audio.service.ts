@@ -23,9 +23,18 @@ export class AudioService {
             fs.mkdirSync(this.tempDir, { recursive: true });
         }
 
-        const ffmpegPath = require('ffmpeg-static');
-        if (ffmpegPath) {
-            ffmpeg.setFfmpegPath(ffmpegPath);
+        try {
+            const ffmpegPath = require('ffmpeg-static');
+            if (ffmpegPath) {
+                this.logger.log(`FFmpeg path resolved: ${ffmpegPath}`);
+                ffmpeg.setFfmpegPath(ffmpegPath);
+                // Also set an environment variable just in case fluent-ffmpeg checks it
+                process.env.FFMPEG_PATH = ffmpegPath;
+            } else {
+                this.logger.error('ffmpeg-static returned an empty path');
+            }
+        } catch (err) {
+            this.logger.error('Failed to require ffmpeg-static', err);
         }
 
         cloudinary.config({
@@ -117,7 +126,8 @@ export class AudioService {
         const backgroundUrl = this.BACKGROUND_URLS[mood];
         const bgSource = fs.existsSync(localBackgroundPath) ? localBackgroundPath : backgroundUrl;
 
-        this.logger.debug(`Mixing audio — background source: ${bgSource}`);
+        this.logger.debug(`Mixing audio — voice path: ${voicePath}, background source: ${bgSource}`);
+        this.logger.debug(`Effective FFmpeg Path: ${process.env.FFMPEG_PATH || 'NOT SET'}`);
 
         return new Promise((resolve, reject) => {
             let command = ffmpeg().input(voicePath);
