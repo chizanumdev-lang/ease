@@ -31,7 +31,7 @@ export class AudioService {
     }
 
     async generateAudioTrack(script: string, mood: string, filename: string): Promise<string> {
-        this.logger.log(`[v1.0.5-FINAL-BOOST] Generating audio track for filename: ${filename}`);
+        this.logger.log(`[v1.0.6-MIXING-RESTORED] Generating audio track for filename: ${filename}`);
         const voicePath = path.join(this.tempDir, `${filename}_voice.mp3`);
         const outputPath = path.join(this.tempDir, `${filename}.mp3`);
 
@@ -69,11 +69,8 @@ export class AudioService {
                 });
             });
 
-            // 2. Mix narration with background music (DISABLED per user request to bypass FFmpeg issues)
-            // await this.mixAudio(voicePath, mood, outputPath);
-
-            // Just use the voice path as the output path for now
-            fs.copyFileSync(voicePath, outputPath);
+            // 2. Mix narration with background music (RE-ENABLED per user request)
+            await this.mixAudio(voicePath, mood, outputPath);
 
             // 3. Upload to Cloudinary
             const cloudinaryUrl = await this.uploadToCloudinary(outputPath, filename);
