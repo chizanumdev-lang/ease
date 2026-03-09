@@ -43,12 +43,19 @@ export class AudioService {
             // 1. TTS using Microsoft Edge TTS (Free, Neural)
             this.logger.log(`Generating TTS with Microsoft Edge TTS for mood: ${mood}`);
 
-            // Instantiate a new TTS client per request to avoid concurrency issues with setMetadata
+            // Instantiate a new TTS client per request
             const tts = new MsEdgeTTS();
 
+            // VERCEL FIX: Manually ensure _metadataOptions is initialized to avoid TypeError
+            // The library fails to initialize this in some environments (Vercel Node.js)
+            (tts as any)._metadataOptions = {
+                voiceLocale: 'en-US',
+                sentenceBoundaryEnabled: false,
+                wordBoundaryEnabled: false
+            };
+
             // Set voice (Ava is high quality, multilingual)
-            // Passing empty object as 3rd arg to fix msedge-tts library bug where it doesn't check for undefined
-            await tts.setMetadata('en-US-AvaMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, {});
+            await tts.setMetadata('en-US-AvaMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, { voiceLocale: 'en-US' });
 
             // Generate audio to file
             await new Promise((resolve, reject) => {
