@@ -2,6 +2,7 @@ import {
     Injectable,
     ConflictException,
     UnauthorizedException,
+    Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +15,7 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
     constructor(
         @InjectRepository(User)
         private userRepository: Repository<User>,
@@ -23,6 +25,7 @@ export class AuthService {
 
     async signup(signupDto: SignupDto) {
         const { email, password, name } = signupDto;
+        this.logger.log(`Attempting signup for email: ${email}`);
 
         // Check if user already exists
         const existingUser = await this.userRepository.findOne({

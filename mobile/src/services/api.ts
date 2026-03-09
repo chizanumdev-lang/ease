@@ -13,9 +13,14 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
     async (config) => {
-        const token = await secureStorage.getAccessToken();
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        // Don't add token for auth routes
+        const isAuthRoute = config.url?.includes('/auth/signup') || config.url?.includes('/auth/login');
+
+        if (!isAuthRoute) {
+            const token = await secureStorage.getAccessToken();
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
         }
         return config;
     },
