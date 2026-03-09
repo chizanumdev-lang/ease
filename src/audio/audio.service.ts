@@ -10,9 +10,12 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 @Injectable()
 export class AudioService {
     private readonly logger = new Logger(AudioService.name);
-    private readonly backgroundsDir = path.join(process.cwd(), 'assets/audio/backgrounds');
     private readonly tempDir = path.join(os.tmpdir(), 'ease-audio');
-    private readonly tts: MsEdgeTTS;
+    private readonly BACKGROUND_URLS: Record<string, string> = {
+        ambient: 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3',
+        focus: 'https://res.cloudinary.com/duooultxc/video/upload/v1773045885/ease/backgrounds/focus.mp3',
+        meditation: 'https://res.cloudinary.com/duooultxc/video/upload/v1773045929/ease/backgrounds/meditation.mp3',
+    };
 
     constructor(private configService: ConfigService) {
         // Ensure temp directory exists (writable in Vercel)
@@ -20,30 +23,36 @@ export class AudioService {
             fs.mkdirSync(this.tempDir, { recursive: true });
         }
 
+        const ffmpegPath = require('ffmpeg-static');
+        if (ffmpegPath) {
+            ffmpeg.setFfmpegPath(ffmpegPath);
+        }
+
         cloudinary.config({
             cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME'),
             api_key: this.configService.get<string>('CLOUDINARY_API_KEY'),
             api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET'),
         });
-
-        this.tts = new MsEdgeTTS();
     }
 
     async generateAudioTrack(script: string, mood: string, filename: string): Promise<string> {
         const voicePath = path.join(this.tempDir, `${filename}_voice.mp3`);
         const outputPath = path.join(this.tempDir, `${filename}.mp3`);
-        const backgroundPath = path.join(this.backgroundsDir, `${mood}.mp3`);
 
         try {
             // 1. TTS using Microsoft Edge TTS (Free, Neural)
             this.logger.log(`Generating TTS with Microsoft Edge TTS for mood: ${mood}`);
 
+            // Instantiate a new TTS client per request to avoid concurrency issues with setMetadata
+            const tts = new MsEdgeTTS();
+
             // Set voice (Ava is high quality, multilingual)
-            await this.tts.setMetadata('en-US-AvaMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+            // Passing empty object as 3rd arg to fix msedge-tts library bug where it doesn't check for undefined
+            await tts.setMetadata('en-US-AvaMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, {});
 
             // Generate audio to file
             await new Promise((resolve, reject) => {
-                const { audioStream } = this.tts.toStream(script);
+                const { audioStream } = tts.toStream(script);
                 const fileStream = fs.createWriteStream(voicePath);
 
                 audioStream.on('data', (chunk) => fileStream.write(chunk));
@@ -58,7 +67,7 @@ export class AudioService {
             });
 
             // 2. Mix narration with background music
-            await this.mixAudio(voicePath, backgroundPath, outputPath);
+            await this.mixAudio(voicePath, mood, outputPath);
 
             // 3. Upload to Cloudinary
             const cloudinaryUrl = await this.uploadToCloudinary(outputPath, filename);
@@ -96,18 +105,21 @@ export class AudioService {
         return result.secure_url;
     }
 
-    private async mixAudio(voicePath: string, backgroundPath: string, outputPath: string): Promise<void> {
-        const bgExists = fs.existsSync(backgroundPath);
-        this.logger.debug(`Mixing audio — background exists: ${bgExists}`);
+    private async mixAudio(voicePath: string, mood: string, outputPath: string): Promise<void> {
+        const localBackgroundPath = path.join(process.cwd(), 'assets/audio/backgrounds', `${mood}.mp3`);
+        const backgroundUrl = this.BACKGROUND_URLS[mood];
+        const bgSource = fs.existsSync(localBackgroundPath) ? localBackgroundPath : backgroundUrl;
+
+        this.logger.debug(`Mixing audio — background source: ${bgSource}`);
 
         return new Promise((resolve, reject) => {
             let command = ffmpeg().input(voicePath);
-            if (bgExists) {
-                command = command.input(backgroundPath).inputOptions(['-stream_loop', '-1']);
+            if (bgSource) {
+                command = command.input(bgSource).inputOptions(['-stream_loop', '-1']);
             }
 
             const filters: any[] = [];
-            if (bgExists) {
+            if (bgSource) {
                 filters.push({ filter: 'volume', options: '1.0', inputs: '0:a', outputs: 'v' });
                 filters.push({ filter: 'volume', options: '0.2', inputs: '1:a', outputs: 'b' });
                 filters.push({ filter: 'amix', options: { inputs: 2, duration: 'first', dropout_transition: 3 }, inputs: ['v', 'b'], outputs: 'mixed' });

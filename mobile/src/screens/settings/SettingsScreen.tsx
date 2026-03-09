@@ -5,7 +5,7 @@ import { TabParamList, NotificationSettings } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { notificationService } from '../../services/notification.service';
 import { audioService } from '../../services/audio.service';
-import { API_BASE_URL } from '../../constants/config';
+import { API_BASE_URL, BACKGROUND_AUDIO } from '../../constants/config';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<TabParamList, 'Settings'>;
@@ -31,8 +31,7 @@ export default function SettingsScreen({ navigation }: Props) {
         setIsLoadingAudio(true);
         try {
             await audioService.stop();
-            const baseUrl = API_BASE_URL.replace(/\/api$/, '');
-            const url = `${baseUrl}/audio/backgrounds/${mood}.mp3`;
+            const url = (BACKGROUND_AUDIO as any)[mood];
 
             await audioService.loadAudio({
                 id: `preview_${mood}`,
