@@ -25,16 +25,25 @@ export class AudioService {
 
         try {
             const ffmpegPath = require('ffmpeg-static');
+            const ffprobePath = require('ffprobe-static').path;
+
             if (ffmpegPath) {
                 this.logger.log(`FFmpeg path resolved: ${ffmpegPath}`);
                 ffmpeg.setFfmpegPath(ffmpegPath);
-                // Also set an environment variable just in case fluent-ffmpeg checks it
                 process.env.FFMPEG_PATH = ffmpegPath;
-            } else {
-                this.logger.error('ffmpeg-static returned an empty path');
+            }
+
+            if (ffprobePath) {
+                this.logger.log(`FFprobe path resolved: ${ffprobePath}`);
+                ffmpeg.setFfprobePath(ffprobePath);
+                process.env.FFPROBE_PATH = ffprobePath;
+            }
+
+            if (!ffmpegPath || !ffprobePath) {
+                this.logger.error(`Binary missing - ffmpeg: ${!!ffmpegPath}, ffprobe: ${!!ffprobePath}`);
             }
         } catch (err) {
-            this.logger.error('Failed to require ffmpeg-static', err);
+            this.logger.error('Failed to require ffmpeg/ffprobe static binaries', err);
         }
 
         cloudinary.config({
