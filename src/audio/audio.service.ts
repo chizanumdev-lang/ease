@@ -31,6 +31,7 @@ export class AudioService {
     }
 
     async generateAudioTrack(script: string, mood: string, filename: string): Promise<string> {
+        this.logger.log(`[v1.0.5-FINAL-BOOST] Generating audio track for filename: ${filename}`);
         const voicePath = path.join(this.tempDir, `${filename}_voice.mp3`);
         const outputPath = path.join(this.tempDir, `${filename}.mp3`);
 
