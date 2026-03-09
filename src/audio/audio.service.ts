@@ -69,8 +69,11 @@ export class AudioService {
                 });
             });
 
-            // 2. Mix narration with background music
-            await this.mixAudio(voicePath, mood, outputPath);
+            // 2. Mix narration with background music (DISABLED per user request to bypass FFmpeg issues)
+            // await this.mixAudio(voicePath, mood, outputPath);
+
+            // Just use the voice path as the output path for now
+            fs.copyFileSync(voicePath, outputPath);
 
             // 3. Upload to Cloudinary
             const cloudinaryUrl = await this.uploadToCloudinary(outputPath, filename);
