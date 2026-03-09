@@ -23,29 +23,6 @@ export class AudioService {
             fs.mkdirSync(this.tempDir, { recursive: true });
         }
 
-        try {
-            const ffmpegPath = require('ffmpeg-static');
-            const ffprobePath = require('ffprobe-static').path;
-
-            if (ffmpegPath) {
-                this.logger.log(`FFmpeg path resolved: ${ffmpegPath}`);
-                ffmpeg.setFfmpegPath(ffmpegPath);
-                process.env.FFMPEG_PATH = ffmpegPath;
-            }
-
-            if (ffprobePath) {
-                this.logger.log(`FFprobe path resolved: ${ffprobePath}`);
-                ffmpeg.setFfprobePath(ffprobePath);
-                process.env.FFPROBE_PATH = ffprobePath;
-            }
-
-            if (!ffmpegPath || !ffprobePath) {
-                this.logger.error(`Binary missing - ffmpeg: ${!!ffmpegPath}, ffprobe: ${!!ffprobePath}`);
-            }
-        } catch (err) {
-            this.logger.error('Failed to require ffmpeg/ffprobe static binaries', err);
-        }
-
         cloudinary.config({
             cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME'),
             api_key: this.configService.get<string>('CLOUDINARY_API_KEY'),
@@ -131,12 +108,23 @@ export class AudioService {
     }
 
     private async mixAudio(voicePath: string, mood: string, outputPath: string): Promise<void> {
+        // Lazy load binaries to avoid startup crashes if they are missing/blocked
+        try {
+            const ffmpegPath = require('ffmpeg-static');
+            const ffprobePath = require('ffprobe-static').path;
+            if (ffmpegPath) ffmpeg.setFfmpegPath(ffmpegPath);
+            if (ffprobePath) ffmpeg.setFfprobePath(ffprobePath);
+            this.logger.debug(`FFmpeg/FFprobe lazy loaded. FFmpeg: ${ffmpegPath}`);
+        } catch (err) {
+            this.logger.error('Lazy loading FFmpeg binaries failed', err);
+        }
+
         const localBackgroundPath = path.join(process.cwd(), 'assets/audio/backgrounds', `${mood}.mp3`);
         const backgroundUrl = this.BACKGROUND_URLS[mood];
         const bgSource = fs.existsSync(localBackgroundPath) ? localBackgroundPath : backgroundUrl;
 
         this.logger.debug(`Mixing audio — voice path: ${voicePath}, background source: ${bgSource}`);
-        this.logger.debug(`Effective FFmpeg Path: ${process.env.FFMPEG_PATH || 'NOT SET'}`);
+        this.logger.debug(`Effective OS Temp Dir: ${os.tmpdir()}`);
 
         return new Promise((resolve, reject) => {
             let command = ffmpeg().input(voicePath);
