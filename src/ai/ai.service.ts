@@ -190,7 +190,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
 
     private async callGemini(prompt: string): Promise<string> {
         if (!this.genAI) throw new Error('Gemini not configured');
-        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const result = await model.generateContent(prompt);
         return result.response.text();
     }
@@ -460,7 +460,7 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             Return ONLY the URL string. Nothing else.`;
 
             const model = this.genAI.getGenerativeModel({
-                model: "gemini-2.0-flash",
+                model: "gemini-2.5-flash",
                 // @ts-ignore
                 tools: [{ googleSearch: {} }],
             });
@@ -509,8 +509,8 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             Return ONLY the query string. No quotes, no explanations.`;
 
             const model = this.genAI.getGenerativeModel({
-                // IMPORTANT: NEVER CHANGE THIS MODEL! MUST BE gemini-2.0-flash.
-                model: "gemini-2.0-flash",
+                // IMPORTANT: NEVER CHANGE THIS MODEL! MUST BE gemini-2.5-flash.
+                model: "gemini-2.5-flash",
             });
 
             const result = await model.generateContent(prompt);
