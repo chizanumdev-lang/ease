@@ -25,12 +25,30 @@ import { AudioModule } from './audio/audio.module';
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        connection: {
+      useFactory: async (configService: ConfigService) => {
+        const redisUrlString = configService.get('KV_URL') || configService.get('REDIS_URL');
+        let connection: any = {
           host: configService.get('REDIS_HOST', 'localhost'),
           port: configService.get('REDIS_PORT', 6379),
-        },
-      }),
+        };
+
+        if (redisUrlString) {
+          try {
+            const parsedUrl = new URL(redisUrlString);
+            connection = {
+              host: parsedUrl.hostname,
+              port: parseInt(parsedUrl.port, 10) || 6379,
+              password: parsedUrl.password || undefined,
+              username: parsedUrl.username || undefined,
+              tls: parsedUrl.protocol === 'rediss:' ? {} : undefined,
+            };
+          } catch (e) {
+            console.error('Failed to parse Redis URL from KV_URL/REDIS_URL', e);
+          }
+        }
+
+        return { connection };
+      },
       inject: [ConfigService],
     }),
     TypeOrmModule.forRootAsync({

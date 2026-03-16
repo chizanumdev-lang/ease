@@ -89,6 +89,9 @@ export class ProgramsService {
         @InjectQueue('audio-generation')
         private audioQueue: Queue,
 
+        @InjectQueue('program-generation')
+        private programQueue: Queue,
+
         private usersService: UsersService,
         private aiService: AiService,
         private youtubeService: YoutubeService,
@@ -158,20 +161,7 @@ export class ProgramsService {
         const sleepStart = user.settings?.sleepWindow?.start || '23:00';
         const wakeStart = user.settings?.sleepWindow?.end || '07:00';
 
-        // Scaled durations across 8 task types
-        const total = minutesPerDay;
-        const dur = {
-            video: Math.max(5, Math.floor(total * 0.25)),
-            exercise: Math.max(5, Math.floor(total * 0.15)),
-            lesson: Math.max(3, Math.floor(total * 0.10)),
-            quiz: Math.max(3, Math.floor(total * 0.08)),
-            journal: Math.max(3, Math.floor(total * 0.07)),
-            audio: Math.max(5, Math.floor(total * 0.15)),
-            mindfulness: Math.max(3, Math.floor(total * 0.10)),
-            reflection: Math.max(3, Math.floor(total * 0.10)),
-        };
-
-        // Create or find existing program for this goal
+        // ─── PHASE 1: Create skeleton (~150ms) — return immediately ───────────
         let program = await this.programRepository.findOne({ where: { goalId, userId } });
         if (!program) {
             program = this.programRepository.create({
@@ -180,224 +170,49 @@ export class ProgramsService {
                 duration,
                 goalId,
                 userId,
+                status: 'generating',
             });
+            await this.programRepository.save(program);
+        } else {
+            // Re-hydrate existing program
+            program.status = 'generating';
             await this.programRepository.save(program);
         }
 
-        // Generate AI Plan — cap at 7 days for speed regardless of user's chosen duration
-        const MAX_AI_DAYS = 7;
-        const aiPlan = await this.aiService.generateProgramPlan(
-            goal.description || goal.title || 'Goal',
-            { 
-                duration: Math.min(duration, MAX_AI_DAYS), 
-                minutesPerDay, 
-                learningStyle, 
+        // Create empty day shells instantly — no AI needed
+        const existingDays = await this.dayPlanRepository.find({ where: { programId: program.id } });
+        const existingDayNumbers = new Set(existingDays.map(d => d.dayNumber));
+        const newDayShells = Array.from({ length: duration }, (_, i) => i + 1)
+            .filter(n => !existingDayNumbers.has(n))
+            .map(n => this.dayPlanRepository.create({
+                dayNumber: n,
+                theme: `Day ${n}`,
+                programId: program.id,
+                status: 'pending',
+            }));
+        if (newDayShells.length > 0) {
+            await this.dayPlanRepository.save(newDayShells);
+        }
+
+        // ─── PHASE 2: Dispatch hydration to background queue ─────────────────
+        await this.programQueue.add('hydrate-program', {
+            programId: program.id,
+            goalText: goal.description || goal.title || 'Goal',
+            goalId: goal.id,
+            userId,
+            params: {
+                duration,
+                minutesPerDay,
+                learningStyle,
                 constraints,
-                category: goal.category 
-            }
-        );
+                category: goal.category,
+                wakeStart,
+                sleepStart,
+                goalText: goal.description || goal.title || 'Goal',
+            },
+        });
 
-        // 1. Create all DayPlan entities sequentially first (fast)
-        const dayPlanMap = new Map<number, DayPlan>();
-        for (const day of aiPlan) {
-            let dayPlan = await this.dayPlanRepository.findOne({
-                where: { programId: program.id, dayNumber: day.dayNumber },
-            });
-            if (!dayPlan) {
-                dayPlan = this.dayPlanRepository.create({
-                    dayNumber: day.dayNumber,
-                    theme: `Day ${day.dayNumber}: ${day.theme}`,
-                    focusAreas: ['Video', 'Exercise', 'Lesson', 'Quiz', 'Journal', 'Audio', 'Mindfulness', 'Reflection'],
-                    programId: program.id,
-                });
-                await this.dayPlanRepository.save(dayPlan);
-            } else {
-                dayPlan.theme = `Day ${day.dayNumber}: ${day.theme}`;
-                await this.dayPlanRepository.save(dayPlan);
-            }
-            dayPlanMap.set(day.dayNumber, dayPlan);
-        }
-
-        // 2. Define a function to generate content for a single day
-        const generateDayContent = async (day: any) => {
-            const dayPlan = dayPlanMap.get(day.dayNumber);
-            if (!dayPlan) return;
-
-            const dayOffset = (day.dayNumber ?? 1) - 1;
-            const tasks: Promise<any>[] = [];
-
-            // 1. Short Lesson Video
-            if (day.videoTask) {
-                tasks.push((async () => {
-                    const searchTopic = day.videoTask.searchQuery || `${day.theme} ${day.videoTask.title}`;
-                    let videoUrl: string;
-                    try {
-                        const result = await this.youtubeService.getRecommendedVideo(searchTopic, day.videoTask.searchQuery);
-                        videoUrl = result.url || `https://www.youtube.com/results?search_query=${encodeURIComponent(searchTopic)}`;
-                    } catch {
-                        videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchTopic)}`;
-                    }
-                    await this.upsertTask({
-                        type: 'video',
-                        dayPlanId: dayPlan.id,
-                        title: day.videoTask.title,
-                        description: day.videoTask.description,
-                        duration: dur.video,
-                        completed: false,
-                        videoUrl,
-                        scheduledAt: this.scheduleTask('video', dayOffset, wakeStart, sleepStart),
-                    });
-                })());
-            }
-
-            // 2. Guided Exercise
-            if (day.exerciseTask) {
-                const steps = (day.exerciseTask.steps as string[] ?? []).join(' → ');
-                tasks.push(this.upsertTask({
-                    type: 'exercise',
-                    dayPlanId: dayPlan.id,
-                    title: day.exerciseTask.title,
-                    description: `${day.exerciseTask.description}\n\nSteps: ${steps}`,
-                    duration: dur.exercise,
-                    completed: false,
-                    scheduledAt: this.scheduleTask('exercise', dayOffset, wakeStart, sleepStart),
-                }));
-            }
-
-            // 3. Short Lesson / Reading
-            if (day.lessonTask) {
-                const keyPoints = (day.lessonTask.keyPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
-                tasks.push(this.upsertTask({
-                    type: 'lesson',
-                    dayPlanId: dayPlan.id,
-                    title: day.lessonTask.title,
-                    description: `${day.lessonTask.description}\n\nKey Points:\n${keyPoints}`,
-                    duration: dur.lesson,
-                    completed: false,
-                    scheduledAt: this.scheduleTask('lesson', dayOffset, wakeStart, sleepStart),
-                }));
-            }
-
-            // 4. Quiz
-            if (day.quiz) {
-                tasks.push((async () => {
-                    let quiz = await this.quizRepository.findOne({ where: { dayPlanId: dayPlan.id } });
-                    if (!quiz) {
-                        quiz = this.quizRepository.create({
-                            title: day.quiz.title,
-                            questions: day.quiz.questions,
-                            dayPlanId: dayPlan.id,
-                        });
-                    } else {
-                        quiz.title = day.quiz.title;
-                        quiz.questions = day.quiz.questions;
-                    }
-                    await this.quizRepository.save(quiz);
-
-                    await this.upsertTask({
-                        type: 'quiz',
-                        dayPlanId: dayPlan.id,
-                        title: `Quiz: ${day.quiz.title}`,
-                        description: `Test your knowledge on ${day.theme}`,
-                        duration: dur.quiz,
-                        completed: false,
-                        quizId: quiz.id,
-                        scheduledAt: this.scheduleTask('quiz', dayOffset, wakeStart, sleepStart),
-                    });
-                })());
-            }
-
-            // 5. Journal Check-in
-            if (day.journalTask) {
-                tasks.push(this.upsertTask({
-                    type: 'journal',
-                    dayPlanId: dayPlan.id,
-                    title: day.journalTask.title,
-                    description: `Reflect: ${day.journalTask.prompt}`,
-                    duration: dur.journal,
-                    completed: false,
-                    scheduledAt: this.scheduleTask('journal', dayOffset, wakeStart, sleepStart),
-                }));
-            }
-
-            // 6. Nightly Audio Session
-            if (day.audioTask && !constraints.includes('no_audio')) {
-                tasks.push((async () => {
-                    const mood = (day.audioTask.mood as string) || 'meditation';
-                    const audioFilename = `program_${program!.id}_day_${day.dayNumber}`;
-
-                    try {
-                        let audioTrack = await this.audioTrackRepository.findOne({ where: { dayPlanId: dayPlan.id } });
-                        if (!audioTrack) {
-                            audioTrack = this.audioTrackRepository.create({ dayPlanId: dayPlan.id, title: '', url: '', duration: 0, type: '' });
-                        }
-                        audioTrack.title = day.audioTask.title;
-                        audioTrack.url = 'generating...';
-                        audioTrack.duration = dur.audio;
-                        audioTrack.type = mood;
-                        await this.audioTrackRepository.save(audioTrack);
-
-                        await this.audioQueue.add('generate-audio', {
-                            audioTrackId: audioTrack.id,
-                            theme: day.theme,
-                            mood: mood,
-                            audioFilename: audioFilename,
-                        });
-
-                        await this.upsertTask({
-                            type: 'audio',
-                            dayPlanId: dayPlan.id,
-                            title: `Nightly Audio: ${day.audioTask.title}`,
-                            description: day.audioTask.description,
-                            duration: dur.audio,
-                            completed: false,
-                            scheduledAt: this.scheduleTask('audio', dayOffset, wakeStart, sleepStart),
-                        });
-                    } catch (audioError) {
-                        this.logger.error(`Failed to queue custom audio for day ${day.dayNumber}`, audioError);
-                    }
-                })());
-            }
-
-            // 7. Mindfulness Break
-            if (day.mindfulnessTask) {
-                tasks.push(this.upsertTask({
-                    type: 'mindfulness',
-                    dayPlanId: dayPlan.id,
-                    title: day.mindfulnessTask.title,
-                    description: `${day.mindfulnessTask.description}\n\nTechnique: ${day.mindfulnessTask.technique}`,
-                    duration: dur.mindfulness,
-                    completed: false,
-                    scheduledAt: this.scheduleTask('mindfulness', dayOffset, wakeStart, sleepStart),
-                }));
-            }
-
-            // 8. Reflection & Review
-            if (day.reflectionTask) {
-                const points = (day.reflectionTask.reviewPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
-                tasks.push(this.upsertTask({
-                    type: 'reflection',
-                    dayPlanId: dayPlan.id,
-                    title: day.reflectionTask.title,
-                    description: `${day.reflectionTask.description}\n\nReview:\n${points}`,
-                    duration: dur.reflection,
-                    completed: false,
-                    scheduledAt: this.scheduleTask('reflection', dayOffset, wakeStart, sleepStart),
-                }));
-            }
-
-            await Promise.all(tasks);
-        };
-
-        // 3. Process day content in batches (e.g., 5 days at a time)
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < aiPlan.length; i += BATCH_SIZE) {
-            const batch = aiPlan.slice(i, i + BATCH_SIZE);
-            this.logger.log(`Processing batch of ${batch.length} days (starting with Day ${batch[0].dayNumber})`);
-            await Promise.all(batch.map(day => generateDayContent(day)));
-        }
-
-        return this.findById(program.id, userId);
+        return program;
     }
 
     async findActive(userId: string): Promise<Program> {
@@ -475,9 +290,32 @@ export class ProgramsService {
         ];
     }
 
-    async evaluatePerformance(programId: string): Promise<any> {
+    async getProgramStatus(id: string) {
         const program = await this.programRepository.findOne({
-            where: { id: programId },
+            where: { id },
+            select: ['id', 'status'],
+        });
+        if (!program) throw new NotFoundException('Program not found');
+
+        const days = await this.dayPlanRepository.find({
+            where: { programId: id },
+            select: ['id', 'dayNumber', 'status', 'theme'],
+            order: { dayNumber: 'ASC' },
+        });
+
+        return {
+            programStatus: program.status,
+            days: days.map(d => ({
+                dayNumber: d.dayNumber,
+                status: d.status,
+                theme: d.theme,
+            })),
+        };
+    }
+
+    async evaluatePerformance(id: string): Promise<any> {
+        const program = await this.programRepository.findOne({
+            where: { id },
             relations: ['user'],
         });
         if (!program) throw new NotFoundException('Program not found');

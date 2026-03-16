@@ -25,6 +25,9 @@ export class DayPlan {
     @Column({ nullable: true })
     theme: string;
 
+    @Column({ default: 'pending' })
+    status: string; // 'pending' | 'ready' | 'failed'
+
     @Column({ type: 'jsonb', nullable: true, name: 'focus_areas' })
     focusAreas: string[];
 

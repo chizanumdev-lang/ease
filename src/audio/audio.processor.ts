@@ -22,12 +22,12 @@ export class AudioProcessor extends WorkerHost {
     }
 
     async process(job: Job<any, any, string>): Promise<any> {
-        const { audioTrackId, theme, mood, audioFilename } = job.data;
+        const { audioTrackId, theme, mood, audioFilename, goal, dayNumber } = job.data;
         this.logger.log(`Processing audio generation job ${job.id} for track ${audioTrackId}`);
 
         try {
             // 1. Generate script
-            const script = await this.aiService.generateAudioScript(theme, mood);
+            const script = await this.aiService.generateAudioScript(theme, mood, goal || 'General Improvement', dayNumber || 1);
             
             // 2. Generate actual TTS audio
             const audioUrl = await this.audioService.generateAudioTrack(script, mood, audioFilename);

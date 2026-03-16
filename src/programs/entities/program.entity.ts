@@ -20,6 +20,9 @@ export class Program {
     @Column()
     title: string;
 
+    @Column({ default: 'generating' })
+    status: string; // 'generating' | 'ready' | 'failed'
+
     @Column({ type: 'text', nullable: true })
     description: string;
 

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { ProgramsController } from './programs.controller';
 import { ProgramsService } from './programs.service';
+import { ProgramProcessor } from './program.processor';
 import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
 import { Task } from '../tasks/entities/task.entity';
@@ -30,16 +31,17 @@ import { AudioModule } from '../audio/audio.module';
             AdaptationLog,
             Progress
         ]),
-        BullModule.registerQueue({
-            name: 'audio-generation',
-        }),
+        BullModule.registerQueue(
+            { name: 'audio-generation' },
+            { name: 'program-generation' },
+        ),
         UsersModule,
         AiModule,
         VideoModule,
         AudioModule,
     ],
     controllers: [ProgramsController],
-    providers: [ProgramsService],
+    providers: [ProgramsService, ProgramProcessor],
     exports: [ProgramsService],
 })
 export class ProgramsModule { }

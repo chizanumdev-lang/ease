@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, UseGuards, Sse, MessageEvent } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { ProgramsService } from './programs.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
@@ -40,10 +41,29 @@ export class ProgramsController {
 
     @Post(':id/evaluate')
     async evaluatePerformance(@GetUser() user: User, @Param('id') id: string) {
-        // We might want to verify ownership here or let service handle it (service checks program.userId potentially, or we do it here)
-        // Service finds program by ID. It should probably also check userId, but Evaluate logic fetches program by ID and loads User.
-        // Let's rely on service or add a check. 
-        // For now, simple pass-through.
         return this.programsService.evaluatePerformance(id);
+    }
+
+    @Get(':id/stream')
+    @Sse()
+    streamProgramStatus(@Param('id') programId: string): Observable<MessageEvent> {
+        return new Observable(observer => {
+            const interval = setInterval(async () => {
+                try {
+                    const { days, programStatus } = await this.programsService.getProgramStatus(programId);
+                    observer.next({ data: JSON.stringify({ days, programStatus }) } as MessageEvent);
+
+                    if (programStatus === 'ready' || programStatus === 'failed') {
+                        clearInterval(interval);
+                        observer.complete();
+                    }
+                } catch (err) {
+                    observer.error(err);
+                    clearInterval(interval);
+                }
+            }, 1500);
+
+            return () => clearInterval(interval);
+        });
     }
 }

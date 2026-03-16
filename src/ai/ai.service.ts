@@ -1,11 +1,28 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ConfigService } from '@nestjs/config';
+import { createHash } from 'crypto';
+import Redis from 'ioredis';
+
+interface AiProvider {
+    name: string;
+    priority: number;
+    cooldownUntil: Date | null;
+    generate: (prompt: string) => Promise<string>;
+}
+
+const DAILY_LIMITS: Record<string, number> = {
+    gemini: 450,  // keep buffer below 500 hard limit
+    groq:   1000, // conservative — free tier is 14,400/day
+    cohere: 30,   // ~1k/month ÷ 30 days
+};
 
 @Injectable()
-export class AiService {
+export class AiService implements OnModuleInit, OnModuleDestroy {
     private genAI: GoogleGenerativeAI;
+    private redis: Redis;
     private readonly logger = new Logger(AiService.name);
+    private providers: AiProvider[];
 
     constructor(private configService: ConfigService) {
         const apiKey = this.configService.get<string>('GEMINI_API_KEY');
@@ -14,6 +31,154 @@ export class AiService {
         } else {
             this.genAI = new GoogleGenerativeAI(apiKey);
         }
+    }
+
+    onModuleInit() {
+        // Build a lean Redis client reusing the same URL as BullMQ.
+        // Falls back to localhost for local dev (same as BullMQ fallback).
+        const redisUrl = this.configService.get<string>('KV_URL') ||
+                         this.configService.get<string>('REDIS_URL');
+        if (redisUrl) {
+            this.redis = new Redis(redisUrl, { tls: redisUrl.startsWith('rediss://') ? {} : undefined, lazyConnect: true });
+        } else {
+            const host = this.configService.get<string>('REDIS_HOST', 'localhost');
+            const port = this.configService.get<number>('REDIS_PORT', 6379);
+            this.redis = new Redis({ host, port, lazyConnect: true });
+        }
+        this.redis.connect().catch(() => this.logger.warn('Redis not reachable — caching and quota tracking disabled'));
+
+        this.providers = [
+            {
+                name: 'gemini',
+                priority: 1,
+                cooldownUntil: null,
+                generate: (prompt) => this.callGemini(prompt),
+            },
+            {
+                name: 'groq',
+                priority: 2,
+                cooldownUntil: null,
+                generate: (prompt) => this.callGroq(prompt),
+            },
+            {
+                name: 'cohere',
+                priority: 3,
+                cooldownUntil: null,
+                generate: (prompt) => this.callCohere(prompt),
+            },
+        ];
+    }
+
+    async onModuleDestroy() {
+        await this.redis?.quit();
+    }
+
+    // ─── Provider Infrastructure ──────────────────────────────────────────────
+
+    private getAvailableProviders(): AiProvider[] {
+        const now = new Date();
+        return this.providers
+            .filter(p => !p.cooldownUntil || p.cooldownUntil < now)
+            .sort((a, b) => a.priority - b.priority);
+    }
+
+    private putOnCooldown(name: string, minutes = 10) {
+        const provider = this.providers.find(p => p.name === name);
+        if (provider) {
+            provider.cooldownUntil = new Date(Date.now() + minutes * 60_000);
+            this.logger.warn(`${name} on cooldown for ${minutes} minutes`);
+        }
+    }
+
+    private async getDailyUsage(provider: string): Promise<number> {
+        try {
+            const key = `usage:${provider}:${new Date().toISOString().slice(0, 10)}`;
+            return parseInt((await this.redis.get(key)) ?? '0', 10);
+        } catch { return 0; }
+    }
+
+    private async incrementUsage(provider: string) {
+        try {
+            const key = `usage:${provider}:${new Date().toISOString().slice(0, 10)}`;
+            await this.redis.incr(key);
+            await this.redis.expire(key, 86400);
+        } catch { /* non-critical */ }
+    }
+
+    private async callWithFallback(prompt: string): Promise<string | null> {
+        // ── Prompt caching: hash the prompt and check Redis (7-day TTL) ──
+        const cacheKey = `ai:${createHash('md5').update(prompt).digest('hex')}`;
+        try {
+            const cached = await this.redis.get(cacheKey);
+            if (cached) {
+                this.logger.log('AI response served from cache');
+                return cached;
+            }
+        } catch { /* cache miss — continue normally */ }
+
+        const available = this.getAvailableProviders();
+        for (const provider of available) {
+            const usage = await this.getDailyUsage(provider.name);
+            const limit = DAILY_LIMITS[provider.name] ?? Infinity;
+            if (usage >= limit) {
+                this.logger.warn(`${provider.name} daily limit reached (${usage}/${limit}), skipping`);
+                continue;
+            }
+
+            try {
+                this.logger.log(`Calling provider: ${provider.name}`);
+                const result = await provider.generate(prompt);
+                await this.incrementUsage(provider.name);
+
+                // Cache successful response for 7 days
+                try { await this.redis.setex(cacheKey, 604800, result); } catch { /* non-critical */ }
+
+                return result;
+            } catch (error) {
+                this.logger.error(`Provider ${provider.name} failed: ${error?.message || error}`);
+                this.putOnCooldown(provider.name);
+            }
+        }
+        return null;
+    }
+
+    private async callGemini(prompt: string): Promise<string> {
+        if (!this.genAI) throw new Error('Gemini not configured');
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const result = await model.generateContent(prompt);
+        return result.response.text();
+    }
+
+    private async callGroq(prompt: string): Promise<string> {
+        const apiKey = this.configService.get<string>('GROQ_API_KEY');
+        if (!apiKey) throw new Error('GROQ_API_KEY not configured');
+
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.7,
+            }),
+        });
+        if (!res.ok) throw new Error(`Groq HTTP ${res.status}: ${await res.text()}`);
+        const data = await res.json();
+        return data.choices[0].message.content;
+    }
+
+    private async callCohere(prompt: string): Promise<string> {
+        const apiKey = this.configService.get<string>('COHERE_API_KEY');
+        if (!apiKey) throw new Error('COHERE_API_KEY not configured');
+
+        const res = await fetch('https://api.cohere.com/v1/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: 'command-r', message: prompt }),
+        });
+        if (!res.ok) throw new Error(`Cohere HTTP ${res.status}: ${await res.text()}`);
+        const data = await res.json();
+        return data.text;
     }
 
     async generateProgramPlan(goal: string, options: any): Promise<any> {
@@ -25,47 +190,122 @@ export class AiService {
 
         const { duration = 30, minutesPerDay = 30, learningStyle = 'mixed', constraints = [], category = 'default' } = options;
 
-        const systemInstruction = `You are an expert curriculum designer. Create a detailed ${duration}-day learning program for the following goal: "${goal}".
-    
-    Parameters:
-    - Daily Commitment: ${minutesPerDay} minutes
-    - Learning Style: ${learningStyle}
-    - Constraints: ${constraints.join(', ') || 'none'}
+        const earlyPhase = Math.floor(duration * 0.3);
+        const midStart = earlyPhase + 1;
+        const midEnd = Math.floor(duration * 0.7);
+        const lateStart = midEnd + 1;
 
-    Output Format: JSON array of objects, one per day.
-    
-    Each Day Object MUST have ALL of the following keys:
-    - dayNumber: integer
-    - theme: string (the day's focus topic, e.g. "Fingerstyle Basics")
-    - videoTask: { title: string, description: string, searchQuery: string (a precise YouTube search query, e.g. "fingerstyle guitar beginner Travis picking tutorial") }
-    - exerciseTask: { title: string, description: string, steps: string[] (3-5 concise step-by-step instructions for the guided exercise) }
-    - lessonTask: { title: string, description: string, keyPoints: string[] (3-5 key takeaways to read or study) }
-    - quiz: { title: string, questions: [ { question: string, options: string[], correctAnswer: integer (0-based index) } ] } (exactly 2 questions)
-    - journalTask: { title: string, prompt: string (a reflective question for the user to write about, related to today's theme) }
-    - audioTask: { title: string, description: string, mood: "meditation" | "focus" | "ambient" }
-    - mindfulnessTask: { title: string, description: string, technique: string (e.g. "4-7-8 breathing", "body scan", "5-4-3-2-1 grounding") }
-    - reflectionTask: { title: string, description: string, reviewPoints: string[] (2-3 things to revisit or consolidate from today) }
+        const videoDuration = Math.round(minutesPerDay * 0.25);
+        const exerciseDuration = Math.round(minutesPerDay * 0.20);
+        const lessonDuration = Math.round(minutesPerDay * 0.15);
+        const audioDuration = Math.round(minutesPerDay * 0.15);
 
-    RULES:
-    - videoTask: provide searchQuery only, NO url field.
-    - audioTask: provide mood only, NO url field.
-    - Ensure all tasks together fit within ${minutesPerDay} minutes/day.
-    - Vary the exercises and reflections across days — avoid repetition.
-    
-    Return ONLY the raw JSON array. No markdown, no commentary.`;
+        const systemInstruction = `You are an expert curriculum designer and personal coach specializing in 
+structured habit and skill development programs.
+
+CONTEXT
+Goal: "${goal}"
+Duration: ${duration} days (generate ALL ${duration} days)
+Daily commitment: ${minutesPerDay} minutes
+Learning style: ${learningStyle}
+Constraints: ${constraints.join(', ') || 'none'}
+
+PROGRESSION RULES
+- Days 1-${earlyPhase}: Foundation. Introduce core concepts. Keep tasks simple and confidence-building.
+- Days ${midStart}-${midEnd}: Development. Increase complexity. Build on prior days explicitly.
+- Days ${lateStart}-${duration}: Mastery. Challenge the user. Reference and synthesize earlier learning.
+- Each day's theme must be a specific, distinct subtopic of the goal — not a generic label.
+- No exercise, technique, or journal prompt may repeat across days.
+
+PER-TASK TIME BUDGET (must sum to ${minutesPerDay} minutes)
+- videoTask: ${videoDuration} minutes
+- exerciseTask: ${exerciseDuration} minutes  
+- lessonTask: ${lessonDuration} minutes
+- quiz: 3 minutes
+- journalTask: 5 minutes
+- audioTask: ${audioDuration} minutes
+- mindfulnessTask: 5 minutes
+- reflectionTask: 3 minutes
+
+OUTPUT SCHEMA
+Return a raw JSON array — no markdown, no code fences, no commentary, 
+no trailing commas. Every object must have ALL of these keys:
+
+{
+  "dayNumber": integer,
+  "theme": string (specific subtopic, e.g. "Fingerstyle Thumb Independence" not "Basics"),
+  
+  "videoTask": {
+    "title": string,
+    "description": string (explain what the user will learn and why it matters today),
+    "searchQuery": string (precise YouTube query, e.g. "fingerstyle guitar thumb independence beginner lesson")
+  },
+  
+  "exerciseTask": {
+    "title": string,
+    "description": string,
+    "steps": string[] (exactly 4 steps, each actionable and specific to today's theme),
+    "durationMinutes": ${exerciseDuration}
+  },
+  
+  "lessonTask": {
+    "title": string,
+    "description": string,
+    "keyPoints": string[] (exactly 4 points, each a complete insight not a heading)
+  },
+  
+  "quiz": {
+    "title": string,
+    "questions": [
+      {
+        "question": string (tests comprehension of today's lesson/video content, not surface recall),
+        "options": string[] (exactly 4 options, one clearly correct, others plausible),
+        "correctAnswer": integer (0-based index),
+        "explanation": string (why the correct answer is right — shown after the user answers)
+      }
+    ]
+    // exactly 2 questions
+  },
+  
+  "journalTask": {
+    "title": string,
+    "prompt": string (open-ended, personal — connects today's theme to the user's own life or progress)
+  },
+  
+  "audioTask": {
+    "title": string,
+    "description": string,
+    "mood": "meditation" | "focus" | "ambient",
+    "theme": string (1-sentence description of what the audio session should focus on)
+  },
+  
+  "mindfulnessTask": {
+    "title": string,
+    "description": string,
+    "technique": string (named technique with brief how-to, e.g. "Box breathing: inhale 4s, hold 4s, exhale 4s, hold 4s")
+  },
+  
+  "reflectionTask": {
+    "title": string,
+    "description": string,
+    "reviewPoints": string[] (exactly 2 points — one reviewing today, one previewing tomorrow)
+  }
+}
+
+QUALITY RULES
+- videoTask.searchQuery must be specific enough to return a real tutorial (include skill level + modality).
+- quiz questions must test understanding of the lesson content, not just theme recall.
+- journalTask.prompt must be unique per day and personally engaging.
+- audioTask.theme feeds into audio script generation — make it emotionally resonant and goal-relevant.
+- mindfulnessTask.technique must vary across days (no technique may repeat).
+
+Return ONLY the raw JSON array starting with [ and ending with ].`;
 
         try {
-            // Do NOT use googleSearch tool here — grounding injects citations that break JSON parsing
-            const model = this.genAI.getGenerativeModel({
-                model: 'gemini-2.5-flash',
-                generationConfig: {
-                    responseMimeType: 'application/json',
-                },
-            });
-
-            const result = await model.generateContent(systemInstruction);
-            const response = await result.response;
-            let text = response.text();
+            // Call through the fallback chain (Gemini → Groq → Cohere)
+            // Note: Gemini supports JSON mode which improves parsing reliability.
+            // Groq/Cohere return plain text that we strip/parse ourselves.
+            let text = await this.callWithFallback(systemInstruction);
 
             if (!text) {
                 throw new Error('Empty content from AI');
@@ -95,6 +335,75 @@ export class AiService {
             // If quota or other error, return fallback plan instead of crashing
             this.logger.warn('Returning fallback program plan due to AI error');
             return this.getFallbackPlan(Math.min(duration, 7), category);
+        }
+    }
+
+    async generateSingleDay(goal: string, dayNumber: number, totalDays: number, options: any): Promise<any> {
+        const { minutesPerDay = 30, learningStyle = 'mixed', constraints = [], category = 'default' } = options;
+
+        const earlyPhase = Math.floor(totalDays * 0.3);
+        const midEnd = Math.floor(totalDays * 0.7);
+        const phase = dayNumber <= earlyPhase ? 'Foundation' :
+                      dayNumber <= midEnd ? 'Development' : 'Mastery';
+
+        const videoDuration = Math.round(minutesPerDay * 0.25);
+        const exerciseDuration = Math.round(minutesPerDay * 0.20);
+        const lessonDuration = Math.round(minutesPerDay * 0.15);
+        const audioDuration = Math.round(minutesPerDay * 0.15);
+
+        const prompt = `You are an expert curriculum designer creating a single day of a ${totalDays}-day learning plan.
+
+CONTEXT
+Goal: "${goal}"
+Day: ${dayNumber} of ${totalDays} (Phase: ${phase})
+Daily commitment: ${minutesPerDay} minutes
+Learning style: ${learningStyle}
+Constraints: ${constraints.join(', ') || 'none'}
+
+PROGRESSION
+- Foundation (days 1-${earlyPhase}): introduce core concepts, keep simple and confidence-building.
+- Development (days ${earlyPhase + 1}-${midEnd}): increase complexity, build on prior days.
+- Mastery (days ${midEnd + 1}-${totalDays}): challenge the user, reference earlier learning.
+This is Day ${dayNumber} (${phase}) — calibrate difficulty accordingly.
+
+PER-TASK TIME BUDGET
+- videoTask: ${videoDuration} min
+- exerciseTask: ${exerciseDuration} min
+- lessonTask: ${lessonDuration} min
+- quiz: 3 min (2 questions)
+- journalTask: 5 min
+- audioTask: ${audioDuration} min
+- mindfulnessTask: 5 min
+- reflectionTask: 3 min
+
+OUTPUT SCHEMA
+Return a single raw JSON object — no markdown, no code fences, no commentary:
+
+{
+  "dayNumber": ${dayNumber},
+  "theme": string (specific subtopic, not a generic label),
+  "videoTask": { "title": string, "description": string, "searchQuery": string },
+  "exerciseTask": { "title": string, "description": string, "steps": string[4], "durationMinutes": ${exerciseDuration} },
+  "lessonTask": { "title": string, "description": string, "keyPoints": string[4] },
+  "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, ...] },
+  "journalTask": { "title": string, "prompt": string },
+  "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string },
+  "mindfulnessTask": { "title": string, "description": string, "technique": string },
+  "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] }
+}
+
+Return ONLY the raw JSON object starting with { and ending with }.`;
+
+        try {
+            let text = await this.callWithFallback(prompt);
+            if (!text) throw new Error('All providers failed for single day');
+            text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+            const day = JSON.parse(text);
+            this.validateDay(day, dayNumber);
+            return day;
+        } catch (error) {
+            this.logger.error(`generateSingleDay failed for day ${dayNumber}: ${error?.message}`);
+            return this.getFallbackDay(dayNumber, category);
         }
     }
 
@@ -166,32 +475,63 @@ export class AiService {
         }
     }
 
-    async generateAudioScript(theme: string, mood: string): Promise<string> {
+    async generateAudioScript(theme: string, mood: string, goal: string, dayNumber: number): Promise<string> {
         try {
-            const prompt = `You are an expert mindfulness and productivity coach. 
-            Create a comprehensive 5-minute narration script for a ${mood} session focused on: "${theme}".
-            
-            Guidelines:
-            - Mood: ${mood}
-            - Tone: Calm, encouraging, and professional.
-            - Content: Include deep breathing instructions, visualizations, and progressive muscle relaxation or mindfulness techniques appropriate for the mood.
-            - Structure: 
-                1. Gentle introduction (30 sec)
-                2. Core practice or guidance (4 minutes)
-                3. Grounding closing (30 sec)
-            - Total word count: MUST be between 750 and 850 words to ensure a 5-minute duration at normal speaking pace.
-            
-            Return ONLY the spoken text. No stage directions, no labels like "Intro:", just the content to be read aloud.`;
+            const moodInstructions: Record<string, string> = {
+                meditation: `Guide the user through a mindfulness meditation. Use slow, spacious pacing. 
+                             Incorporate body scan or breath awareness. Sentences should be short and restful.`,
+                focus: `Prime the user's mind for deep work. Use steady, confident pacing. 
+                             Include a brief visualization of successful task completion. 
+                             Build energy progressively through the script.`,
+                ambient: `Create a gentle wind-down session. Use soft, unhurried pacing. 
+                             Help the user release the day and prepare for rest. 
+                             End with a body relaxation sequence.`
+            };
 
-            const model = this.genAI.getGenerativeModel({
-                // IMPORTANT: NEVER CHANGE THIS MODEL! MUST BE gemini-2.5-flash.
-                model: "gemini-2.5-flash",
-            });
+            const prompt = `
+            You are a professional mindfulness coach and audio scriptwriter creating a 
+            personalized 5-minute session for a personal development app.
+            
+            USER CONTEXT
+            - Overall goal: "${goal}"
+            - Today's learning theme: "${theme}"
+            - Session mood: ${mood}
+            - Day number: ${dayNumber}
+            
+            SESSION STRUCTURE (strictly follow this timing)
+            1. OPENING (30 seconds / ~65 words)
+               - Welcome the user warmly
+               - Acknowledge what they worked on today: "${theme}"
+               - Set the intention for this session
+            
+            2. CORE PRACTICE (4 minutes / ~620 words)
+               ${moodInstructions[mood] || moodInstructions.meditation}
+               - Weave in 1-2 specific references to today's theme ("${theme}") 
+                 as metaphors or anchors — not as instruction, but as imagery
+               - Example: if theme is "Fingerstyle Thumb Independence", 
+                 you might say "imagine each finger moving with quiet confidence, 
+                 independent yet part of something whole"
+            
+            3. CLOSING (30 seconds / ~65 words)
+               - Gently bring awareness back to the room
+               - Affirm one specific thing they accomplished today related to "${theme}"
+               - Leave them with a single, memorable phrase to carry forward
+            
+            STRICT RULES
+            - Total word count: 750-850 words (this equals exactly 5 minutes of speech)
+            - Tone: calm, warm, encouraging — never clinical or robotic
+            - NO stage directions, labels, or section headers in the output
+            - NO instructions like "close your eyes" as a command — use invitations: "you might let your eyes close"
+            - NO medical claims or therapeutic promises
+            - Spoken text only — exactly as it should be read aloud by a TTS voice
+            
+            Return only the spoken script text. Nothing else.
+            `;
 
-            const result = await model.generateContent(prompt);
-            const text = result.response.text().trim();
-            this.logger.log(`AI audio script generated for ${theme} (${mood}) - length: ${text.length} chars`);
-            return text;
+            const text = await this.callWithFallback(prompt);
+            if (!text) throw new Error('All AI providers failed to generate audio script');
+            this.logger.log(`AI audio script generated for ${theme} (${mood}) - length: ${text.trim().length} chars`);
+            return text.trim();
         } catch (error) {
             this.logger.error('Failed to generate audio script', error);
             // Return a high-quality 5-minute generic fallback if AI is unavailable (e.g. quota exceeded)

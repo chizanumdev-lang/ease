@@ -50,8 +50,16 @@ export class AudioService {
                 wordBoundaryEnabled: false
             };
 
+            const VOICE_BY_MOOD: Record<string, string> = {
+                meditation: 'en-US-AriaNeural',      // softer, breathy — better for wind-down
+                focus: 'en-US-AvaMultilingualNeural', // clear, confident — keep your current
+                ambient: 'en-US-JennyNeural',     // warm, gentle — better for sleep prep
+            };
+
+            const voice = VOICE_BY_MOOD[mood] || 'en-US-AvaMultilingualNeural';
+
             // Set voice (Ava is high quality, multilingual)
-            await tts.setMetadata('en-US-AvaMultilingualNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, { voiceLocale: 'en-US' });
+            await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, { voiceLocale: 'en-US' });
 
             // Generate audio to file
             await new Promise((resolve, reject) => {
