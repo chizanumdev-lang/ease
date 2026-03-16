@@ -23,6 +23,11 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
     private redis: Redis;
     private readonly logger = new Logger(AiService.name);
     private providers: AiProvider[];
+    private locks: Record<string, boolean> = {
+        gemini: false,
+        groq: false,
+        cohere: false,
+    };
 
     constructor(private configService: ConfigService) {
         const apiKey = this.configService.get<string>('GEMINI_API_KEY');
@@ -82,12 +87,44 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
             .sort((a, b) => a.priority - b.priority);
     }
 
-    private putOnCooldown(name: string, minutes = 10) {
+    private putOnCooldown(name: string, seconds = 600) {
         const provider = this.providers.find(p => p.name === name);
         if (provider) {
-            provider.cooldownUntil = new Date(Date.now() + minutes * 60_000);
-            this.logger.warn(`${name} on cooldown for ${minutes} minutes`);
+            provider.cooldownUntil = new Date(Date.now() + seconds * 1000);
+            this.logger.warn(`${name} on cooldown for ${seconds} seconds`);
         }
+    }
+
+    private handleProviderError(providerName: string, error: any) {
+        if (this.isQuotaError(error)) {
+            const retryDelay = this.extractRetryDelay(error);
+            // Default to 60s if no specific hint, otherwise hint + 5s buffer
+            const cooldownSec = retryDelay ? Math.ceil(retryDelay + 5) : 60;
+            this.putOnCooldown(providerName, cooldownSec);
+        } else {
+            // General error cooldown: 1 minute
+            this.putOnCooldown(providerName, 60);
+        }
+    }
+
+    private isQuotaError(error: any): boolean {
+        const msg = (error?.message || '').toLowerCase();
+        return msg.includes('429') || msg.includes('quota') || msg.includes('rate limit');
+    }
+
+    private extractRetryDelay(error: any): number | null {
+        try {
+            // Gemini error details often contain RetryInfo
+            const details = error?.response?.error?.details || error?.details || [];
+            const retryInfo = details.find(d => d['@type']?.includes('RetryInfo'));
+            if (retryInfo?.retryDelay) {
+                // Handle "28s" or "28.5s" string format
+                return parseFloat(retryInfo.retryDelay.replace(/[^0-9.]/g, ''));
+            }
+        } catch (e) {
+            this.logger.debug(`Failed to parse retry delay: ${e.message}`);
+        }
+        return null;
     }
 
     private async getDailyUsage(provider: string): Promise<number> {
@@ -118,6 +155,12 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
 
         const available = this.getAvailableProviders();
         for (const provider of available) {
+            // Check mutex lock
+            if (this.locks[provider.name]) {
+                this.logger.debug(`Provider ${provider.name} is currently busy, trying next...`);
+                continue;
+            }
+
             const usage = await this.getDailyUsage(provider.name);
             const limit = DAILY_LIMITS[provider.name] ?? Infinity;
             if (usage >= limit) {
@@ -125,6 +168,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                 continue;
             }
 
+            this.locks[provider.name] = true;
             try {
                 this.logger.log(`Calling provider: ${provider.name}`);
                 const result = await provider.generate(prompt);
@@ -136,7 +180,9 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                 return result;
             } catch (error) {
                 this.logger.error(`Provider ${provider.name} failed: ${error?.message || error}`);
-                this.putOnCooldown(provider.name);
+                this.handleProviderError(provider.name, error);
+            } finally {
+                this.locks[provider.name] = false;
             }
         }
         return null;
@@ -144,7 +190,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
 
     private async callGemini(prompt: string): Promise<string> {
         if (!this.genAI) throw new Error('Gemini not configured');
-        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
         const result = await model.generateContent(prompt);
         return result.response.text();
     }
@@ -414,7 +460,7 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             Return ONLY the URL string. Nothing else.`;
 
             const model = this.genAI.getGenerativeModel({
-                model: "gemini-2.5-flash",
+                model: "gemini-2.0-flash",
                 // @ts-ignore
                 tools: [{ googleSearch: {} }],
             });
@@ -463,8 +509,8 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             Return ONLY the query string. No quotes, no explanations.`;
 
             const model = this.genAI.getGenerativeModel({
-                // IMPORTANT: NEVER CHANGE THIS MODEL! MUST BE gemini-2.5-flash.
-                model: "gemini-2.5-flash",
+                // IMPORTANT: NEVER CHANGE THIS MODEL! MUST BE gemini-2.0-flash.
+                model: "gemini-2.0-flash",
             });
 
             const result = await model.generateContent(prompt);

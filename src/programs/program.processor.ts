@@ -38,7 +38,7 @@ export class ProgramProcessor extends WorkerHost {
     }
 
     async process(job: Job<any, any, string>): Promise<any> {
-        const { programId, goalText, goalId, userId, params } = job.data;
+        const { programId, goalText, params } = job.data;
         this.logger.log(`Hydrating program ${programId} for goal: ${goalText}`);
 
         const days = await this.dayPlanRepository.find({
@@ -46,14 +46,40 @@ export class ProgramProcessor extends WorkerHost {
             order: { dayNumber: 'ASC' },
         });
 
-        // Fire ALL days in parallel — each independently generates AI content
-        await Promise.allSettled(
-            days.map(day => this.hydrateDay(day, goalText, params))
-        );
+        // Concurrency-limited batch processing (2 at a time) with 15s pause
+        // to stay safely under Gemini's 15 requests/min free tier limit.
+        await this.processInBatches(days, 2, 15000, async (day) => {
+            await this.hydrateDay(day, goalText, params);
+        });
 
         await this.programRepository.update(programId, { status: 'ready' });
         this.logger.log(`Program ${programId} fully hydrated and marked ready`);
         return { success: true };
+    }
+
+    private async processInBatches<T>(
+        items: T[],
+        concurrency: number,
+        delayMs: number,
+        fn: (item: T) => Promise<void>
+    ) {
+        const chunks: T[][] = [];
+        for (let i = 0; i < items.length; i += concurrency) {
+            chunks.push(items.slice(i, i + concurrency));
+        }
+
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+            this.logger.debug(`Processing batch ${i + 1}/${chunks.length} (${chunk.length} items)`);
+            
+            await Promise.allSettled(chunk.map(fn));
+
+            // Pause between batches (except after the last one)
+            if (i < chunks.length - 1) {
+                this.logger.debug(`Waiting ${delayMs / 1000}s before next batch...`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
     }
 
     private async hydrateDay(day: DayPlan, goalText: string, params: any): Promise<void> {
