@@ -23,7 +23,7 @@ export class AiService {
             return this.getFallbackPlan();
         }
 
-        const { duration = 30, minutesPerDay = 30, learningStyle = 'mixed', constraints = [] } = options;
+        const { duration = 30, minutesPerDay = 30, learningStyle = 'mixed', constraints = [], category = 'default' } = options;
 
         const systemInstruction = `You are an expert curriculum designer. Create a detailed ${duration}-day learning program for the following goal: "${goal}".
     
@@ -74,14 +74,27 @@ export class AiService {
             // Strip any residual markdown fences just in case
             text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
 
-            const plan = JSON.parse(text);
-            this.logger.log(`AI plan generated: ${plan.length} days`);
+            let rawPlan = JSON.parse(text);
+            
+            // Validate each day independently so one bad day doesn't kill the whole plan
+            const plan = rawPlan.map((day: any, i: number) => {
+                const dayNumber = day.dayNumber || i + 1;
+                try {
+                    this.validateDay(day, dayNumber);
+                    return day;
+                } catch (e) {
+                    this.logger.warn(`Validation failed for day ${dayNumber}: ${e.message}. Using fallback.`);
+                    return this.getFallbackDay(dayNumber, category);
+                }
+            });
+
+            this.logger.log(`AI plan generated: ${plan.length} days (validated)`);
             return plan;
         } catch (error) {
             this.logger.error(`Failed to generate program plan: ${error?.message || error}`);
             // If quota or other error, return fallback plan instead of crashing
             this.logger.warn('Returning fallback program plan due to AI error');
-            return this.getFallbackPlan();
+            return this.getFallbackPlan(Math.min(duration, 7), category);
         }
     }
 
@@ -214,9 +227,60 @@ As we prepare to close this session, gently start to bring your awareness back t
         }
     }
 
-    private getFallbackPlan() {
-        const days: any[] = [];
-        const themes = [
+    private validateDay(day: any, dayIndex: number): void {
+        const required = ['videoTask', 'exerciseTask', 'lessonTask', 'quiz',
+            'journalTask', 'audioTask', 'mindfulnessTask', 'reflectionTask'];
+
+        for (const field of required) {
+            if (!day[field]) throw new Error(`Day ${dayIndex} missing field: ${field}`);
+        }
+
+        if (!day.quiz || !day.quiz.questions || day.quiz.questions.length !== 2) {
+            throw new Error(`Day ${dayIndex} quiz must have exactly 2 questions`);
+        }
+    }
+
+    private getFallbackDay(dayNumber: number, goalCategory: string = 'default') {
+        const categories: Record<string, string[]> = {
+            'language': [
+                'Basic Greetings & Alphabet',
+                'Common Vocabulary',
+                'Simple Sentence Structure',
+                'Listening Comprehension',
+                'Speaking Practice',
+                'Review & Conversation',
+                'Immersive Practice'
+            ],
+            'fitness': [
+                'Form & Technique',
+                'Core Activation',
+                'Strength Foundations',
+                'Cardio Endurance',
+                'Active Recovery & Flex',
+                'High Intensity Intervals',
+                'Full Body Flow'
+            ],
+            'productivity': [
+                'Time Blocking Basics',
+                'Prioritization Techniques',
+                'Managing Distractions',
+                'Deep Work Strategies',
+                'Workflow Optimization',
+                'Review & Rest',
+                'System Consolidation'
+            ],
+            'study': [
+                'Setting Up the Environment',
+                'Information Intake Methods',
+                'Active Recall & Spaced Repetition',
+                'Synthesizing Notes',
+                'Mock Testing',
+                'Reviewing Mistakes',
+                'Final Consolidation'
+            ]
+        };
+
+        const themes = categories[(goalCategory || '').toLowerCase()] || [
             'Introduction & Foundations',
             'Core Skills',
             'Building Momentum',
@@ -225,53 +289,59 @@ As we prepare to close this session, gently start to bring your awareness back t
             'Review & Consolidation',
             'Application',
         ];
-        for (let i = 1; i <= 7; i++) {
-            const theme = themes[(i - 1) % themes.length];
-            days.push({
-                dayNumber: i,
-                theme,
-                videoTask: {
-                    title: `Day ${i}: ${theme} — Video Lesson`,
-                    description: `Watch a focused lesson on ${theme}.`,
-                    searchQuery: `${theme} beginner tutorial`,
-                },
-                exerciseTask: {
-                    title: `Day ${i}: Guided Exercise`,
-                    description: `A hands-on exercise to reinforce ${theme}.`,
-                    steps: ['Step 1: Warm up', 'Step 2: Core drill', 'Step 3: Apply the concept', 'Step 4: Cool down'],
-                },
-                lessonTask: {
-                    title: `Day ${i}: Reading Lesson`,
-                    description: `Study the key concepts of ${theme}.`,
-                    keyPoints: ['Key concept 1', 'Key concept 2', 'Key concept 3'],
-                },
-                quiz: {
-                    title: `Day ${i} Quiz`,
-                    questions: [
-                        { question: 'What was the main focus today?', options: ['Consistency', 'Speed', 'Technique'], correctAnswer: 0 },
-                        { question: 'What is the next step?', options: ['Practice more', 'Move on', 'Skip it'], correctAnswer: 0 },
-                    ],
-                },
-                journalTask: {
-                    title: `Day ${i}: Journal Check-in`,
-                    prompt: `What did you find most challenging about ${theme} today, and how will you approach it tomorrow?`,
-                },
-                audioTask: {
-                    title: `Day ${i}: Nightly Audio`,
-                    description: `A calming audio session to close out the day.`,
-                    mood: i % 3 === 0 ? 'ambient' : i % 2 === 0 ? 'focus' : 'meditation',
-                },
-                mindfulnessTask: {
-                    title: `Day ${i}: Mindfulness Break`,
-                    description: 'Take a short break to reset your focus.',
-                    technique: ['4-7-8 breathing', 'body scan', '5-4-3-2-1 grounding', 'box breathing'][(i - 1) % 4],
-                },
-                reflectionTask: {
-                    title: `Day ${i}: Evening Reflection`,
-                    description: `Review what you learned about ${theme}.`,
-                    reviewPoints: ['What went well?', 'What was challenging?', 'What will I do differently tomorrow?'],
-                },
-            });
+        
+        const theme = themes[(dayNumber - 1) % themes.length];
+        return {
+            dayNumber: dayNumber,
+            theme,
+            videoTask: {
+                title: `Day ${dayNumber}: ${theme} — Video Lesson`,
+                description: `Watch a focused lesson on ${theme}.`,
+                searchQuery: `${theme} beginner tutorial`,
+            },
+            exerciseTask: {
+                title: `Day ${dayNumber}: Guided Exercise`,
+                description: `A hands-on exercise to reinforce ${theme}.`,
+                steps: ['Step 1: Warm up', 'Step 2: Core drill', 'Step 3: Apply the concept', 'Step 4: Cool down'],
+            },
+            lessonTask: {
+                title: `Day ${dayNumber}: Reading Lesson`,
+                description: `Study the key concepts of ${theme}.`,
+                keyPoints: ['Key concept 1', 'Key concept 2', 'Key concept 3'],
+            },
+            quiz: {
+                title: `Day ${dayNumber} Quiz`,
+                questions: [
+                    { question: 'What was the main focus today?', options: ['Consistency', 'Speed', 'Technique'], correctAnswer: 0 },
+                    { question: 'What is the next step?', options: ['Practice more', 'Move on', 'Skip it'], correctAnswer: 0 },
+                ],
+            },
+            journalTask: {
+                title: `Day ${dayNumber}: Journal Check-in`,
+                prompt: `What did you find most challenging about ${theme} today, and how will you approach it tomorrow?`,
+            },
+            audioTask: {
+                title: `Day ${dayNumber}: Nightly Audio`,
+                description: `A calming audio session to close out the day.`,
+                mood: dayNumber % 3 === 0 ? 'ambient' : dayNumber % 2 === 0 ? 'focus' : 'meditation',
+            },
+            mindfulnessTask: {
+                title: `Day ${dayNumber}: Mindfulness Break`,
+                description: 'Take a short break to reset your focus.',
+                technique: ['4-7-8 breathing', 'body scan', '5-4-3-2-1 grounding', 'box breathing'][(dayNumber - 1) % 4],
+            },
+            reflectionTask: {
+                title: `Day ${dayNumber}: Evening Reflection`,
+                description: `Review what you learned about ${theme}.`,
+                reviewPoints: ['What went well?', 'What was challenging?', 'What will I do differently tomorrow?'],
+            },
+        };
+    }
+
+    private getFallbackPlan(duration: number = 7, category: string = 'default') {
+        const days: any[] = [];
+        for (let i = 1; i <= duration; i++) {
+            days.push(this.getFallbackDay(i, category));
         }
         return days;
     }

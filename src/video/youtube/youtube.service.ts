@@ -59,7 +59,8 @@ export class YoutubeService {
         const validVideos = await this.getVideoDetailsAndRank(videoIds);
 
         if (validVideos.length === 0) {
-            return { error: 'No suitable video found after validation' };
+            this.logger.warn(`No valid videos found after filtering for query: ${query}`);
+            return { url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}` };
         }
 
         const bestVideo = validVideos[0];
@@ -114,10 +115,14 @@ export class YoutubeService {
                     const isPublic = video.status.privacyStatus === 'public';
                     const isEmbeddable = video.status.embeddable;
                     const duration = this.parseDuration(video.contentDetails.duration || '');
-                    const isNotShort = duration > 60; // Filter out shorts (< 1 min) if desired, or keep. Let's say > 1 min default.
+                    const isNotShort = duration > 180; // Filter out shorts (< 3 mins)
                     const isNotTooLong = duration < 45 * 60; // Max 45 mins
+                    
+                    // Enforce English if a language is explicitly set
+                    const lang = video.snippet?.defaultAudioLanguage || video.snippet?.defaultLanguage;
+                    const isEnglishOrUnknown = !lang || lang.startsWith('en');
 
-                    return isPublic && isEmbeddable && isNotShort && isNotTooLong;
+                    return isPublic && isEmbeddable && isNotShort && isNotTooLong && isEnglishOrUnknown;
                 })
                 .sort((a, b) => {
                     // Rank by view count (descending)

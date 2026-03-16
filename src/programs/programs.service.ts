@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { Repository, MoreThan } from 'typeorm'; // Import MoreThan
 import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
@@ -84,6 +86,9 @@ export class ProgramsService {
         @InjectRepository(Progress)
         private progressRepository: Repository<Progress>,
 
+        @InjectQueue('audio-generation')
+        private audioQueue: Queue,
+
         private usersService: UsersService,
         private aiService: AiService,
         private youtubeService: YoutubeService,
@@ -92,29 +97,30 @@ export class ProgramsService {
 
     // ── Helpers ─────────────────────────────────────────────────────────────
 
-    /** Compute a scheduled Date for a given task type, day offset, and sleep start. */
-    private scheduleTask(type: string, dayOffset: number, sleepStart: string): Date {
-        // Fixed times by task type
-        const TASK_HOURS: Record<string, [number, number]> = {
-            video: [8, 0],
-            exercise: [9, 0],
-            lesson: [10, 30],
-            quiz: [11, 0],
-            journal: [18, 0],
-            mindfulness: [13, 0],
-            reflection: [20, 0],
-        };
-
+    /** Compute a scheduled Date for a given task type, day offset, wake start, and sleep start. */
+    private scheduleTask(type: string, dayOffset: number, wakeStart: string, sleepStart: string): Date {
         const d = new Date();
         d.setDate(d.getDate() + dayOffset);
 
-        if (type === 'audio') {
-            // Sleep start minus 20 minutes
+        if (type === 'audio' || type === 'reflection') {
             const [h, m] = sleepStart.split(':').map(Number);
-            d.setHours(h, Math.max(0, m - 20), 0, 0);
-        } else {
-            const [h, m] = TASK_HOURS[type] ?? [8, 0];
             d.setHours(h, m, 0, 0);
+            const offset = type === 'audio' ? -30 : -60;
+            d.setMinutes(d.getMinutes() + offset);
+        } else {
+            const [h, m] = wakeStart.split(':').map(Number);
+            d.setHours(h, m, 0, 0);
+            
+            const offsets: Record<string, number> = {
+                'exercise': 0,         // first thing after wake
+                'lesson': 60,          // 1hr after wake
+                'video': 120,          // mid-morning
+                'quiz': 135,           // right after video
+                'journal': 6 * 60,     // 6 hours after wake
+                'mindfulness': 8 * 60, // 8 hours after wake
+            };
+            
+            d.setMinutes(d.getMinutes() + (offsets[type] || 0));
         }
         return d;
     }
@@ -150,6 +156,7 @@ export class ProgramsService {
 
         const user = await this.usersService.findById(userId);
         const sleepStart = user.settings?.sleepWindow?.start || '23:00';
+        const wakeStart = user.settings?.sleepWindow?.end || '07:00';
 
         // Scaled durations across 8 task types
         const total = minutesPerDay;
@@ -181,7 +188,13 @@ export class ProgramsService {
         const MAX_AI_DAYS = 7;
         const aiPlan = await this.aiService.generateProgramPlan(
             goal.description || goal.title || 'Goal',
-            { duration: Math.min(duration, MAX_AI_DAYS), minutesPerDay, learningStyle, constraints }
+            { 
+                duration: Math.min(duration, MAX_AI_DAYS), 
+                minutesPerDay, 
+                learningStyle, 
+                constraints,
+                category: goal.category 
+            }
         );
 
         // 1. Create all DayPlan entities sequentially first (fast)
@@ -232,7 +245,7 @@ export class ProgramsService {
                         duration: dur.video,
                         completed: false,
                         videoUrl,
-                        scheduledAt: this.scheduleTask('video', dayOffset, sleepStart),
+                        scheduledAt: this.scheduleTask('video', dayOffset, wakeStart, sleepStart),
                     });
                 })());
             }
@@ -247,7 +260,7 @@ export class ProgramsService {
                     description: `${day.exerciseTask.description}\n\nSteps: ${steps}`,
                     duration: dur.exercise,
                     completed: false,
-                    scheduledAt: this.scheduleTask('exercise', dayOffset, sleepStart),
+                    scheduledAt: this.scheduleTask('exercise', dayOffset, wakeStart, sleepStart),
                 }));
             }
 
@@ -261,7 +274,7 @@ export class ProgramsService {
                     description: `${day.lessonTask.description}\n\nKey Points:\n${keyPoints}`,
                     duration: dur.lesson,
                     completed: false,
-                    scheduledAt: this.scheduleTask('lesson', dayOffset, sleepStart),
+                    scheduledAt: this.scheduleTask('lesson', dayOffset, wakeStart, sleepStart),
                 }));
             }
 
@@ -289,7 +302,7 @@ export class ProgramsService {
                         duration: dur.quiz,
                         completed: false,
                         quizId: quiz.id,
-                        scheduledAt: this.scheduleTask('quiz', dayOffset, sleepStart),
+                        scheduledAt: this.scheduleTask('quiz', dayOffset, wakeStart, sleepStart),
                     });
                 })());
             }
@@ -303,7 +316,7 @@ export class ProgramsService {
                     description: `Reflect: ${day.journalTask.prompt}`,
                     duration: dur.journal,
                     completed: false,
-                    scheduledAt: this.scheduleTask('journal', dayOffset, sleepStart),
+                    scheduledAt: this.scheduleTask('journal', dayOffset, wakeStart, sleepStart),
                 }));
             }
 
@@ -314,18 +327,22 @@ export class ProgramsService {
                     const audioFilename = `program_${program!.id}_day_${day.dayNumber}`;
 
                     try {
-                        const script = await this.aiService.generateAudioScript(day.theme, mood);
-                        const audioUrl = await this.audioService.generateAudioTrack(script, mood, audioFilename);
-
                         let audioTrack = await this.audioTrackRepository.findOne({ where: { dayPlanId: dayPlan.id } });
                         if (!audioTrack) {
                             audioTrack = this.audioTrackRepository.create({ dayPlanId: dayPlan.id, title: '', url: '', duration: 0, type: '' });
                         }
                         audioTrack.title = day.audioTask.title;
-                        audioTrack.url = audioUrl;
+                        audioTrack.url = 'generating...';
                         audioTrack.duration = dur.audio;
                         audioTrack.type = mood;
                         await this.audioTrackRepository.save(audioTrack);
+
+                        await this.audioQueue.add('generate-audio', {
+                            audioTrackId: audioTrack.id,
+                            theme: day.theme,
+                            mood: mood,
+                            audioFilename: audioFilename,
+                        });
 
                         await this.upsertTask({
                             type: 'audio',
@@ -334,10 +351,10 @@ export class ProgramsService {
                             description: day.audioTask.description,
                             duration: dur.audio,
                             completed: false,
-                            scheduledAt: this.scheduleTask('audio', dayOffset, sleepStart),
+                            scheduledAt: this.scheduleTask('audio', dayOffset, wakeStart, sleepStart),
                         });
                     } catch (audioError) {
-                        this.logger.error(`Failed to generate custom audio for day ${day.dayNumber}`, audioError);
+                        this.logger.error(`Failed to queue custom audio for day ${day.dayNumber}`, audioError);
                     }
                 })());
             }
@@ -351,7 +368,7 @@ export class ProgramsService {
                     description: `${day.mindfulnessTask.description}\n\nTechnique: ${day.mindfulnessTask.technique}`,
                     duration: dur.mindfulness,
                     completed: false,
-                    scheduledAt: this.scheduleTask('mindfulness', dayOffset, sleepStart),
+                    scheduledAt: this.scheduleTask('mindfulness', dayOffset, wakeStart, sleepStart),
                 }));
             }
 
@@ -365,7 +382,7 @@ export class ProgramsService {
                     description: `${day.reflectionTask.description}\n\nReview:\n${points}`,
                     duration: dur.reflection,
                     completed: false,
-                    scheduledAt: this.scheduleTask('reflection', dayOffset, sleepStart),
+                    scheduledAt: this.scheduleTask('reflection', dayOffset, wakeStart, sleepStart),
                 }));
             }
 

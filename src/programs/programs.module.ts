@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { ProgramsController } from './programs.controller';
 import { ProgramsService } from './programs.service';
 import { Program } from './entities/program.entity';
@@ -29,6 +30,9 @@ import { AudioModule } from '../audio/audio.module';
             AdaptationLog,
             Progress
         ]),
+        BullModule.registerQueue({
+            name: 'audio-generation',
+        }),
         UsersModule,
         AiModule,
         VideoModule,
