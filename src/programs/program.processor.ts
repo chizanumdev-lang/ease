@@ -13,7 +13,10 @@ import { Quiz } from '../quizzes/entities/quiz.entity';
 import { AiService } from '../ai/ai.service';
 import { YoutubeService } from '../video/youtube/youtube.service';
 
-@Processor('program-generation')
+@Processor('program-generation', {
+    lockDuration: 300000, // 5 minutes (to accommodate 15s batch delays)
+    lockRenewTime: 60000,
+})
 @Injectable()
 export class ProgramProcessor extends WorkerHost {
     private readonly logger = new Logger(ProgramProcessor.name);

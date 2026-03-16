@@ -7,7 +7,9 @@ import { AudioTrack } from './entities/audio-track.entity';
 import { AudioService } from './audio.service';
 import { AiService } from '../ai/ai.service';
 
-@Processor('audio-generation')
+@Processor('audio-generation', {
+    lockDuration: 120000, // 2 minutes (for FFmpeg mixing)
+})
 @Injectable()
 export class AudioProcessor extends WorkerHost {
     private readonly logger = new Logger(AudioProcessor.name);
