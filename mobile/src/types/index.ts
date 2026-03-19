@@ -36,6 +36,7 @@ export interface Program {
     duration: number;
     goalId: string;
     userId: string;
+    status: string;
     goal?: Goal;
     dayPlans?: DayPlan[];
     createdAt: string;
@@ -48,6 +49,7 @@ export interface DayPlan {
     theme?: string;
     focusAreas?: string[];
     programId: string;
+    status: string;
     tasks?: Task[];
     audioTracks?: AudioTrack[];
     quizzes?: Quiz[];

@@ -22,7 +22,8 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
         }
     }, [programId]);
 
-    if (isLoading || !currentProgram) {
+    // If it's pure "generating", we wait for Day 1 to be ready.
+    if (isLoading || !currentProgram || currentProgram.status === 'generating') {
         return (
             <View style={styles.loading}>
                 <ActivityIndicator size="large" color={Theme.colors.primary} />
@@ -76,11 +77,23 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
                     {currentProgram.dayPlans?.slice(0, 7).map((dayPlan, index) => (
                         <View key={dayPlan.id} style={styles.timelineItem}>
                             <View style={styles.timelineLeft}>
-                                <View style={[styles.timelineDot, index === 0 && styles.timelineDotActive]} />
+                                <View style={[
+                                    styles.timelineDot,
+                                    dayPlan.status === 'ready' && styles.timelineDotActive,
+                                    dayPlan.status === 'pending' && styles.timelineDotPending
+                                ]} />
                                 {index < 6 && <View style={styles.timelineLine} />}
                             </View>
                             <View style={styles.timelineRight}>
-                                <Text style={styles.dayLabel}>Day {dayPlan.dayNumber}</Text>
+                                <View style={styles.dayHeader}>
+                                    <Text style={styles.dayLabel}>Day {dayPlan.dayNumber}</Text>
+                                    {dayPlan.status === 'pending' && (
+                                        <View style={styles.statusBadge}>
+                                            <ActivityIndicator size="small" color={Theme.colors.slate[400]} style={{ marginRight: 4 }} />
+                                            <Text style={styles.statusBadgeText}>Preparing</Text>
+                                        </View>
+                                    )}
+                                </View>
                                 <Text style={styles.themeTitle}>{dayPlan.theme}</Text>
                                 {dayPlan.focusAreas && dayPlan.focusAreas.length > 0 && (
                                     <Text style={styles.focusAreasText}>
@@ -246,11 +259,30 @@ const styles = StyleSheet.create({
         paddingBottom: 24,
         paddingLeft: 12,
     },
+    dayHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Theme.colors.slate[200],
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
+    },
+    statusBadgeText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: Theme.colors.slate[400],
+        textTransform: 'uppercase',
+    },
     dayLabel: {
         fontSize: 12,
         fontWeight: '700',
         color: Theme.colors.primary,
-        marginBottom: 4,
         textTransform: 'uppercase',
     },
     themeTitle: {
@@ -263,6 +295,11 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: Theme.colors.text.muted,
         lineHeight: 20,
+    },
+    timelineDotPending: {
+        backgroundColor: Theme.colors.slate[200],
+        borderWidth: 2,
+        borderColor: Theme.colors.slate[300],
     },
     moreIndicator: {
         paddingLeft: 42,

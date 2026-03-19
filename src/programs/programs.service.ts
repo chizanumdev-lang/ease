@@ -140,6 +140,188 @@ export class ProgramsService {
         return this.taskRepository.save(this.taskRepository.create(fields));
     }
 
+    async hydrateDay(dayId: string, goalText: string, params: any): Promise<void> {
+        const day = await this.dayPlanRepository.findOne({ where: { id: dayId } });
+        if (!day) return;
+
+        try {
+            const content = await this.aiService.generateSingleDay(
+                goalText,
+                day.dayNumber,
+                params.duration || 7,
+                params,
+            );
+
+            await this.saveDayContent(day, content, params);
+
+            await this.dayPlanRepository.update(day.id, {
+                theme: `Day ${day.dayNumber}: ${content.theme}`,
+                status: 'ready',
+            });
+
+            this.logger.log(`Day ${day.dayNumber} of program ${day.programId} hydrated`);
+        } catch (error) {
+            this.logger.error(`Failed to hydrate day ${day.dayNumber}: ${error?.message}`);
+            await this.dayPlanRepository.update(day.id, { status: 'failed' });
+            throw error;
+        }
+    }
+
+    private async saveDayContent(day: DayPlan, content: any, params: any): Promise<void> {
+        const wakeStart = params.wakeStart || '07:00';
+        const sleepStart = params.sleepStart || '23:00';
+        const constraints = params.constraints || [];
+        const dayOffset = day.dayNumber - 1;
+        const total = params.minutesPerDay || 30;
+        const dur = {
+            video: Math.max(5, Math.floor(total * 0.25)),
+            exercise: Math.max(5, Math.floor(total * 0.15)),
+            lesson: Math.max(3, Math.floor(total * 0.10)),
+            quiz: Math.max(3, Math.floor(total * 0.08)),
+            journal: Math.max(3, Math.floor(total * 0.07)),
+            audio: Math.max(5, Math.floor(total * 0.15)),
+            mindfulness: Math.max(3, Math.floor(total * 0.10)),
+            reflection: Math.max(3, Math.floor(total * 0.10)),
+        };
+
+        const tasks: Promise<any>[] = [];
+
+        // 1. Video
+        if (content.videoTask) {
+            tasks.push((async () => {
+                const topic = content.videoTask.searchQuery || `${content.theme} ${content.videoTask.title}`;
+                let videoUrl: string;
+                try {
+                    const result = await this.youtubeService.getRecommendedVideo(topic, content.videoTask.searchQuery);
+                    videoUrl = result.url || `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}`;
+                } catch {
+                    videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}`;
+                }
+                await this.upsertTask({
+                    type: 'video', dayPlanId: day.id,
+                    title: content.videoTask.title, description: content.videoTask.description,
+                    duration: dur.video, completed: false, videoUrl,
+                    scheduledAt: this.scheduleTask('video', dayOffset, wakeStart, sleepStart),
+                });
+            })());
+        }
+
+        // 2. Exercise
+        if (content.exerciseTask) {
+            const steps = (content.exerciseTask.steps as string[] ?? []).join(' → ');
+            tasks.push(this.upsertTask({
+                type: 'exercise', dayPlanId: day.id,
+                title: content.exerciseTask.title,
+                description: `${content.exerciseTask.description}\n\nSteps: ${steps}`,
+                duration: dur.exercise, completed: false,
+                scheduledAt: this.scheduleTask('exercise', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 3. Lesson
+        if (content.lessonTask) {
+            const keyPoints = (content.lessonTask.keyPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
+            tasks.push(this.upsertTask({
+                type: 'lesson', dayPlanId: day.id,
+                title: content.lessonTask.title,
+                description: `${content.lessonTask.description}\n\nKey Points:\n${keyPoints}`,
+                duration: dur.lesson, completed: false,
+                scheduledAt: this.scheduleTask('lesson', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 4. Quiz
+        if (content.quiz) {
+            tasks.push((async () => {
+                let quiz = await this.quizRepository.findOne({ where: { dayPlanId: day.id } });
+                if (!quiz) {
+                    quiz = this.quizRepository.create({ title: content.quiz.title, questions: content.quiz.questions, dayPlanId: day.id });
+                } else {
+                    quiz.title = content.quiz.title;
+                    quiz.questions = content.quiz.questions;
+                }
+                await this.quizRepository.save(quiz);
+                await this.upsertTask({
+                    type: 'quiz', dayPlanId: day.id,
+                    title: content.quiz.title || `Quiz: ${content.theme}`,
+                    description: `Test your understanding of today's lesson.`,
+                    duration: dur.quiz, completed: false, quizId: quiz.id,
+                    scheduledAt: this.scheduleTask('quiz', dayOffset, wakeStart, sleepStart),
+                });
+            })());
+        }
+
+        // 5. Journal
+        if (content.journalTask) {
+            tasks.push(this.upsertTask({
+                type: 'journal', dayPlanId: day.id,
+                title: content.journalTask.title, description: content.journalTask.prompt,
+                duration: dur.journal, completed: false,
+                scheduledAt: this.scheduleTask('journal', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 6. Audio (fire-and-forget into audio queue)
+        if (content.audioTask && !constraints.includes('no_audio')) {
+            tasks.push((async () => {
+                const mood = content.audioTask.mood || 'meditation';
+                const audioFilename = `program_${day.programId}_day_${day.dayNumber}`;
+                let audioTrack = await this.audioTrackRepository.findOne({ where: { dayPlanId: day.id } });
+                if (!audioTrack) {
+                    audioTrack = this.audioTrackRepository.create({ dayPlanId: day.id, title: '', url: '', duration: 0, type: '' });
+                }
+                audioTrack.title = content.audioTask.title;
+                audioTrack.url = 'generating...';
+                audioTrack.duration = dur.audio;
+                audioTrack.type = mood;
+                await this.audioTrackRepository.save(audioTrack);
+
+                // Fire-and-forget: audio generation is async and doesn't block day hydration
+                this.audioQueue.add('generate-audio', {
+                    audioTrackId: audioTrack.id,
+                    theme: content.audioTask.theme || content.theme,
+                    mood,
+                    goal: params.goalText,
+                    dayNumber: day.dayNumber,
+                    audioFilename,
+                });
+
+                await this.upsertTask({
+                    type: 'audio', dayPlanId: day.id,
+                    title: content.audioTask.title || 'Nightly Audio',
+                    description: content.audioTask.description || '',
+                    duration: dur.audio, completed: false,
+                    scheduledAt: this.scheduleTask('audio', dayOffset, wakeStart, sleepStart),
+                });
+            })());
+        }
+
+        // 7. Mindfulness
+        if (content.mindfulnessTask) {
+            tasks.push(this.upsertTask({
+                type: 'mindfulness', dayPlanId: day.id,
+                title: content.mindfulnessTask.title,
+                description: `${content.mindfulnessTask.description}\n\nTechnique: ${content.mindfulnessTask.technique}`,
+                duration: dur.mindfulness, completed: false,
+                scheduledAt: this.scheduleTask('mindfulness', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 8. Reflection
+        if (content.reflectionTask) {
+            const points = (content.reflectionTask.reviewPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
+            tasks.push(this.upsertTask({
+                type: 'reflection', dayPlanId: day.id,
+                title: content.reflectionTask.title,
+                description: `${content.reflectionTask.description}\n\nReview:\n${points}`,
+                duration: dur.reflection, completed: false,
+                scheduledAt: this.scheduleTask('reflection', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        await Promise.all(tasks);
+    }
+
     // ── generateProgram ──────────────────────────────────────────────────────
 
     async generateProgram(
@@ -194,22 +376,38 @@ export class ProgramsService {
             await this.dayPlanRepository.save(newDayShells);
         }
 
-        // ─── PHASE 2: Dispatch hydration to background queue ─────────────────
+        // ─── PHASE 2: Synchronous Day 1 Hydration ─────────────────────────────
+        const day1 = await this.dayPlanRepository.findOne({ 
+            where: { programId: program.id, dayNumber: 1 } 
+        });
+        
+        const generationParams = {
+            duration,
+            minutesPerDay,
+            learningStyle,
+            constraints,
+            category: goal.category,
+            wakeStart,
+            sleepStart,
+            goalText: goal.description || goal.title || 'Goal',
+        };
+
+        if (day1 && day1.status !== 'ready') {
+            try {
+                await this.hydrateDay(day1.id, generationParams.goalText, generationParams);
+                program.status = 'day1_ready';
+                await this.programRepository.save(program);
+            } catch (e) {
+                this.logger.error(`Failed to synchronously hydrate Day 1: ${e.message}`);
+                // Continue anyway, maybe the queue will catch it or user can retry
+            }
+        }
+
+        // ─── PHASE 3: Dispatch remaining days to background queue ─────────────
         await this.programQueue.add('hydrate-program', {
             programId: program.id,
-            goalText: goal.description || goal.title || 'Goal',
-            goalId: goal.id,
-            userId,
-            params: {
-                duration,
-                minutesPerDay,
-                learningStyle,
-                constraints,
-                category: goal.category,
-                wakeStart,
-                sleepStart,
-                goalText: goal.description || goal.title || 'Goal',
-            },
+            goalText: generationParams.goalText,
+            params: generationParams,
         });
 
         return program;
