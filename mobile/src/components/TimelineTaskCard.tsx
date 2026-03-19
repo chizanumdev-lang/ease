@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#fff',
         borderWidth: 4,
-        borderColor: '#f6f6f8',
+        borderColor: '#f6f6f8', // matches container bg
         zIndex: 10,
     },
     circleCompleted: {
@@ -138,10 +138,9 @@ const styles = StyleSheet.create({
         borderWidth: 0,
     },
     circleActive: {
-        backgroundColor: 'rgba(66, 17, 212, 0.1)',
+        backgroundColor: 'rgba(66, 17, 212, 0.12)',
         borderColor: '#f6f6f8',
         borderWidth: 4,
-        padding: 0,
     },
     circleUpcoming: {
         backgroundColor: '#f1f5f9',
@@ -151,14 +150,14 @@ const styles = StyleSheet.create({
     card: {
         flex: 1,
         backgroundColor: '#fff',
-        borderRadius: 16,
+        borderRadius: 20,
         padding: 16,
         borderWidth: 1,
         borderColor: '#f1f5f9',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
+        shadowOpacity: 0.04,
+        shadowRadius: 6,
         elevation: 2,
     },
     cardActive: {
@@ -166,11 +165,12 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         shadowColor: '#4211d4',
         shadowOpacity: 0.1,
-        shadowRadius: 8,
+        shadowRadius: 12,
     },
     cardUpcoming: {
         borderStyle: 'dashed',
         backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        borderColor: '#e2e8f0',
     },
     cardHeader: {
         flexDirection: 'row',
@@ -182,42 +182,48 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     activeBadge: {
-        backgroundColor: 'rgba(66, 17, 212, 0.1)',
+        backgroundColor: 'rgba(66, 17, 212, 0.08)',
         paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 4,
+        paddingVertical: 3,
+        borderRadius: 6,
         alignSelf: 'flex-start',
-        marginBottom: 6,
+        marginBottom: 8,
     },
     activeBadgeText: {
         color: '#4211d4',
         fontSize: 10,
         fontWeight: '800',
+        letterSpacing: 0.5,
     },
     title: {
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: '700',
         color: '#0f172a',
+        letterSpacing: -0.3,
     },
     titleCompleted: {
-        color: '#64748b',
-        // textDecorationLine: 'line-through', // Optional, design didn't show it but good for UX? The task said replace it with checkbox.
+        color: '#94a3b8',
     },
     subtitle: {
-        fontSize: 12,
+        fontSize: 13,
         color: '#64748b',
         marginTop: 4,
+        lineHeight: 18,
     },
     resumeButton: {
         backgroundColor: '#4211d4',
-        borderRadius: 8,
-        paddingVertical: 10,
+        borderRadius: 12,
+        paddingVertical: 12,
         alignItems: 'center',
         marginTop: 16,
+        shadowColor: '#4211d4',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
     },
     resumeButtonText: {
         color: '#fff',
         fontWeight: '700',
-        fontSize: 14,
+        fontSize: 15,
     }
 });

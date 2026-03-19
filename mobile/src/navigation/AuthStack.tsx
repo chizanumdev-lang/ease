@@ -4,6 +4,7 @@ import { AuthStackParamList } from '../types';
 import LoginScreen from '../screens/auth/LoginScreen';
 import SignupScreen from '../screens/auth/SignupScreen';
 import OnboardingScreen from '../screens/auth/OnboardingScreen';
+import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import OnboardingFlowScreen from '../screens/onboarding/OnboardingFlowScreen';
 import { useAuthStore } from '../store/authStore';
 
@@ -33,6 +34,7 @@ export default function AuthStack() {
     console.log('[AUTH_STACK] Showing normal auth screens');
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />

@@ -1,338 +1,402 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Switch, ActivityIndicator } from 'react-native';
-import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Switch, Image, Dimensions } from 'react-native';
+import { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TabParamList, NotificationSettings } from '../../types';
 import { useAuthStore } from '../../store/authStore';
-import { notificationService } from '../../services/notification.service';
-import { audioService } from '../../services/audio.service';
-import { API_BASE_URL, BACKGROUND_AUDIO } from '../../constants/config';
+import { Theme } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<TabParamList, 'Settings'>;
 
+const { width } = Dimensions.get('window');
+
+const COACHING_TONES = [
+    { id: 'supportive', label: 'Supportive', icon: 'heart-outline', desc: 'Encouraging & Kind' },
+    { id: 'analytical', label: 'Analytical', icon: 'stats-chart-outline', desc: 'Data-driven & Precise' },
+    { id: 'direct', label: 'Direct', icon: 'flash-outline', desc: 'Action-oriented' },
+];
+
+const FOCUS_AREAS = [
+    { id: 'stress', label: 'Stress Management' },
+    { id: 'sleep', label: 'Better Sleep' },
+    { id: 'productivity', label: 'Productivity' },
+    { id: 'mindfulness', label: 'Mindfulness' },
+];
+
 export default function SettingsScreen({ navigation }: Props) {
     const { user, logout, updateSettings } = useAuthStore();
-    const [previewingMood, setPreviewingMood] = useState<string | null>(null);
-    const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-
-    useEffect(() => {
-        return () => {
-            audioService.stop();
-        };
-    }, []);
-
-    const handlePreviewMood = async (mood: string) => {
-        if (previewingMood === mood) {
-            await audioService.stop();
-            setPreviewingMood(null);
-            return;
-        }
-
-        setIsLoadingAudio(true);
-        try {
-            await audioService.stop();
-            const url = (BACKGROUND_AUDIO as any)[mood];
-
-            await audioService.loadAudio({
-                id: `preview_${mood}`,
-                title: `${mood.charAt(0).toUpperCase() + mood.slice(1)} Preview`,
-                url,
-                type: mood,
-            });
-
-            await audioService.play(0);
-            setPreviewingMood(mood);
-        } catch (error) {
-            Alert.alert('Error', 'Failed to play background music preview.');
-        } finally {
-            setIsLoadingAudio(false);
-        }
-    };
-
-    const handleTestNotification = async () => {
-        try {
-            await notificationService.testNotification();
-            Alert.alert('Success', 'Test notification scheduled for 5 seconds from now.');
-        } catch (error) {
-            Alert.alert('Error', 'Failed to schedule test notification. Check permissions.');
-        }
-    };
-
+    
     const handleToggle = async (key: keyof NotificationSettings, value: boolean) => {
         if (!user) return;
-
-        const currentSettings = user.settings || {};
-        const currentNotifications = currentSettings.notifications || {
+        const currentNotifications = user.settings?.notifications || {
             taskReminders: true,
             nightAudio: true,
             weeklySummary: true,
         };
-
         const newSettings = {
-            ...currentSettings,
-            notifications: {
-                ...currentNotifications,
-                [key]: value,
-            },
+            ...user.settings,
+            notifications: { ...currentNotifications, [key]: value },
         };
+        await updateSettings(newSettings);
+    };
 
+    const handleUpdatePreference = async (key: string, value: any) => {
+        if (!user) return;
+        const newSettings = {
+            ...user.settings,
+            [key]: value,
+        };
         await updateSettings(newSettings);
     };
 
     const handleLogout = () => {
-        Alert.alert(
-            'Logout',
-            'Are you sure you want to logout?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Logout',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await logout();
-                    },
-                },
-            ]
-        );
+        Alert.alert('Logout', 'Are you sure you want to logout?', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Logout', style: 'destructive', onPress: logout },
+        ]);
     };
 
     return (
-        <ScrollView style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.title}>Settings</Text>
-            </View>
-
-
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Labs</Text>
-                <View style={styles.card}>
-                    <Text style={styles.label}>AI Audio Pipeline</Text>
-                    <Text style={styles.infoText}>Test our new 5-minute AI narration engine. This is an experimental feature.</Text>
-                    <TouchableOpacity
-                        style={styles.previewButton}
-                        onPress={() => (navigation as any).navigate('AudioPreview')}
-                    >
-                        <Text style={styles.previewButtonText}>Preview 5-Min Audio</Text>
+        <View style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                {/* Profile Header */}
+                <View style={styles.profileHeader}>
+                    <View style={styles.profileImageContainer}>
+                        <Image
+                            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBPcqwvnGRJTBHRYhDLfV176zDemjNo1XxrHgT3M_PUgxnNgWUN-B11LyZ0dpjLVmIyb4pFXOJkuT6q6SQWvPTh0wPx0ceJTXCxr25DeFgekAx4_qt9x2VByrpay91DcEQONMH_L1w3QABzaFA91-GI_sWttDoH3fveglhhoR_-IPmMSOzXV9-v6XVkUppxd2Nz4f6WGzmUFtFJkULUmVSOf-Uu8KjLdg9AdQIn5bbbs3aOf6lNwj0OMwOoJl53QGBF4R6gcjy0FQuM' }}
+                            style={styles.profileImage}
+                        />
+                        <TouchableOpacity style={styles.editBadge}>
+                            <Ionicons name="camera" size={16} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={styles.userName}>{user?.name || 'User'}</Text>
+                    <Text style={styles.userEmail}>{user?.email}</Text>
+                    <TouchableOpacity style={styles.editProfileButton}>
+                        <Text style={styles.editProfileText}>Edit Profile</Text>
                     </TouchableOpacity>
                 </View>
-            </View>
 
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Background Music</Text>
-                <View style={styles.card}>
-                    <Text style={styles.infoText}>Choose the perfect background atmosphere for your coaching sessions and meditations.</Text>
-                    {['meditation', 'focus', 'ambient'].map((mood) => (
-                        <View key={mood}>
-                            <View style={styles.audioRow}>
-                                <View>
-                                    <Text style={styles.audioName}>{mood.charAt(0).toUpperCase() + mood.slice(1)}</Text>
-                                    <Text style={styles.audioDesc}>
-                                        {mood === 'meditation' ? 'Calm and steady' : mood === 'focus' ? 'Deep concentration' : 'Gentle atmosphere'}
-                                    </Text>
-                                </View>
-                                <TouchableOpacity
-                                    style={[
-                                        styles.playButton,
-                                        previewingMood === mood && styles.playingButton
-                                    ]}
-                                    onPress={() => handlePreviewMood(mood)}
-                                    disabled={isLoadingAudio}
-                                >
-                                    {isLoadingAudio && previewingMood === mood ? (
-                                        <ActivityIndicator size="small" color="#fff" />
-                                    ) : (
-                                        <Ionicons
-                                            name={previewingMood === mood ? "stop" : "play"}
-                                            size={20}
-                                            color="#fff"
-                                        />
-                                    )}
-                                </TouchableOpacity>
-                            </View>
-                            {mood !== 'ambient' && <View style={styles.divider} />}
+                {/* Progress Tracking Cards */}
+                <View style={styles.progressRow}>
+                    <View style={styles.progressCard}>
+                        <View style={styles.cardHeader}>
+                            <Ionicons name="leaf" size={16} color={Theme.colors.primary} />
+                            <Text style={styles.cardLabel}>SPIRIT TREE</Text>
                         </View>
-                    ))}
+                        <Text style={styles.cardValue}>Level 3</Text>
+                        <Text style={styles.cardSubValue}>Flourishing</Text>
+                    </View>
+                    <View style={styles.progressCard}>
+                        <View style={styles.cardHeader}>
+                            <Ionicons name="flame" size={16} color="#f97316" />
+                            <Text style={styles.cardLabel}>STREAK</Text>
+                        </View>
+                        <Text style={styles.cardValue}>12 Days</Text>
+                        <Text style={styles.cardSubValue}>Mindfulness</Text>
+                    </View>
                 </View>
-            </View>
 
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Notifications</Text>
-                <View style={styles.card}>
-                    <View style={styles.row}>
-                        <Text style={styles.settingLabel}>Task Reminders</Text>
-                        <Switch
-                            value={user?.settings?.notifications?.taskReminders ?? true}
-                            onValueChange={(val) => handleToggle('taskReminders', val)}
-                        />
+                {/* Coaching Tone Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Coaching Tone</Text>
+                    <View style={styles.toneGrid}>
+                        {COACHING_TONES.map((tone) => (
+                            <TouchableOpacity 
+                                key={tone.id}
+                                style={[
+                                    styles.toneCard,
+                                    user?.settings?.coachingTone === tone.id && styles.toneCardSelected
+                                ]}
+                                onPress={() => handleUpdatePreference('coachingTone', tone.id)}
+                            >
+                                <Ionicons 
+                                    name={tone.icon as any} 
+                                    size={24} 
+                                    color={user?.settings?.coachingTone === tone.id ? '#fff' : '#64748b'} 
+                                />
+                                <Text style={[
+                                    styles.toneLabel,
+                                    user?.settings?.coachingTone === tone.id && styles.textWhite
+                                ]}>{tone.label}</Text>
+                                <Text style={[
+                                    styles.toneDesc,
+                                    user?.settings?.coachingTone === tone.id && styles.textWhiteMuted
+                                ]}>{tone.desc}</Text>
+                            </TouchableOpacity>
+                        ))}
                     </View>
-                    <View style={styles.divider} />
-                    <View style={styles.row}>
-                        <Text style={styles.settingLabel}>Nightly Audio</Text>
-                        <Switch
-                            value={user?.settings?.notifications?.nightAudio ?? true}
-                            onValueChange={(val) => handleToggle('nightAudio', val)}
-                        />
+                </View>
+
+                {/* Focus Areas Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Focus Areas</Text>
+                    <View style={styles.chipCloud}>
+                        {FOCUS_AREAS.map((area) => {
+                            const isSelected = user?.settings?.focusAreas?.includes(area.id);
+                            return (
+                                <TouchableOpacity 
+                                    key={area.id}
+                                    style={[styles.chip, isSelected && styles.chipSelected]}
+                                    onPress={() => {
+                                        const current = user?.settings?.focusAreas || [];
+                                        const next = isSelected 
+                                            ? current.filter((id: string) => id !== area.id)
+                                            : [...current, area.id];
+                                        handleUpdatePreference('focusAreas', next);
+                                    }}
+                                >
+                                    <Text style={[styles.chipText, isSelected && styles.textWhite]}>
+                                        {area.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </View>
-                    <View style={styles.divider} />
-                    <View style={styles.row}>
-                        <Text style={styles.settingLabel}>Weekly Summary</Text>
-                        <Switch
-                            value={user?.settings?.notifications?.weeklySummary ?? true}
-                            onValueChange={(val) => handleToggle('weeklySummary', val)}
-                        />
+                </View>
+
+                {/* Notifications Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Notifications</Text>
+                    <View style={styles.settingsGroup}>
+                        {[
+                            { id: 'taskReminders', label: 'Morning Reminders' },
+                            { id: 'nightAudio', label: 'Nightly Audio' },
+                            { id: 'weeklySummary', label: 'Progress Weekly' },
+                        ].map((notif, idx) => (
+                            <View key={notif.id}>
+                                <View style={styles.settingRow}>
+                                    <View style={styles.settingInfo}>
+                                        <Text style={styles.settingLabel}>{notif.label}</Text>
+                                    </View>
+                                    <Switch
+                                        value={user?.settings?.notifications?.[notif.id as keyof NotificationSettings] ?? true}
+                                        onValueChange={(val) => handleToggle(notif.id as keyof NotificationSettings, val)}
+                                        trackColor={{ false: '#e2e8f0', true: Theme.colors.primary }}
+                                    />
+                                </View>
+                                {idx < 2 && <View style={styles.divider} />}
+                            </View>
+                        ))}
                     </View>
-                    <View style={styles.divider} />
-                    <TouchableOpacity style={styles.testButton} onPress={handleTestNotification}>
-                        <Text style={styles.testButtonText}>Send Test Notification (5s)</Text>
+                </View>
+
+                {/* Account Actions */}
+                <View style={[styles.section, { marginBottom: 40 }]}>
+                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                        <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+                        <Text style={styles.logoutText}>Logout</Text>
                     </TouchableOpacity>
                 </View>
-            </View>
-
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Account</Text>
-                <View style={styles.card}>
-                    <Text style={styles.label}>Name</Text>
-                    <Text style={styles.value}>{user?.name}</Text>
-
-                    <Text style={styles.label}>Email</Text>
-                    <Text style={styles.value}>{user?.email}</Text>
-                </View>
-            </View>
-
-            <View style={styles.section}>
-                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                    <Text style={styles.logoutText}>Logout</Text>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
-    },
-    header: {
-        padding: 20,
         backgroundColor: '#fff',
     },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
+    scrollContent: {
+        paddingTop: 60,
+        paddingBottom: 40,
+    },
+    profileHeader: {
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        marginBottom: 32,
+    },
+    profileImageContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        marginBottom: 16,
+        padding: 4,
+        borderWidth: 2,
+        borderColor: 'rgba(66, 17, 212, 0.1)',
+    },
+    profileImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 46,
+    },
+    editBadge: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: Theme.colors.primary,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
+    userName: {
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#0f172a',
+        letterSpacing: -0.5,
+    },
+    userEmail: {
+        fontSize: 14,
+        color: '#64748b',
+        marginTop: 4,
+        marginBottom: 16,
+    },
+    editProfileButton: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 20,
+        backgroundColor: '#f1f5f9',
+    },
+    editProfileText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#0f172a',
+    },
+    progressRow: {
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        gap: 12,
+        marginBottom: 32,
+    },
+    progressCard: {
+        flex: 1,
+        backgroundColor: '#f8fafc',
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#f1f5f9',
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 8,
+    },
+    cardLabel: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#64748b',
+        letterSpacing: 1,
+    },
+    cardValue: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#0f172a',
+    },
+    cardSubValue: {
+        fontSize: 12,
+        color: '#64748b',
+        marginTop: 2,
     },
     section: {
-        padding: 20,
+        paddingHorizontal: 20,
+        marginBottom: 32,
     },
     sectionTitle: {
         fontSize: 18,
-        fontWeight: '600',
-        marginBottom: 12,
-        color: '#1a1a1a',
+        fontWeight: '800',
+        color: '#0f172a',
+        marginBottom: 16,
     },
-    card: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
+    toneGrid: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    toneCard: {
+        flex: 1,
+        backgroundColor: '#f8fafc',
+        borderRadius: 16,
         padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    label: {
-        fontSize: 12,
-        color: '#666',
-        marginTop: 12,
-        marginBottom: 4,
-    },
-    value: {
-        fontSize: 16,
-        color: '#1a1a1a',
-    },
-    logoutButton: {
-        backgroundColor: '#fff',
-        padding: 16,
-        borderRadius: 8,
-        alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#ff3b30',
+        borderColor: '#f1f5f9',
+        alignItems: 'center',
     },
-    logoutText: {
-        color: '#ff3b30',
-        fontSize: 16,
+    toneCardSelected: {
+        backgroundColor: Theme.colors.primary,
+        borderColor: Theme.colors.primary,
+    },
+    toneLabel: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#0f172a',
+        marginTop: 8,
+    },
+    toneDesc: {
+        fontSize: 10,
+        color: '#64748b',
+        marginTop: 2,
+        textAlign: 'center',
+    },
+    textWhite: {
+        color: '#fff',
+    },
+    textWhiteMuted: {
+        color: 'rgba(255, 255, 255, 0.7)',
+    },
+    chipCloud: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    chip: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        backgroundColor: '#f1f5f9',
+    },
+    chipSelected: {
+        backgroundColor: Theme.colors.primary,
+    },
+    chipText: {
+        fontSize: 14,
         fontWeight: '600',
+        color: '#64748b',
     },
-    row: {
+    settingsGroup: {
+        backgroundColor: '#f8fafc',
+        borderRadius: 20,
+        padding: 4,
+        borderWidth: 1,
+        borderColor: '#f1f5f9',
+    },
+    settingRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
+        padding: 16,
+    },
+    settingInfo: {
+        flex: 1,
     },
     settingLabel: {
-        fontSize: 16,
-        color: '#1a1a1a',
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#0f172a',
     },
     divider: {
         height: 1,
-        backgroundColor: '#f0f0f0',
-        marginVertical: 4,
+        backgroundColor: '#f1f5f9',
+        marginHorizontal: 16,
     },
-    testButton: {
-        marginTop: 12,
-        padding: 12,
-        backgroundColor: '#f0f8ff',
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    testButtonText: {
-        color: '#007AFF',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    infoText: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 16,
-        lineHeight: 20,
-    },
-    previewButton: {
-        backgroundColor: '#1a1a1a',
-        padding: 14,
-        borderRadius: 10,
-        alignItems: 'center',
-    },
-    previewButtonText: {
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: '700',
-    },
-    audioRow: {
+    logoutButton: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
-    },
-    audioName: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#1a1a1a',
-    },
-    audioDesc: {
-        fontSize: 13,
-        color: '#666',
-        marginTop: 2,
-    },
-    playButton: {
-        backgroundColor: '#007AFF',
-        width: 40,
-        height: 40,
-        borderRadius: 20,
         justifyContent: 'center',
-        alignItems: 'center',
+        gap: 8,
+        paddingVertical: 16,
+        borderRadius: 20,
+        backgroundColor: '#fef2f2',
+        borderWidth: 1,
+        borderColor: '#fee2e2',
     },
-    playingButton: {
-        backgroundColor: '#ff3b30',
+    logoutText: {
+        color: '#ef4444',
+        fontSize: 16,
+        fontWeight: '700',
     },
 });

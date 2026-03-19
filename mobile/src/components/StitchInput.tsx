@@ -13,6 +13,7 @@ interface StitchInputProps {
     containerStyle?: ViewStyle;
     inputStyle?: TextStyle;
     error?: string;
+    autoFocus?: boolean;
 }
 
 export default function StitchInput({
@@ -26,6 +27,7 @@ export default function StitchInput({
     containerStyle,
     inputStyle,
     error,
+    autoFocus = false,
 }: StitchInputProps) {
     return (
         <View style={[styles.container, containerStyle]}>
@@ -40,6 +42,7 @@ export default function StitchInput({
                     secureTextEntry={secureTextEntry}
                     keyboardType={keyboardType}
                     autoCapitalize={autoCapitalize}
+                    autoFocus={autoFocus}
                 />
             </View>
             {error && <Text style={styles.errorText}>{error}</Text>}

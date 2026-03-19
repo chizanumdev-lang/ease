@@ -152,7 +152,7 @@ export class ProgramsService {
                 params,
             );
 
-            await this.saveDayContent(day, content, params);
+            await this.saveDayContent(day, content, params, { forceSyncAudio: day.dayNumber === 1 });
 
             await this.dayPlanRepository.update(day.id, {
                 theme: `Day ${day.dayNumber}: ${content.theme}`,
@@ -167,7 +167,7 @@ export class ProgramsService {
         }
     }
 
-    private async saveDayContent(day: DayPlan, content: any, params: any): Promise<void> {
+    private async saveDayContent(day: DayPlan, content: any, params: any, options: { forceSyncAudio?: boolean } = {}): Promise<void> {
         const wakeStart = params.wakeStart || '07:00';
         const sleepStart = params.sleepStart || '23:00';
         const constraints = params.constraints || [];
@@ -271,20 +271,37 @@ export class ProgramsService {
                     audioTrack = this.audioTrackRepository.create({ dayPlanId: day.id, title: '', url: '', duration: 0, type: '' });
                 }
                 audioTrack.title = content.audioTask.title;
-                audioTrack.url = 'generating...';
+                audioTrack.url = pickAudioUrl(mood, day.dayNumber);
                 audioTrack.duration = dur.audio;
                 audioTrack.type = mood;
-                await this.audioTrackRepository.save(audioTrack);
 
-                // Fire-and-forget: audio generation is async and doesn't block day hydration
-                this.audioQueue.add('generate-audio', {
-                    audioTrackId: audioTrack.id,
-                    theme: content.audioTask.theme || content.theme,
-                    mood,
-                    goal: params.goalText,
-                    dayNumber: day.dayNumber,
-                    audioFilename,
-                });
+                if (options.forceSyncAudio) {
+                    try {
+                        const script = await this.aiService.generateAudioScript(
+                            content.audioTask.theme || content.theme,
+                            mood,
+                            params.goalText || 'General Improvement',
+                            day.dayNumber
+                        );
+                        const audioUrl = await this.audioService.generateAudioTrack(script, mood, audioFilename);
+                        audioTrack.url = audioUrl;
+                    } catch (error) {
+                        this.logger.error(`Failed to generate sync audio for Day 1: ${error.message}`);
+                        // Fallback already set (curated Pixabay URL)
+                    }
+                } else {
+                    // Fire-and-forget: audio generation is async for non-Day 1
+                    this.audioQueue.add('generate-audio', {
+                        audioTrackId: audioTrack.id,
+                        theme: content.audioTask.theme || content.theme,
+                        mood,
+                        goal: params.goalText || 'General Improvement',
+                        dayNumber: day.dayNumber,
+                        audioFilename,
+                    });
+                }
+
+                await this.audioTrackRepository.save(audioTrack);
 
                 await this.upsertTask({
                     type: 'audio', dayPlanId: day.id,

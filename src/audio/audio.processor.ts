@@ -28,6 +28,13 @@ export class AudioProcessor extends WorkerHost {
         this.logger.log(`Processing audio generation job ${job.id} for track ${audioTrackId}`);
 
         try {
+            // 0. Check if already generated (sync path)
+            const existingTrack = await this.audioTrackRepository.findOne({ where: { id: audioTrackId } });
+            if (existingTrack && existingTrack.url && existingTrack.url !== 'generating...' && existingTrack.url !== '' && !existingTrack.url.includes('pixabay.com')) {
+                this.logger.log(`Audio track ${audioTrackId} already generated, skipping job`);
+                return { success: true, url: existingTrack.url };
+            }
+
             // 1. Generate script
             const script = await this.aiService.generateAudioScript(theme, mood, goal || 'General Improvement', dayNumber || 1);
             
