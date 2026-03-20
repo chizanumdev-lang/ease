@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
+import { MsEdgeTTS } from 'msedge-tts';
 import { WaveFile } from 'wavefile';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -15,7 +17,26 @@ interface BinauralConfig {
 @Injectable()
 export class AudioMixerService {
   private readonly logger = new Logger(AudioMixerService.name);
-  private ttsClient = new TextToSpeechClient();
+  private ttsClient: TextToSpeechClient | null = null;
+  private edgeTts = new MsEdgeTTS();
+
+  constructor(private configService: ConfigService) {
+    const googleCredentialsJson = this.configService.get<string>('GOOGLE_SERVICE_ACCOUNT_JSON');
+    const googleApiKey = this.configService.get<string>('GOOGLE_API_KEY');
+    
+    if (googleCredentialsJson || googleApiKey) {
+      try {
+        const config = googleCredentialsJson 
+          ? { credentials: JSON.parse(googleCredentialsJson) }
+          : { apiKey: googleApiKey };
+          
+        this.ttsClient = new TextToSpeechClient(config);
+        this.logger.log('Google TTS Client initialized');
+      } catch (err) {
+        this.logger.error('Failed to initialize Google TTS, will use Edge TTS fallback', err);
+      }
+    }
+  }
 
   /**
    * Generate binaural beat audio buffer
@@ -68,26 +89,46 @@ export class AudioMixerService {
     narration: string,
     duration: number
   ): Promise<Buffer> {
-    // Combine affirmations with pauses
-    const affirmationScript = affirmations.join('... ... ... '); // Long pauses
+    const affirmationScript = affirmations.join('... ... ... ');
     const fullScript = `${narration} ... ${affirmationScript}`;
 
-    const [response] = await this.ttsClient.synthesizeSpeech({
-      input: { text: fullScript },
-      voice: {
-        languageCode: 'en-US',
-        name: 'en-US-Neural2-J', // Calm, soothing voice
-        ssmlGender: 'NEUTRAL',
-      },
-      audioConfig: {
-        audioEncoding: 'LINEAR16',
-        speakingRate: 0.85, // Slower for subliminal effect
-        pitch: -2.0,        // Slightly lower pitch
-        volumeGainDb: -12.0, // CRITICAL: Very quiet (subliminal)
-      },
-    });
+    // Prefer Google if configured, otherwise use Edge TTS (No Key Required)
+    if (this.ttsClient) {
+      try {
+        const [response] = await this.ttsClient.synthesizeSpeech({
+          input: { text: fullScript },
+          voice: {
+            languageCode: 'en-US',
+            name: 'en-US-Neural2-J',
+            ssmlGender: 'NEUTRAL',
+          },
+          audioConfig: {
+            audioEncoding: 'LINEAR16',
+            speakingRate: 0.85,
+            pitch: -2.0,
+            volumeGainDb: -12.0,
+          },
+        });
+        return Buffer.from(response.audioContent as Uint8Array);
+      } catch (err) {
+        this.logger.warn('Google TTS failed, falling back to Edge TTS', err);
+      }
+    }
 
-    return Buffer.from(response.audioContent as Uint8Array);
+    // Edge TTS Fallback (Zero Config)
+    this.logger.log('Generating voiceover using Edge TTS (Zero Config)...');
+    try {
+      // Use a common supported format string for msedge-tts
+      // Format examples: 'audio-24khz-96kbitrate-mono-mp3', 'webview-16khz-16kbps-mono-opus'
+      await this.edgeTts.setMetadata('en-US-GuyNeural', 'audio-24khz-96kbitrate-mono-mp3');
+      const audioData = await this.edgeTts.toStream(fullScript);
+      
+      // The library returns a Buffer when no stream is provided as 2nd argument
+      return audioData;
+    } catch (err) {
+      this.logger.error('Edge TTS also failed', err);
+      throw err;
+    }
   }
 
   /**

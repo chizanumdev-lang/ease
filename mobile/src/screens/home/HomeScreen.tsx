@@ -120,9 +120,14 @@ export default function HomeScreen({ navigation }: Props) {
                         </Text>
                     </View>
                 </View>
-                <TouchableOpacity style={styles.notificationButton}>
-                    <Ionicons name="notifications-outline" size={22} color="#64748b" />
-                </TouchableOpacity>
+                <View style={styles.headerActions}>
+                    <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteProgram}>
+                        <Ionicons name="trash-outline" size={22} color="#ef4444" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.notificationButton}>
+                        <Ionicons name="notifications-outline" size={22} color="#64748b" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* Stats Row */}
@@ -283,7 +288,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f6f6f8',
     },
     listContent: {
-        paddingBottom: 100,
+        paddingBottom: 180,
     },
     header: {
         paddingHorizontal: 20,
@@ -327,6 +332,10 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         marginTop: 2,
     },
+    headerActions: {
+        flexDirection: 'row',
+        gap: 8,
+    },
     notificationButton: {
         width: 44,
         height: 44,
@@ -334,6 +343,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#f1f5f9',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    deleteButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#fef2f2',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#fee2e2',
     },
     statsRow: {
         flexDirection: 'row',

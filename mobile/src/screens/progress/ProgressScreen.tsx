@@ -175,7 +175,7 @@ export default function ProgressScreen() {
                 </View>
             </View>
 
-            <View style={{ height: 100 }} />
+            <View style={{ height: 180 }} />
         </ScrollView>
     );
 }

@@ -66,23 +66,23 @@ export default function MiniAudioPlayer() {
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#fff',
-        borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
+        bottom: 100, // Float above the tab bar (64 height + 24 bottom + 12 gap)
+        left: 20,
+        right: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 16,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 8,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        elevation: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
     },
     content: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        paddingBottom: 16, // Extra padding for tab bar
     },
     iconContainer: {
         width: 48,

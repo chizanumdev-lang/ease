@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingTop: 60,
-        paddingBottom: 40,
+        paddingBottom: 180,
     },
     profileHeader: {
         alignItems: 'center',

@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 16,
-        paddingBottom: 32,
+        paddingBottom: 180,
     },
     messageRow: {
         flexDirection: 'row',

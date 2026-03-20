@@ -59,6 +59,7 @@ import { AudioModule } from './audio/audio.module';
         ssl: {
           rejectUnauthorized: false,
         },
+        connectTimeoutMS: 10000, // 10 seconds (Neon pooler resilience)
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, // Set to false in production
       }),
