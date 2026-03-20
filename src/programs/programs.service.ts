@@ -28,6 +28,10 @@ import { UsersService } from '../users/users.service';
 import { AiService } from '../ai/ai.service';
 import { YoutubeService } from '../video/youtube/youtube.service';
 import { AudioService } from '../audio/audio.service';
+import { AudioMixerService } from '../audio/audio-mixer.service';
+import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
 
 // Curated royalty-free, directly-streamable MP3s by mood (Mixkit, no auth required)
 const AUDIO_TRACKS: Record<string, string[]> = {
@@ -96,6 +100,7 @@ export class ProgramsService {
         private aiService: AiService,
         private youtubeService: YoutubeService,
         private audioService: AudioService,
+        private audioMixerService: AudioMixerService,
     ) { }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
@@ -277,26 +282,36 @@ export class ProgramsService {
 
                 if (options.forceSyncAudio) {
                     try {
-                        const script = await this.aiService.generateAudioScript(
+                        const scriptData = await this.aiService.generateAudioScript(
                             content.audioTask.theme || content.theme,
-                            mood,
-                            params.goalText || 'General Improvement',
-                            day.dayNumber
+                            5
                         );
-                        const audioUrl = await this.audioService.generateAudioTrack(script, mood, audioFilename);
+                        
+                        const tempDir = path.join(os.tmpdir(), 'ease-audio-binaural-sync');
+                        const audioPath = await this.audioMixerService.createBinauralSubliminalTrack(
+                            scriptData,
+                            tempDir
+                        );
+
+                        const audioUrl = await this.audioService.uploadToCloudinary(audioPath, audioFilename);
                         audioTrack.url = audioUrl;
+                        audioTrack.type = scriptData.sessionType;
+                        audioTrack.metadata = {
+                            sessionType: scriptData.sessionType,
+                            frequency: scriptData.binauralFrequency,
+                            affirmations: scriptData.affirmations,
+                        };
+
+                        // Cleanup sync temp file
+                        try { if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath); } catch {}
                     } catch (error) {
-                        this.logger.error(`Failed to generate sync audio for Day 1: ${error.message}`);
-                        // Fallback already set (curated Pixabay URL)
+                        this.logger.error(`Failed to generate sync binaural audio for Day 1: ${error.message}`);
                     }
                 } else {
                     // Fire-and-forget: audio generation is async for non-Day 1
                     this.audioQueue.add('generate-audio', {
                         audioTrackId: audioTrack.id,
                         theme: content.audioTask.theme || content.theme,
-                        mood,
-                        goal: params.goalText || 'General Improvement',
-                        dayNumber: day.dayNumber,
                         audioFilename,
                     });
                 }
@@ -421,11 +436,14 @@ export class ProgramsService {
         }
 
         // ─── PHASE 3: Dispatch remaining days to background queue ─────────────
+        // NOTE: We are limiting generation to only Day 1 to preserve AI quota.
+        /*
         await this.programQueue.add('hydrate-program', {
             programId: program.id,
             goalText: generationParams.goalText,
             params: generationParams,
         });
+        */
 
         return program;
     }

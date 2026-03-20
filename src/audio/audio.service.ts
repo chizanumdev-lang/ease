@@ -104,7 +104,7 @@ export class AudioService {
         });
     }
 
-    private async uploadToCloudinary(filePath: string, publicId: string): Promise<string> {
+    public async uploadToCloudinary(filePath: string, publicId: string): Promise<string> {
         this.logger.log(`Uploading audio to Cloudinary: ${publicId}`);
         const result = await cloudinary.uploader.upload(filePath, {
             resource_type: 'video',

@@ -3,6 +3,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import Redis from 'ioredis';
+import { AudioScriptData } from './interfaces/audio-script.interface';
+
 
 interface AiProvider {
     name: string;
@@ -521,97 +523,69 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
         }
     }
 
-    async generateAudioScript(theme: string, mood: string, goal: string, dayNumber: number): Promise<string> {
+    async generateAudioScript(dayTheme: string, duration: number = 5): Promise<AudioScriptData> {
+        const prompt = `
+You are creating a subliminal audio script for a ${duration}-minute session.
+
+**Context**: The user just completed a learning task about: "${dayTheme}"
+
+**Requirements**:
+1. Generate affirmations that reinforce today's lesson (8-12 statements)
+2. Each affirmation should be:
+   - Present tense ("I am mastering...", "My skills grow...")
+   - Specific to the theme (mention concrete techniques/concepts from today)
+   - Emotionally resonant (confidence, capability, progress)
+3. Create a gentle background narration (~600 words) for ambient voiceover
+4. Specify the optimal binaural beat frequency for this session type
+
+**Session Types & Frequencies**:
+- Focus/Learning: 14-30 Hz (Beta waves) - Active concentration
+- Relaxation/Integration: 8-13 Hz (Alpha waves) - Calm alertness  
+- Deep meditation: 4-7 Hz (Theta waves) - Subconscious processing
+- Sleep preparation: 0.5-3 Hz (Delta waves) - Deep rest
+
+**Output strict JSON**:
+{
+  "sessionType": "focus" | "relaxation" | "meditation" | "sleep",
+  "binauralFrequency": 14.5,  // Target brainwave Hz
+  "carrierFrequency": 200,    // Base tone (100-300 Hz recommended)
+  "affirmations": [
+    "I am mastering thumb independence in fingerstyle guitar",
+    "My muscle memory improves with each practice session"
+  ],
+  "backgroundNarration": "As you settle into this moment, notice how your body remembers the movements you practiced today...",
+  "theme": "${dayTheme}"
+}
+
+Return ONLY the raw JSON object starting with { and ending with }.
+`;
+
         try {
-            const moodInstructions: Record<string, string> = {
-                meditation: `Guide the user through a mindfulness meditation. Use slow, spacious pacing. 
-                             Incorporate body scan or breath awareness. Sentences should be short and restful.`,
-                focus: `Prime the user's mind for deep work. Use steady, confident pacing. 
-                             Include a brief visualization of successful task completion. 
-                             Build energy progressively through the script.`,
-                ambient: `Create a gentle wind-down session. Use soft, unhurried pacing. 
-                             Help the user release the day and prepare for rest. 
-                             End with a body relaxation sequence.`
-            };
-
-            const prompt = `
-            You are a professional mindfulness coach and audio scriptwriter creating a 
-            personalized 5-minute session for a personal development app.
+            const response = await this.callWithFallback(prompt);
+            if (!response) throw new Error('AI providers failed to generate audio script');
             
-            USER CONTEXT
-            - Overall goal: "${goal}"
-            - Today's learning theme: "${theme}"
-            - Session mood: ${mood}
-            - Day number: ${dayNumber}
+            const jsonMatch = response.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error('Failed to extract JSON from AI response');
             
-            SESSION STRUCTURE (strictly follow this timing)
-            1. OPENING (30 seconds / ~65 words)
-               - Welcome the user warmly
-               - Acknowledge what they worked on today: "${theme}"
-               - Set the intention for this session
-            
-            2. CORE PRACTICE (4 minutes / ~620 words)
-               ${moodInstructions[mood] || moodInstructions.meditation}
-               - Weave in 1-2 specific references to today's theme ("${theme}") 
-                 as metaphors or anchors — not as instruction, but as imagery
-               - Example: if theme is "Fingerstyle Thumb Independence", 
-                 you might say "imagine each finger moving with quiet confidence, 
-                 independent yet part of something whole"
-            
-            3. CLOSING (30 seconds / ~65 words)
-               - Gently bring awareness back to the room
-               - Affirm one specific thing they accomplished today related to "${theme}"
-               - Leave them with a single, memorable phrase to carry forward
-            
-            STRICT RULES
-            - Total word count: 750-850 words (this equals exactly 5 minutes of speech)
-            - Tone: calm, warm, encouraging — never clinical or robotic
-            - NO stage directions, labels, or section headers in the output
-            - NO instructions like "close your eyes" as a command — use invitations: "you might let your eyes close"
-            - NO medical claims or therapeutic promises
-            - Spoken text only — exactly as it should be read aloud by a TTS voice
-            
-            Return only the spoken script text. Nothing else.
-            `;
-
-            const text = await this.callWithFallback(prompt);
-            if (!text) throw new Error('All AI providers failed to generate audio script');
-            this.logger.log(`AI audio script generated for ${theme} (${mood}) - length: ${text.trim().length} chars`);
-            return text.trim();
+            return JSON.parse(jsonMatch[0]);
         } catch (error) {
             this.logger.error('Failed to generate audio script', error);
-            // Return a high-quality 5-minute generic fallback if AI is unavailable (e.g. quota exceeded)
-            return `Welcome to this dedicated session of deep relaxation and focus. Before we begin, find a comfortable position. Whether you're sitting in a chair, on a cushion, or lying down, ensure your spine is relatively straight but not rigid. Allow your hands to rest gently in your lap or at your sides. 
-
-Take a moment to simply arrive. Notice the weight of your body against the surface beneath you. Feel the connection to the ground. 
-
-Let's start with three deep, cleansing breaths. Inhale deeply through your nose, filling your lungs completely... hold for a moment... and exhale slowly and fully through your mouth. 
-
-Again, deep breath in... hold... and release. Feel the tension leaving your body with every exhale.
-
-One last time, at your own pace... 
-
-Now, let your breath return to its natural rhythm. Don't try to change it; just observe it. Notice the cool air entering your nostrils, and the slightly warmer air leaving. Feel the gentle rise and fall of your chest and abdomen. 
-
-As we move through this session, your mind will naturally wander. That's what minds do. When you notice your thoughts drifting to work, or chores, or future plans, simply acknowledge them without judgment. Imagine them as clouds floating across a vast blue sky. Just let them pass and gently bring your attention back to your breath.
-
-Now, let's bring our awareness to our physical body. We'll perform a progressive relaxation. Starting at the very top of your head, imagine a soft, warm light of relaxation beginning to spread. Feel it smoothing out the forehead, relaxing the muscles around your eyes. Let your jaw drop slightly, releasing any clenching. 
-
-This warmth slowly moves down your neck and into your shoulders. These are areas where we often carry the weight of our daily responsibilities. Imagine that weight simply melting away. Your shoulders feel light and relaxed.
-
-The relaxation flows down your arms, past your elbows, into your wrists, and all the way to your fingertips. Notice any sensations here—perhaps a slight tingling or warmth.
-
-Now, bring that awareness to your back. Starting from the upper back, feel each vertebra relaxing. This relaxation spreads through your chest and abdomen. If you feel any tightness in your stomach, allow it to soften.
-
-Feel the warmth moving into your hips and thighs. Your legs feel heavy and comfortable. The light flows past your knees, into your calves, through your ankles, and all the way to your toes. Your entire body, from head to toe, is now in a state of deep, restful relaxation.
-
-In this quiet space, think about your primary goal for today. Not as a source of stress, but as a path toward growth. See yourself moving through your tasks with clarity and ease. You are capable, you are focused, and you are resilient.
-
-Stay with this feeling for a few more moments of silence...
-
-As we prepare to close this session, gently start to bring your awareness back to the room. Wiggle your fingers and toes. Take a deep, refreshing breath. When you're ready, slowly open your eyes. Carry this sense of calm and focus with you into the rest of your day. You have everything you need within you.`;
+            // Fallback
+            return {
+                sessionType: 'relaxation',
+                binauralFrequency: 10,
+                carrierFrequency: 200,
+                affirmations: [
+                    "I am absorbing today's lessons with ease",
+                    "My mind is calm and ready to integrate new skills",
+                    "I am growing more capable every day"
+                ],
+                backgroundNarration: "As you settle into this moment, allow your mind to drift back through what you've learned today. Feel the progress you've made, and let it settle deep within your foundation.",
+                theme: dayTheme
+            };
         }
     }
+
 
     private validateDay(day: any, dayIndex: number): void {
         const required = ['videoTask', 'exerciseTask', 'lessonTask', 'quiz',

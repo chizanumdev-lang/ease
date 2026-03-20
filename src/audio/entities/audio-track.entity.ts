@@ -26,6 +26,9 @@ export class AudioTrack {
     @Column({ nullable: true })
     type: string;
 
+    @Column({ type: 'json', nullable: true })
+    metadata: any;
+
     @Column({ name: 'day_plan_id' })
     dayPlanId: string;
 

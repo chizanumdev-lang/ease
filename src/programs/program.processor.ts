@@ -58,9 +58,12 @@ export class ProgramProcessor extends WorkerHost {
         }
 
         // Concurrency-limited batch processing (2 at a time) with 15s pause
+        // NOTE: We are limiting generation to only Day 1 to preserve AI quota.
+        /*
         await this.processInBatches(days, 2, 15000, async (day) => {
             await this.programsService.hydrateDay(day.id, goalText, params);
         });
+        */
 
         await this.programRepository.update(programId, { status: 'ready' });
         this.logger.log(`Program ${programId} fully hydrated and marked ready`);

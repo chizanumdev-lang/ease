@@ -5,7 +5,7 @@ export class GenerateProgramDto {
     goalId: string;
 
     @IsInt()
-    @Min(7)
+    @Min(1)
     @Max(90)
     @IsOptional()
     duration?: number = 30;
