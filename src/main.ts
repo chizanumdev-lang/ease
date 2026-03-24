@@ -23,6 +23,6 @@ async function bootstrap() {
   // Set global prefix
   app.setGlobalPrefix('api', { exclude: ['/', 'health', ''] });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();

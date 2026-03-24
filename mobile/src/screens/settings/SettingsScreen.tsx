@@ -5,6 +5,9 @@ import { TabParamList, NotificationSettings } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { Theme } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { programsService } from '../../services/programs.service';
+import { useAudioStore } from '../../store/audioStore';
+import { STATIC_BINAURAL_BEATS } from '../../constants/config';
 
 type Props = NativeStackScreenProps<TabParamList, 'Settings'>;
 
@@ -25,7 +28,57 @@ const FOCUS_AREAS = [
 
 export default function SettingsScreen({ navigation }: Props) {
     const { user, logout, updateSettings } = useAuthStore();
+    const { loadTrack, play, stop, isPlaying, currentTrack } = useAudioStore();
     
+    // Test Audio State
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isGeneratingBinaural, setIsGeneratingBinaural] = useState(false);
+    const [testTheme, setTestTheme] = useState('Forest');
+    const [testFrequency, setTestFrequency] = useState(10); // Default Alpha
+
+    const handleTestAudio = async () => {
+        setIsGenerating(true);
+        try {
+            const { url } = await programsService.generateAudioPreview(testTheme, 'calm');
+            await loadTrack({
+                id: 'test-audio',
+                url,
+                title: `Test: ${testTheme}`,
+                duration: 300, // 5 mins
+                type: 'meditation'
+            });
+            await play();
+            Alert.alert('Success', 'Audio generated and playing!');
+        } catch (error) {
+            console.error('Test audio failed:', error);
+            Alert.alert('Error', 'Failed to generate test audio');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleTestBinaural = async () => {
+        setIsGeneratingBinaural(true);
+        try {
+            const url = (STATIC_BINAURAL_BEATS as any)[testFrequency];
+            if (!url) throw new Error('Static URL not found');
+            
+            await loadTrack({
+                id: 'test-binaural',
+                url,
+                title: `Binaural: ${testFrequency}Hz`,
+                duration: 60, // Static files are 1 min
+                type: 'meditation'
+            });
+            await play();
+        } catch (error) {
+            console.error('Binaural test failed:', error);
+            Alert.alert('Error', 'Failed to play binaural beat');
+        } finally {
+            setIsGeneratingBinaural(false);
+        }
+    };
+
     const handleToggle = async (key: keyof NotificationSettings, value: boolean) => {
         if (!user) return;
         const currentNotifications = user.settings?.notifications || {
@@ -178,6 +231,95 @@ export default function SettingsScreen({ navigation }: Props) {
                                 {idx < 2 && <View style={styles.divider} />}
                             </View>
                         ))}
+                    </View>
+                </View>
+
+                {/* Debug & Testing - ONLY FOR USER REQUEST */}
+                <View style={[styles.section, { borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 24 }]}>
+                    <View style={styles.sectionHeaderRow}>
+                        <Ionicons name="construct-outline" size={20} color={Theme.colors.primary} />
+                        <Text style={[styles.sectionTitle, { marginBottom: 0, marginLeft: 8 }]}>Debug & Testing</Text>
+                    </View>
+                    <Text style={styles.debugSubtitle}>Verify backend audio generation fix</Text>
+                    
+                    <View style={styles.debugCard}>
+                        <Text style={styles.debugLabel}>Select Theme</Text>
+                        <View style={styles.debugThemes}>
+                            {['Forest', 'Ocean', 'Deep Space', 'Cozy Cafe'].map(t => (
+                                <TouchableOpacity 
+                                    key={t}
+                                    style={[styles.debugThemeChip, testTheme === t && styles.debugThemeChipSelected]}
+                                    onPress={() => setTestTheme(t)}
+                                >
+                                    <Text style={[styles.debugThemeText, testTheme === t && styles.textWhite]}>{t}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        <TouchableOpacity 
+                            style={[styles.debugButton, isGenerating && styles.debugButtonDisabled]}
+                            onPress={handleTestAudio}
+                            disabled={isGenerating}
+                        >
+                            {isGenerating ? (
+                                <View style={styles.row}>
+                                    <Text style={styles.debugButtonText}>Generating...</Text>
+                                </View>
+                            ) : (
+                                <View style={styles.row}>
+                                    <Ionicons name="musical-notes-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                                    <Text style={styles.debugButtonText}>Generate & Play Test Audio</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        {isPlaying && currentTrack?.id === 'test-audio' && (
+                            <TouchableOpacity style={styles.stopButton} onPress={() => stop()}>
+                                <Ionicons name="stop" size={20} color="#fff" />
+                                <Text style={styles.stopText}>Stop Playback</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    <View style={[styles.debugCard, { marginTop: 16 }]}>
+                        <Text style={styles.debugLabel}>Raw Binaural Test (No Voice)</Text>
+                        <View style={styles.debugThemes}>
+                            {[
+                                { name: 'Theta (6Hz)', val: 6 },
+                                { name: 'Alpha (10Hz)', val: 10 },
+                                { name: 'Beta (20Hz)', val: 20 }
+                            ].map(f => (
+                                <TouchableOpacity 
+                                    key={f.val}
+                                    style={[styles.debugThemeChip, testFrequency === f.val && styles.debugThemeChipSelected]}
+                                    onPress={() => setTestFrequency(f.val)}
+                                >
+                                    <Text style={[styles.debugThemeText, testFrequency === f.val && styles.textWhite]}>{f.name}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        <TouchableOpacity 
+                            style={[styles.debugButton, { backgroundColor: '#64748b' }, isGeneratingBinaural && styles.debugButtonDisabled]}
+                            onPress={handleTestBinaural}
+                            disabled={isGeneratingBinaural}
+                        >
+                            {isGeneratingBinaural ? (
+                                <Text style={styles.debugButtonText}>Generating...</Text>
+                            ) : (
+                                <View style={styles.row}>
+                                    <Ionicons name="pulse-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                                    <Text style={styles.debugButtonText}>Test Raw Binaural Beat</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        {isPlaying && currentTrack?.id === 'test-binaural' && (
+                            <TouchableOpacity style={styles.stopButton} onPress={() => stop()}>
+                                <Ionicons name="stop" size={20} color="#fff" />
+                                <Text style={styles.stopText}>Stop Playback</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </View>
 
@@ -398,5 +540,86 @@ const styles = StyleSheet.create({
         color: '#ef4444',
         fontSize: 16,
         fontWeight: '700',
+    },
+    // Debug Styles
+    sectionHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    debugSubtitle: {
+        fontSize: 13,
+        color: '#64748b',
+        marginBottom: 20,
+        marginTop: -12,
+    },
+    debugCard: {
+        backgroundColor: '#f8fafc',
+        borderRadius: 20,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    debugLabel: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#475569',
+        marginBottom: 12,
+    },
+    debugThemes: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 20,
+    },
+    debugThemeChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    debugThemeChipSelected: {
+        backgroundColor: Theme.colors.primary,
+        borderColor: Theme.colors.primary,
+    },
+    debugThemeText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#64748b',
+    },
+    debugButton: {
+        backgroundColor: Theme.colors.primary,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    debugButtonDisabled: {
+        opacity: 0.6,
+    },
+    debugButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    stopButton: {
+        marginTop: 12,
+        backgroundColor: '#64748b',
+        paddingVertical: 12,
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    stopText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
 });

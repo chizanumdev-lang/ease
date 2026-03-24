@@ -293,6 +293,9 @@ export class ProgramsService {
                             tempDir
                         );
 
+                        // Wait 1s to ensure file flush (safety)
+                        await new Promise(r => setTimeout(r, 1000));
+                        
                         const audioUrl = await this.audioService.uploadToCloudinary(audioPath, audioFilename);
                         audioTrack.url = audioUrl;
                         audioTrack.type = scriptData.sessionType;
@@ -303,9 +306,11 @@ export class ProgramsService {
                         };
 
                         // Cleanup sync temp file
-                        try { if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath); } catch {}
+                        try { if (require('fs').existsSync(audioPath)) require('fs').unlinkSync(audioPath); } catch {}
                     } catch (error) {
-                        this.logger.error(`Failed to generate sync binaural audio for Day 1: ${error.message}`);
+                        const errMsg = error instanceof Error ? error.message : JSON.stringify(error);
+                        this.logger.error(`Failed to generate sync binaural audio for Day 1: ${errMsg}`);
+                        this.logger.error(error); // Log full object for stack
                     }
                 } else {
                     // Fire-and-forget: audio generation is async for non-Day 1
@@ -436,14 +441,11 @@ export class ProgramsService {
         }
 
         // ─── PHASE 3: Dispatch remaining days to background queue ─────────────
-        // NOTE: We are limiting generation to only Day 1 to preserve AI quota.
-        /*
         await this.programQueue.add('hydrate-program', {
             programId: program.id,
             goalText: generationParams.goalText,
             params: generationParams,
         });
-        */
 
         return program;
     }

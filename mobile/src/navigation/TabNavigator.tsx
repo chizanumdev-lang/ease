@@ -38,7 +38,7 @@ export default function TabNavigator() {
                     component={HomeScreen}
                     options={{
                         tabBarLabel: 'Home',
-                        tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🏠</Text>,
+                        tabBarIcon: ({ color }: { color: string }) => <Text style={{ fontSize: 20 }}>🏠</Text>,
                     }}
                 />
                 <Tab.Screen
@@ -46,7 +46,7 @@ export default function TabNavigator() {
                     component={ProgressScreen}
                     options={{
                         tabBarLabel: 'Progress',
-                        tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📊</Text>,
+                        tabBarIcon: ({ color }: { color: string }) => <Text style={{ fontSize: 20 }}>📊</Text>,
                     }}
                 />
                 <Tab.Screen
@@ -54,7 +54,7 @@ export default function TabNavigator() {
                     component={CoachScreen}
                     options={{
                         tabBarLabel: 'Coach',
-                        tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🤖</Text>,
+                        tabBarIcon: ({ color }: { color: string }) => <Text style={{ fontSize: 20 }}>🤖</Text>,
                     }}
                 />
                 <Tab.Screen
@@ -62,7 +62,7 @@ export default function TabNavigator() {
                     component={SettingsScreen}
                     options={{
                         tabBarLabel: 'Settings',
-                        tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>⚙️</Text>,
+                        tabBarIcon: ({ color }: { color: string }) => <Text style={{ fontSize: 20 }}>⚙️</Text>,
                     }}
                 />
             </Tab.Navigator>

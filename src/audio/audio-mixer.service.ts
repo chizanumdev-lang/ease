@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
-import { MsEdgeTTS } from 'msedge-tts';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import { WaveFile } from 'wavefile';
+import { Readable } from 'stream';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -13,6 +14,14 @@ interface BinauralConfig {
   fadeIn: number;         // Seconds
   fadeOut: number;        // Seconds
 }
+
+const STATIC_BINAURAL_MAP: Record<number, string> = {
+  4: 'https://res.cloudinary.com/duooultxc/video/upload/v1774276955/ease/audio/static_binaural_4hz.mp3',
+  6: 'https://res.cloudinary.com/duooultxc/video/upload/v1774269228/ease/audio/static_binaural_6hz.mp3',
+  10: 'https://res.cloudinary.com/duooultxc/video/upload/v1774269306/ease/audio/static_binaural_10hz.mp3',
+  15: 'https://res.cloudinary.com/duooultxc/video/upload/v1774277400/ease/audio/static_binaural_15hz.mp3',
+  20: 'https://res.cloudinary.com/duooultxc/video/upload/v1774269382/ease/audio/static_binaural_20hz.mp3',
+};
 
 @Injectable()
 export class AudioMixerService {
@@ -117,16 +126,62 @@ export class AudioMixerService {
 
     // Edge TTS Fallback (Zero Config)
     this.logger.log('Generating voiceover using Edge TTS (Zero Config)...');
+    
+    // Use temporary files to avoid stream closure issues with fluent-ffmpeg
+    const os = require('os');
+    const crypto = require('crypto');
+    const tempId = crypto.randomBytes(8).toString('hex');
+    const tempMp3Path = path.join(os.tmpdir(), `ease-tts-${tempId}.mp3`);
+    const tempWavPath = path.join(os.tmpdir(), `ease-tts-${tempId}.wav`);
+
     try {
-      // Use a common supported format string for msedge-tts
-      // Format examples: 'audio-24khz-96kbitrate-mono-mp3', 'webview-16khz-16kbps-mono-opus'
-      await this.edgeTts.setMetadata('en-US-GuyNeural', 'audio-24khz-96kbitrate-mono-mp3');
-      const audioData = await this.edgeTts.toStream(fullScript);
+      await this.edgeTts.setMetadata('en-US-GuyNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
       
-      // The library returns a Buffer when no stream is provided as 2nd argument
-      return audioData;
+      // Use toStream and manually write to file because toFile expects a directory
+      const { audioStream } = this.edgeTts.toStream(fullScript);
+      const fsCore = require('fs');
+      const writeStream = fsCore.createWriteStream(tempMp3Path);
+      
+      await new Promise<void>((resolve, reject) => {
+        audioStream.pipe(writeStream);
+        writeStream.on('finish', resolve);
+        writeStream.on('error', reject);
+        audioStream.on('error', reject);
+      });
+      
+      const ffmpeg = require('fluent-ffmpeg');
+      const ffmpegPath = require('ffmpeg-static');
+      ffmpeg.setFfmpegPath(ffmpegPath);
+      
+      await new Promise<void>((resolve, reject) => {
+        ffmpeg(tempMp3Path)
+          .toFormat('wav')
+          .audioFrequency(44100)
+          .audioChannels(1)
+          .on('error', (err: any) => {
+            this.logger.error('ffmpeg processing error', err);
+            reject(err);
+          })
+          .on('end', () => resolve())
+          .save(tempWavPath);
+      });
+
+      const finalBuffer = await fs.readFile(tempWavPath);
+      
+      // Cleanup
+      await Promise.all([
+        fs.unlink(tempMp3Path).catch(() => {}),
+        fs.unlink(tempWavPath).catch(() => {})
+      ]);
+
+      return finalBuffer;
     } catch (err) {
-      this.logger.error('Edge TTS also failed', err);
+      this.logger.error('Edge TTS or conversion failed', err);
+      // Cleanup on error
+      await Promise.all([
+        fs.unlink(tempMp3Path).catch(() => {}),
+        fs.unlink(tempWavPath).catch(() => {})
+      ]);
       throw err;
     }
   }
@@ -169,12 +224,20 @@ export class AudioMixerService {
     const mixedLeft = new Float32Array(binauralLen);
     const mixedRight = new Float32Array(binauralLen);
 
+    // Cache channel references and lengths for speed
+    const bCh0 = binauralChannels[0];
+    const bCh1 = binauralChannels[1] || bCh0;
+    const vCh0 = voiceChannels[0];
+    const vCh1 = voiceChannels[1] || vCh0;
+    const vLen = vCh0.length;
+
     for (let i = 0; i < binauralLen; i++) {
-      const voiceIndex = Math.min(i, voiceChannel0.length - 1);
-      
-      // Mix with proper balance (80% binaural, 20% voice for subliminal)
-      mixedLeft[i] = binauralChannels[0][i] * 0.8 + (voiceChannel0[voiceIndex] || 0) * 0.2;
-      mixedRight[i] = binauralChannels[1][i] * 0.8 + (voiceChannel1[voiceIndex] || 0) * 0.2;
+        // Subliminal voiceover should loop or stop if shorter
+        // Typically it matches or is shorter than the background
+        const vIdx = i < vLen ? i : vLen - 1;
+        
+        mixedLeft[i] = bCh0[i] * 0.8 + (vCh0[vIdx] || 0) * 0.2;
+        mixedRight[i] = bCh1[i] * 0.8 + (vCh1[vIdx] || 0) * 0.2;
     }
 
     // Create final WAV
@@ -192,33 +255,70 @@ export class AudioMixerService {
    */
   async createBinauralSubliminalTrack(
     scriptData: any,
-    outputDir: string
+    outputDir: string,
+    duration: number = 5
   ): Promise<string> {
-    const filename = `audio_${Date.now()}.wav`;
+    const filename = `audio_${Date.now()}.mp3`;
     const outputPath = path.join(outputDir, filename);
 
-    this.logger.log(`Creating binaural track for theme: ${scriptData.theme}`);
+    this.logger.log(`Creating binaural track for theme: ${scriptData.theme} (MP3)`);
 
-    // Step 1: Generate binaural beats
-    const binauralBuffer = await this.generateBinauralBeat({
-      frequency: scriptData.binauralFrequency,
-      carrierFreq: scriptData.carrierFrequency,
-      duration: 5,
-      fadeIn: 10,
-      fadeOut: 15,
-    });
-
-    // Step 2: Generate subliminal voice
+    // 1. Generate Voiceover (Local File)
     const voiceBuffer = await this.generateSubliminalVoice(
       scriptData.affirmations,
       scriptData.backgroundNarration,
-      5
+      duration
     );
+    
+    const tempVoicePath = path.join(outputDir, `temp_voice_${Date.now()}.wav`);
+    await fs.writeFile(tempVoicePath, voiceBuffer);
 
-    // Step 3: Mix layers
-    await this.mixAudioLayers(binauralBuffer, voiceBuffer, outputPath);
+    // 2. Mix with Binaural (Static from URL)
+    const availableFrequencies = Object.keys(STATIC_BINAURAL_MAP).map(Number);
+    const targetFreq = scriptData.binauralFrequency;
+    
+    // Find closest frequency
+    const closestFreq = availableFrequencies.reduce((prev, curr) => {
+      return (Math.abs(curr - targetFreq) < Math.abs(prev - targetFreq) ? curr : prev);
+    });
 
-    this.logger.log(`Binaural track created successfully at ${outputPath}`);
-    return outputPath;
+    const staticUrl = STATIC_BINAURAL_MAP[closestFreq];
+    const ffmpeg = require('fluent-ffmpeg');
+    const ffmpegPath = require('ffmpeg-static');
+    ffmpeg.setFfmpegPath(ffmpegPath);
+
+    return new Promise<string>((resolve, reject) => {
+      let command = ffmpeg();
+
+      if (staticUrl) {
+        this.logger.log(`Using static binaural beat for ${closestFreq}Hz (requested ${targetFreq}Hz)`);
+        command.input(staticUrl).input(tempVoicePath);
+      } else {
+        // Fallback (though reduce ensures we get one)
+        reject(new Error(`No static beat available for ${targetFreq}Hz`));
+        return;
+      }
+
+      command
+        .complexFilter([
+          '[0:a]volume=1.0,aloop=loop=-1:size=2e9[bg]', // Loop the 1min beat if needed
+          '[1:a]volume=0.3[voice]',
+          '[bg][voice]amix=inputs=2:duration=first[out]'
+        ])
+        .setDuration(duration * 60)
+        .map('[out]')
+        .audioCodec('libmp3lame')
+        .audioBitrate('128k')
+        .on('error', (err: any) => {
+          this.logger.error('FFMPEG Mixing Error', err);
+          reject(err);
+        })
+        .on('end', async () => {
+          this.logger.log(`Mixed audio saved to ${outputPath}`);
+          await fs.unlink(tempVoicePath).catch(() => {});
+          resolve(outputPath);
+        })
+        .save(outputPath);
+    });
   }
 }
