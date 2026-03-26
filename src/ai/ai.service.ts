@@ -265,89 +265,80 @@ PROGRESSION RULES
 - Each day's theme must be a specific, distinct subtopic of the goal — not a generic label.
 - No exercise, technique, or journal prompt may repeat across days.
 
-PER-TASK TIME BUDGET (must sum to ${minutesPerDay} minutes)
-- videoTask: ${videoDuration} minutes
-- exerciseTask: ${exerciseDuration} minutes  
-- lessonTask: ${lessonDuration} minutes
-- quiz: 3 minutes
-- journalTask: 5 minutes
-- audioTask: ${audioDuration} minutes
-- mindfulnessTask: 5 minutes
-- reflectionTask: 3 minutes
+DAILY FLOW (Follow this order for better habit formation)
+1. Lesson (Theory) → 2. Video (Demo) → 3. Quiz (Check) → 4. Exercise (Practice) → 5. Journal (Insights) → 6. Mindfulness (Reset) → 7. Audio (Integration)
 
 OUTPUT SCHEMA
-Return a raw JSON array — no markdown, no code fences, no commentary, 
-no trailing commas. Every object must have ALL of these keys:
+Return a raw JSON array — no markdown, no code fences, no commentary, no trailing commas. Every object must have ALL of these keys:
 
 {
   "dayNumber": integer,
   "theme": string (specific subtopic, e.g. "Fingerstyle Thumb Independence" not "Basics"),
-  
-  "videoTask": {
-    "title": string,
-    "description": string (explain what the user will learn and why it matters today),
-    "searchQuery": string (precise YouTube query, e.g. "fingerstyle guitar thumb independence beginner lesson")
-  },
-  
-  "exerciseTask": {
-    "title": string,
-    "description": string,
-    "steps": string[] (exactly 4 steps, each actionable and specific to today's theme),
-    "durationMinutes": ${exerciseDuration}
-  },
+  "focusAreas": string[], (exactly 3 key concepts for today)
   
   "lessonTask": {
+    "title": string (action-oriented or question-based, e.g. "The Science of Habit Loops"),
+    "description": string (explain what the user will understand after reading),
+    "keyPoints": string[] (exactly 4 points, each a complete insight or actionable fact)
+  },
+
+  "videoTask": {
     "title": string,
     "description": string,
-    "keyPoints": string[] (exactly 4 points, each a complete insight not a heading)
+    "searchQuery": string (precise YouTube query including level/modality)
   },
-  
+
   "quiz": {
     "title": string,
     "questions": [
       {
-        "question": string (tests comprehension of today's lesson/video content, not surface recall),
-        "options": string[] (exactly 4 options, one clearly correct, others plausible),
+        "question": string (tests comprehension of today's lesson/video),
+        "options": string[] (exactly 4 options, one clearly correct),
         "correctAnswer": integer (0-based index),
-        "explanation": string (why the correct answer is right — shown after the user answers)
+        "explanation": string (why it's correct — shown after answer)
       }
     ]
     // exactly 2 questions
   },
   
-  "journalTask": {
-    "title": string,
-    "prompt": string (open-ended, personal — connects today's theme to the user's own life or progress)
+  "exerciseTask": {
+    "title": string (Verb + Outcome, e.g. "Master the Pomodoro Sprint"),
+    "description": string (what they'll accomplish and why it matters),
+    "steps": string[] (exactly 4 actionable steps, specific to today's theme),
+    "durationMinutes": ${exerciseDuration}
   },
   
-  "audioTask": {
-    "title": string,
-    "description": string,
-    "mood": "meditation" | "focus" | "ambient",
-    "theme": string (1-sentence description of what the audio session should focus on)
+  "journalTask": {
+    "title": string (e.g. "Focus Reflection"),
+    "prompt": string (open-ended, personal — connects today's theme to the user's life)
   },
   
   "mindfulnessTask": {
     "title": string,
     "description": string,
-    "technique": string (named technique with brief how-to, e.g. "Box breathing: inhale 4s, hold 4s, exhale 4s, hold 4s")
+    "technique": string (named technique with brief how-to, vary daily)
   },
   
   "reflectionTask": {
     "title": string,
     "description": string,
-    "reviewPoints": string[] (exactly 2 points — one reviewing today, one previewing tomorrow)
+    "reviewPoints": string[] (exactly 2 points: one for today's win, one for tomorrow's prep)
+  },
+
+  "audioTask": {
+    "title": string,
+    "description": string,
+    "mood": "meditation" | "focus" | "ambient",
+    "theme": string (1-sentence prompt for AI audio script generation)
   }
 }
 
 QUALITY RULES
-- videoTask.searchQuery must be specific enough to return a real tutorial (include skill level + modality).
-- quiz questions must test understanding of the lesson content, not just theme recall.
-- journalTask.prompt must be unique per day and personally engaging.
-- audioTask.theme feeds into audio script generation — make it emotionally resonant and goal-relevant.
-- mindfulnessTask.technique must vary across days (no technique may repeat).
-
-Return ONLY the raw JSON array starting with [ and ending with ].`;
+- Each task must be scannable and mobile-friendly (no walls of text).
+- Avoid medical claims; use coaching/wellness framing.
+- Steps should be ONE clear action; use "→" logic in your mind when writing them.
+- videoTask.searchQuery must be specific enough to return a real tutorial.
+- reflectionTask.reviewPoints must vary (e.g., "What went well?" vs "What will I prep tonight?").`;
 
         try {
             // Call through the fallback chain (Gemini → Groq → Cohere)
@@ -408,37 +399,32 @@ Daily commitment: ${minutesPerDay} minutes
 Learning style: ${learningStyle}
 Constraints: ${constraints.join(', ') || 'none'}
 
-PROGRESSION
-- Foundation (days 1-${earlyPhase}): introduce core concepts, keep simple and confidence-building.
-- Development (days ${earlyPhase + 1}-${midEnd}): increase complexity, build on prior days.
-- Mastery (days ${midEnd + 1}-${totalDays}): challenge the user, reference earlier learning.
-This is Day ${dayNumber} (${phase}) — calibrate difficulty accordingly.
-
-PER-TASK TIME BUDGET
-- videoTask: ${videoDuration} min
-- exerciseTask: ${exerciseDuration} min
-- lessonTask: ${lessonDuration} min
-- quiz: 3 min (2 questions)
-- journalTask: 5 min
-- audioTask: ${audioDuration} min
-- mindfulnessTask: 5 min
-- reflectionTask: 3 min
+DAILY FLOW (Follow this order)
+1. Lesson → 2. Video → 3. Quiz → 4. Exercise → 5. Journal → 6. Mindfulness → 7. Audio
 
 OUTPUT SCHEMA
 Return a single raw JSON object — no markdown, no code fences, no commentary:
 
 {
   "dayNumber": ${dayNumber},
-  "theme": string (specific subtopic, not a generic label),
+  "theme": string (specific subtopic),
+  "focusAreas": string[], (exactly 3 key points)
+  
+  "lessonTask": { "title": string (action-oriented), "description": string, "keyPoints": string[4] },
   "videoTask": { "title": string, "description": string, "searchQuery": string },
-  "exerciseTask": { "title": string, "description": string, "steps": string[4], "durationMinutes": ${exerciseDuration} },
-  "lessonTask": { "title": string, "description": string, "keyPoints": string[4] },
-  "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, ...] },
+  "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
+  "exerciseTask": { "title": string (Verb + Outcome), "description": string, "steps": string[4], "durationMinutes": ${exerciseDuration} },
   "journalTask": { "title": string, "prompt": string },
-  "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string },
   "mindfulnessTask": { "title": string, "description": string, "technique": string },
-  "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] }
+  "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] },
+  "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string }
 }
+
+QUALITY RULES
+- Scannable, mobile-friendly content.
+- Action-oriented titles.
+- Varied mindfulness techniques.
+- Reflection points: one today's win, one tomorrow's prep.
 
 Return ONLY the raw JSON object starting with { and ending with }.`;
 
@@ -588,11 +574,15 @@ Return ONLY the raw JSON object starting with { and ending with }.
 
 
     private validateDay(day: any, dayIndex: number): void {
-        const required = ['videoTask', 'exerciseTask', 'lessonTask', 'quiz',
+        const required = ['focusAreas', 'videoTask', 'exerciseTask', 'lessonTask', 'quiz',
             'journalTask', 'audioTask', 'mindfulnessTask', 'reflectionTask'];
 
         for (const field of required) {
             if (!day[field]) throw new Error(`Day ${dayIndex} missing field: ${field}`);
+        }
+
+        if (!Array.isArray(day.focusAreas) || day.focusAreas.length !== 3) {
+            throw new Error(`Day ${dayIndex} focusAreas must be an array of exactly 3 strings`);
         }
 
         if (!day.quiz || !day.quiz.questions || day.quiz.questions.length !== 2) {

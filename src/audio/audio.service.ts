@@ -153,7 +153,7 @@ export class AudioService {
             command
                 .complexFilter(filters, 'mixed')
                 .audioCodec('libmp3lame')
-                .audioBitrate('128k')
+                .audioBitrate('64k')
                 .on('start', (cmd) => this.logger.debug(`FFmpeg: ${cmd}`))
                 .on('error', (err, _stdout, stderr) => {
                     this.logger.error(`FFmpeg error: ${err.message} — ${stderr}`);

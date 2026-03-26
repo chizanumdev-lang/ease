@@ -302,13 +302,13 @@ export class AudioMixerService {
       command
         .complexFilter([
           '[0:a]volume=1.0,aloop=loop=-1:size=2e9[bg]', // Loop the 1min beat if needed
-          '[1:a]volume=0.3[voice]',
+          '[1:a]volume=0.1[voice]',
           '[bg][voice]amix=inputs=2:duration=first[out]'
         ])
         .setDuration(duration * 60)
         .map('[out]')
         .audioCodec('libmp3lame')
-        .audioBitrate('128k')
+        .audioBitrate('64k')
         .on('error', (err: any) => {
           this.logger.error('FFMPEG Mixing Error', err);
           reject(err);

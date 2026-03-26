@@ -161,6 +161,7 @@ export class ProgramsService {
 
             await this.dayPlanRepository.update(day.id, {
                 theme: `Day ${day.dayNumber}: ${content.theme}`,
+                focusAreas: content.focusAreas,
                 status: 'ready',
             });
 
@@ -191,7 +192,19 @@ export class ProgramsService {
 
         const tasks: Promise<any>[] = [];
 
-        // 1. Video
+        // 1. Lesson (Theory)
+        if (content.lessonTask) {
+            const keyPoints = (content.lessonTask.keyPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
+            tasks.push(this.upsertTask({
+                type: 'lesson', dayPlanId: day.id,
+                title: content.lessonTask.title,
+                description: `${content.lessonTask.description}\n\nKey Points:\n${keyPoints}`,
+                duration: dur.lesson, completed: false,
+                scheduledAt: this.scheduleTask('lesson', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 2. Video (Demo)
         if (content.videoTask) {
             tasks.push((async () => {
                 const topic = content.videoTask.searchQuery || `${content.theme} ${content.videoTask.title}`;
@@ -211,31 +224,7 @@ export class ProgramsService {
             })());
         }
 
-        // 2. Exercise
-        if (content.exerciseTask) {
-            const steps = (content.exerciseTask.steps as string[] ?? []).join(' → ');
-            tasks.push(this.upsertTask({
-                type: 'exercise', dayPlanId: day.id,
-                title: content.exerciseTask.title,
-                description: `${content.exerciseTask.description}\n\nSteps: ${steps}`,
-                duration: dur.exercise, completed: false,
-                scheduledAt: this.scheduleTask('exercise', dayOffset, wakeStart, sleepStart),
-            }));
-        }
-
-        // 3. Lesson
-        if (content.lessonTask) {
-            const keyPoints = (content.lessonTask.keyPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
-            tasks.push(this.upsertTask({
-                type: 'lesson', dayPlanId: day.id,
-                title: content.lessonTask.title,
-                description: `${content.lessonTask.description}\n\nKey Points:\n${keyPoints}`,
-                duration: dur.lesson, completed: false,
-                scheduledAt: this.scheduleTask('lesson', dayOffset, wakeStart, sleepStart),
-            }));
-        }
-
-        // 4. Quiz
+        // 3. Quiz (Check)
         if (content.quiz) {
             tasks.push((async () => {
                 let quiz = await this.quizRepository.findOne({ where: { dayPlanId: day.id } });
@@ -256,7 +245,19 @@ export class ProgramsService {
             })());
         }
 
-        // 5. Journal
+        // 4. Exercise (Practice)
+        if (content.exerciseTask) {
+            const steps = (content.exerciseTask.steps as string[] ?? []).join(' → ');
+            tasks.push(this.upsertTask({
+                type: 'exercise', dayPlanId: day.id,
+                title: content.exerciseTask.title,
+                description: `${content.exerciseTask.description}\n\nSteps: ${steps}`,
+                duration: dur.exercise, completed: false,
+                scheduledAt: this.scheduleTask('exercise', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 5. Journal (Insights)
         if (content.journalTask) {
             tasks.push(this.upsertTask({
                 type: 'journal', dayPlanId: day.id,
@@ -266,17 +267,28 @@ export class ProgramsService {
             }));
         }
 
-        // 6. Audio (fire-and-forget into audio queue)
+        // 6. Mindfulness (Reset)
+        if (content.mindfulnessTask) {
+            tasks.push(this.upsertTask({
+                type: 'mindfulness', dayPlanId: day.id,
+                title: content.mindfulnessTask.title,
+                description: `${content.mindfulnessTask.description}\n\nTechnique: ${content.mindfulnessTask.technique}`,
+                duration: dur.mindfulness, completed: false,
+                scheduledAt: this.scheduleTask('mindfulness', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 7. Audio (Integration)
         if (content.audioTask && !constraints.includes('no_audio')) {
             tasks.push((async () => {
                 const mood = content.audioTask.mood || 'meditation';
                 const audioFilename = `program_${day.programId}_day_${day.dayNumber}`;
                 let audioTrack = await this.audioTrackRepository.findOne({ where: { dayPlanId: day.id } });
                 if (!audioTrack) {
-                    audioTrack = this.audioTrackRepository.create({ dayPlanId: day.id, title: '', url: '', duration: 0, type: '' });
+                    audioTrack = this.audioTrackRepository.create({ dayPlanId: day.id, title: '', url: pickAudioUrl(mood, day.dayNumber), duration: 0, type: '' });
                 }
                 audioTrack.title = content.audioTask.title;
-                audioTrack.url = pickAudioUrl(mood, day.dayNumber);
+                audioTrack.url = pickAudioUrl(mood, day.dayNumber); // Changed as per instruction
                 audioTrack.duration = dur.audio;
                 audioTrack.type = mood;
 
@@ -310,7 +322,6 @@ export class ProgramsService {
                     } catch (error) {
                         const errMsg = error instanceof Error ? error.message : JSON.stringify(error);
                         this.logger.error(`Failed to generate sync binaural audio for Day 1: ${errMsg}`);
-                        this.logger.error(error); // Log full object for stack
                     }
                 } else {
                     // Fire-and-forget: audio generation is async for non-Day 1
@@ -333,24 +344,13 @@ export class ProgramsService {
             })());
         }
 
-        // 7. Mindfulness
-        if (content.mindfulnessTask) {
-            tasks.push(this.upsertTask({
-                type: 'mindfulness', dayPlanId: day.id,
-                title: content.mindfulnessTask.title,
-                description: `${content.mindfulnessTask.description}\n\nTechnique: ${content.mindfulnessTask.technique}`,
-                duration: dur.mindfulness, completed: false,
-                scheduledAt: this.scheduleTask('mindfulness', dayOffset, wakeStart, sleepStart),
-            }));
-        }
-
         // 8. Reflection
         if (content.reflectionTask) {
             const points = (content.reflectionTask.reviewPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
             tasks.push(this.upsertTask({
                 type: 'reflection', dayPlanId: day.id,
                 title: content.reflectionTask.title,
-                description: `${content.reflectionTask.description}\n\nReview:\n${points}`,
+                description: `${content.reflectionTask.description}\n\nReflection Points:\n${points}`,
                 duration: dur.reflection, completed: false,
                 scheduledAt: this.scheduleTask('reflection', dayOffset, wakeStart, sleepStart),
             }));
