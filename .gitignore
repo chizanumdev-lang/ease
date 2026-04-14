@@ -47,4 +47,4 @@ lerna-debug.log*
 mobile/node_modules/
 mobile/.expo/
 mobile/.expo-shared/
-mobile/assets/stitch_supportive_ai_coach/
+/stitch designs
