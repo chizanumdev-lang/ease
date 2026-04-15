@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
 import { useAuthStore } from '../../store/authStore';
@@ -8,6 +8,7 @@ import StitchButton from '../../components/StitchButton';
 import StitchInput from '../../components/StitchInput';
 import Logo from '../../components/Logo';
 import { Ionicons } from '@expo/vector-icons';
+import { useModalStore } from '../../store/modalStore';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -16,10 +17,15 @@ export default function LoginScreen({ navigation }: Props) {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const { login, isLoading, error } = useAuthStore();
+    const { showModal } = useModalStore();
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Error', 'Please enter both email and password');
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Please enter both email and password'
+            });
             return;
         }
 
@@ -35,7 +41,11 @@ export default function LoginScreen({ navigation }: Props) {
             } else {
                 errorMessage = err.message || 'Login failed';
             }
-            Alert.alert('Login Failed', errorMessage);
+            showModal({
+                type: 'error',
+                title: 'Login Failed',
+                description: errorMessage
+            });
         }
     };
 

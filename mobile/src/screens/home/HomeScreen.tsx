@@ -5,7 +5,6 @@ import {
     StyleSheet, 
     FlatList, 
     TouchableOpacity, 
-    Alert, 
     Platform, 
     StatusBar, 
     Animated, 
@@ -22,12 +21,14 @@ import { MainStackParamList, Task } from '../../types';
 import { useProgramsStore } from '../../store/programsStore';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
+import { useModalStore } from '../../store/modalStore';
 
 import Logo from '../../components/Logo';
 import GoalBanner from '../../components/stitch/GoalBanner';
 import StatCard from '../../components/stitch/StatCard';
 import TaskCard from '../../components/stitch/TaskCard';
 import StitchModal from '../../components/stitch/StitchModal';
+import HomeEmptyState from '../../components/stitch/HomeEmptyState';
 
 type Props = NativeStackScreenProps<MainStackParamList> & {
     navigation: any;
@@ -37,6 +38,7 @@ const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    const { showModal } = useModalStore();
     const { user } = useAuthStore();
     const { todayPlan, currentProgram, updateTask } = useProgramsStore();
     
@@ -64,6 +66,43 @@ export default function HomeScreen({ navigation }: Props) {
         navigation.navigate('Task', { task });
     };
 
+    const handleBeginStory = () => {
+        navigation.navigate('GoalWizard');
+    };
+
+    if (!currentProgram && !todayPlan) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+                <View style={styles.topNavWrapper}>
+                    <View style={styles.topNav}>
+                        <TouchableOpacity 
+                            style={styles.navButton}
+                            onPress={() => {
+                                useProgramsStore.getState().loadMockTaskChain();
+                                showModal({
+                                    type: 'success',
+                                    title: "Demo Loaded",
+                                    description: "The high-fidelity task circuit has been loaded."
+                                });
+                            }}
+                        >
+                            <Ionicons name="flask-outline" size={24} color={colors.primary} />
+                        </TouchableOpacity>
+                        <Logo size={32} />
+                        <TouchableOpacity 
+                            style={[styles.profileButton, { backgroundColor: colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' }]}
+                            onPress={() => navigation.navigate('Settings')}
+                        >
+                            <Ionicons name="settings-outline" size={24} color={colors.text} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                <HomeEmptyState onStartPress={handleBeginStory} />
+            </SafeAreaView>
+        );
+    }
+
     const renderHeader = () => (
         <View style={styles.header}>
             {/* Top Navigation */}
@@ -72,7 +111,11 @@ export default function HomeScreen({ navigation }: Props) {
                     style={styles.navButton}
                     onPress={() => {
                         useProgramsStore.getState().loadMockTaskChain();
-                        Alert.alert("Demo Loaded", "The high-fidelity task circuit has been loaded.");
+                        showModal({
+                            type: 'success',
+                            title: "Demo Loaded",
+                            description: "The high-fidelity task circuit has been loaded."
+                        });
                     }}
                 >
                     <Ionicons name="flask-outline" size={24} color={colors.primary} />
@@ -97,12 +140,14 @@ export default function HomeScreen({ navigation }: Props) {
             </View>
 
             {/* Goal Banner */}
-            <GoalBanner 
-                title="Your Spirit Tree is flourishing"
-                subtitle="Today's progress starts with one small step. You're closer to your goal than yesterday."
-                progress={0.66}
-                phase="Growth Phase 3"
-            />
+            {currentProgram && (
+                <GoalBanner 
+                    title={currentProgram.title || "Your Spirit Tree is flourishing"}
+                    subtitle="Today's progress starts with one small step. You're closer to your goal than yesterday."
+                    progress={0.66}
+                    phase="Growth Phase 3"
+                />
+            )}
 
             {/* Stats Scroll */}
             <View style={styles.statsSection}>
@@ -190,6 +235,10 @@ const styles = StyleSheet.create({
         paddingBottom: 120,
     },
     header: {
+        paddingHorizontal: 20,
+        paddingTop: 10,
+    },
+    topNavWrapper: {
         paddingHorizontal: 20,
         paddingTop: 10,
     },

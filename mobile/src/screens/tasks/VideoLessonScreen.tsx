@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    Alert,
     ActivityIndicator,
     ScrollView,
     TouchableOpacity,
@@ -15,6 +14,7 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import { Ionicons } from '@expo/vector-icons';
 import { MainStackParamList } from '../../types';
 import { useTheme } from '../../hooks/useTheme';
+import { useModalStore } from '../../store/modalStore';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'VideoLesson'>;
 
@@ -22,6 +22,7 @@ const { width } = Dimensions.get('window');
 
 export default function VideoLessonScreen({ route, navigation }: Props) {
     const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
+    const { showModal } = useModalStore();
     const { task } = route.params;
     const [playing, setPlaying] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -48,7 +49,11 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
             if (task.quizId) {
                 navigation.replace('Quiz', { quizId: task.quizId, taskId: task.id });
             } else {
-                Alert.alert('Video Complete', 'Great job!');
+                showModal({
+                    type: 'success',
+                    title: 'Video Complete',
+                    description: 'Great job!'
+                });
             }
         }
     }, [task, navigation]);
@@ -99,7 +104,11 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                         videoId={videoId}
                         onChangeState={onStateChange}
                         onReady={onReady}
-                        onError={() => Alert.alert('Error', 'Player error')}
+                        onError={() => showModal({
+                            type: 'error',
+                            title: 'Error',
+                            description: 'Player error'
+                        })}
                     />
                 </View>
 

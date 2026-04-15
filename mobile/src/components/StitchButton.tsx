@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 interface StitchButtonProps {
     title: string;
     onPress: () => void;
-    variant?: 'primary' | 'secondary' | 'tonal' | 'outline' | 'ghost';
+    variant?: 'primary' | 'secondary' | 'tonal' | 'outline' | 'ghost' | 'destructive';
     size?: 'sm' | 'md' | 'lg';
     isLoading?: boolean;
     disabled?: boolean;
@@ -68,6 +68,9 @@ export default function StitchButton({
         if (size === 'sm') baseStyle.push(styles.sm);
         if (size === 'lg') baseStyle.push(styles.lg);
 
+        if (variant === 'destructive') {
+            baseStyle.push({ backgroundColor: colors.error });
+        }
         if (variant === 'secondary' || variant === 'tonal') {
             baseStyle.push({ backgroundColor: colors.secondaryContainer });
         }
@@ -95,8 +98,8 @@ export default function StitchButton({
         if (size === 'sm') baseStyle.push(styles.textSm);
         if (size === 'lg') baseStyle.push(styles.textLg);
 
-        if (variant === 'primary') {
-            baseStyle.push({ color: '#ffffff' }); // Always white for primary gradient
+        if (variant === 'primary' || variant === 'destructive') {
+            baseStyle.push({ color: '#ffffff' }); // Always white for primary gradient and destructive
         } else if (variant === 'secondary' || variant === 'tonal') {
             baseStyle.push({ color: colors.onSurface });
         } else if (variant === 'ghost') {

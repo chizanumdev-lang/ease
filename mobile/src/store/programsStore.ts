@@ -340,6 +340,11 @@ export const useProgramsStore = create<ProgramsState>()(
             reset: () => set({ currentProgram: null, todayPlan: null, syncQueue: [], error: null, isLoading: false }),
 
             deleteProgram: async (programId: string) => {
+                if (programId.startsWith('mock-')) {
+                    get().reset();
+                    return;
+                }
+
                 set({ isLoading: true, error: null });
                 try {
                     await programsService.deleteProgram(programId);

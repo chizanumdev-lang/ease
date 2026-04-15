@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../../hooks/useTheme';
 import StitchButton from '../StitchButton';
 
@@ -9,7 +10,7 @@ interface StitchModalProps {
     onClose: () => void;
     title: string;
     description: string;
-    type?: 'success' | 'confirmation' | 'error';
+    type?: 'success' | 'confirmation' | 'error' | 'info';
     primaryAction?: {
         label: string;
         onPress: () => void;
@@ -38,6 +39,7 @@ export default function StitchModal({
             case 'success': return 'checkmark-circle';
             case 'confirmation': return 'help-circle';
             case 'error': return 'alert-circle';
+            case 'info': return 'information-circle';
             default: return 'information-circle';
         }
     };
@@ -45,9 +47,20 @@ export default function StitchModal({
     const getIconColor = () => {
         switch (type) {
             case 'success': return colors.primary;
-            case 'confirmation': return colors.textMuted;
+            case 'confirmation': return colors.secondary;
             case 'error': return colors.error;
+            case 'info': return colors.primary;
             default: return colors.primary;
+        }
+    };
+
+    const getIconBgColor = () => {
+        switch (type) {
+            case 'success': return colors.primaryContainer + '40';
+            case 'confirmation': return colors.secondaryContainer;
+            case 'error': return colors.error + '15';
+            case 'info': return colors.primaryContainer + '20';
+            default: return colors.primaryContainer + '20';
         }
     };
 
@@ -59,19 +72,26 @@ export default function StitchModal({
             onRequestClose={onClose}
         >
             <View style={styles.overlay}>
-                <Pressable style={styles.backdrop} onPress={onClose} />
+                <BlurView 
+                    tint={isDark ? "dark" : "light"} 
+                    intensity={20} 
+                    style={StyleSheet.absoluteFill} 
+                >
+                    <Pressable style={styles.backdrop} onPress={onClose} />
+                </BlurView>
+                
                 <View 
                     style={[
                         styles.content, 
                         { 
                             backgroundColor: colors.surface, 
-                            borderRadius: borderRadius.xxl,
+                            borderRadius: 32,
                             padding: spacing.xl,
                         }
                     ]}
                 >
-                    <View style={[styles.iconContainer, { backgroundColor: getIconColor() + '15' }]}>
-                        <Ionicons name={getIcon()} size={48} color={getIconColor()} />
+                    <View style={[styles.iconContainer, { backgroundColor: getIconBgColor() }]}>
+                        <Ionicons name={getIcon()} size={42} color={getIconColor()} />
                     </View>
 
                     <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>
@@ -88,7 +108,7 @@ export default function StitchModal({
                                 title={primaryAction.label} 
                                 onPress={primaryAction.onPress}
                                 style={styles.button}
-                                variant={type === 'error' ? 'primary' : 'primary'} // Might add destructive variant later
+                                variant={type === 'error' || type === 'confirmation' && primaryAction.label.toLowerCase().includes('end') ? 'destructive' : 'primary'}
                             />
                         )}
                         {secondaryAction && (
@@ -111,39 +131,41 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
     },
     backdrop: {
-        ...StyleSheet.absoluteFillObject,
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.3)',
     },
     content: {
         width: width * 0.85,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
+        shadowColor: '#225344',
+        shadowOffset: { width: 0, height: 20 },
         shadowOpacity: 0.1,
-        shadowRadius: 20,
+        shadowRadius: 30,
         elevation: 10,
     },
     iconContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
+        width: 72,
+        height: 72,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
     },
     title: {
         fontSize: 24,
         fontWeight: '800',
         textAlign: 'center',
-        marginBottom: 12,
+        marginBottom: 8,
+        letterSpacing: -0.5,
     },
     description: {
         fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
         marginBottom: 32,
+        paddingHorizontal: 10,
     },
     actions: {
         width: '100%',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, StatusBar, KeyboardAvoidingView, Platform, Switch } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, StatusBar, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
 import { useAuthStore } from '../../store/authStore';
@@ -8,6 +8,7 @@ import StitchButton from '../../components/StitchButton';
 import StitchInput from '../../components/StitchInput';
 import Logo from '../../components/Logo';
 import { Ionicons } from '@expo/vector-icons';
+import { useModalStore } from '../../store/modalStore';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Signup'>;
 
@@ -18,20 +19,33 @@ export default function SignupScreen({ navigation }: Props) {
     const [password, setPassword] = React.useState('');
     const [acceptTerms, setAcceptTerms] = React.useState(false);
     const { signup, isLoading, error } = useAuthStore();
+    const { showModal } = useModalStore();
 
     const handleSignup = async () => {
         if (!name || !email || !password) {
-            Alert.alert('Error', 'Please fill in all fields');
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Please fill in all fields'
+            });
             return;
         }
 
         if (!acceptTerms) {
-            Alert.alert('Error', 'Please accept the Terms and Conditions');
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Please accept the Terms and Conditions'
+            });
             return;
         }
 
         if (password.length < 8) {
-            Alert.alert('Error', 'Password must be at least 8 characters');
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Password must be at least 8 characters'
+            });
             return;
         }
 
@@ -46,7 +60,11 @@ export default function SignupScreen({ navigation }: Props) {
             } else {
                 errorMessage = err.message || 'Signup failed';
             }
-            Alert.alert('Signup Failed', errorMessage);
+            showModal({
+                type: 'error',
+                title: 'Signup Failed',
+                description: errorMessage
+            });
         }
     };
 

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { API_BASE_URL } from '../../constants/config';
 import axios from 'axios';
 import { useAuthStore } from '../../store/authStore';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useModalStore } from '../../store/modalStore';
 
 export default function AudioPreviewScreen() {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    const { showModal } = useModalStore();
     const navigation = useNavigation<any>();
     const { user } = useAuthStore();
     const [loading, setLoading] = useState(false);
@@ -42,11 +44,19 @@ export default function AudioPreviewScreen() {
                     }
                 });
             } else {
-                Alert.alert('Error', 'No audio URL returned from server.');
+                showModal({
+                    type: 'error',
+                    title: 'Error',
+                    description: 'No audio URL returned from server.'
+                });
             }
         } catch (error: any) {
             console.error('[PREVIEW] Failed to generate audio:', error?.response?.data || error.message);
-            Alert.alert('Generation Failed', 'Please check your internet connection or try again later.');
+            showModal({
+                type: 'error',
+                title: 'Generation Failed',
+                description: 'Please check your internet connection or try again later.'
+            });
         } finally {
             setLoading(false);
         }

@@ -6,12 +6,11 @@ import { useAuthStore } from '../store/authStore';
 import AuthStack from './AuthStack';
 import MainStack from './MainStack';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
 import { notificationService } from '../services/notification.service';
 import { createNavigationContainerRef } from '@react-navigation/native';
-import { AudioTrack } from '../types';
+import GlobalModal from '../components/stitch/GlobalModal';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
@@ -41,13 +40,11 @@ export default function RootNavigator() {
                 }
             } else if (data.type === 'audio' && data.trackId) {
                 // Navigate to AudioPlayer
-                // We need to fetch the track or reconstruct it. 
-                // For now, simpler to just open the relevant day or player if we have data.
                 if (navigationRef.isReady()) {
                     // @ts-ignore
                     navigationRef.navigate('Main', {
                         screen: 'AudioPlayer',
-                        params: { track: { id: data.trackId, title: 'Evening Reflection', url: '', dayPlanId: '' } } // minimal track data
+                        params: { track: { id: data.trackId, title: 'Evening Reflection', url: '', dayPlanId: '' } } 
                     });
                 }
             }
@@ -70,9 +67,7 @@ export default function RootNavigator() {
         );
     }
 
-    // Check if user has completed onboarding based on backend settings
     const hasCompletedOnboarding = user?.settings?.onboardingCompleted === true;
-    console.log('[NAV] Navigation decision - isAuth:', isAuthenticated, 'hasCompletedOnboarding:', hasCompletedOnboarding);
 
     return (
         <NavigationContainer ref={navigationRef}>
@@ -83,6 +78,7 @@ export default function RootNavigator() {
                     <Stack.Screen name="Auth" component={AuthStack} />
                 )}
             </Stack.Navigator>
+            <GlobalModal />
         </NavigationContainer>
     );
 }

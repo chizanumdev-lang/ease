@@ -5,7 +5,6 @@ import {
     StyleSheet,
     TouchableOpacity,
     ActivityIndicator,
-    Alert,
     Image,
     Animated,
     Dimensions,
@@ -18,6 +17,7 @@ import { MainStackParamList } from '../../types';
 import { useAudioStore } from '../../store/audioStore';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
+import { useModalStore } from '../../store/modalStore';
 import { canAutoPlayAudio } from '../../utils/sleepWindow.util';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'AudioPlayer'>;
@@ -26,6 +26,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function AudioPlayerScreen({ route, navigation }: Props) {
     const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
+    const { showModal } = useModalStore();
     const { track } = route.params;
     const { user } = useAuthStore();
     const {
@@ -78,7 +79,11 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
                 }
             } catch (error) {
                 console.error('[AUDIO_PLAYER] Failed to load track:', error);
-                Alert.alert('Error', 'Failed to load audio track');
+                showModal({
+                    type: 'error',
+                    title: 'Error',
+                    description: 'Failed to load audio track'
+                });
             }
         };
 

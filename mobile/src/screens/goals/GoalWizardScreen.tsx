@@ -5,7 +5,6 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    Alert,
     ScrollView,
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -21,6 +20,7 @@ import StitchButton from '../../components/StitchButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
+import { useModalStore } from '../../store/modalStore';
 
 const { width } = Dimensions.get('window');
 
@@ -62,18 +62,27 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
     const { createGoal } = useGoalsStore();
     const { generateProgram, isLoading: isProgramLoading } = useProgramsStore();
+    const { showModal } = useModalStore();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const handleNext = () => {
         if (step === 'CATEGORY') {
             if (!category) {
-                Alert.alert('Selection Required', 'Please choose a growth goal category to continue.');
+                showModal({
+                    type: 'info',
+                    title: 'Selection Required',
+                    description: 'Please choose a growth goal category to continue.'
+                });
                 return;
             }
             setStep('SETTINGS');
         } else if (step === 'SETTINGS') {
             if (!goalDescription.trim()) {
-                Alert.alert('Input Required', 'Please describe your goal in detail.');
+                showModal({
+                    type: 'info',
+                    title: 'Input Required',
+                    description: 'Please describe your goal in detail.'
+                });
                 return;
             }
             setStep('DURATION');
@@ -113,7 +122,11 @@ export default function GoalWizardScreen({ navigation }: Props) {
             navigation.replace('ProgramPreview', { programId: program.id });
         } catch (error) {
             console.error('Wizard Error:', error);
-            Alert.alert('Error', 'Failed to create your personalized program. Please try again.');
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Failed to create your personalized program. Please try again.'
+            });
             setStep('TIME');
         } finally {
             setIsSubmitting(false);

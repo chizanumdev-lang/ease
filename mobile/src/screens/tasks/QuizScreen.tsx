@@ -6,7 +6,6 @@ import {
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
-    Alert,
     StatusBar,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -15,11 +14,13 @@ import { quizzesService } from '../../services/quizzes.service';
 import { tasksService } from '../../services/tasks.service';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
+import { useModalStore } from '../../store/modalStore';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'Quiz'>;
 
 export default function QuizScreen({ route, navigation }: Props) {
     const { colors, spacing, borderRadius, isDark } = useTheme();
+    const { showModal } = useModalStore();
     const { quizId, taskId } = route.params;
     const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [loading, setLoading] = useState(true);
@@ -38,7 +39,11 @@ export default function QuizScreen({ route, navigation }: Props) {
             setAnswers(new Array(data.questions.length).fill(null));
         } catch (error) {
             console.error('Failed to load quiz:', error);
-            Alert.alert('Error', 'Failed to load quiz. Please try again.');
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Failed to load quiz. Please try again.'
+            });
             navigation.goBack();
         } finally {
             setLoading(false);
@@ -68,7 +73,11 @@ export default function QuizScreen({ route, navigation }: Props) {
 
         // Check all questions answered
         if (answers.some(a => a === null)) {
-            Alert.alert('Incomplete', 'Please answer all questions before submitting.');
+            showModal({
+                type: 'info',
+                title: 'Incomplete',
+                description: 'Please answer all questions before submitting.'
+            });
             return;
         }
 
@@ -87,7 +96,11 @@ export default function QuizScreen({ route, navigation }: Props) {
             await tasksService.update(taskId, { completed: true });
         } catch (error) {
             console.error('Failed to submit quiz:', error);
-            Alert.alert('Warning', 'Quiz completed but failed to sync with server.');
+            showModal({
+                type: 'error',
+                title: 'Warning',
+                description: 'Quiz completed but failed to sync with server.'
+            });
         }
     };
 
@@ -123,9 +136,9 @@ export default function QuizScreen({ route, navigation }: Props) {
                     </View>
 
                     {score < 60 && (
-                        <View style={[styles.recommendationBox, { backgroundColor: `${colors.tertiary}15`, borderColor: colors.tertiary }]}>
-                            <Ionicons name="bulb-outline" size={32} color={colors.tertiary} style={styles.recommendationIcon} />
-                            <Text style={[styles.recommendationTitle, { color: colors.tertiary }]}>Recommendation</Text>
+                        <View style={[styles.recommendationBox, { backgroundColor: `${colors.secondary}15`, borderColor: colors.secondary }]}>
+                            <Ionicons name="bulb-outline" size={32} color={colors.secondary} style={styles.recommendationIcon} />
+                            <Text style={[styles.recommendationTitle, { color: colors.secondary }]}>Recommendation</Text>
                             <Text style={[styles.recommendationText, { color: colors.onSurfaceVariant }]}>
                                 Consider reviewing the video lesson again to strengthen your understanding.
                                 A score of 60% or higher is recommended before moving forward.

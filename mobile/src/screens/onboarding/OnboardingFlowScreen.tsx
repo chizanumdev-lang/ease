@@ -7,7 +7,6 @@ import {
     StyleSheet,
     ScrollView,
     Platform,
-    Alert,
     SafeAreaView,
     StatusBar,
     Dimensions,
@@ -19,6 +18,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
+import { useModalStore } from '../../store/modalStore';
 import StitchButton from '../../components/StitchButton';
 import StitchInput from '../../components/StitchInput';
 
@@ -29,6 +29,7 @@ const { width } = Dimensions.get('window');
 
 export default function OnboardingFlowScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
+    const { showModal } = useModalStore();
     const [currentStep, setCurrentStep] = useState(1);
     const { updateSettings, isLoading } = useAuthStore();
 
@@ -68,7 +69,11 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
         try {
             await updateSettings(settings);
         } catch (error) {
-            Alert.alert('Error', 'Failed to save settings. Please try again.');
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Failed to save settings. Please try again.'
+            });
         }
     };
 
@@ -174,6 +179,7 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                         <Text style={[styles.stepTitle, { color: colors.text }]}>What should we call you?</Text>
                         <Text style={[styles.stepSubtitle, { color: colors.textMuted }]}>Choose a nickname for your journey.</Text>
                         <StitchInput
+                            label="Nickname"
                             placeholder="Enter nickname"
                             value={nickname}
                             onChangeText={setNickname}

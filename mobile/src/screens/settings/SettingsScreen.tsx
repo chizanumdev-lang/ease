@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Switch, Image, Dimensions, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Image, Dimensions, Platform } from 'react-native';
 import { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TabParamList, NotificationSettings } from '../../types';
@@ -10,6 +10,8 @@ import { useAudioStore } from '../../store/audioStore';
 import { STATIC_BINAURAL_BEATS } from '../../constants/config';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Logo from '../../components/Logo';
+import { useProgramsStore } from '../../store/programsStore';
+import { useModalStore } from '../../store/modalStore';
 
 type Props = NativeStackScreenProps<TabParamList, 'Settings'>;
 
@@ -30,8 +32,10 @@ const FOCUS_AREAS = [
 
 export default function SettingsScreen({ navigation }: Props) {
     const { user, logout, updateSettings } = useAuthStore();
+    const { currentProgram, deleteProgram } = useProgramsStore();
     const { loadTrack, play, stop, isPlaying, currentTrack } = useAudioStore();
     const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
+    const { showModal } = useModalStore();
     
     // Test Audio State
     const [isGenerating, setIsGenerating] = useState(false);
@@ -51,10 +55,18 @@ export default function SettingsScreen({ navigation }: Props) {
                 type: 'meditation'
             });
             await play();
-            Alert.alert('Success', 'Audio generated and playing!');
+            showModal({
+                type: 'success',
+                title: 'Success',
+                description: 'Audio generated and playing!'
+            });
         } catch (error) {
             console.error('Test audio failed:', error);
-            Alert.alert('Error', 'Failed to generate test audio');
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Failed to generate test audio'
+            });
         } finally {
             setIsGenerating(false);
         }
@@ -76,7 +88,11 @@ export default function SettingsScreen({ navigation }: Props) {
             await play();
         } catch (error) {
             console.error('Binaural test failed:', error);
-            Alert.alert('Error', 'Failed to play binaural beat');
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Failed to play binaural beat'
+            });
         } finally {
             setIsGeneratingBinaural(false);
         }
@@ -106,10 +122,52 @@ export default function SettingsScreen({ navigation }: Props) {
     };
 
     const handleLogout = () => {
-        Alert.alert('Logout', 'Are you sure you want to logout?', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Logout', style: 'destructive', onPress: logout },
-        ]);
+        showModal({
+            type: 'confirmation',
+            title: 'Logout',
+            description: 'Are you sure you want to logout?',
+            primaryAction: {
+                label: 'Logout',
+                onPress: logout
+            },
+            secondaryAction: {
+                label: 'Cancel',
+                onPress: () => {}
+            }
+        });
+    };
+
+    const handleDeletePlan = () => {
+        if (!currentProgram) return;
+
+        showModal({
+            type: 'confirmation',
+            title: 'Delete Plan',
+            description: `Are you sure you want to delete "${currentProgram.title}"? This will clear all progress and cannot be undone.`,
+            primaryAction: {
+                label: 'Delete Plan',
+                onPress: async () => {
+                    try {
+                        await deleteProgram(currentProgram.id);
+                        showModal({
+                            type: 'success',
+                            title: 'Success',
+                            description: 'Program deleted successfully'
+                        });
+                    } catch (error) {
+                        showModal({
+                            type: 'error',
+                            title: 'Error',
+                            description: 'Failed to delete the program. Please try again.'
+                        });
+                    }
+                }
+            },
+            secondaryAction: {
+                label: 'Cancel',
+                onPress: () => {}
+            }
+        });
     };
 
     return (
@@ -355,6 +413,26 @@ export default function SettingsScreen({ navigation }: Props) {
                         )}
                     </View>
                 </View>
+
+                {/* Plan Management */}
+                {currentProgram && (
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Plan Management</Text>
+                        <View style={[styles.planCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                            <View style={styles.planInfo}>
+                                <Text style={[styles.planLabel, { color: colors.textMuted }]}>ACTIVE PLAN</Text>
+                                <Text style={[styles.planTitle, { color: colors.text }]}>{currentProgram.title}</Text>
+                            </View>
+                            <TouchableOpacity 
+                                style={[styles.deletePlanButton, { backgroundColor: isDark ? 'rgba(186, 26, 26, 0.1)' : '#fef2f2' }]} 
+                                onPress={handleDeletePlan}
+                            >
+                                <Ionicons name="trash-outline" size={18} color={colors.error} />
+                                <Text style={[styles.deletePlanText, { color: colors.error }]}>Delete Plan</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
 
                 {/* Account Actions */}
                 <View style={[styles.section, { marginBottom: 40 }]}>
@@ -623,5 +701,38 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row',
         alignItems: 'center',
+    },
+    planCard: {
+        borderRadius: 20,
+        padding: 20,
+        borderWidth: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    planInfo: {
+        flex: 1,
+    },
+    planLabel: {
+        fontSize: 10,
+        fontWeight: '700',
+        letterSpacing: 1,
+        marginBottom: 4,
+    },
+    planTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    deletePlanButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
+    },
+    deletePlanText: {
+        fontSize: 14,
+        fontWeight: '700',
     },
 });
