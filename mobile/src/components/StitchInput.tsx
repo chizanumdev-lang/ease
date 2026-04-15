@@ -1,87 +1,210 @@
-import React from 'react';
-import { View, TextInput, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { Theme } from '../constants/theme';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+    View, 
+    TextInput, 
+    Text, 
+    StyleSheet, 
+    Animated, 
+    Pressable,
+    ViewStyle,
+    TextInputProps,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../hooks/useTheme';
 
-interface StitchInputProps {
-    label?: string;
-    placeholder?: string;
-    value: string;
-    onChangeText: (text: string) => void;
-    secureTextEntry?: boolean;
-    keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
-    autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-    containerStyle?: ViewStyle;
-    inputStyle?: TextStyle;
+interface StitchInputProps extends TextInputProps {
+    label: string;
     error?: string;
-    autoFocus?: boolean;
+    success?: boolean;
+    helperText?: string;
+    prefixIcon?: keyof typeof Ionicons.glyphMap;
+    isPassword?: boolean;
+    containerStyle?: ViewStyle;
 }
 
 export default function StitchInput({
     label,
-    placeholder,
-    value,
-    onChangeText,
-    secureTextEntry = false,
-    keyboardType = 'default',
-    autoCapitalize = 'none',
-    containerStyle,
-    inputStyle,
     error,
-    autoFocus = false,
+    success,
+    helperText,
+    prefixIcon,
+    isPassword,
+    containerStyle,
+    value,
+    onFocus,
+    onBlur,
+    ...props
 }: StitchInputProps) {
+    const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    const [isFocused, setIsFocused] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    
+    // Animation for floating label
+    const labelAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
+
+    useEffect(() => {
+        Animated.timing(labelAnim, {
+            toValue: (isFocused || value) ? 1 : 0,
+            duration: 200,
+            useNativeDriver: false,
+        }).start();
+    }, [isFocused, value, labelAnim]);
+
+    const handleFocus = (e: any) => {
+        setIsFocused(true);
+        if (onFocus) onFocus(e);
+    };
+
+    const handleBlur = (e: any) => {
+        setIsFocused(false);
+        if (onBlur) onBlur(e);
+    };
+
+    const labelStyle = {
+        position: 'absolute' as const,
+        left: prefixIcon ? 48 : 20,
+        top: labelAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [22, 8],
+        }),
+        fontSize: labelAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [16, 12],
+        }),
+        color: labelAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [
+                isDark ? 'rgba(255,255,255,0.4)' : colors.textMuted, 
+                error ? colors.error : (isFocused ? colors.primary : colors.textMuted)
+            ],
+        }),
+        fontFamily: fonts.bodyMedium,
+        zIndex: 1,
+    };
+
     return (
-        <View style={[styles.container, containerStyle]}>
-            {label && <Text style={styles.label}>{label}</Text>}
-            <View style={[styles.inputContainer, error ? styles.inputError : null]}>
-                <TextInput
-                    style={[styles.input, inputStyle]}
-                    placeholder={placeholder}
-                    placeholderTextColor={Theme.colors.slate[400]}
-                    value={value}
-                    onChangeText={onChangeText}
-                    secureTextEntry={secureTextEntry}
-                    keyboardType={keyboardType}
-                    autoCapitalize={autoCapitalize}
-                    autoFocus={autoFocus}
-                />
-            </View>
-            {error && <Text style={styles.errorText}>{error}</Text>}
+        <View style={[styles.outerContainer, containerStyle]}>
+            <Pressable 
+                style={[
+                    styles.inputWrapper,
+                    { 
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : colors.surfaceContainerHighest,
+                        borderRadius: borderRadius.lg,
+                        borderColor: error ? colors.error : (isFocused ? colors.primary : 'transparent'),
+                        borderWidth: 1.5,
+                    }
+                ]}
+            >
+                <Animated.Text style={labelStyle}>{label}</Animated.Text>
+                
+                <View style={styles.inputRow}>
+                    {prefixIcon && (
+                        <View style={styles.iconContainer}>
+                            <Ionicons 
+                                name={prefixIcon} 
+                                size={20} 
+                                color={isFocused ? colors.primary : colors.textMuted} 
+                            />
+                        </View>
+                    )}
+                    
+                    <TextInput
+                        style={[
+                            styles.input,
+                            { 
+                                color: colors.text,
+                                fontFamily: fonts.body,
+                                paddingLeft: prefixIcon ? 48 : 20,
+                                paddingTop: 18,
+                            }
+                        ]}
+                        value={value}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                        secureTextEntry={isPassword && !showPassword}
+                        selectionColor={colors.primary}
+                        placeholderTextColor="transparent"
+                        {...props}
+                    />
+
+                    {isPassword && (
+                        <Pressable 
+                            onPress={() => setShowPassword(!showPassword)}
+                            style={styles.rightIconContainer}
+                        >
+                            <Ionicons 
+                                name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                                size={20} 
+                                color={colors.textMuted} 
+                            />
+                        </Pressable>
+                    )}
+
+                    {success && !isPassword && (
+                        <View style={styles.rightIconContainer}>
+                            <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                        </View>
+                    )}
+                </View>
+            </Pressable>
+
+            {(error || helperText) && (
+                <View style={styles.feedbackContainer}>
+                    {error ? (
+                        <>
+                            <Ionicons name="alert-circle" size={14} color={colors.error} />
+                            <Text style={[styles.errorText, { color: colors.error, fontFamily: fonts.body }]}>{error}</Text>
+                        </>
+                    ) : (
+                        <Text style={[styles.helperText, { color: colors.textMuted, fontFamily: fonts.body }]}>{helperText}</Text>
+                    )}
+                </View>
+            )}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        marginBottom: Theme.spacing.md,
+    outerContainer: {
         width: '100%',
+        marginBottom: 16,
     },
-    label: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: Theme.colors.slate[700],
-        marginBottom: Theme.spacing.xs,
-        paddingHorizontal: 4,
-    },
-    inputContainer: {
-        backgroundColor: Theme.colors.white,
-        borderRadius: Theme.borderRadius.lg,
-        borderWidth: 1,
-        borderColor: Theme.colors.slate[200],
-        height: 56,
+    inputWrapper: {
+        height: 64,
         justifyContent: 'center',
-        paddingHorizontal: Theme.spacing.md,
+        overflow: 'hidden',
+    },
+    inputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: '100%',
     },
     input: {
+        flex: 1,
+        height: '100%',
         fontSize: 16,
-        color: Theme.colors.slate[900],
+        textAlignVertical: 'center',
     },
-    inputError: {
-        borderColor: '#ff4444',
+    iconContainer: {
+        position: 'absolute',
+        left: 16,
+        zIndex: 2,
+    },
+    rightIconContainer: {
+        paddingHorizontal: 16,
+        justifyContent: 'center',
+    },
+    feedbackContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 6,
+        paddingHorizontal: 4,
     },
     errorText: {
         fontSize: 12,
-        color: '#ff4444',
-        marginTop: 4,
-        paddingHorizontal: 4,
+        marginLeft: 4,
+    },
+    helperText: {
+        fontSize: 12,
     },
 });

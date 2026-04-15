@@ -1,13 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
 import { useProgramsStore } from '../../store/programsStore';
+import { useTheme } from '../../hooks/useTheme';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'Task'>;
 
 export default function TaskScreen({ route, navigation }: Props) {
+    const { colors, spacing, borderRadius, isDark } = useTheme();
     const { task } = route.params;
     const { updateTask } = useProgramsStore();
 
@@ -28,41 +30,51 @@ export default function TaskScreen({ route, navigation }: Props) {
     };
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+            
             <View style={styles.header}>
-                <View style={styles.iconContainer}>
-                    <Ionicons name={getIconName(task.type)} size={40} color="#007AFF" />
+                <View style={[styles.iconContainer, { backgroundColor: colors.surfaceContainerLow }]}>
+                    <Ionicons name={getIconName(task.type)} size={40} color={colors.primary} />
                 </View>
-                <Text style={styles.title}>{task.title}</Text>
+                <Text style={[styles.title, { color: colors.text }]}>{task.title}</Text>
                 <View style={styles.meta}>
                     <View style={styles.metaItem}>
-                        <Ionicons name="time-outline" size={16} color="#666" />
-                        <Text style={styles.metaText}>{task.duration || 15} min</Text>
+                        <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+                        <Text style={[styles.metaText, { color: colors.textMuted }]}>{task.duration || 15} min</Text>
                     </View>
                     <View style={styles.metaItem}>
-                        <Ionicons name="pricetag-outline" size={16} color="#666" />
-                        <Text style={styles.metaText}>{task.type || 'Task'}</Text>
+                        <Ionicons name="pricetag-outline" size={16} color={colors.textMuted} />
+                        <Text style={[styles.metaText, { color: colors.textMuted }]}>{task.type || 'Task'}</Text>
                     </View>
                 </View>
             </View>
 
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Instructions</Text>
-                <View style={styles.card}>
-                    <Text style={styles.description}>{task.description || 'No instructions provided.'}</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Instructions</Text>
+                <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: isDark ? '#000' : colors.outline }]}>
+                    <Text style={[styles.description, { color: colors.onSurfaceVariant }]}>{task.description || 'No instructions provided.'}</Text>
                 </View>
             </View>
 
             <TouchableOpacity
-                style={[styles.completeButton, task.completed && styles.completedButton]}
+                style={[
+                    styles.completeButton, 
+                    { backgroundColor: colors.primary, shadowColor: colors.primary },
+                    task.completed && { backgroundColor: isDark ? colors.surfaceContainerHigh : colors.outlineVariant, shadowOpacity: 0.1 }
+                ]}
                 onPress={handleToggleComplete}
             >
                 <Ionicons
                     name={task.completed ? "checkmark-circle" : "checkbox-outline"}
                     size={24}
-                    color="#fff"
+                    color={task.completed ? colors.textMuted : (isDark ? colors.background : "#fff")}
                 />
-                <Text style={styles.completeButtonText}>
+                <Text style={[
+                    styles.completeButtonText, 
+                    { color: isDark ? colors.background : "#fff" },
+                    task.completed && { color: colors.textMuted }
+                ]}>
                     {task.completed ? "Mark as Incomplete" : "Complete Task"}
                 </Text>
             </TouchableOpacity>
@@ -73,10 +85,9 @@ export default function TaskScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     content: {
-        padding: 20,
+        padding: 24,
         paddingBottom: 40,
     },
     header: {
@@ -88,17 +99,16 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: '#edf7ff',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
+        fontSize: 26,
+        fontWeight: '800',
         textAlign: 'center',
         marginBottom: 12,
+        letterSpacing: -0.5,
     },
     meta: {
         flexDirection: 'row',
@@ -111,7 +121,7 @@ const styles = StyleSheet.create({
     },
     metaText: {
         fontSize: 14,
-        color: '#666',
+        fontWeight: '600',
         textTransform: 'capitalize',
     },
     section: {
@@ -119,47 +129,39 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 18,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
+        fontWeight: '800',
         marginBottom: 12,
         letterSpacing: 0.5,
+        textTransform: 'uppercase',
     },
     card: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
+        borderRadius: 20,
+        padding: 24,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
         elevation: 3,
     },
     description: {
         fontSize: 16,
-        lineHeight: 26,
-        color: '#444',
+        lineHeight: 24,
+        fontWeight: '500',
     },
     completeButton: {
-        backgroundColor: '#007AFF',
-        borderRadius: 16,
+        borderRadius: 18,
         paddingVertical: 18,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 10,
-        shadowColor: '#007AFF',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    completedButton: {
-        backgroundColor: '#28a745',
-        shadowColor: '#28a745',
+        gap: 12,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 6,
     },
     completeButtonText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
 });

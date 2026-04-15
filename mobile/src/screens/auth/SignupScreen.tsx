@@ -1,23 +1,32 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, StatusBar, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
 import { useAuthStore } from '../../store/authStore';
-import { Theme } from '../../constants/theme';
+import { useTheme } from '../../hooks/useTheme';
 import StitchButton from '../../components/StitchButton';
 import StitchInput from '../../components/StitchInput';
+import Logo from '../../components/Logo';
+import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Signup'>;
 
 export default function SignupScreen({ navigation }: Props) {
+    const { colors, spacing, borderRadius, fonts, shadows, isDark } = useTheme();
     const [name, setName] = React.useState('');
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
+    const [acceptTerms, setAcceptTerms] = React.useState(false);
     const { signup, isLoading, error } = useAuthStore();
 
     const handleSignup = async () => {
         if (!name || !email || !password) {
             Alert.alert('Error', 'Please fill in all fields');
+            return;
+        }
+
+        if (!acceptTerms) {
+            Alert.alert('Error', 'Please accept the Terms and Conditions');
             return;
         }
 
@@ -34,72 +43,114 @@ export default function SignupScreen({ navigation }: Props) {
                 errorMessage = err.response.data?.message || 'Server error';
             } else if (err.request) {
                 errorMessage = 'Network error. Please check your connection.';
-            } else if (err.message) {
-                errorMessage = err.message;
+            } else {
+                errorMessage = err.message || 'Signup failed';
             }
             Alert.alert('Signup Failed', errorMessage);
         }
     };
 
+    const getPasswordStrength = () => {
+        if (!password) return 0;
+        let strength = 0;
+        if (password.length >= 8) strength += 0.25;
+        if (/[A-Z]/.test(password)) strength += 0.25;
+        if (/[0-9]/.test(password)) strength += 0.25;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 0.25;
+        return strength;
+    };
+
+    const strength = getPasswordStrength();
+
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" />
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Text style={styles.backIcon}>←</Text>
-                </TouchableOpacity>
-                <Text style={styles.stepIndicator}>Step 2 of 9</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.textContent}>
-                    <Text style={styles.title}>Join EASE</Text>
-                    <Text style={styles.subtitle}>Begin your path to calm and consistent growth.</Text>
-                </View>
-
-                <View style={styles.formCard}>
-                    <StitchInput
-                        label="Full Name"
-                        placeholder="Your name"
-                        value={name}
-                        onChangeText={setName}
-                    />
-                    <StitchInput
-                        label="Email Address"
-                        placeholder="name@example.com"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                    />
-                    <StitchInput
-                        label="Create Password"
-                        placeholder="Min. 8 characters"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
-
-                    <StitchButton
-                        title="Start My Journey"
-                        onPress={handleSignup}
-                        isLoading={isLoading}
-                        variant="secondary"
-                        style={styles.signupButton}
-                    />
-                </View>
-
-                <View style={styles.footer}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                        <Text style={styles.footerText}>
-                            Already have an account? <Text style={styles.footerLink}>Log In</Text>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+            <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+            >
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <View style={styles.header}>
+                        <Logo size={60} style={styles.logo} />
+                        <Text style={[styles.title, { fontFamily: fonts.display, color: colors.onSurface }]}>Welcome to EASE</Text>
+                        <Text style={[styles.subtitle, { fontFamily: fonts.body, color: colors.onSurfaceVariant }]}>
+                            Your mindful journey begins with a single step.
                         </Text>
-                    </TouchableOpacity>
-                    <Text style={styles.legalText}>
-                        By signing up, you agree to our Terms of Service and Privacy Policy.
-                    </Text>
-                </View>
-            </ScrollView>
+                    </View>
+
+                    <View style={[styles.formContainer, { paddingHorizontal: spacing.xl }]}>
+                        <StitchInput
+                            label="Full Name"
+                            placeholder="Evelyn Rivers"
+                            value={name}
+                            onChangeText={setName}
+                            autoCapitalize="words"
+                        />
+                        <StitchInput
+                            label="Email"
+                            placeholder="evelyn@serenity.com"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
+                        <View style={styles.passwordContainer}>
+                            <StitchInput
+                                label="Password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry
+                            />
+                            {password.length > 0 && (
+                                <View style={styles.strengthIndicator}>
+                                    <View style={styles.strengthTracks}>
+                                        <View style={[styles.strengthTrack, { backgroundColor: strength >= 0.25 ? colors.primary : colors.surfaceContainerHighest }]} />
+                                        <View style={[styles.strengthTrack, { backgroundColor: strength >= 0.5 ? colors.primary : colors.surfaceContainerHighest }]} />
+                                        <View style={[styles.strengthTrack, { backgroundColor: strength >= 0.75 ? colors.primary : colors.surfaceContainerHighest }]} />
+                                        <View style={[styles.strengthTrack, { backgroundColor: strength >= 1 ? colors.primary : colors.surfaceContainerHighest }]} />
+                                    </View>
+                                    <Text style={[styles.strengthText, { color: colors.primary, fontFamily: fonts.label }]}>
+                                        {strength <= 0.25 ? 'Weak' : strength <= 0.5 ? 'Fair' : strength <= 0.75 ? 'Strong' : 'Exceptional'}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+
+                        <View style={styles.termsRow}>
+                            <Switch
+                                value={acceptTerms}
+                                onValueChange={setAcceptTerms}
+                                trackColor={{ false: colors.surfaceContainerHighest, true: colors.primary }}
+                                thumbColor={colors.white}
+                            />
+                            <Text style={[styles.termsText, { color: colors.onSurfaceVariant, fontFamily: fonts.body }]}>
+                                I agree to the <Text style={{ color: colors.primary, fontWeight: '700' }}>Terms</Text> and <Text style={{ color: colors.primary, fontWeight: '700' }}>Privacy Policy</Text>.
+                            </Text>
+                        </View>
+
+                        <StitchButton
+                            title="Create Account"
+                            onPress={handleSignup}
+                            isLoading={isLoading}
+                            variant="primary"
+                            style={styles.signupButton}
+                        />
+                    </View>
+
+                    <View style={styles.footer}>
+                        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                            <Text style={[styles.footerText, { fontFamily: fonts.body, color: colors.onSurfaceVariant }]}>
+                                Already have an account? <Text style={[styles.footerLink, { color: colors.primary, fontFamily: fonts.display }]}>Log In</Text>
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -107,87 +158,79 @@ export default function SignupScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background.light,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: Theme.spacing.lg,
-        paddingTop: Theme.spacing.md,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(0,0,0,0.05)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    backIcon: {
-        fontSize: 20,
-        color: Theme.colors.slate[900],
-    },
-    stepIndicator: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: Theme.colors.slate[400],
-        textTransform: 'uppercase',
-        letterSpacing: 1,
     },
     scrollContent: {
-        paddingHorizontal: Theme.spacing.xl,
-        paddingTop: Theme.spacing.xxl,
-        paddingBottom: Theme.spacing.xl,
+        flexGrow: 1,
+        paddingBottom: 40,
     },
-    textContent: {
+    header: {
         alignItems: 'center',
-        marginBottom: Theme.spacing.xxl,
+        marginTop: 40,
+        marginBottom: 32,
+    },
+    logo: {
+        marginBottom: 16,
     },
     title: {
-        fontSize: 32,
-        fontWeight: '800',
-        color: Theme.colors.text.light,
-        marginBottom: Theme.spacing.sm,
+        fontSize: 28,
+        textAlign: 'center',
+        marginBottom: 8,
     },
     subtitle: {
-        fontSize: 16,
-        color: Theme.colors.text.muted,
+        fontSize: 14,
         textAlign: 'center',
+        paddingHorizontal: 40,
     },
-    formCard: {
-        backgroundColor: Theme.colors.white,
-        borderRadius: Theme.borderRadius.xl,
-        padding: Theme.spacing.xl,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.05,
-        shadowRadius: 20,
-        elevation: 5,
-        borderWidth: 1,
-        borderColor: Theme.colors.slate[200],
+    formContainer: {
+        width: '100%',
+    },
+    passwordContainer: {
+        marginBottom: 8,
+    },
+    strengthIndicator: {
+        marginTop: 8,
+    },
+    strengthTracks: {
+        flexDirection: 'row',
+        gap: 4,
+        height: 4,
+        marginBottom: 4,
+    },
+    strengthTrack: {
+        flex: 1,
+        height: '100%',
+        borderRadius: 2,
+    },
+    strengthText: {
+        fontSize: 10,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    termsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginVertical: 20,
+    },
+    termsText: {
+        fontSize: 13,
+        flex: 1,
+        lineHeight: 18,
     },
     signupButton: {
-        marginTop: Theme.spacing.md,
-        height: 60,
+        marginTop: 8,
     },
     footer: {
-        marginTop: Theme.spacing.xxl,
+        marginTop: 40,
         alignItems: 'center',
     },
     footerText: {
         fontSize: 14,
-        color: Theme.colors.text.muted,
     },
     footerLink: {
-        color: Theme.colors.accent,
         fontWeight: '700',
     },
-    legalText: {
-        fontSize: 10,
-        color: Theme.colors.slate[400],
-        textAlign: 'center',
-        marginTop: Theme.spacing.xl,
-        paddingHorizontal: Theme.spacing.lg,
-    },
 });
+
+
+

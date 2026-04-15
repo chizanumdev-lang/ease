@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Task } from '../types';
 
+import { useTheme } from '../hooks/useTheme';
+
 interface Props {
     task: Task;
     onPress: (task: Task) => void;
@@ -10,6 +12,8 @@ interface Props {
 }
 
 export default function TimelineTaskCard({ task, onPress, onAction }: Props) {
+    const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+
     const formatTime = (isoString?: string) => {
         if (!isoString) return '';
         const date = new Date(isoString);
@@ -37,21 +41,22 @@ export default function TimelineTaskCard({ task, onPress, onAction }: Props) {
     };
 
     const getCircleIcon = () => {
-        if (isCompleted) return <Ionicons name="checkmark" size={20} color="#fff" />;
-        if (isActive) return <Ionicons name="play" size={20} color="#4211d4" />;
-        return <Ionicons name="lock-closed" size={18} color="#94a3b8" />;
+        if (isCompleted) return <Ionicons name="checkmark" size={20} color={isDark ? colors.background : "#fff"} />;
+        if (isActive) return <Ionicons name="play" size={20} color={colors.primary} />;
+        return <Ionicons name="lock-closed" size={18} color={colors.textMuted} />;
     };
 
     return (
-        <View style={[styles.container, isUpcoming && styles.upcomingOpacity]}>
+        <View style={[styles.container, { paddingHorizontal: spacing.xl, marginBottom: spacing.lg }, isUpcoming && styles.upcomingOpacity]}>
             {/* Timeline Line */}
-            <View style={styles.timelineColumn}>
-                <View style={styles.line} />
+            <View style={[styles.timelineColumn, { marginRight: spacing.md }]}>
+                <View style={[styles.line, { backgroundColor: colors.outlineVariant }]} />
                 <View style={[
                     styles.circle,
-                    isCompleted && styles.circleCompleted,
-                    isActive && styles.circleActive,
-                    isUpcoming && styles.circleUpcoming
+                    { backgroundColor: colors.surface, borderColor: colors.surfaceContainerHighest },
+                    isCompleted && { backgroundColor: colors.primary, borderWidth: 0 },
+                    isActive && { backgroundColor: colors.surfaceContainerLow, borderColor: colors.surfaceContainerHighest },
+                    isUpcoming && { backgroundColor: colors.surfaceContainerHighest }
                 ]}>
                     {getCircleIcon()}
                 </View>
@@ -61,8 +66,14 @@ export default function TimelineTaskCard({ task, onPress, onAction }: Props) {
             <TouchableOpacity
                 style={[
                     styles.card,
-                    isActive && styles.cardActive,
-                    isUpcoming && styles.cardUpcoming
+                    { 
+                        backgroundColor: colors.surface, 
+                        borderColor: colors.outlineVariant,
+                        padding: spacing.md,
+                        borderRadius: borderRadius.xl
+                    },
+                    isActive && { borderColor: colors.primary, borderWidth: 2 },
+                    isUpcoming && { borderStyle: 'dashed', backgroundColor: colors.surfaceVariant + '20' }
                 ]}
                 onPress={() => onPress(task)}
                 onLongPress={() => onAction(task.id)}
@@ -70,30 +81,34 @@ export default function TimelineTaskCard({ task, onPress, onAction }: Props) {
                 <View style={styles.cardHeader}>
                     <View style={styles.content}>
                         {isActive && (
-                            <View style={styles.activeBadge}>
-                                <Text style={styles.activeBadgeText}>ACTIVE NOW</Text>
+                            <View style={[styles.activeBadge, { backgroundColor: colors.surfaceContainerLow }]}>
+                                <Text style={[styles.activeBadgeText, { color: colors.primary }]}>ACTIVE NOW</Text>
                             </View>
                         )}
-                        <Text style={[styles.title, isCompleted && styles.titleCompleted]}>
+                        <Text style={[
+                            styles.title, 
+                            { color: colors.text, fontFamily: fonts.display },
+                            isCompleted && { color: colors.textMuted }
+                        ]}>
                             {task.title}
                         </Text>
-                        <Text style={styles.subtitle}>
-                            {task.duration || 15} mins • {isCompleted ? `Completed at ${formatTime(task.scheduledAt)}` : (isActive ? '8 minutes remaining' : `Scheduled for ${formatTime(task.scheduledAt) || 'Anytime'}`)}
+                        <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                            {task.duration || 15} mins • {isCompleted ? `Completed` : (isActive ? 'Active' : `Upcoming`)}
                         </Text>
                     </View>
                     <Ionicons
                         name={getIconName(task.type)}
                         size={24}
-                        color={isCompleted || isActive ? '#4211d4' : '#cbd5e1'}
+                        color={isCompleted || isActive ? colors.primary : colors.textMuted}
                     />
                 </View>
 
                 {isActive && (
                     <TouchableOpacity
-                        style={styles.resumeButton}
+                        style={[styles.resumeButton, { backgroundColor: colors.primary, borderRadius: borderRadius.lg, marginTop: spacing.md }]}
                         onPress={() => onPress(task)}
                     >
-                        <Text style={styles.resumeButtonText}>Resume Session</Text>
+                        <Text style={[styles.resumeButtonText, { color: isDark ? colors.background : "#fff" }]}>Resume Session</Text>
                     </TouchableOpacity>
                 )}
             </TouchableOpacity>
@@ -104,8 +119,6 @@ export default function TimelineTaskCard({ task, onPress, onAction }: Props) {
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        paddingHorizontal: 20,
-        marginBottom: 24,
     },
     upcomingOpacity: {
         opacity: 0.6,
@@ -113,14 +126,12 @@ const styles = StyleSheet.create({
     timelineColumn: {
         width: 40,
         alignItems: 'center',
-        marginRight: 12,
     },
     line: {
         position: 'absolute',
         width: 2,
         top: 4,
         bottom: -30,
-        backgroundColor: '#f1f5f9',
     },
     circle: {
         width: 40,
@@ -128,49 +139,17 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#fff',
         borderWidth: 4,
-        borderColor: '#f6f6f8', // matches container bg
         zIndex: 10,
-    },
-    circleCompleted: {
-        backgroundColor: '#4211d4',
-        borderWidth: 0,
-    },
-    circleActive: {
-        backgroundColor: 'rgba(66, 17, 212, 0.12)',
-        borderColor: '#f6f6f8',
-        borderWidth: 4,
-    },
-    circleUpcoming: {
-        backgroundColor: '#f1f5f9',
-        borderWidth: 4,
-        borderColor: '#f6f6f8',
     },
     card: {
         flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 16,
         borderWidth: 1,
-        borderColor: '#f1f5f9',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.04,
         shadowRadius: 6,
         elevation: 2,
-    },
-    cardActive: {
-        borderColor: '#4211d4',
-        borderWidth: 2,
-        shadowColor: '#4211d4',
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-    },
-    cardUpcoming: {
-        borderStyle: 'dashed',
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-        borderColor: '#e2e8f0',
     },
     cardHeader: {
         flexDirection: 'row',
@@ -179,10 +158,8 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        marginRight: 12,
     },
     activeBadge: {
-        backgroundColor: 'rgba(66, 17, 212, 0.08)',
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 6,
@@ -190,7 +167,6 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     activeBadgeText: {
-        color: '#4211d4',
         fontSize: 10,
         fontWeight: '800',
         letterSpacing: 0.5,
@@ -198,31 +174,22 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 17,
         fontWeight: '700',
-        color: '#0f172a',
         letterSpacing: -0.3,
-    },
-    titleCompleted: {
-        color: '#94a3b8',
     },
     subtitle: {
         fontSize: 13,
-        color: '#64748b',
         marginTop: 4,
         lineHeight: 18,
     },
     resumeButton: {
-        backgroundColor: '#4211d4',
-        borderRadius: 12,
         paddingVertical: 12,
         alignItems: 'center',
-        marginTop: 16,
-        shadowColor: '#4211d4',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.1,
         shadowRadius: 8,
     },
     resumeButtonText: {
-        color: '#fff',
         fontWeight: '700',
         fontSize: 15,
     }

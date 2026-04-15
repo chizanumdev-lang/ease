@@ -57,21 +57,60 @@ export interface DayPlan {
     updatedAt: string;
 }
 
+export enum TaskStatus {
+    LOCKED = 'locked',           // Dependency not met
+    PENDING = 'pending',         // Ready to start
+    IN_PROGRESS = 'in_progress', // User engaged
+    COMPLETED = 'completed',     // Successfully finished
+    FAILED = 'failed',           // Did not meet criteria
+    SKIPPED = 'skipped',         // User moved past it
+}
+
+export type TaskType = 
+    | 'video' 
+    | 'quiz' 
+    | 'audio' 
+    | 'micro-app' 
+    | 'reflection' 
+    | 'journal' 
+    | 'consistency';
+
+export interface TaskMetadata {
+    videoTimestamp?: number;
+    quizScore?: number;
+    quizAttempts?: number;
+    audioPosition?: number;
+    reflectionAnswers?: Record<string, string>;
+    journalEntry?: string; // Encrypted content
+    microAppResult?: string;
+    reflectionRating?: number;
+    reflectionMood?: string;
+    consistencyConfirmed?: boolean;
+    timerDuration?: number;
+    externalLink?: string;
+}
+
 export interface Task {
     id: string;
     title: string;
     description?: string;
-    completed: boolean;
+    status: TaskStatus;
+    completed: boolean; // Keeping for legacy/compatibility
     completedAt?: string;
-    type?: string;
+    type: TaskType;
     duration?: number;
     scheduledAt?: string;
     videoUrl?: string;
     quizId?: string;
     dayPlanId: string;
+    metadata?: TaskMetadata;
+    dependency_task_id?: string;
+    next_task_id?: string;
+    order: number;
     createdAt: string;
     updatedAt: string;
 }
+
 
 export interface AudioTrack {
     id: string;

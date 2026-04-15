@@ -7,15 +7,19 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    StatusBar,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList, Quiz, QuizQuestion } from '../../types';
 import { quizzesService } from '../../services/quizzes.service';
 import { tasksService } from '../../services/tasks.service';
+import { useTheme } from '../../hooks/useTheme';
+import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'Quiz'>;
 
 export default function QuizScreen({ route, navigation }: Props) {
+    const { colors, spacing, borderRadius, isDark } = useTheme();
     const { quizId, taskId } = route.params;
     const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [loading, setLoading] = useState(true);
@@ -93,35 +97,36 @@ export default function QuizScreen({ route, navigation }: Props) {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
-                <Text style={styles.loadingText}>Loading quiz...</Text>
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading quiz...</Text>
             </View>
         );
     }
 
     if (!quiz) {
         return (
-            <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>Quiz not found</Text>
+            <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+                <Text style={[styles.errorText, { color: colors.error }]}>Quiz not found</Text>
             </View>
         );
     }
 
     if (submitted) {
         return (
-            <ScrollView style={styles.container}>
+            <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
                 <View style={styles.resultsContainer}>
-                    <Text style={styles.resultsTitle}>Quiz Complete!</Text>
-                    <View style={styles.scoreCircle}>
+                    <Text style={[styles.resultsTitle, { color: colors.text }]}>Quiz Complete!</Text>
+                    <View style={[styles.scoreCircle, { backgroundColor: colors.primary }]}>
                         <Text style={styles.scoreText}>{score}%</Text>
                     </View>
 
                     {score < 60 && (
-                        <View style={styles.recommendationBox}>
-                            <Text style={styles.recommendationIcon}>💡</Text>
-                            <Text style={styles.recommendationTitle}>Recommendation</Text>
-                            <Text style={styles.recommendationText}>
+                        <View style={[styles.recommendationBox, { backgroundColor: `${colors.tertiary}15`, borderColor: colors.tertiary }]}>
+                            <Ionicons name="bulb-outline" size={32} color={colors.tertiary} style={styles.recommendationIcon} />
+                            <Text style={[styles.recommendationTitle, { color: colors.tertiary }]}>Recommendation</Text>
+                            <Text style={[styles.recommendationText, { color: colors.onSurfaceVariant }]}>
                                 Consider reviewing the video lesson again to strengthen your understanding.
                                 A score of 60% or higher is recommended before moving forward.
                             </Text>
@@ -129,40 +134,40 @@ export default function QuizScreen({ route, navigation }: Props) {
                     )}
 
                     <View style={styles.explanationsContainer}>
-                        <Text style={styles.explanationsTitle}>Review</Text>
+                        <Text style={[styles.explanationsTitle, { color: colors.text }]}>Review</Text>
                         {quiz.questions.map((question, qIndex) => {
                             const userAnswer = answers[qIndex];
                             const isCorrect = userAnswer === question.correctAnswer;
 
                             return (
-                                <View key={qIndex} style={styles.explanationCard}>
+                                <View key={qIndex} style={[styles.explanationCard, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
                                     <View style={styles.questionHeader}>
-                                        <Text style={styles.questionNumber}>Question {qIndex + 1}</Text>
+                                        <Text style={[styles.questionNumber, { color: colors.primary }]}>Question {qIndex + 1}</Text>
                                         <View style={[
                                             styles.resultBadge,
-                                            isCorrect ? styles.correctBadge : styles.incorrectBadge
+                                            { backgroundColor: isCorrect ? `${colors.primary}15` : `${colors.error}15` }
                                         ]}>
-                                            <Text style={styles.resultBadgeText}>
+                                            <Text style={[styles.resultBadgeText, { color: isCorrect ? colors.primary : colors.error }]}>
                                                 {isCorrect ? '✓ Correct' : '✗ Incorrect'}
                                             </Text>
                                         </View>
                                     </View>
 
-                                    <Text style={styles.questionText}>{question.question}</Text>
+                                    <Text style={[styles.questionText, { color: colors.text }]}>{question.question}</Text>
 
                                     <View style={styles.answersReview}>
-                                        <Text style={styles.reviewLabel}>Your answer:</Text>
+                                        <Text style={[styles.reviewLabel, { color: colors.textMuted }]}>Your answer:</Text>
                                         <Text style={[
                                             styles.reviewAnswer,
-                                            isCorrect ? styles.correctAnswer : styles.incorrectAnswer
+                                            { backgroundColor: colors.surfaceContainerLow, color: isCorrect ? colors.primary : colors.error, borderColor: isCorrect ? colors.primary : colors.error }
                                         ]}>
                                             {question.options[userAnswer!]}
                                         </Text>
 
                                         {!isCorrect && (
                                             <>
-                                                <Text style={styles.reviewLabel}>Correct answer:</Text>
-                                                <Text style={[styles.reviewAnswer, styles.correctAnswer]}>
+                                                <Text style={[styles.reviewLabel, { color: colors.textMuted }]}>Correct answer:</Text>
+                                                <Text style={[styles.reviewAnswer, { backgroundColor: colors.surfaceContainerLow, color: colors.primary, borderColor: colors.primary }]}>
                                                     {question.options[question.correctAnswer]}
                                                 </Text>
                                             </>
@@ -170,9 +175,9 @@ export default function QuizScreen({ route, navigation }: Props) {
                                     </View>
 
                                     {question.explanation && (
-                                        <View style={styles.explanationBox}>
-                                            <Text style={styles.explanationLabel}>Explanation:</Text>
-                                            <Text style={styles.explanationText}>{question.explanation}</Text>
+                                        <View style={[styles.explanationBox, { backgroundColor: `${colors.primary}10` }]}>
+                                            <Text style={[styles.explanationLabel, { color: colors.primary }]}>Explanation:</Text>
+                                            <Text style={[styles.explanationText, { color: colors.onSurfaceVariant }]}>{question.explanation}</Text>
                                         </View>
                                     )}
                                 </View>
@@ -180,8 +185,8 @@ export default function QuizScreen({ route, navigation }: Props) {
                         })}
                     </View>
 
-                    <TouchableOpacity style={styles.finishButton} onPress={handleFinish}>
-                        <Text style={styles.finishButtonText}>Return to Home</Text>
+                    <TouchableOpacity style={[styles.finishButton, { backgroundColor: colors.primary }]} onPress={handleFinish}>
+                        <Text style={[styles.finishButtonText, { color: isDark ? colors.background : "#fff" }]}>Return to Home</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -191,19 +196,20 @@ export default function QuizScreen({ route, navigation }: Props) {
     const allAnswered = answers.every(a => a !== null);
 
     return (
-        <ScrollView style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.title}>{quiz.title}</Text>
-                <Text style={styles.subtitle}>
+        <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+            <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.outlineVariant }]}>
+                <Text style={[styles.title, { color: colors.text }]}>{quiz.title}</Text>
+                <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                     {quiz.questions.length} {quiz.questions.length === 1 ? 'Question' : 'Questions'}
                 </Text>
             </View>
 
             <View style={styles.questionsContainer}>
                 {quiz.questions.map((question, qIndex) => (
-                    <View key={qIndex} style={styles.questionCard}>
-                        <Text style={styles.questionNumber}>Question {qIndex + 1}</Text>
-                        <Text style={styles.questionText}>{question.question}</Text>
+                    <View key={qIndex} style={[styles.questionCard, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+                        <Text style={[styles.questionNumber, { color: colors.primary }]}>Question {qIndex + 1}</Text>
+                        <Text style={[styles.questionText, { color: colors.text }]}>{question.question}</Text>
 
                         <View style={styles.optionsContainer}>
                             {question.options.map((option, oIndex) => {
@@ -213,19 +219,22 @@ export default function QuizScreen({ route, navigation }: Props) {
                                         key={oIndex}
                                         style={[
                                             styles.optionButton,
-                                            isSelected && styles.optionButtonSelected
+                                            { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant },
+                                            isSelected && { backgroundColor: `${colors.primary}10`, borderColor: colors.primary }
                                         ]}
                                         onPress={() => selectAnswer(qIndex, oIndex)}
                                     >
                                         <View style={[
                                             styles.optionRadio,
-                                            isSelected && styles.optionRadioSelected
+                                            { borderColor: colors.outlineVariant },
+                                            isSelected && { borderColor: colors.primary }
                                         ]}>
-                                            {isSelected && <View style={styles.optionRadioDot} />}
+                                            {isSelected && <View style={[styles.optionRadioDot, { backgroundColor: colors.primary }]} />}
                                         </View>
                                         <Text style={[
                                             styles.optionText,
-                                            isSelected && styles.optionTextSelected
+                                            { color: colors.text },
+                                            isSelected && { color: colors.primary, fontWeight: '700' }
                                         ]}>
                                             {option}
                                         </Text>
@@ -238,11 +247,15 @@ export default function QuizScreen({ route, navigation }: Props) {
             </View>
 
             <TouchableOpacity
-                style={[styles.submitButton, !allAnswered && styles.submitButtonDisabled]}
+                style={[
+                    styles.submitButton, 
+                    { backgroundColor: colors.primary },
+                    !allAnswered && { backgroundColor: colors.outlineVariant }
+                ]}
                 onPress={submitQuiz}
                 disabled={!allAnswered}
             >
-                <Text style={styles.submitButtonText}>
+                <Text style={[styles.submitButtonText, { color: isDark ? colors.background : "#fff" }]}>
                     {allAnswered ? 'Submit Quiz' : `Answer all questions (${answers.filter(a => a !== null).length}/${quiz.questions.length})`}
                 </Text>
             </TouchableOpacity>
@@ -253,7 +266,6 @@ export default function QuizScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
     },
     loadingContainer: {
         flex: 1,
@@ -263,7 +275,7 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: 12,
         fontSize: 16,
-        color: '#666',
+        fontWeight: '600',
     },
     errorContainer: {
         flex: 1,
@@ -272,46 +284,43 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontSize: 18,
-        color: '#e74c3c',
+        fontWeight: '700',
     },
     header: {
-        padding: 20,
-        backgroundColor: '#fff',
+        padding: 24,
+        paddingTop: 60,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
+        fontSize: 28,
+        fontWeight: '800',
+        letterSpacing: -0.5,
         marginBottom: 4,
     },
     subtitle: {
         fontSize: 15,
-        color: '#666',
+        fontWeight: '600',
     },
     questionsContainer: {
         padding: 20,
     },
     questionCard: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
+        borderRadius: 20,
         padding: 20,
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: '#eee',
     },
     questionNumber: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#007AFF',
+        fontSize: 12,
+        fontWeight: '800',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
         marginBottom: 8,
     },
     questionText: {
         fontSize: 18,
-        fontWeight: '600',
-        color: '#1a1a1a',
-        marginBottom: 16,
+        fontWeight: '700',
+        marginBottom: 20,
         lineHeight: 26,
     },
     optionsContainer: {
@@ -321,200 +330,171 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#f8f9fa',
-        borderRadius: 8,
+        borderRadius: 16,
         borderWidth: 2,
-        borderColor: '#e0e0e0',
-    },
-    optionButtonSelected: {
-        backgroundColor: '#e3f2fd',
-        borderColor: '#007AFF',
     },
     optionRadio: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
+        width: 22,
+        height: 22,
+        borderRadius: 11,
         borderWidth: 2,
-        borderColor: '#ccc',
         marginRight: 12,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    optionRadioSelected: {
-        borderColor: '#007AFF',
-    },
     optionRadioDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: '#007AFF',
+        width: 10,
+        height: 10,
+        borderRadius: 5,
     },
     optionText: {
         flex: 1,
         fontSize: 16,
-        color: '#333',
-    },
-    optionTextSelected: {
-        color: '#007AFF',
         fontWeight: '500',
     },
     submitButton: {
         margin: 20,
         padding: 18,
-        backgroundColor: '#007AFF',
-        borderRadius: 12,
+        borderRadius: 18,
         alignItems: 'center',
-    },
-    submitButtonDisabled: {
-        backgroundColor: '#ccc',
+        marginBottom: 60,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 5,
     },
     submitButtonText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     resultsContainer: {
-        padding: 20,
+        padding: 24,
+        paddingTop: 60,
     },
     resultsTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
+        fontSize: 32,
+        fontWeight: '800',
         textAlign: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
+        letterSpacing: -1,
     },
     scoreCircle: {
-        width: 150,
-        height: 150,
-        borderRadius: 75,
-        backgroundColor: '#007AFF',
+        width: 160,
+        height: 160,
+        borderRadius: 80,
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center',
-        marginBottom: 30,
+        marginBottom: 32,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+        elevation: 10,
     },
     scoreText: {
         fontSize: 48,
-        fontWeight: 'bold',
+        fontWeight: '800',
         color: '#fff',
     },
     recommendationBox: {
-        backgroundColor: '#fff3cd',
-        borderRadius: 12,
+        borderRadius: 20,
         padding: 20,
-        marginBottom: 30,
+        marginBottom: 32,
         borderWidth: 1,
-        borderColor: '#ffc107',
+        alignItems: 'center',
     },
     recommendationIcon: {
-        fontSize: 32,
-        textAlign: 'center',
         marginBottom: 8,
     },
     recommendationTitle: {
         fontSize: 18,
-        fontWeight: 'bold',
-        color: '#856404',
+        fontWeight: '800',
         marginBottom: 8,
-        textAlign: 'center',
     },
     recommendationText: {
         fontSize: 15,
-        color: '#856404',
         lineHeight: 22,
         textAlign: 'center',
+        fontWeight: '500',
     },
     explanationsContainer: {
-        marginBottom: 20,
+        marginBottom: 32,
     },
     explanationsTitle: {
         fontSize: 22,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
+        fontWeight: '800',
         marginBottom: 16,
+        letterSpacing: -0.5,
     },
     explanationCard: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
+        borderRadius: 20,
         padding: 20,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#eee',
     },
     questionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
     },
     resultBadge: {
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 6,
-    },
-    correctBadge: {
-        backgroundColor: '#d4edda',
-    },
-    incorrectBadge: {
-        backgroundColor: '#f8d7da',
+        borderRadius: 10,
     },
     resultBadgeText: {
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: 12,
+        fontWeight: '800',
     },
     answersReview: {
-        marginTop: 12,
-        gap: 8,
+        marginTop: 16,
+        gap: 12,
     },
     reviewLabel: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#666',
-        marginTop: 8,
+        fontSize: 13,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
     },
     reviewAnswer: {
         fontSize: 16,
-        padding: 12,
-        borderRadius: 8,
-        backgroundColor: '#f8f9fa',
-    },
-    correctAnswer: {
-        color: '#28a745',
+        padding: 16,
+        borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#28a745',
-    },
-    incorrectAnswer: {
-        color: '#dc3545',
-        borderWidth: 1,
-        borderColor: '#dc3545',
+        fontWeight: '600',
     },
     explanationBox: {
-        marginTop: 16,
+        marginTop: 20,
         padding: 16,
-        backgroundColor: '#e3f2fd',
-        borderRadius: 8,
+        borderRadius: 14,
     },
     explanationLabel: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#1976d2',
+        fontWeight: '800',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
         marginBottom: 8,
     },
     explanationText: {
         fontSize: 15,
-        color: '#1565c0',
         lineHeight: 22,
+        fontWeight: '500',
     },
     finishButton: {
         padding: 18,
-        backgroundColor: '#28a745',
-        borderRadius: 12,
+        borderRadius: 18,
         alignItems: 'center',
-        marginTop: 20,
+        marginBottom: 40,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 5,
     },
     finishButtonText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
 });

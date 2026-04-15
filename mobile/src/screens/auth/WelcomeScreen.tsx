@@ -1,87 +1,114 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    TouchableOpacity, 
+    Dimensions, 
+    StatusBar,
+    Platform
+} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../../types';
-import { Theme } from '../../constants/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from 'react-native';
+import StitchButton from '../../components/StitchButton';
+import PetalBackground from '../../components/PetalBackground';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
 
 const { width } = Dimensions.get('window');
 
 export default function WelcomeScreen({ navigation }: Props) {
-    const colorScheme = useColorScheme();
-    const isDark = colorScheme === 'dark';
-
-    const bgColor = isDark ? Theme.colors.background.dark : Theme.colors.background.light;
-    const textColor = isDark ? Theme.colors.text.dark : Theme.colors.text.light;
-    const mutedTextColor = isDark ? Theme.colors.text.mutedDark : Theme.colors.text.muted;
+    const { colors, fonts, isDark } = useTheme();
+    const insets = useSafeAreaInsets();
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={styles.logoContainer}>
-                    <View style={styles.iconBg}>
-                        <Ionicons name="sparkles" size={20} color={Theme.colors.primary} />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar 
+                barStyle={isDark ? "light-content" : "dark-content"} 
+                backgroundColor="transparent"
+                translucent 
+            />
+            
+            {/* Background Petals (Full Screen) */}
+            <View style={StyleSheet.absoluteFill}>
+                <PetalBackground />
+            </View>
+
+            {/* Content Overlay */}
+            <View style={[styles.content, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+                
+                {/* Sticky Header Badge */}
+                <View style={styles.topBadgeContainer}>
+                    <View style={[
+                        styles.badge, 
+                        { 
+                            backgroundColor: isDark ? 'rgba(59, 107, 91, 0.4)' : 'rgba(215, 228, 199, 0.7)',
+                            borderColor: colors.secondaryContainer
+                        }
+                    ]}>
+                        <Ionicons name="checkmark-circle" size={14} color={colors.primary} style={styles.badgeIcon} />
+                        <Text style={[styles.badgeText, { color: colors.primary }]}>
+                            Trusted by 10,000+ learners
+                        </Text>
                     </View>
-                    <Text style={[styles.logoText, { color: textColor }]}>EASE</Text>
                 </View>
-                <TouchableOpacity>
-                    <Text style={[styles.helpText, { color: mutedTextColor }]}>Help</Text>
-                </TouchableOpacity>
-            </View>
 
-            {/* Main Content */}
-            <View style={styles.main}>
-                {/* Hero Illustration */}
-                <View style={styles.heroContainer}>
-                    <View style={[styles.glow, styles.glowLarge]} />
-                    <View style={[styles.illustrationBox, { backgroundColor: isDark ? 'rgba(66, 17, 212, 0.1)' : 'rgba(66, 17, 212, 0.05)' }]}>
-                        <Ionicons name="trail-sign-outline" size={100} color={Theme.colors.primary} style={{ opacity: 0.8 }} />
-                        <View style={[styles.glow, styles.glowSmall, { top: -10, right: -10 }]} />
-                        <View style={[styles.glow, styles.glowMedium, { bottom: -20, left: -20 }]} />
+                {/* Hero Section */}
+                <View style={styles.heroSection}>
+                    <View style={styles.brandingContainer}>
+                        <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>EASE</Text>
+                        <Text style={[styles.tagline, { color: colors.onSurfaceVariant }]}>
+                            Your daily growth, automated
+                        </Text>
                     </View>
                 </View>
 
-                {/* Text Content */}
-                <View style={styles.textContent}>
-                    <Text style={[styles.title, { color: textColor }]}>
-                        Build the habits{'\n'}that <Text style={{ color: Theme.colors.primary }}>build you.</Text>
-                    </Text>
-                    <Text style={[styles.subtitle, { color: mutedTextColor }]}>
-                        Design personalized routines and experience intelligent guidance for a calmer, more productive life.
-                    </Text>
+                {/* Action Section */}
+                <View style={styles.actionSection}>
+                    <View style={styles.buttonGroup}>
+                        <StitchButton 
+                            title="Create Account"
+                            variant="primary"
+                            onPress={() => navigation.navigate('Signup')}
+                            style={styles.mainButton}
+                        />
+                        
+                        <StitchButton 
+                            title="Sign In"
+                            variant="outline"
+                            onPress={() => navigation.navigate('Login')}
+                            style={styles.outlineButton}
+                            textStyle={{ color: colors.text }}
+                        />
+                    </View>
                 </View>
 
-                {/* Action Buttons */}
-                <View style={styles.actions}>
-                    <TouchableOpacity 
-                        style={styles.primaryButton}
-                        onPress={() => navigation.navigate('Signup')}
-                    >
-                        <Text style={styles.primaryButtonText}>Get Started</Text>
-                    </TouchableOpacity>
+                {/* Footer Section */}
+                <View style={styles.footerSection}>
+                    <View style={styles.iconRow}>
+                        <TouchableOpacity style={[styles.footerIconButton, { backgroundColor: colors.surfaceContainerHighest }]}>
+                            <Ionicons name="people" size={24} color={colors.text} />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.footerIconButton, { backgroundColor: colors.surfaceContainerHighest }]}>
+                            <Ionicons name="shield-checkmark" size={24} color={colors.text} />
+                        </TouchableOpacity>
+                    </View>
 
-                    <TouchableOpacity 
-                        style={[styles.secondaryButton, { backgroundColor: isDark ? 'rgba(66, 17, 212, 0.1)' : '#e2e8f0' }]}
-                        onPress={() => navigation.navigate('Login')}
-                    >
-                        <Text style={[styles.secondaryButtonText, { color: textColor }]}>Log In</Text>
-                    </TouchableOpacity>
+                    <View style={styles.legalLinks}>
+                        <TouchableOpacity>
+                            <Text style={[styles.legalText, { color: colors.onSurfaceVariant }]}>PRIVACY</Text>
+                        </TouchableOpacity>
+                        <Text style={[styles.legalSeparator, { color: colors.outlineVariant }]}>•</Text>
+                        <TouchableOpacity>
+                            <Text style={[styles.legalText, { color: colors.onSurfaceVariant }]}>TERMS</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
-
-            {/* Footer */}
-            <View style={styles.footer}>
-                <View style={styles.dots}>
-                    <View style={[styles.dot, styles.dotActive]} />
-                    <View style={[styles.dot, { backgroundColor: isDark ? '#334155' : '#cbd5e1' }]} />
-                    <View style={[styles.dot, { backgroundColor: isDark ? '#334155' : '#cbd5e1' }]} />
-                </View>
-            </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -89,144 +116,118 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    content: {
+        flex: 1,
+        zIndex: 10,
+    },
+    topBadgeContainer: {
         alignItems: 'center',
-        paddingHorizontal: 24,
         paddingTop: 20,
     },
-    logoContainer: {
+    badge: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-    },
-    iconBg: {
-        backgroundColor: 'rgba(66, 17, 212, 0.15)',
-        padding: 8,
-        borderRadius: 10,
-    },
-    logoText: {
-        fontSize: 20,
-        fontWeight: '800',
-        letterSpacing: -0.5,
-    },
-    helpText: {
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    main: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 24,
-    },
-    heroContainer: {
-        width: width * 0.8,
-        aspectRatio: 1,
-        marginBottom: 48,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    illustrationBox: {
-        width: '100%',
-        height: '100%',
-        borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(66, 17, 212, 0.2)',
-        overflow: 'hidden',
-    },
-    glow: {
-        position: 'absolute',
-        backgroundColor: Theme.colors.primary,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
         borderRadius: 100,
-        opacity: 0.2,
+        borderWidth: 1,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
-    glowLarge: {
-        width: 300,
-        height: 300,
-        filter: 'blur(60px)',
+    badgeIcon: {
+        marginRight: 8,
     },
-    glowSmall: {
-        width: 60,
-        height: 60,
-        filter: 'blur(20px)',
-        opacity: 0.4,
+    badgeText: {
+        fontSize: 10,
+        fontWeight: '900',
+        textTransform: 'uppercase',
+        letterSpacing: 2,
     },
-    glowMedium: {
-        width: 100,
-        height: 100,
-        filter: 'blur(40px)',
-        opacity: 0.2,
-    },
-    textContent: {
+    heroSection: {
+        flex: 1.2,
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 40,
+    },
+    brandingContainer: {
+        alignItems: 'center',
     },
     title: {
-        fontSize: 36,
+        fontSize: 72,
         fontWeight: '900',
-        textAlign: 'center',
-        lineHeight: 42,
-        letterSpacing: -1,
-        marginBottom: 16,
+        letterSpacing: -4,
+        lineHeight: 80,
     },
-    subtitle: {
+    tagline: {
         fontSize: 18,
+        fontWeight: '500',
         textAlign: 'center',
-        lineHeight: 28,
-        paddingHorizontal: 10,
+        opacity: 0.8,
+        maxWidth: 220,
+        marginTop: 8,
     },
-    actions: {
+    actionSection: {
+        flex: 0.8,
+        justifyContent: 'center',
+        paddingHorizontal: 32,
+    },
+    buttonGroup: {
         width: '100%',
-        gap: 16,
+        gap: 12,
     },
-    primaryButton: {
+    mainButton: {
+        height: 64,
+    },
+    outlineButton: {
+        height: 64,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+    },
+    footerSection: {
+        paddingBottom: 20,
+        alignItems: 'center',
+        gap: 32,
+    },
+    iconRow: {
+        flexDirection: 'row',
+        gap: 32,
+    },
+    footerIconButton: {
+        width: 56,
         height: 56,
-        backgroundColor: Theme.colors.primary,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: Theme.colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.25,
-        shadowRadius: 12,
-        elevation: 8,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
-    primaryButtonText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '700',
-    },
-    secondaryButton: {
-        height: 56,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'transparent',
-    },
-    secondaryButtonText: {
-        fontSize: 18,
-        fontWeight: '700',
-    },
-    footer: {
-        paddingBottom: 40,
-        alignItems: 'center',
-    },
-    dots: {
+    legalLinks: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: 24,
     },
-    dot: {
-        height: 6,
-        borderRadius: 3,
+    legalText: {
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 2,
     },
-    dotActive: {
-        width: 24,
-        backgroundColor: Theme.colors.primary,
+    legalSeparator: {
+        fontSize: 16,
     },
 });

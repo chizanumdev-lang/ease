@@ -5,7 +5,7 @@ import { MainStackParamList } from '../types';
 import TabNavigator from './TabNavigator';
 import GoalWizardScreen from '../screens/goals/GoalWizardScreen';
 import ProgramPreviewScreen from '../screens/goals/ProgramPreviewScreen';
-import TaskScreen from '../screens/tasks/TaskScreen';
+import TaskScreenRouter from '../screens/tasks/TaskScreenRouter';
 import VideoLessonScreen from '../screens/tasks/VideoLessonScreen';
 import QuizScreen from '../screens/tasks/QuizScreen';
 import AudioPlayerScreen from '../screens/audio/AudioPlayerScreen';
@@ -38,7 +38,7 @@ export default function MainStack() {
             />
             <Stack.Screen
                 name="Task"
-                component={TaskScreen}
+                component={TaskScreenRouter}
                 options={{
                     title: 'Task',
                 }}

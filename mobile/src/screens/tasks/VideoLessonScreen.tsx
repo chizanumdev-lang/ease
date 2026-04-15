@@ -14,12 +14,14 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { Ionicons } from '@expo/vector-icons';
 import { MainStackParamList } from '../../types';
+import { useTheme } from '../../hooks/useTheme';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'VideoLesson'>;
 
 const { width } = Dimensions.get('window');
 
 export default function VideoLessonScreen({ route, navigation }: Props) {
+    const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
     const { task } = route.params;
     const [playing, setPlaying] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -58,37 +60,37 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
 
     if (!videoId) {
         return (
-            <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={64} color="#ef4444" />
-                <Text style={styles.errorText}>Invalid video URL</Text>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Text style={styles.backBtnText}>Go Back</Text>
+            <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+                <Ionicons name="alert-circle" size={64} color={colors.error} />
+                <Text style={[styles.errorText, { color: colors.text }]}>Invalid video URL</Text>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, { backgroundColor: colors.surfaceContainerLow }]}>
+                    <Text style={[styles.backBtnText, { color: colors.primary }]}>Go Back</Text>
                 </TouchableOpacity>
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             {/* Top Bar */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-                    <Ionicons name="arrow-back" size={24} color="#f1f5f9" />
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Daily Lesson</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Daily Lesson</Text>
                 <TouchableOpacity style={styles.iconButton}>
-                    <Ionicons name="share-outline" size={24} color="#f1f5f9" />
+                    <Ionicons name="share-outline" size={24} color={colors.text} />
                 </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Video Player */}
-                <View style={styles.playerWrapper}>
+                <View style={[styles.playerWrapper, { borderColor: colors.outlineVariant, backgroundColor: '#000' }]}>
                     {loading && (
                         <View style={styles.loadingOverlay}>
-                            <ActivityIndicator size="large" color="#13ecec" />
+                            <ActivityIndicator size="large" color={colors.primary} />
                         </View>
                     )}
                     <YoutubePlayer
@@ -104,50 +106,50 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                 {/* Lesson Info */}
                 <View style={styles.lessonInfo}>
                     <View style={styles.infoTextContainer}>
-                        <Text style={styles.lessonLabel}>MORNING ROUTINE • PART 4</Text>
-                        <Text style={styles.lessonTitle}>{task.title}</Text>
-                        <Text style={styles.lessonDescription}>{task.description || 'Learn to eliminate distractions in your first hour.'}</Text>
+                        <Text style={[styles.lessonLabel, { color: colors.primary }]}>MORNING ROUTINE • PART 4</Text>
+                        <Text style={[styles.lessonTitle, { color: colors.text }]}>{task.title}</Text>
+                        <Text style={[styles.lessonDescription, { color: colors.textMuted }]}>{task.description || 'Learn to eliminate distractions in your first hour.'}</Text>
                     </View>
-                    <TouchableOpacity style={styles.bookmarkBtn}>
-                        <Ionicons name="bookmark-outline" size={20} color="#f1f5f9" />
+                    <TouchableOpacity style={[styles.bookmarkBtn, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                        <Ionicons name="bookmark-outline" size={20} color={colors.text} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Progress Card */}
-                <View style={styles.progressCard}>
+                <View style={[styles.progressCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
                     <View style={styles.progressHeader}>
-                        <Text style={styles.progressLabel}>Lesson Progress</Text>
-                        <Text style={styles.progressValue}>65% Complete</Text>
+                        <Text style={[styles.progressLabel, { color: colors.textMuted }]}>Lesson Progress</Text>
+                        <Text style={[styles.progressValue, { color: colors.primary }]}>65% Complete</Text>
                     </View>
-                    <View style={styles.progressTrack}>
-                        <View style={[styles.progressFill, { width: '65%' }]} />
+                    <View style={[styles.progressTrack, { backgroundColor: colors.outlineVariant }]}>
+                        <View style={[styles.progressFill, { width: '65%', backgroundColor: colors.primary }]} />
                     </View>
                 </View>
 
                 {/* Key Takeaways */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="bulb-outline" size={20} color="#13ecec" />
-                        <Text style={styles.sectionTitle}>Key Takeaways</Text>
+                        <Ionicons name="bulb-outline" size={20} color={colors.primary} />
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Key Takeaways</Text>
                     </View>
                     <View style={styles.takeawaysList}>
                         <View style={styles.takeawayItem}>
-                            <View style={styles.checkCircle}>
-                                <Ionicons name="checkmark" size={12} color="#13ecec" />
+                            <View style={[styles.checkCircle, { backgroundColor: `${colors.primary}15` }]}>
+                                <Ionicons name="checkmark" size={12} color={colors.primary} />
                             </View>
-                            <Text style={styles.takeawayText}>Identify your "Deep Work" window immediately after waking up.</Text>
+                            <Text style={[styles.takeawayText, { color: colors.text }]}>Identify your "Deep Work" window immediately after waking up.</Text>
                         </View>
                         <View style={styles.takeawayItem}>
-                            <View style={styles.checkCircle}>
-                                <Ionicons name="checkmark" size={12} color="#13ecec" />
+                            <View style={[styles.checkCircle, { backgroundColor: `${colors.primary}15` }]}>
+                                <Ionicons name="checkmark" size={12} color={colors.primary} />
                             </View>
-                            <Text style={styles.takeawayText}>The 'No-Phone Zone': Why physical distance from devices matters.</Text>
+                            <Text style={[styles.takeawayText, { color: colors.text }]}>The 'No-Phone Zone': Why physical distance from devices matters.</Text>
                         </View>
                         <View style={styles.takeawayItem}>
-                            <View style={styles.checkCircle}>
-                                <Ionicons name="checkmark" size={12} color="#13ecec" />
+                            <View style={[styles.checkCircle, { backgroundColor: `${colors.primary}15` }]}>
+                                <Ionicons name="checkmark" size={12} color={colors.primary} />
                             </View>
-                            <Text style={styles.takeawayText}>Hydration and light exposure as biological focus triggers.</Text>
+                            <Text style={[styles.takeawayText, { color: colors.text }]}>Hydration and light exposure as biological focus triggers.</Text>
                         </View>
                     </View>
                 </View>
@@ -155,19 +157,19 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                 {/* Resources */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="document-text-outline" size={20} color="#13ecec" />
-                        <Text style={styles.sectionTitle}>Resources</Text>
+                        <Ionicons name="document-text-outline" size={20} color={colors.primary} />
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Resources</Text>
                     </View>
                     <View style={styles.resourceList}>
-                        <TouchableOpacity style={styles.resourceItem}>
-                            <View style={styles.resourceIconBox}>
-                                <Ionicons name="document-outline" size={20} color="#ef4444" />
+                        <TouchableOpacity style={[styles.resourceItem, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                            <View style={[styles.resourceIconBox, { backgroundColor: `${colors.error}15` }]}>
+                                <Ionicons name="document-outline" size={20} color={colors.error} />
                             </View>
                             <View style={styles.resourceMeta}>
-                                <Text style={styles.resourceName}>Focus Worksheet.pdf</Text>
-                                <Text style={styles.resourceSize}>2.4 MB</Text>
+                                <Text style={[styles.resourceName, { color: colors.text }]}>Focus Worksheet.pdf</Text>
+                                <Text style={[styles.resourceSize, { color: colors.textMuted }]}>2.4 MB</Text>
                             </View>
-                            <Ionicons name="download-outline" size={20} color="#64748b" />
+                            <Ionicons name="download-outline" size={20} color={colors.textMuted} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -176,10 +178,19 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
             </ScrollView>
 
             {/* Bottom Action */}
-            <View style={styles.footer}>
-                <TouchableOpacity style={styles.completeBtn} onPress={() => onStateChange('ended')}>
-                    <Text style={styles.completeBtnText}>Mark as Complete</Text>
-                    <Ionicons name="checkmark-circle" size={20} color="#102222" />
+            <View style={[styles.footer, { backgroundColor: `${colors.background}F2` }]}>
+                <TouchableOpacity 
+                    style={[
+                        styles.completeBtn, 
+                        { 
+                            backgroundColor: colors.primary,
+                            shadowColor: colors.primary 
+                        }
+                    ]} 
+                    onPress={() => onStateChange('ended')}
+                >
+                    <Text style={[styles.completeBtnText, { color: isDark ? colors.background : '#fff' }]}>Mark as Complete</Text>
+                    <Ionicons name="checkmark-circle" size={20} color={isDark ? colors.background : '#fff'} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -189,7 +200,6 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#102222',
     },
     header: {
         flexDirection: 'row',
@@ -203,7 +213,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 18,
         fontWeight: '700',
-        color: '#f1f5f9',
     },
     iconButton: {
         width: 40,
@@ -218,8 +227,6 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        backgroundColor: '#000',
         marginBottom: 16,
     },
     loadingOverlay: {
@@ -242,37 +249,30 @@ const styles = StyleSheet.create({
     lessonLabel: {
         fontSize: 10,
         fontWeight: '800',
-        color: '#13ecec',
         letterSpacing: 2,
         marginBottom: 8,
     },
     lessonTitle: {
         fontSize: 24,
         fontWeight: '800',
-        color: '#f1f5f9',
         marginBottom: 8,
     },
     lessonDescription: {
         fontSize: 14,
-        color: '#94a3b8',
         lineHeight: 20,
     },
     bookmarkBtn: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     progressCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
         padding: 16,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
         marginBottom: 24,
     },
     progressHeader: {
@@ -282,23 +282,19 @@ const styles = StyleSheet.create({
     },
     progressLabel: {
         fontSize: 14,
-        color: '#94a3b8',
         fontWeight: '500',
     },
     progressValue: {
         fontSize: 14,
-        color: '#13ecec',
         fontWeight: '700',
     },
     progressTrack: {
         height: 8,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
         borderRadius: 4,
         overflow: 'hidden',
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#13ecec',
         borderRadius: 4,
     },
     section: {
@@ -313,7 +309,6 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#f1f5f9',
     },
     takeawaysList: {
         gap: 16,
@@ -327,7 +322,6 @@ const styles = StyleSheet.create({
         width: 20,
         height: 20,
         borderRadius: 10,
-        backgroundColor: 'rgba(19, 236, 236, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 2,
@@ -335,7 +329,6 @@ const styles = StyleSheet.create({
     takeawayText: {
         flex: 1,
         fontSize: 14,
-        color: '#cbd5e1',
         lineHeight: 20,
     },
     resourceList: {
@@ -345,16 +338,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
     resourceIconBox: {
         width: 40,
         height: 40,
         borderRadius: 8,
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -365,11 +355,9 @@ const styles = StyleSheet.create({
     resourceName: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#f1f5f9',
     },
     resourceSize: {
         fontSize: 12,
-        color: '#64748b',
     },
     footer: {
         position: 'absolute',
@@ -378,17 +366,14 @@ const styles = StyleSheet.create({
         right: 0,
         padding: 24,
         paddingBottom: 40,
-        backgroundColor: 'rgba(16, 34, 34, 0.95)',
     },
     completeBtn: {
         height: 56,
-        backgroundColor: '#13ecec',
         borderRadius: 16,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         gap: 8,
-        shadowColor: '#13ecec',
         shadowOffset: { width: 0, height: 0 },
         shadowOpacity: 0.4,
         shadowRadius: 20,
@@ -397,30 +382,25 @@ const styles = StyleSheet.create({
     completeBtnText: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#102222',
     },
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#102222',
         padding: 32,
     },
     errorText: {
         fontSize: 20,
         fontWeight: '800',
-        color: '#f1f5f9',
         marginTop: 16,
         marginBottom: 24,
     },
     backBtn: {
         paddingHorizontal: 24,
         paddingVertical: 12,
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
         borderRadius: 12,
     },
     backBtnText: {
-        color: '#13ecec',
         fontWeight: '700',
     }
 });

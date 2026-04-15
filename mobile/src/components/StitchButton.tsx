@@ -1,17 +1,30 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import { Theme } from '../constants/theme';
+import { 
+    ActivityIndicator, 
+    TextStyle,
+    Animated,
+    Pressable,
+    StyleSheet,
+    ViewStyle,
+    View,
+    Text
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../hooks/useTheme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface StitchButtonProps {
     title: string;
     onPress: () => void;
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+    variant?: 'primary' | 'secondary' | 'tonal' | 'outline' | 'ghost';
     size?: 'sm' | 'md' | 'lg';
     isLoading?: boolean;
     disabled?: boolean;
     style?: ViewStyle;
     textStyle?: TextStyle;
     showArrow?: boolean;
+    leftIcon?: React.ReactNode;
+    rightIcon?: React.ReactNode;
 }
 
 export default function StitchButton({
@@ -24,16 +37,47 @@ export default function StitchButton({
     style,
     textStyle,
     showArrow = false,
+    leftIcon,
+    rightIcon,
 }: StitchButtonProps) {
+    const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 0.98,
+            useNativeDriver: true,
+            speed: 50,
+        }).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            speed: 50,
+        }).start();
+    };
+
     const getButtonStyle = () => {
         const baseStyle: ViewStyle[] = [styles.button];
+        
+        // Dynamic borderRadius
+        baseStyle.push({ borderRadius: borderRadius.xl });
 
         if (size === 'sm') baseStyle.push(styles.sm);
         if (size === 'lg') baseStyle.push(styles.lg);
 
-        if (variant === 'primary') baseStyle.push(styles.primary);
-        if (variant === 'secondary') baseStyle.push(styles.secondary);
-        if (variant === 'outline') baseStyle.push(styles.outline);
+        if (variant === 'secondary' || variant === 'tonal') {
+            baseStyle.push({ backgroundColor: colors.secondaryContainer });
+        }
+        if (variant === 'outline') {
+            baseStyle.push({ 
+                backgroundColor: 'transparent',
+                borderWidth: 1.5,
+                borderColor: colors.outlineVariant
+            });
+        }
         if (variant === 'ghost') baseStyle.push(styles.ghost);
 
         if (disabled || isLoading) baseStyle.push(styles.disabled);
@@ -43,17 +87,27 @@ export default function StitchButton({
     };
 
     const getTextStyle = () => {
-        const baseStyle: TextStyle[] = [styles.text];
+        const baseStyle: TextStyle[] = [
+            styles.text,
+            { fontFamily: fonts.display }
+        ];
 
         if (size === 'sm') baseStyle.push(styles.textSm);
         if (size === 'lg') baseStyle.push(styles.textLg);
 
-        if (variant === 'outline' || variant === 'ghost') {
-            baseStyle.push({ color: Theme.colors.primary });
-        } else if (variant === 'secondary') {
-            baseStyle.push({ color: Theme.colors.slate[900] });
+        if (variant === 'primary') {
+            baseStyle.push({ color: '#ffffff' }); // Always white for primary gradient
+        } else if (variant === 'secondary' || variant === 'tonal') {
+            baseStyle.push({ color: colors.onSurface });
+        } else if (variant === 'ghost') {
+            baseStyle.push({ 
+                color: colors.primary,
+                textDecorationLine: 'underline',
+                textDecorationColor: colors.primary,
+                textDecorationStyle: 'solid'
+            });
         } else {
-            baseStyle.push({ color: Theme.colors.white });
+            baseStyle.push({ color: colors.primary });
         }
 
         if (textStyle) baseStyle.push(textStyle);
@@ -61,64 +115,97 @@ export default function StitchButton({
         return baseStyle;
     };
 
+    const renderIcon = (icon: React.ReactNode, type: 'left' | 'right') => {
+        if (!icon) return null;
+        if (typeof icon === 'string') {
+            return (
+                <View style={type === 'left' ? styles.leftIcon : styles.rightIcon}>
+                    <Ionicons 
+                        name={icon as any} 
+                        size={size === 'sm' ? 16 : 20} 
+                        color={variant === 'primary' ? '#ffffff' : colors.primary} 
+                    />
+                </View>
+            );
+        }
+        return <View style={type === 'left' ? styles.leftIcon : styles.rightIcon}>{icon}</View>;
+    };
+
+    const renderContent = () => {
+        if (isLoading) {
+            return (
+                <ActivityIndicator 
+                    color={variant === 'primary' ? '#ffffff' : colors.primary} 
+                />
+            );
+        }
+
+        return (
+            <View style={styles.contentWrapper}>
+                {renderIcon(leftIcon, 'left')}
+                <Text style={getTextStyle()}>{title}</Text>
+                {showArrow && (
+                    <Text style={[getTextStyle(), { marginLeft: 8 }]}>→</Text>
+                )}
+                {renderIcon(rightIcon, 'right')}
+            </View>
+        );
+    };
+
+    if (variant === 'primary') {
+        return (
+            <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+                <Pressable
+                    onPress={onPress}
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    disabled={disabled || isLoading}
+                >
+                    <LinearGradient
+                        colors={isDark ? [colors.primary, '#2d5a4c'] : ['#225344', '#3b6b5b']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={getButtonStyle()}
+                    >
+                        {renderContent()}
+                    </LinearGradient>
+                </Pressable>
+            </Animated.View>
+        );
+    }
+
     return (
-        <TouchableOpacity
-            onPress={onPress}
-            disabled={disabled || isLoading}
-            style={getButtonStyle()}
-            activeOpacity={0.8}
-        >
-            {isLoading ? (
-                <ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? Theme.colors.primary : Theme.colors.white} />
-            ) : (
-                <>
-                    <Text style={getTextStyle()}>{title}</Text>
-                    {showArrow && (
-                        <Text style={[getTextStyle(), { marginLeft: 8 }]}>→</Text>
-                    )}
-                </>
-            )}
-        </TouchableOpacity>
+        <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+            <Pressable
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                disabled={disabled || isLoading}
+                style={getButtonStyle()}
+            >
+                {renderContent()}
+            </Pressable>
+        </Animated.View>
     );
 }
 
+// Internal text/layout styles
+
 const styles = StyleSheet.create({
     button: {
-        borderRadius: Theme.borderRadius.xl,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: Theme.spacing.lg,
-        height: 56,
+        paddingHorizontal: 28,
+        height: 60,
     },
     sm: {
         height: 40,
-        paddingHorizontal: Theme.spacing.md,
+        paddingHorizontal: 16,
     },
     lg: {
         height: 64,
-        paddingHorizontal: Theme.spacing.xl,
-    },
-    primary: {
-        backgroundColor: Theme.colors.primary,
-        shadowColor: Theme.colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    secondary: {
-        backgroundColor: Theme.colors.accent,
-        shadowColor: Theme.colors.accent,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    outline: {
-        backgroundColor: 'transparent',
-        borderWidth: 1,
-        borderColor: Theme.colors.slate[200],
+        paddingHorizontal: 32,
     },
     ghost: {
         backgroundColor: 'transparent',
@@ -127,13 +214,25 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     text: {
-        fontSize: 18,
-        fontWeight: '700',
+        fontSize: 16,
+        fontWeight: '800',
+        letterSpacing: -0.2,
     },
     textSm: {
         fontSize: 14,
     },
     textLg: {
-        fontSize: 20,
+        fontSize: 18,
+    },
+    contentWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    leftIcon: {
+        marginRight: 10,
+    },
+    rightIcon: {
+        marginLeft: 10,
     },
 });
+

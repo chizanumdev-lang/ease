@@ -5,12 +5,14 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../types';
 import { useAudioStore } from '../store/audioStore';
+import { useTheme } from '../hooks/useTheme';
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
 export default function MiniAudioPlayer() {
     const navigation = useNavigation<NavigationProp>();
     const { currentTrack, isPlaying, pause, play } = useAudioStore();
+    const { colors, spacing, borderRadius, isDark } = useTheme();
 
     // Don't show if no track is loaded
     if (!currentTrack) return null;
@@ -32,17 +34,31 @@ export default function MiniAudioPlayer() {
     };
 
     return (
-        <TouchableOpacity style={styles.container} onPress={handleExpand} activeOpacity={0.9}>
-            <View style={styles.content}>
-                <View style={styles.iconContainer}>
-                    <Ionicons name="musical-notes" size={24} color="#007AFF" />
+        <TouchableOpacity 
+            style={[
+                styles.container, 
+                { 
+                    backgroundColor: isDark ? 'rgba(34, 83, 68, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+                    borderColor: colors.outlineVariant,
+                    borderRadius: borderRadius.lg,
+                    bottom: 100, // Float above the tab bar
+                    left: spacing.lg,
+                    right: spacing.lg,
+                }
+            ]} 
+            onPress={handleExpand} 
+            activeOpacity={0.9}
+        >
+            <View style={[styles.content, { padding: spacing.sm }]}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.surfaceContainerLow, marginRight: spacing.md }]}>
+                    <Ionicons name="musical-notes" size={24} color={colors.primary} />
                 </View>
 
                 <View style={styles.info}>
-                    <Text style={styles.title} numberOfLines={1}>
+                    <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
                         {currentTrack.title}
                     </Text>
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                         {isPlaying ? 'Playing' : 'Paused'}
                     </Text>
                 </View>
@@ -55,7 +71,7 @@ export default function MiniAudioPlayer() {
                     <Ionicons
                         name={isPlaying ? 'pause' : 'play'}
                         size={28}
-                        color="#007AFF"
+                        color={colors.primary}
                     />
                 </TouchableOpacity>
             </View>
@@ -66,32 +82,23 @@ export default function MiniAudioPlayer() {
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        bottom: 100, // Float above the tab bar (64 height + 24 bottom + 12 gap)
-        left: 20,
-        right: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderRadius: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 10,
         elevation: 10,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
     },
     content: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
     },
     iconContainer: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#edf7ff',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
     },
     info: {
         flex: 1,
@@ -99,13 +106,11 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 16,
-        fontWeight: '600',
-        color: '#1a1a1a',
+        fontWeight: '700',
         marginBottom: 2,
     },
     subtitle: {
         fontSize: 13,
-        color: '#666',
     },
     playButton: {
         padding: 8,

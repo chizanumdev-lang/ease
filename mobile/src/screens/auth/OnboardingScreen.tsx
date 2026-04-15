@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Dimensions, StatusBar } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
-import { Theme } from '../../constants/theme';
+import { useTheme } from '../../hooks/useTheme';
 import StitchButton from '../../components/StitchButton';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
@@ -10,39 +10,41 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
 const { width } = Dimensions.get('window');
 
 export default function OnboardingScreen({ navigation }: Props) {
+    const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
+
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" />
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             <View style={styles.header}>
                 <View style={styles.logoContainer}>
-                    <View style={styles.logoIcon}>
+                    <View style={[styles.logoIcon, { backgroundColor: colors.surfaceContainerLow }]}>
                         <Text style={styles.logoEmoji}>✨</Text>
                     </View>
-                    <Text style={styles.logoText}>EASE</Text>
+                    <Text style={[styles.logoText, { color: colors.text }]}>EASE</Text>
                 </View>
                 <StitchButton
                     title="Help"
                     onPress={() => { }}
                     variant="ghost"
                     size="sm"
-                    textStyle={styles.helpText}
+                    textStyle={[styles.helpText, { color: colors.textMuted }]}
                 />
             </View>
 
             <View style={styles.content}>
                 <View style={styles.illustrationArea}>
-                    <View style={styles.blob} />
-                    <View style={styles.illustrationCard}>
+                    <View style={[styles.blob, { backgroundColor: colors.primary, opacity: isDark ? 0.15 : 0.05 }]} />
+                    <View style={[styles.illustrationCard, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }, shadows.ambient]}>
                         <Text style={styles.illustrationEmoji}>📍</Text>
                     </View>
                 </View>
 
                 <View style={styles.textContent}>
-                    <Text style={styles.title}>
+                    <Text style={[styles.title, { color: colors.text }]}>
                         Build the habits{"\n"}
-                        that <Text style={styles.highlight}>build you.</Text>
+                        that <Text style={[styles.highlight, { color: colors.primary }]}>build you.</Text>
                     </Text>
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                         Design personalized routines and experience intelligent guidance for a calmer, more productive life.
                     </Text>
                 </View>
@@ -57,13 +59,13 @@ export default function OnboardingScreen({ navigation }: Props) {
                         title="Log In"
                         onPress={() => navigation.navigate('Login')}
                         variant="outline"
-                        style={styles.loginButton}
+                        style={[styles.loginButton, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}
                     />
 
                     <View style={styles.pagination}>
-                        <View style={[styles.dot, styles.activeDot]} />
-                        <View style={styles.dot} />
-                        <View style={styles.dot} />
+                        <View style={[styles.dot, { backgroundColor: colors.primary }]} />
+                        <View style={[styles.dot, { backgroundColor: colors.outlineVariant }]} />
+                        <View style={[styles.dot, { backgroundColor: colors.outlineVariant }]} />
                     </View>
                 </View>
             </View>
@@ -74,49 +76,45 @@ export default function OnboardingScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background.light,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: Theme.spacing.lg,
-        paddingTop: Theme.spacing.md,
+        paddingHorizontal: 24,
+        paddingTop: 16,
     },
     logoContainer: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     logoIcon: {
-        backgroundColor: 'rgba(66, 17, 212, 0.1)',
-        padding: Theme.spacing.sm,
-        borderRadius: Theme.borderRadius.md,
-        marginRight: Theme.spacing.sm,
+        padding: 8,
+        borderRadius: 12,
+        marginRight: 8,
     },
     logoEmoji: {
         fontSize: 18,
     },
     logoText: {
         fontSize: 20,
-        fontWeight: '700',
-        color: Theme.colors.text.light,
-        letterSpacing: -0.5,
+        fontWeight: '900',
+        letterSpacing: 2,
     },
     helpText: {
-        color: Theme.colors.slate[400],
         fontSize: 14,
-        fontWeight: '500',
+        fontWeight: '700',
     },
     content: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: Theme.spacing.xl,
+        paddingHorizontal: 32,
     },
     illustrationArea: {
         width: width * 0.7,
         aspectRatio: 1,
-        marginBottom: Theme.spacing.xxl,
+        marginBottom: 48,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -124,76 +122,60 @@ const styles = StyleSheet.create({
         position: 'absolute',
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(66, 17, 212, 0.15)',
-        borderRadius: Theme.borderRadius.full,
+        borderRadius: 200,
         transform: [{ scale: 1.2 }],
     },
     illustrationCard: {
         width: '100%',
         height: '100%',
-        backgroundColor: Theme.colors.white,
-        borderRadius: Theme.borderRadius.xl,
+        borderRadius: 40,
         borderWidth: 1,
-        borderColor: 'rgba(66, 17, 212, 0.1)',
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: Theme.colors.primary,
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 5,
     },
     illustrationEmoji: {
         fontSize: 80,
     },
     textContent: {
         alignItems: 'center',
-        marginBottom: Theme.spacing.xxl,
+        marginBottom: 48,
     },
     title: {
         fontSize: 36,
-        fontWeight: '800',
-        color: Theme.colors.text.light,
+        fontWeight: '900',
         textAlign: 'center',
         lineHeight: 44,
-        marginBottom: Theme.spacing.md,
+        marginBottom: 16,
+        letterSpacing: -1,
     },
-    highlight: {
-        color: Theme.colors.primary,
-    },
+    highlight: {},
     subtitle: {
         fontSize: 17,
-        color: Theme.colors.text.muted,
         textAlign: 'center',
         lineHeight: 26,
-        paddingHorizontal: Theme.spacing.md,
+        paddingHorizontal: 10,
+        fontWeight: '500',
     },
     footer: {
         width: '100%',
-        paddingBottom: Theme.spacing.xl,
+        paddingBottom: 32,
     },
     mainButton: {
-        marginBottom: Theme.spacing.md,
+        marginBottom: 12,
     },
     loginButton: {
-        backgroundColor: Theme.colors.slate[200],
-        borderWidth: 0,
+        borderWidth: 1,
     },
     pagination: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: Theme.spacing.xl,
+        marginTop: 32,
     },
     dot: {
         width: 6,
         height: 6,
         borderRadius: 3,
-        backgroundColor: Theme.colors.slate[300],
         marginHorizontal: 4,
-    },
-    activeDot: {
-        width: 24,
-        backgroundColor: Theme.colors.primary,
     },
 });

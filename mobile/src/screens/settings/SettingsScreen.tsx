@@ -1,13 +1,15 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Switch, Image, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Switch, Image, Dimensions, Platform } from 'react-native';
 import { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TabParamList, NotificationSettings } from '../../types';
 import { useAuthStore } from '../../store/authStore';
-import { Theme } from '../../constants/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { programsService } from '../../services/programs.service';
 import { useAudioStore } from '../../store/audioStore';
 import { STATIC_BINAURAL_BEATS } from '../../constants/config';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Logo from '../../components/Logo';
 
 type Props = NativeStackScreenProps<TabParamList, 'Settings'>;
 
@@ -29,6 +31,7 @@ const FOCUS_AREAS = [
 export default function SettingsScreen({ navigation }: Props) {
     const { user, logout, updateSettings } = useAuthStore();
     const { loadTrack, play, stop, isPlaying, currentTrack } = useAudioStore();
+    const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
     
     // Test Audio State
     const [isGenerating, setIsGenerating] = useState(false);
@@ -110,71 +113,79 @@ export default function SettingsScreen({ navigation }: Props) {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.topNav}>
+                    <Logo size={32} style={styles.navLogo} />
+                    <Text style={[styles.navTitle, { color: colors.text }]}>Settings</Text>
+                </View>
+
                 {/* Profile Header */}
                 <View style={styles.profileHeader}>
-                    <View style={styles.profileImageContainer}>
+                    <View style={[styles.profileImageContainer, { borderColor: colors.outlineVariant }]}>
                         <Image
                             source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBPcqwvnGRJTBHRYhDLfV176zDemjNo1XxrHgT3M_PUgxnNgWUN-B11LyZ0dpjLVmIyb4pFXOJkuT6q6SQWvPTh0wPx0ceJTXCxr25DeFgekAx4_qt9x2VByrpay91DcEQONMH_L1w3QABzaFA91-GI_sWttDoH3fveglhhoR_-IPmMSOzXV9-v6XVkUppxd2Nz4f6WGzmUFtFJkULUmVSOf-Uu8KjLdg9AdQIn5bbbs3aOf6lNwj0OMwOoJl53QGBF4R6gcjy0FQuM' }}
                             style={styles.profileImage}
                         />
-                        <TouchableOpacity style={styles.editBadge}>
-                            <Ionicons name="camera" size={16} color="#fff" />
+                        <TouchableOpacity style={[styles.editBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
+                            <Ionicons name="camera" size={16} color={isDark ? colors.background : colors.white} />
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.userName}>{user?.name || 'User'}</Text>
-                    <Text style={styles.userEmail}>{user?.email}</Text>
-                    <TouchableOpacity style={styles.editProfileButton}>
-                        <Text style={styles.editProfileText}>Edit Profile</Text>
+                    <Text style={[styles.userName, { color: colors.text }]}>{user?.name || 'User'}</Text>
+                    <Text style={[styles.userEmail, { color: colors.textMuted }]}>{user?.email}</Text>
+                    <TouchableOpacity style={[styles.editProfileButton, { backgroundColor: colors.surfaceContainerLow }]}>
+                        <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Progress Tracking Cards */}
                 <View style={styles.progressRow}>
-                    <View style={styles.progressCard}>
+                    <View style={[styles.progressCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
                         <View style={styles.cardHeader}>
-                            <Ionicons name="leaf" size={16} color={Theme.colors.primary} />
-                            <Text style={styles.cardLabel}>SPIRIT TREE</Text>
+                            <Ionicons name="leaf" size={16} color={colors.primary} />
+                            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>SPIRIT TREE</Text>
                         </View>
-                        <Text style={styles.cardValue}>Level 3</Text>
-                        <Text style={styles.cardSubValue}>Flourishing</Text>
+                        <Text style={[styles.cardValue, { color: colors.text }]}>Level 3</Text>
+                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>Flourishing</Text>
                     </View>
-                    <View style={styles.progressCard}>
+                    <View style={[styles.progressCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
                         <View style={styles.cardHeader}>
-                            <Ionicons name="flame" size={16} color="#f97316" />
-                            <Text style={styles.cardLabel}>STREAK</Text>
+                            <Ionicons name="flame" size={16} color={colors.error} />
+                            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>STREAK</Text>
                         </View>
-                        <Text style={styles.cardValue}>12 Days</Text>
-                        <Text style={styles.cardSubValue}>Mindfulness</Text>
+                        <Text style={[styles.cardValue, { color: colors.text }]}>12 Days</Text>
+                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>Mindfulness</Text>
                     </View>
                 </View>
 
                 {/* Coaching Tone Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Coaching Tone</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Coaching Tone</Text>
                     <View style={styles.toneGrid}>
                         {COACHING_TONES.map((tone) => (
                             <TouchableOpacity 
                                 key={tone.id}
                                 style={[
                                     styles.toneCard,
-                                    user?.settings?.coachingTone === tone.id && styles.toneCardSelected
+                                    { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant },
+                                    user?.settings?.coachingTone === tone.id && { backgroundColor: colors.primary, borderColor: colors.primary }
                                 ]}
                                 onPress={() => handleUpdatePreference('coachingTone', tone.id)}
                             >
                                 <Ionicons 
                                     name={tone.icon as any} 
                                     size={24} 
-                                    color={user?.settings?.coachingTone === tone.id ? '#fff' : '#64748b'} 
+                                    color={user?.settings?.coachingTone === tone.id ? (isDark ? colors.background : colors.white) : colors.textMuted} 
                                 />
                                 <Text style={[
                                     styles.toneLabel,
-                                    user?.settings?.coachingTone === tone.id && styles.textWhite
+                                    { color: colors.text },
+                                    user?.settings?.coachingTone === tone.id && { color: isDark ? colors.background : colors.white }
                                 ]}>{tone.label}</Text>
                                 <Text style={[
                                     styles.toneDesc,
-                                    user?.settings?.coachingTone === tone.id && styles.textWhiteMuted
+                                    { color: colors.textMuted },
+                                    user?.settings?.coachingTone === tone.id && { color: isDark ? colors.background : "rgba(255, 255, 255, 0.7)" }
                                 ]}>{tone.desc}</Text>
                             </TouchableOpacity>
                         ))}
@@ -183,14 +194,18 @@ export default function SettingsScreen({ navigation }: Props) {
 
                 {/* Focus Areas Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Focus Areas</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Focus Areas</Text>
                     <View style={styles.chipCloud}>
                         {FOCUS_AREAS.map((area) => {
                             const isSelected = user?.settings?.focusAreas?.includes(area.id);
                             return (
                                 <TouchableOpacity 
                                     key={area.id}
-                                    style={[styles.chip, isSelected && styles.chipSelected]}
+                                    style={[
+                                        styles.chip, 
+                                        { backgroundColor: colors.surfaceContainerLow },
+                                        isSelected && { backgroundColor: colors.primary }
+                                    ]}
                                     onPress={() => {
                                         const current = user?.settings?.focusAreas || [];
                                         const next = isSelected 
@@ -199,7 +214,11 @@ export default function SettingsScreen({ navigation }: Props) {
                                         handleUpdatePreference('focusAreas', next);
                                     }}
                                 >
-                                    <Text style={[styles.chipText, isSelected && styles.textWhite]}>
+                                    <Text style={[
+                                        styles.chipText, 
+                                        { color: colors.textMuted },
+                                        isSelected && { color: isDark ? colors.background : colors.white }
+                                    ]}>
                                         {area.label}
                                     </Text>
                                 </TouchableOpacity>
@@ -210,8 +229,8 @@ export default function SettingsScreen({ navigation }: Props) {
 
                 {/* Notifications Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Notifications</Text>
-                    <View style={styles.settingsGroup}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Notifications</Text>
+                    <View style={[styles.settingsGroup, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
                         {[
                             { id: 'taskReminders', label: 'Morning Reminders' },
                             { id: 'nightAudio', label: 'Nightly Audio' },
@@ -220,69 +239,75 @@ export default function SettingsScreen({ navigation }: Props) {
                             <View key={notif.id}>
                                 <View style={styles.settingRow}>
                                     <View style={styles.settingInfo}>
-                                        <Text style={styles.settingLabel}>{notif.label}</Text>
+                                        <Text style={[styles.settingLabel, { color: colors.text }]}>{notif.label}</Text>
                                     </View>
                                     <Switch
                                         value={user?.settings?.notifications?.[notif.id as keyof NotificationSettings] ?? true}
                                         onValueChange={(val) => handleToggle(notif.id as keyof NotificationSettings, val)}
-                                        trackColor={{ false: '#e2e8f0', true: Theme.colors.primary }}
+                                        trackColor={{ false: isDark ? colors.outline : colors.surfaceContainerHighest, true: colors.primary }}
                                     />
                                 </View>
-                                {idx < 2 && <View style={styles.divider} />}
+                                {idx < 2 && <View style={[styles.divider, { backgroundColor: colors.outlineVariant }]} />}
                             </View>
                         ))}
                     </View>
                 </View>
 
-                {/* Debug & Testing - ONLY FOR USER REQUEST */}
-                <View style={[styles.section, { borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 24 }]}>
+                {/* Debug & Testing */}
+                <View style={[styles.section, { borderTopWidth: 1, borderTopColor: colors.outlineVariant, paddingTop: 24 }]}>
                     <View style={styles.sectionHeaderRow}>
-                        <Ionicons name="construct-outline" size={20} color={Theme.colors.primary} />
-                        <Text style={[styles.sectionTitle, { marginBottom: 0, marginLeft: 8 }]}>Debug & Testing</Text>
+                        <Ionicons name="construct-outline" size={20} color={colors.primary} />
+                        <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0, marginLeft: 8 }]}>Debug & Testing</Text>
                     </View>
-                    <Text style={styles.debugSubtitle}>Verify backend audio generation fix</Text>
+                    <Text style={[styles.debugSubtitle, { color: colors.textMuted }]}>Verify backend audio generation fix</Text>
                     
-                    <View style={styles.debugCard}>
-                        <Text style={styles.debugLabel}>Select Theme</Text>
+                    <View style={[styles.debugCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                        <Text style={[styles.debugLabel, { color: colors.text }]}>Select Theme</Text>
                         <View style={styles.debugThemes}>
                             {['Forest', 'Ocean', 'Deep Space', 'Cozy Cafe'].map(t => (
                                 <TouchableOpacity 
                                     key={t}
-                                    style={[styles.debugThemeChip, testTheme === t && styles.debugThemeChipSelected]}
+                                    style={[
+                                        styles.debugThemeChip, 
+                                        { backgroundColor: colors.surface, borderColor: colors.outlineVariant },
+                                        testTheme === t && { backgroundColor: colors.primary, borderColor: colors.primary }
+                                    ]}
                                     onPress={() => setTestTheme(t)}
                                 >
-                                    <Text style={[styles.debugThemeText, testTheme === t && styles.textWhite]}>{t}</Text>
+                                    <Text style={[
+                                        styles.debugThemeText, 
+                                        { color: colors.textMuted },
+                                        testTheme === t && { color: isDark ? colors.background : colors.white }
+                                    ]}>{t}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
 
                         <TouchableOpacity 
-                            style={[styles.debugButton, isGenerating && styles.debugButtonDisabled]}
+                            style={[styles.debugButton, { backgroundColor: colors.primary }, isGenerating && styles.debugButtonDisabled]}
                             onPress={handleTestAudio}
                             disabled={isGenerating}
                         >
                             {isGenerating ? (
-                                <View style={styles.row}>
-                                    <Text style={styles.debugButtonText}>Generating...</Text>
-                                </View>
+                                <Text style={[styles.debugButtonText, { color: isDark ? colors.background : colors.white }]}>Generating...</Text>
                             ) : (
                                 <View style={styles.row}>
-                                    <Ionicons name="musical-notes-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                                    <Text style={styles.debugButtonText}>Generate & Play Test Audio</Text>
+                                    <Ionicons name="musical-notes-outline" size={20} color={isDark ? colors.background : colors.white} style={{ marginRight: 8 }} />
+                                    <Text style={[styles.debugButtonText, { color: isDark ? colors.background : colors.white }]}>Generate & Play Test Audio</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
 
                         {isPlaying && currentTrack?.id === 'test-audio' && (
-                            <TouchableOpacity style={styles.stopButton} onPress={() => stop()}>
-                                <Ionicons name="stop" size={20} color="#fff" />
-                                <Text style={styles.stopText}>Stop Playback</Text>
+                            <TouchableOpacity style={[styles.stopButton, { backgroundColor: colors.outline }]} onPress={() => stop()}>
+                                <Ionicons name="stop" size={20} color={colors.white} />
+                                <Text style={[styles.stopText, { color: colors.white }]}>Stop Playback</Text>
                             </TouchableOpacity>
                         )}
                     </View>
 
-                    <View style={[styles.debugCard, { marginTop: 16 }]}>
-                        <Text style={styles.debugLabel}>Raw Binaural Test (No Voice)</Text>
+                    <View style={[styles.debugCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant, marginTop: 16 }]}>
+                        <Text style={[styles.debugLabel, { color: colors.text }]}>Raw Binaural Test (No Voice)</Text>
                         <View style={styles.debugThemes}>
                             {[
                                 { name: 'Theta (6Hz)', val: 6 },
@@ -291,33 +316,41 @@ export default function SettingsScreen({ navigation }: Props) {
                             ].map(f => (
                                 <TouchableOpacity 
                                     key={f.val}
-                                    style={[styles.debugThemeChip, testFrequency === f.val && styles.debugThemeChipSelected]}
+                                    style={[
+                                        styles.debugThemeChip, 
+                                        { backgroundColor: colors.surface, borderColor: colors.outlineVariant },
+                                        testFrequency === f.val && { backgroundColor: colors.primary, borderColor: colors.primary }
+                                    ]}
                                     onPress={() => setTestFrequency(f.val)}
                                 >
-                                    <Text style={[styles.debugThemeText, testFrequency === f.val && styles.textWhite]}>{f.name}</Text>
+                                    <Text style={[
+                                        styles.debugThemeText, 
+                                        { color: colors.textMuted },
+                                        testFrequency === f.val && { color: isDark ? colors.background : colors.white }
+                                    ]}>{f.name}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
 
                         <TouchableOpacity 
-                            style={[styles.debugButton, { backgroundColor: '#64748b' }, isGeneratingBinaural && styles.debugButtonDisabled]}
+                            style={[styles.debugButton, { backgroundColor: colors.outline }, isGeneratingBinaural && styles.debugButtonDisabled]}
                             onPress={handleTestBinaural}
                             disabled={isGeneratingBinaural}
                         >
                             {isGeneratingBinaural ? (
-                                <Text style={styles.debugButtonText}>Generating...</Text>
+                                <Text style={[styles.debugButtonText, { color: colors.white }]}>Generating...</Text>
                             ) : (
                                 <View style={styles.row}>
-                                    <Ionicons name="pulse-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                                    <Text style={styles.debugButtonText}>Test Raw Binaural Beat</Text>
+                                    <Ionicons name="pulse-outline" size={20} color={colors.white} style={{ marginRight: 8 }} />
+                                    <Text style={[styles.debugButtonText, { color: colors.white }]}>Test Raw Binaural Beat</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
 
                         {isPlaying && currentTrack?.id === 'test-binaural' && (
-                            <TouchableOpacity style={styles.stopButton} onPress={() => stop()}>
-                                <Ionicons name="stop" size={20} color="#fff" />
-                                <Text style={styles.stopText}>Stop Playback</Text>
+                            <TouchableOpacity style={[styles.stopButton, { backgroundColor: colors.outline }]} onPress={() => stop()}>
+                                <Ionicons name="stop" size={20} color={colors.white} />
+                                <Text style={[styles.stopText, { color: colors.white }]}>Stop Playback</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -325,24 +358,48 @@ export default function SettingsScreen({ navigation }: Props) {
 
                 {/* Account Actions */}
                 <View style={[styles.section, { marginBottom: 40 }]}>
-                    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                        <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-                        <Text style={styles.logoutText}>Logout</Text>
+                    <TouchableOpacity 
+                        style={[
+                            styles.logoutButton, 
+                            { 
+                                backgroundColor: isDark ? 'rgba(186, 26, 26, 0.1)' : '#fef2f2', 
+                                borderColor: colors.error + '40' // Add some transparency if needed, or use outlineVariant
+                            }
+                        ]} 
+                        onPress={handleLogout}
+                    >
+                        <Ionicons name="log-out-outline" size={20} color={colors.error} />
+                        <Text style={[styles.logoutText, { color: colors.error }]}>Logout</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+    },
+    topNav: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        gap: 12,
+    },
+    navLogo: {
+        // small branding in settings
+    },
+    navTitle: {
+        fontSize: 18,
+        fontWeight: '900',
+        textTransform: 'uppercase',
+        letterSpacing: 2,
     },
     scrollContent: {
-        paddingTop: 60,
-        paddingBottom: 180,
+        paddingTop: Platform.OS === 'ios' ? 20 : 40,
+        paddingBottom: 120,
     },
     profileHeader: {
         alignItems: 'center',
@@ -356,7 +413,6 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         padding: 4,
         borderWidth: 2,
-        borderColor: 'rgba(66, 17, 212, 0.1)',
     },
     profileImage: {
         width: '100%',
@@ -367,24 +423,20 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         right: 0,
-        backgroundColor: Theme.colors.primary,
         width: 28,
         height: 28,
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#fff',
     },
     userName: {
         fontSize: 24,
         fontWeight: '800',
-        color: '#0f172a',
         letterSpacing: -0.5,
     },
     userEmail: {
         fontSize: 14,
-        color: '#64748b',
         marginTop: 4,
         marginBottom: 16,
     },
@@ -392,12 +444,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 20,
-        backgroundColor: '#f1f5f9',
     },
     editProfileText: {
         fontSize: 14,
         fontWeight: '700',
-        color: '#0f172a',
     },
     progressRow: {
         flexDirection: 'row',
@@ -407,11 +457,9 @@ const styles = StyleSheet.create({
     },
     progressCard: {
         flex: 1,
-        backgroundColor: '#f8fafc',
         borderRadius: 20,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#f1f5f9',
     },
     cardHeader: {
         flexDirection: 'row',
@@ -422,17 +470,14 @@ const styles = StyleSheet.create({
     cardLabel: {
         fontSize: 10,
         fontWeight: '700',
-        color: '#64748b',
         letterSpacing: 1,
     },
     cardValue: {
         fontSize: 20,
         fontWeight: '800',
-        color: '#0f172a',
     },
     cardSubValue: {
         fontSize: 12,
-        color: '#64748b',
         marginTop: 2,
     },
     section: {
@@ -442,7 +487,6 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: '800',
-        color: '#0f172a',
         marginBottom: 16,
     },
     toneGrid: {
@@ -451,34 +495,20 @@ const styles = StyleSheet.create({
     },
     toneCard: {
         flex: 1,
-        backgroundColor: '#f8fafc',
         borderRadius: 16,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#f1f5f9',
         alignItems: 'center',
-    },
-    toneCardSelected: {
-        backgroundColor: Theme.colors.primary,
-        borderColor: Theme.colors.primary,
     },
     toneLabel: {
         fontSize: 14,
         fontWeight: '700',
-        color: '#0f172a',
         marginTop: 8,
     },
     toneDesc: {
         fontSize: 10,
-        color: '#64748b',
         marginTop: 2,
         textAlign: 'center',
-    },
-    textWhite: {
-        color: '#fff',
-    },
-    textWhiteMuted: {
-        color: 'rgba(255, 255, 255, 0.7)',
     },
     chipCloud: {
         flexDirection: 'row',
@@ -489,22 +519,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 20,
-        backgroundColor: '#f1f5f9',
-    },
-    chipSelected: {
-        backgroundColor: Theme.colors.primary,
     },
     chipText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#64748b',
     },
     settingsGroup: {
-        backgroundColor: '#f8fafc',
         borderRadius: 20,
         padding: 4,
         borderWidth: 1,
-        borderColor: '#f1f5f9',
     },
     settingRow: {
         flexDirection: 'row',
@@ -518,11 +541,9 @@ const styles = StyleSheet.create({
     settingLabel: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#0f172a',
     },
     divider: {
         height: 1,
-        backgroundColor: '#f1f5f9',
         marginHorizontal: 16,
     },
     logoutButton: {
@@ -532,16 +553,12 @@ const styles = StyleSheet.create({
         gap: 8,
         paddingVertical: 16,
         borderRadius: 20,
-        backgroundColor: '#fef2f2',
         borderWidth: 1,
-        borderColor: '#fee2e2',
     },
     logoutText: {
-        color: '#ef4444',
         fontSize: 16,
         fontWeight: '700',
     },
-    // Debug Styles
     sectionHeaderRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -549,21 +566,17 @@ const styles = StyleSheet.create({
     },
     debugSubtitle: {
         fontSize: 13,
-        color: '#64748b',
         marginBottom: 20,
         marginTop: -12,
     },
     debugCard: {
-        backgroundColor: '#f8fafc',
         borderRadius: 20,
         padding: 20,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
     },
     debugLabel: {
         fontSize: 14,
         fontWeight: '700',
-        color: '#475569',
         marginBottom: 12,
     },
     debugThemes: {
@@ -576,21 +589,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 12,
-        backgroundColor: '#fff',
         borderWidth: 1,
-        borderColor: '#e2e8f0',
-    },
-    debugThemeChipSelected: {
-        backgroundColor: Theme.colors.primary,
-        borderColor: Theme.colors.primary,
     },
     debugThemeText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#64748b',
     },
     debugButton: {
-        backgroundColor: Theme.colors.primary,
         paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',
@@ -599,13 +604,11 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
     debugButtonText: {
-        color: '#fff',
         fontSize: 14,
         fontWeight: '700',
     },
     stopButton: {
         marginTop: 12,
-        backgroundColor: '#64748b',
         paddingVertical: 12,
         borderRadius: 12,
         flexDirection: 'row',
@@ -614,7 +617,6 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     stopText: {
-        color: '#fff',
         fontSize: 14,
         fontWeight: '700',
     },

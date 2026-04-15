@@ -9,24 +9,26 @@ import CoachScreen from '../screens/coach/CoachScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import MiniAudioPlayer from '../components/MiniAudioPlayer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Theme } from '../constants/theme';
+import { useTheme } from '../hooks/useTheme';
+import { Ionicons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
 export default function TabNavigator() {
+    const { colors, isDark } = useTheme();
     const insets = useSafeAreaInsets();
 
     return (
-        <View style={{ flex: 1, backgroundColor: Theme.colors.background.light }}>
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
             <Tab.Navigator
                 screenOptions={{
                     headerShown: false,
-                    tabBarActiveTintColor: Theme.colors.primary,
-                    tabBarInactiveTintColor: Theme.colors.text.muted,
-                    tabBarStyle: styles.tabBar,
+                    tabBarActiveTintColor: colors.primary,
+                    tabBarInactiveTintColor: colors.textMuted,
+                    tabBarStyle: [styles.tabBar, { backgroundColor: isDark ? 'rgba(43, 93, 78, 0.7)' : 'rgba(255, 255, 255, 0.7)' }],
                     tabBarBackground: () => (
                         <BlurView
-                            tint="light"
+                            tint={isDark ? "dark" : "light"}
                             intensity={80}
                             style={StyleSheet.absoluteFill}
                         />
@@ -38,15 +40,15 @@ export default function TabNavigator() {
                     component={HomeScreen}
                     options={{
                         tabBarLabel: 'Home',
-                        tabBarIcon: ({ color }: { color: string }) => <Text style={{ fontSize: 20 }}>🏠</Text>,
+                        tabBarIcon: ({ color }: { color: string }) => <Ionicons name="home-outline" size={20} color={color} />,
                     }}
                 />
                 <Tab.Screen
                     name="Progress"
                     component={ProgressScreen}
                     options={{
-                        tabBarLabel: 'Progress',
-                        tabBarIcon: ({ color }: { color: string }) => <Text style={{ fontSize: 20 }}>📊</Text>,
+                        tabBarLabel: 'Stats',
+                        tabBarIcon: ({ color }: { color: string }) => <Ionicons name="analytics-outline" size={20} color={color} />,
                     }}
                 />
                 <Tab.Screen
@@ -54,7 +56,7 @@ export default function TabNavigator() {
                     component={CoachScreen}
                     options={{
                         tabBarLabel: 'Coach',
-                        tabBarIcon: ({ color }: { color: string }) => <Text style={{ fontSize: 20 }}>🤖</Text>,
+                        tabBarIcon: ({ color }: { color: string }) => <Ionicons name="chatbubbles-outline" size={20} color={color} />,
                     }}
                 />
                 <Tab.Screen
@@ -62,7 +64,7 @@ export default function TabNavigator() {
                     component={SettingsScreen}
                     options={{
                         tabBarLabel: 'Settings',
-                        tabBarIcon: ({ color }: { color: string }) => <Text style={{ fontSize: 20 }}>⚙️</Text>,
+                        tabBarIcon: ({ color }: { color: string }) => <Ionicons name="settings-outline" size={20} color={color} />,
                     }}
                 />
             </Tab.Navigator>
@@ -79,7 +81,6 @@ const styles = StyleSheet.create({
         right: 20,
         height: 64,
         borderRadius: 32,
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
         borderTopWidth: 0,
         paddingBottom: 0, // Reset default padding
         elevation: 10,

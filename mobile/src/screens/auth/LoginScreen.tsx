@@ -1,81 +1,122 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
 import { useAuthStore } from '../../store/authStore';
-import { Theme } from '../../constants/theme';
+import { useTheme } from '../../hooks/useTheme';
 import StitchButton from '../../components/StitchButton';
 import StitchInput from '../../components/StitchInput';
+import Logo from '../../components/Logo';
+import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
+    const { colors, spacing, borderRadius, fonts, shadows, isDark } = useTheme();
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const { login, isLoading, error } = useAuthStore();
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Error', 'Please fill in all fields');
+            Alert.alert('Error', 'Please enter both email and password');
             return;
         }
 
         try {
             await login(email, password);
-        } catch (err) {
-            Alert.alert('Login Failed', error || 'Something went wrong');
+            // Navigation is handled by RootNavigator observing auth state
+        } catch (err: any) {
+            let errorMessage = 'Something went wrong';
+            if (err.response) {
+                errorMessage = err.response.data?.message || 'Invalid credentials';
+            } else if (err.request) {
+                errorMessage = 'Network error. Please check your connection.';
+            } else {
+                errorMessage = err.message || 'Login failed';
+            }
+            Alert.alert('Login Failed', errorMessage);
         }
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" />
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Text style={styles.backIcon}>←</Text>
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Welcome Back</Text>
-                <View style={{ width: 40 }} />
-            </View>
-
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.textContent}>
-                    <Text style={styles.title}>Welcome Back</Text>
-                    <Text style={styles.subtitle}>Login to continue your journey</Text>
-                </View>
-
-                <View style={styles.formCard}>
-                    <StitchInput
-                        label="Email Address"
-                        placeholder="name@example.com"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                    />
-                    <StitchInput
-                        label="Password"
-                        placeholder="Your password"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
-
-                    <StitchButton
-                        title="Login"
-                        onPress={handleLogin}
-                        isLoading={isLoading}
-                        style={styles.loginButton}
-                    />
-                </View>
-
-                <View style={styles.footer}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                        <Text style={styles.footerText}>
-                            Don't have an account? <Text style={styles.footerLink}>Sign up</Text>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+            <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+            >
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <View style={styles.header}>
+                        <Logo size={80} style={styles.logo} />
+                        <Text style={[styles.brandName, { fontFamily: fonts.display, color: colors.onSurface }]}>EASE</Text>
+                        <Text style={[styles.welcomeText, { fontFamily: fonts.body, color: colors.onSurfaceVariant }]}>
+                            Welcome back. Let's continue your journey.
                         </Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+                    </View>
+
+                    <View style={[styles.formContainer, { paddingHorizontal: spacing.xl }]}>
+                        <StitchInput
+                            label="Email or Phone"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                        />
+                        <StitchInput
+                            label="Password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                        />
+
+                        <TouchableOpacity style={styles.forgotPassword}>
+                            <Text style={[styles.forgotPasswordText, { fontFamily: fonts.label, color: colors.primary }]}>
+                                Forgot Password?
+                            </Text>
+                        </TouchableOpacity>
+
+                        <StitchButton
+                            title="Log In"
+                            onPress={handleLogin}
+                            isLoading={isLoading}
+                            variant="primary"
+                            style={styles.loginButton}
+                        />
+
+                        <View style={styles.dividerContainer}>
+                            <View style={[styles.divider, { backgroundColor: colors.outlineVariant }]} />
+                            <Text style={[styles.dividerText, { fontFamily: fonts.label, color: colors.onSurfaceVariant }]}>
+                                or continue with
+                            </Text>
+                            <View style={[styles.divider, { backgroundColor: colors.outlineVariant }]} />
+                        </View>
+
+                        <View style={styles.socialRow}>
+                            <TouchableOpacity style={[styles.socialButton, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                                <Ionicons name="logo-google" size={24} color={colors.onSurface} />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.socialButton, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                                <Ionicons name="logo-apple" size={24} color={colors.onSurface} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    <View style={styles.footer}>
+                        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                            <Text style={[styles.footerText, { fontFamily: fonts.body, color: colors.onSurfaceVariant }]}>
+                                Don't have an account? <Text style={[styles.footerLink, { color: colors.primary, fontFamily: fonts.display }]}>Create Account</Text>
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -83,78 +124,78 @@ export default function LoginScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.colors.background.light,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: Theme.spacing.lg,
-        paddingTop: Theme.spacing.md,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(0,0,0,0.05)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    backIcon: {
-        fontSize: 20,
-        color: Theme.colors.slate[900],
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: Theme.colors.slate[900],
     },
     scrollContent: {
-        paddingHorizontal: Theme.spacing.xl,
-        paddingTop: Theme.spacing.xxl,
-        paddingBottom: Theme.spacing.xl,
+        flexGrow: 1,
+        paddingBottom: 40,
     },
-    textContent: {
+    header: {
         alignItems: 'center',
-        marginBottom: Theme.spacing.xxl,
+        marginTop: 60,
+        marginBottom: 40,
     },
-    title: {
+    logo: {
+        marginBottom: 16,
+    },
+    brandName: {
         fontSize: 32,
-        fontWeight: '800',
-        color: Theme.colors.text.light,
-        marginBottom: Theme.spacing.sm,
+        letterSpacing: 2,
+        marginBottom: 8,
     },
-    subtitle: {
-        fontSize: 16,
-        color: Theme.colors.text.muted,
+    welcomeText: {
+        fontSize: 14,
         textAlign: 'center',
+        paddingHorizontal: 40,
     },
-    formCard: {
-        backgroundColor: Theme.colors.white,
-        borderRadius: Theme.borderRadius.xl,
-        padding: Theme.spacing.xl,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.05,
-        shadowRadius: 20,
-        elevation: 5,
-        borderWidth: 1,
-        borderColor: Theme.colors.slate[200],
+    formContainer: {
+        width: '100%',
+    },
+    forgotPassword: {
+        alignSelf: 'flex-end',
+        marginVertical: 12,
+    },
+    forgotPasswordText: {
+        fontSize: 14,
     },
     loginButton: {
-        marginTop: Theme.spacing.md,
-        height: 60,
+        marginTop: 20,
+    },
+    dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 32,
+    },
+    divider: {
+        flex: 1,
+        height: 1,
+    },
+    dividerText: {
+        paddingHorizontal: 16,
+        fontSize: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    socialRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 16,
+    },
+    socialButton: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
     },
     footer: {
-        marginTop: Theme.spacing.xxl,
+        marginTop: 40,
         alignItems: 'center',
     },
     footerText: {
         fontSize: 14,
-        color: Theme.colors.text.muted,
     },
     footerLink: {
-        color: Theme.colors.primary,
         fontWeight: '700',
     },
 });

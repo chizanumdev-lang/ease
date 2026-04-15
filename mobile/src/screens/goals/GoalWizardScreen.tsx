@@ -19,7 +19,7 @@ import { useProgramsStore } from '../../store/programsStore';
 import SelectionCard from '../../components/SelectionCard';
 import StitchButton from '../../components/StitchButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Theme } from '../../constants/theme';
+import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -50,6 +50,7 @@ const COMMITMENTS = [
 ];
 
 export default function GoalWizardScreen({ navigation }: Props) {
+    const { colors, spacing, borderRadius, shadows, isDark, fonts } = useTheme();
     const [step, setStep] = React.useState<Step>('CATEGORY');
 
     // Form State
@@ -131,7 +132,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                         key={index}
                         style={[
                             styles.progressBar,
-                            index <= currentIndex ? styles.progressBarActive : styles.progressBarInactive,
+                            { backgroundColor: index <= currentIndex ? colors.primary : colors.surfaceContainerHighest },
                             { width: (width - 64) / steps.length }
                         ]}
                     />
@@ -141,37 +142,37 @@ export default function GoalWizardScreen({ navigation }: Props) {
     };
 
     const renderHeader = (title: string, subtitle: string) => (
-        <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.subtitle}>{subtitle}</Text>
+        <View style={[styles.header, { marginBottom: spacing.xl }]}>
+            <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>{title}</Text>
+            <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>{subtitle}</Text>
         </View>
     );
 
     if (step === 'GENERATING') {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={Theme.colors.primary} />
-                <Text style={styles.loadingText}>Designing your program...</Text>
-                <Text style={styles.loadingSubtext}>Analyzing goal • Structuring curriculum • Scheduling tasks</Text>
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loadingText, { color: colors.text }]}>Designing your program...</Text>
+                <Text style={[styles.loadingSubtext, { color: colors.textMuted }]}>Analyzing goal • Structuring curriculum • Scheduling tasks</Text>
             </View>
         );
     }
 
     return (
-        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
-                <View style={styles.topNav}>
+                <View style={[styles.topNav, { paddingHorizontal: spacing.md, paddingVertical: spacing.sm }]}>
                     {step !== 'CATEGORY' ? (
-                        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                            <Ionicons name="chevron-back" size={24} color={Theme.colors.text.light} />
+                        <TouchableOpacity onPress={handleBack} style={[styles.backButton, { backgroundColor: colors.surfaceContainerLow }]}>
+                            <Ionicons name="chevron-back" size={24} color={colors.text} />
                         </TouchableOpacity>
                     ) : (
-                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                            <Ionicons name="close" size={24} color={Theme.colors.text.light} />
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.surfaceContainerLow }]}>
+                            <Ionicons name="close" size={24} color={colors.text} />
                         </TouchableOpacity>
                     )}
                     {renderProgress()}
@@ -180,7 +181,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
                 <ScrollView
                     style={styles.container}
-                    contentContainerStyle={styles.contentContainer}
+                    contentContainerStyle={[styles.contentContainer, { padding: spacing.lg }]}
                     showsVerticalScrollIndicator={false}
                 >
                     {step === 'CATEGORY' && (
@@ -193,7 +194,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                     description={cat.description}
                                     selected={category === cat.id}
                                     onPress={() => setCategory(cat.id)}
-                                    icon={<Ionicons name={cat.icon as any} size={24} color={category === cat.id ? Theme.colors.primary : Theme.colors.slate[400]} />}
+                                    icon={<Ionicons name={cat.icon as any} size={24} color={category === cat.id ? colors.primary : colors.slate[400]} />}
                                 />
                             ))}
                         </>
@@ -202,27 +203,27 @@ export default function GoalWizardScreen({ navigation }: Props) {
                     {step === 'SETTINGS' && (
                         <>
                             {renderHeader("Goal Settings & Timeframe", "Describe what you want to achieve and when.")}
-                            <Text style={styles.label}>Detailed Description</Text>
+                            <Text style={[styles.label, { color: colors.text }]}>Detailed Description</Text>
                             <TextInput
-                                style={styles.textArea}
+                                style={[styles.textArea, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.outlineVariant }]}
                                 placeholder="I want to learn confirmational guitar playing, focusing on fingerstyle techniques..."
                                 value={goalDescription}
                                 onChangeText={setGoalDescription}
                                 multiline
                                 numberOfLines={6}
                                 textAlignVertical="top"
-                                placeholderTextColor={Theme.colors.slate[400]}
+                                placeholderTextColor={colors.textMuted}
                             />
 
-                            <Text style={[styles.label, { marginTop: 24 }]}>Target Achievement Date (Optional)</Text>
+                            <Text style={[styles.label, { marginTop: 24, color: colors.text }]}>Target Achievement Date (Optional)</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.outlineVariant }]}
                                 placeholder="YYYY-MM-DD (e.g. 2026-06-01)"
                                 value={targetDate}
                                 onChangeText={setTargetDate}
-                                placeholderTextColor={Theme.colors.slate[400]}
+                                placeholderTextColor={colors.textMuted}
                             />
-                            <Text style={styles.hint}>Leaving this blank will use the timeframe from the next step.</Text>
+                            <Text style={[styles.hint, { color: colors.textMuted }]}>Leaving this blank will use the timeframe from the next step.</Text>
                         </>
                     )}
 
@@ -236,7 +237,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                     description={dur.description}
                                     selected={timeframe === dur.id}
                                     onPress={() => setTimeframe(dur.id)}
-                                    icon={<Ionicons name="time-outline" size={24} color={timeframe === dur.id ? Theme.colors.primary : Theme.colors.slate[400]} />}
+                                    icon={<Ionicons name="time-outline" size={24} color={timeframe === dur.id ? colors.primary : colors.slate[400]} />}
                                 />
                             ))}
                         </>
@@ -252,14 +253,14 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                     description={comm.description}
                                     selected={dailyMinutes === comm.id}
                                     onPress={() => setDailyMinutes(comm.id)}
-                                    icon={<Ionicons name="flash-outline" size={24} color={dailyMinutes === comm.id ? Theme.colors.primary : Theme.colors.slate[400]} />}
+                                    icon={<Ionicons name="flash-outline" size={24} color={dailyMinutes === comm.id ? colors.primary : colors.slate[400]} />}
                                 />
                             ))}
                         </>
                     )}
                 </ScrollView>
 
-                <View style={styles.footer}>
+                <View style={[styles.footer, { borderTopColor: colors.outlineVariant }]}>
                     <StitchButton
                         title={step === 'TIME' ? "Generate My Plan" : "Continue"}
                         onPress={handleNext}
@@ -274,20 +275,16 @@ export default function GoalWizardScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: Theme.colors.white,
     },
     topNav: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: Theme.spacing.md,
-        paddingVertical: Theme.spacing.sm,
         justifyContent: 'space-between',
     },
     backButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: Theme.colors.slate[200],
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -299,85 +296,63 @@ const styles = StyleSheet.create({
         height: 4,
         borderRadius: 2,
     },
-    progressBarActive: {
-        backgroundColor: Theme.colors.primary,
-    },
-    progressBarInactive: {
-        backgroundColor: Theme.colors.slate[200],
-    },
     container: {
         flex: 1,
     },
     contentContainer: {
-        padding: Theme.spacing.lg,
     },
     header: {
-        marginBottom: Theme.spacing.xl,
     },
     title: {
         fontSize: 28,
         fontWeight: '800',
-        color: Theme.colors.text.light,
-        marginBottom: Theme.spacing.sm,
+        marginBottom: 8,
     },
     subtitle: {
         fontSize: 16,
-        color: Theme.colors.text.muted,
         lineHeight: 24,
     },
     label: {
         fontSize: 16,
         fontWeight: '700',
-        color: Theme.colors.text.light,
-        marginBottom: Theme.spacing.sm,
+        marginBottom: 8,
     },
     textArea: {
-        backgroundColor: Theme.colors.background.light,
-        borderRadius: Theme.borderRadius.lg,
-        padding: Theme.spacing.md,
+        borderRadius: 16,
+        padding: 16,
         height: 160,
         fontSize: 16,
-        color: Theme.colors.text.light,
         borderWidth: 1,
-        borderColor: Theme.colors.slate[200],
     },
     input: {
-        backgroundColor: Theme.colors.background.light,
-        borderRadius: Theme.borderRadius.lg,
-        padding: Theme.spacing.md,
+        borderRadius: 16,
+        padding: 16,
         fontSize: 16,
-        color: Theme.colors.text.light,
         borderWidth: 1,
-        borderColor: Theme.colors.slate[200],
     },
     hint: {
         marginTop: 8,
         fontSize: 13,
-        color: Theme.colors.text.muted,
         fontStyle: 'italic',
     },
     footer: {
-        padding: Theme.spacing.lg,
+        padding: 24,
         borderTopWidth: 1,
-        borderTopColor: Theme.colors.slate[200],
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: Theme.colors.white,
-        padding: Theme.spacing.xl,
+        padding: 32,
     },
     loadingText: {
-        marginTop: Theme.spacing.lg,
+        marginTop: 24,
         fontSize: 20,
         fontWeight: '700',
-        color: Theme.colors.text.light,
     },
     loadingSubtext: {
-        marginTop: Theme.spacing.sm,
+        marginTop: 8,
         fontSize: 15,
-        color: Theme.colors.text.muted,
         textAlign: 'center',
     },
 });
