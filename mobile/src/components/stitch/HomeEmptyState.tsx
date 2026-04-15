@@ -86,26 +86,6 @@ export default function HomeEmptyState({ onStartPress }: HomeEmptyStateProps) {
                         </Text>
                     </View>
                 </TouchableOpacity>
-
-                {/* Stats Ghost Row */}
-                <View style={styles.ghostRow}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ghostScroll}>
-                        {[
-                            { label: 'Streak', value: '0', icon: 'flash-outline' },
-                            { label: 'Progress', value: '--', icon: 'checkmark-done-outline' },
-                            { label: 'Points', value: '0', icon: 'star-outline' },
-                            { label: 'Badges', value: '0', icon: 'medal-outline' },
-                        ].map((stat, i) => (
-                            <View key={i} style={[styles.ghostStat, { backgroundColor: colors.surfaceContainerLow + '40' }]}>
-                                <Ionicons name={stat.icon as any} size={20} color={colors.primary + '30'} />
-                                <View>
-                                    <Text style={[styles.ghostValue, { color: colors.text + '20', fontFamily: fonts.display }]}>{stat.value}</Text>
-                                    <Text style={[styles.ghostLabel, { color: colors.textMuted + '30', fontFamily: fonts.label }]}>{stat.label.toUpperCase()}</Text>
-                                </View>
-                            </View>
-                        ))}
-                    </ScrollView>
-                </View>
             </View>
         </ScrollView>
     );
@@ -142,9 +122,9 @@ const styles = StyleSheet.create({
     },
     card: {
         borderRadius: 40,
-        padding: 24,
+        padding: 28,
         width: width * 0.9,
-        marginBottom: -20, // Overlap effect
+        marginBottom: 16, // Removed negative overlap to prevent text cutoff
         shadowColor: '#225344',
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.08,
@@ -228,33 +208,5 @@ const styles = StyleSheet.create({
         fontSize: 10,
         letterSpacing: 1.5,
         marginTop: 4,
-    },
-    ghostRow: {
-        width: '100%',
-        marginTop: 20,
-        opacity: 0.6,
-        transform: [{ scale: 0.95 }],
-    },
-    ghostScroll: {
-        paddingHorizontal: 24,
-        gap: 16,
-    },
-    ghostStat: {
-        minWidth: 140,
-        padding: 20,
-        borderRadius: 32,
-        flexDirection: 'column',
-        gap: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(111, 121, 122, 0.05)',
-    },
-    ghostValue: {
-        fontSize: 24,
-        fontWeight: '800',
-    },
-    ghostLabel: {
-        fontSize: 9,
-        fontWeight: '700',
-        letterSpacing: 1,
     },
 });
