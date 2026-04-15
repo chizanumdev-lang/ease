@@ -24,4 +24,7 @@ export class GenerateProgramDto {
     @IsString({ each: true })
     @IsOptional()
     constraints?: string[] = [];
+
+    @IsOptional()
+    metadata?: any;
 }

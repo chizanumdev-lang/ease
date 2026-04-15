@@ -1,5 +1,5 @@
-//export const API_BASE_URL = 'http://172.20.10.5:3000/api';
-export const API_BASE_URL = 'https://ease-amber.vercel.app/api';
+//export const API_BASE_URL = 'http://192.168.0.250:3000/api';
+export const API_BASE_URL = 'http://localhost:3000/api';
 
 export const API_ENDPOINTS = {
     // Auth
@@ -17,6 +17,7 @@ export const API_ENDPOINTS = {
     // Programs
     GENERATE_PROGRAM: '/programs/generate',
     ACTIVE_PROGRAM: '/programs/active',
+    PREVIEW: '/programs/preview',
     PROGRAM: (id: string) => `/programs/${id}`,
     TODAY_PLAN: (id: string) => `/programs/${id}/today`,
 

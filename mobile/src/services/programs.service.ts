@@ -11,6 +11,7 @@ export const programsService = {
             minutesPerDay?: number;
             learningStyle?: string;
             constraints?: string[];
+            metadata?: any;
         }
     ): Promise<Program> {
         const response = await api.post<Program>(API_ENDPOINTS.GENERATE_PROGRAM, {
@@ -19,6 +20,19 @@ export const programsService = {
             ...options
         });
         mmkvStorage.setCurrentProgram(response.data);
+        return response.data;
+    },
+    
+    async getProgramPreview(
+        goalId?: string,
+        duration: number = 30,
+        options?: any
+    ): Promise<any> {
+        const response = await api.post(API_ENDPOINTS.PREVIEW, {
+            goalId,
+            duration,
+            ...options
+        });
         return response.data;
     },
 

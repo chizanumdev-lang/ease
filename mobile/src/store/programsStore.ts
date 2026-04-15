@@ -23,12 +23,14 @@ interface ProgramsState {
             minutesPerDay?: number;
             learningStyle?: string;
             constraints?: string[];
+            metadata?: any;
         }
     ) => Promise<Program>;
     fetchActiveProgram: () => Promise<Program | void>;
     fetchProgram: (id: string) => Promise<void>;
     fetchTodayPlan: (programId: string) => Promise<void>;
     updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
+    fetchPreviewMetadata: (goalId?: string, duration?: number, options?: any) => Promise<any>;
     
     // Task Chain Actions
     startTask: (taskId: string) => Promise<void>;
@@ -88,6 +90,21 @@ export const useProgramsStore = create<ProgramsState>()(
                 } catch (error: any) {
                     set({
                         error: error.response?.data?.message || 'Failed to generate program',
+                        isLoading: false,
+                    });
+                    throw error;
+                }
+            },
+
+            fetchPreviewMetadata: async (goalId, duration = 30, options) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const preview = await programsService.getProgramPreview(goalId, duration, options);
+                    set({ isLoading: false });
+                    return preview;
+                } catch (error: any) {
+                    set({
+                        error: error.response?.data?.message || 'Failed to fetch preview',
                         isLoading: false,
                     });
                     throw error;

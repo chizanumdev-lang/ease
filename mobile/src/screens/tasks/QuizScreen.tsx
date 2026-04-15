@@ -83,24 +83,39 @@ export default function QuizScreen({ route, navigation }: Props) {
 
         const calculatedScore = calculateScore();
         setScore(calculatedScore);
-        setSubmitted(true);
+        
+        showModal({
+            type: 'loading',
+            title: 'Submitting Quiz',
+            description: 'Analyzing your responses and calculating milestones...'
+        });
 
         try {
             // Submit to backend
-            await quizzesService.submitAttempt(
+            const submitPromise = quizzesService.submitAttempt(
                 quizId,
                 answers as number[]
             );
 
             // Mark task as completed
-            await tasksService.update(taskId, { completed: true });
+            const updatePromise = tasksService.update(taskId, { completed: true });
+
+            await Promise.all([
+                submitPromise,
+                updatePromise,
+                new Promise(resolve => setTimeout(resolve, 1000)) // Ensure premium feel
+            ]);
+
+            useModalStore.getState().hideModal();
+            setSubmitted(true);
         } catch (error) {
             console.error('Failed to submit quiz:', error);
             showModal({
                 type: 'error',
-                title: 'Warning',
-                description: 'Quiz completed but failed to sync with server.'
+                title: 'Sync Warning',
+                description: 'Your quiz results are ready, but we failed to sync with the server. Your progress will be saved locally.'
             });
+            setSubmitted(true);
         }
     };
 

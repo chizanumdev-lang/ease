@@ -26,14 +26,18 @@ export default function GlobalModal() {
                 label: primaryAction.label,
                 onPress: () => {
                     primaryAction.onPress();
-                    hideModal();
+                    if (primaryAction.autoClose !== false) {
+                        hideModal();
+                    }
                 }
             } : undefined}
             secondaryAction={secondaryAction ? {
                 label: secondaryAction.label,
                 onPress: () => {
                     secondaryAction.onPress();
-                    hideModal();
+                    if (secondaryAction.autoClose !== false) {
+                        hideModal();
+                    }
                 }
             } : undefined}
         />

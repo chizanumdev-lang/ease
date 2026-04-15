@@ -8,7 +8,7 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 interface Props {
     title?: string;
     subtitle?: string;
-    variant?: 'full' | 'compact';
+    variant?: 'full' | 'compact' | 'component';
 }
 
 const CIRCUMFERENCE = 2 * Math.PI * 70;
@@ -23,16 +23,6 @@ export default function LoadingState({
     const dashOffsetAnim = React.useRef(new Animated.Value(CIRCUMFERENCE)).current;
 
     React.useEffect(() => {
-        // Rotation Animation
-        Animated.loop(
-            Animated.timing(rotateAnim, {
-                toValue: 1,
-                duration: 3000,
-                easing: Easing.linear,
-                useNativeDriver: true,
-            })
-        ).start();
-
         // Dash Offset Animation (mimicking the 0% -> 50% -> 100% flow)
         Animated.loop(
             Animated.sequence([
@@ -56,6 +46,46 @@ export default function LoadingState({
         inputRange: [0, 1],
         outputRange: ['0deg', '360deg'],
     });
+
+    if (variant === 'component') {
+        return (
+            <View style={styles.componentContainer}>
+                <View style={styles.animationContainer}>
+                    <Animated.View style={[styles.svgWrapper, { transform: [{ rotate: rotation }] }]}>
+                        <Svg width="120" height="120" viewBox="0 0 160 160">
+                            <Circle
+                                cx="80"
+                                cy="80"
+                                r="70"
+                                stroke={colors.primary}
+                                strokeWidth="2"
+                                fill="transparent"
+                                opacity={0.1}
+                            />
+                            <AnimatedCircle
+                                cx="80"
+                                cy="80"
+                                r="70"
+                                stroke={colors.primary}
+                                strokeWidth="2"
+                                fill="transparent"
+                                strokeDasharray={CIRCUMFERENCE}
+                                strokeDashoffset={dashOffsetAnim}
+                                strokeLinecap="round"
+                            />
+                        </Svg>
+                    </Animated.View>
+                    <View style={[styles.logoCircleSmall, { backgroundColor: isDark ? colors.surfaceContainerLow : colors.surface }]}>
+                        <Text style={[styles.logoTextSmall, { color: colors.primary, fontFamily: fonts.display }]}>E</Text>
+                    </View>
+                </View>
+                <View style={styles.textContainerSmall}>
+                    <Text style={[styles.titleSmall, { color: colors.text }]}>{title}</Text>
+                    {subtitle && <Text style={[styles.subtitleSmall, { color: colors.textMuted }]}>{subtitle}</Text>}
+                </View>
+            </View>
+        );
+    }
 
     if (variant === 'compact') {
         return (
@@ -95,33 +125,35 @@ export default function LoadingState({
             <View style={[styles.absolute, { opacity: 0.03, backgroundColor: colors.primary }]} />
             
             <View style={styles.content}>
-                <Animated.View style={[styles.svgWrapper, { transform: [{ rotate: rotation }] }]}>
-                    <Svg width="160" height="160" viewBox="0 0 160 160">
-                        <Circle
-                            cx="80"
-                            cy="80"
-                            r="70"
-                            stroke={colors.primary}
-                            strokeWidth="1.5"
-                            fill="transparent"
-                            opacity={0.1}
-                        />
-                        <AnimatedCircle
-                            cx="80"
-                            cy="80"
-                            r="70"
-                            stroke={colors.primary}
-                            strokeWidth="1.5"
-                            fill="transparent"
-                            strokeDasharray={CIRCUMFERENCE}
-                            strokeDashoffset={dashOffsetAnim}
-                            strokeLinecap="round"
-                        />
-                    </Svg>
+                <View style={styles.animationContainer}>
+                    <Animated.View style={[styles.svgWrapper, { transform: [{ rotate: rotation }] }]}>
+                        <Svg width="160" height="160" viewBox="0 0 160 160">
+                            <Circle
+                                cx="80"
+                                cy="80"
+                                r="70"
+                                stroke={colors.primary}
+                                strokeWidth="1.5"
+                                fill="transparent"
+                                opacity={0.1}
+                            />
+                            <AnimatedCircle
+                                cx="80"
+                                cy="80"
+                                r="70"
+                                stroke={colors.primary}
+                                strokeWidth="1.5"
+                                fill="transparent"
+                                strokeDasharray={CIRCUMFERENCE}
+                                strokeDashoffset={dashOffsetAnim}
+                                strokeLinecap="round"
+                            />
+                        </Svg>
+                    </Animated.View>
                     <View style={[styles.logoCircle, { backgroundColor: isDark ? colors.surfaceContainerLow : colors.surface }]}>
                         <Text style={[styles.logoText, { color: colors.primary, fontFamily: fonts.display }]}>EASE</Text>
                     </View>
-                </Animated.View>
+                </View>
                 <View style={styles.textContainer}>
                     <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>{title}</Text>
                     <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>{subtitle}</Text>
@@ -143,11 +175,15 @@ const styles = StyleSheet.create({
     content: {
         alignItems: 'center',
     },
-    svgWrapper: {
+    animationContainer: {
         width: 160,
         height: 160,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    svgWrapper: {
+        width: 160,
+        height: 160,
     },
     logoCircle: {
         position: 'absolute',
@@ -198,5 +234,42 @@ const styles = StyleSheet.create({
     compactText: {
         fontSize: 14,
         fontWeight: '500',
+    },
+    componentContainer: {
+        alignItems: 'center',
+        padding: 24,
+    },
+    logoCircleSmall: {
+        position: 'absolute',
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
+    },
+    logoTextSmall: {
+        fontSize: 24,
+        fontWeight: '900',
+    },
+    textContainerSmall: {
+        marginTop: 24,
+        alignItems: 'center',
+    },
+    titleSmall: {
+        fontSize: 18,
+        fontWeight: '700',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    subtitleSmall: {
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 20,
+        opacity: 0.7,
     }
 });

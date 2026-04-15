@@ -26,6 +26,9 @@ export class Program {
     @Column({ type: 'text', nullable: true })
     description: string;
 
+    @Column({ type: 'jsonb', nullable: true })
+    metadata: any;
+
     @Column({ type: 'int' })
     duration: number;
 

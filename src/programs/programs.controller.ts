@@ -19,6 +19,14 @@ export class ProgramsController {
         return this.programsService.generateProgram(user.id, generateProgramDto);
     }
 
+    @Post('preview')
+    async getPreview(
+        @GetUser() user: User,
+        @Body() generateProgramDto: GenerateProgramDto,
+    ) {
+        return this.programsService.getProgramPreview(user.id, generateProgramDto);
+    }
+
     @Get('active')
     async getActive(@GetUser() user: User) {
         return this.programsService.findActive(user.id);

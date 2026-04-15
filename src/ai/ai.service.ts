@@ -573,6 +573,66 @@ Return ONLY the raw JSON object starting with { and ending with }.
     }
 
 
+    async generateProgramPreview(goal: string, options: any): Promise<any> {
+        if (!this.genAI) return this.getFallbackPreview(goal, options);
+
+        const { duration = 30, minutesPerDay = 30, category = 'default' } = options;
+
+        const systemInstruction = `You are an expert curriculum designer. Generate high-level metadata for a ${duration}-day learning program based on the goal: "${goal}".
+        
+        OUTPUT SCHEMA:
+        Return ONLY a raw JSON object:
+        {
+          "title": "Concise, inspiring program name",
+          "category": "One of: Skill, Habit, Career, Mental, Fitness",
+          "primaryGoal": "The single most important outcome",
+          "description": "Short, compelling program summary (max 120 chars)",
+          "coachInsight": "A one-sentence personalized coaching note about the journey ahead and its intensity progression.",
+          "sampleDays": [
+            { "day": 1, "title": "Foundation focused title", "description": "Action-oriented summary" },
+            { "day": 2, "title": "Progression focused title", "description": "Action-oriented summary" },
+            { "day": 3, "title": "Integration focused title", "description": "Action-oriented summary" }
+          ],
+          "weeklyIntensity": [number, number, number, number, number, number, number] 
+        }
+
+        INTENSITY LOGIC:
+        The "weeklyIntensity" array represents relative effort (0-100) for 7 representative days. 
+        It should reflect a healthy progression: start lower for foundation, peak for challenge, and vary slightly for recovery.
+        
+        Return ONLY valid JSON.`;
+
+        try {
+            let text = await this.callWithFallback(systemInstruction);
+            if (!text) throw new Error('Preview generation failed');
+            text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+            const preview = JSON.parse(text);
+            
+            // Ensure schema validity
+            if (!preview.title || !preview.weeklyIntensity) throw new Error('Incomplete preview data');
+            return preview;
+        } catch (error) {
+            this.logger.error(`Preview generation failed: ${error.message}`);
+            return this.getFallbackPreview(goal, options);
+        }
+    }
+
+    private getFallbackPreview(goal: string, options: any) {
+        return {
+            title: goal.substring(0, 30) + ' Journey',
+            category: options.category || 'Skill',
+            primaryGoal: 'Master ' + goal.substring(0, 20),
+            description: 'A transformative ' + (options.duration || 30) + '-day program built for your growth.',
+            coachInsight: 'This plan is balanced for sustainable progress and steady challenge.',
+            sampleDays: [
+                { day: 1, title: 'Foundations of ' + goal, description: 'Setting the stage for your growth.' },
+                { day: 2, title: 'Strategic Practice', description: 'Applying core techniques.' },
+                { day: 3, title: 'Initial Integration', description: 'Connecting concepts together.' }
+            ],
+            weeklyIntensity: [20, 35, 60, 45, 80, 25, 30]
+        };
+    }
+
     private validateDay(day: any, dayIndex: number): void {
         const required = ['focusAreas', 'videoTask', 'exerciseTask', 'lessonTask', 'quiz',
             'journalTask', 'audioTask', 'mindfulnessTask', 'reflectionTask'];

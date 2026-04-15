@@ -114,13 +114,14 @@ export default function GoalWizardScreen({ navigation }: Props) {
     const [targetDate, setTargetDate] = useState('');
     const [timeframe, setTimeframe] = useState<number>(60);
     const [dailyMinutes, setDailyMinutes] = useState<number>(30);
-
-    const { createGoal } = useGoalsStore();
-    const { generateProgram } = useProgramsStore();
-    const { showModal } = useModalStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleNext = () => {
+    const { createGoal } = useGoalsStore();
+    const { generateProgram, fetchPreviewMetadata } = useProgramsStore();
+    const { showModal } = useModalStore();
+    const [previewData, setPreviewData] = useState<any>(null);
+
+    const handleNext = async () => {
         if (step === 'CATEGORY') {
             if (!category) {
                 showModal({ type: 'info', title: 'Selection Required', description: 'Choose your journey foundation.' });
@@ -134,7 +135,29 @@ export default function GoalWizardScreen({ navigation }: Props) {
             }
             setStep('COMMITMENT');
         } else if (step === 'COMMITMENT') {
-            setStep('REVIEW');
+            showModal({
+                type: 'loading',
+                title: 'Preparing Your Review',
+                description: 'Our AI is analyzing your goals to provide personalized insights and intensity projections...'
+            });
+            
+            try {
+                // Fetch preview metadata for the Review screen
+                // We omit the goalId as it hasn't been created yet
+                const data = await fetchPreviewMetadata(undefined, timeframe, {
+                    minutesPerDay: dailyMinutes,
+                    category,
+                    goalDescription: goalDescription.trim()
+                });
+                setPreviewData(data);
+                useModalStore.getState().hideModal();
+                setStep('REVIEW');
+            } catch (error) {
+                console.error('Preview error:', error);
+                // Fallback: Proceed to review anyway but without AI projections
+                useModalStore.getState().hideModal();
+                setStep('REVIEW');
+            }
         } else if (step === 'REVIEW') {
             handleSubmit();
         }
@@ -149,7 +172,12 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
-        setStep('GENERATING');
+        
+        showModal({
+            type: 'loading',
+            title: 'Manifesting Your Path',
+            description: 'AI is weaving your personalized roadmap and gathering resources...'
+        });
 
         try {
             const title = goalDescription.split('.')[0].substring(0, 50) + (goalDescription.length > 50 ? '...' : '');
@@ -164,9 +192,16 @@ export default function GoalWizardScreen({ navigation }: Props) {
             const program = await generateProgram(
                 goal.id,
                 timeframe,
-                { minutesPerDay: dailyMinutes, learningStyle: 'mixed', constraints: [] }
+                { 
+                    minutesPerDay: dailyMinutes, 
+                    learningStyle: 'mixed', 
+                    constraints: [],
+                    metadata: previewData // Pass the AI-generated preview to be saved
+                }
             );
 
+            // Close modal before navigation
+            useModalStore.getState().hideModal();
             navigation.replace('ProgramPreview', { programId: program.id });
         } catch (error) {
             console.error('Wizard Error:', error);
@@ -175,7 +210,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                 title: 'Manifestation Failed',
                 description: 'We couldn\'t weave your path right now. Please try again.'
             });
-            setStep('REVIEW');
+            // Stay on REVIEW step if error occurred
         } finally {
             setIsSubmitting(false);
         }
@@ -422,34 +457,63 @@ export default function GoalWizardScreen({ navigation }: Props) {
                             <View style={styles.stepContainer}>
                                 {renderHeader(4, "Final Alignment", "Review your journey foundations before we manifest the path.")}
                                 
-                                <View style={[styles.reviewCard, { backgroundColor: colors.surface, borderRadius: 40 }, shadows.ambient]}>
-                                    <View style={styles.reviewRow}>
-                                        <Text style={[styles.reviewLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>GOAL</Text>
-                                        <Text style={[styles.reviewValue, { color: colors.text, fontFamily: fonts.body }]}>{goalDescription}</Text>
-                                    </View>
-                                    <View style={[styles.divider, { marginVertical: 16 }]} />
-                                    <View style={styles.reviewRow}>
-                                        <Text style={[styles.reviewLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>CATEGORY</Text>
-                                        <Text style={[styles.reviewValue, { color: colors.text, fontFamily: fonts.body, textTransform: 'capitalize' }]}>{category}</Text>
-                                    </View>
-                                    <View style={[styles.divider, { marginVertical: 16 }]} />
-                                    <View style={styles.reviewRow}>
-                                        <Text style={[styles.reviewLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>DURATION</Text>
-                                        <Text style={[styles.reviewValue, { color: colors.text, fontFamily: fonts.body }]}>{timeframe} Days</Text>
-                                    </View>
-                                    <View style={[styles.divider, { marginVertical: 16 }]} />
-                                    <View style={styles.reviewRow}>
-                                        <Text style={[styles.reviewLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>FREQUENCY</Text>
-                                        <Text style={[styles.reviewValue, { color: colors.text, fontFamily: fonts.body }]}>{dailyMinutes}m / Daily</Text>
-                                    </View>
-                                </View>
+                                <View style={styles.reviewContent}>
+                                        {/* Summary Card */}
+                                        <View style={[styles.reviewSummaryCard, shadows.ambient]}>
+                                            {/* TODO: Replace with specialized category-specific high-fidelity images in the future */}
+                                            <ImageBackground
+                                                source={CATEGORIES.find(c => c.id === category)?.bgImage}
+                                                style={styles.reviewSummaryBg}
+                                                imageStyle={{ borderRadius: 32 }}
+                                            >
+                                                <View style={styles.reviewSummaryOverlay}>
+                                                    <View style={[styles.categoryBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                                                        <Text style={[styles.categoryBadgeText, { color: '#fff', fontFamily: fonts.label }]}>
+                                                            {previewData?.category?.toUpperCase() || category.toUpperCase()}
+                                                        </Text>
+                                                    </View>
+                                                    <Text style={[styles.reviewSummaryTitle, { color: '#fff', fontFamily: fonts.display }]}>
+                                                        {previewData?.title || goalDescription.substring(0, 40) + '...'}
+                                                    </Text>
+                                                </View>
+                                            </ImageBackground>
+                                        </View>
 
-                                <View style={styles.coachQuoteBox}>
-                                    <View style={[styles.quoteLine, { backgroundColor: colors.primary }]} />
-                                    <Text style={[styles.quoteText, { color: colors.text, fontFamily: fonts.display }]}>
-                                        {`"The secret to permanence is small, rhythmic steps. This ${timeframe}-day journey is perfectly balanced for your current stamina."`}
-                                    </Text>
+                                        {/* Coach Insight - Glassmorphism style */}
+                                        <View style={[styles.insightPanel, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(34, 83, 68, 0.05)', borderColor: colors.primary + '20' }]}>
+                                            <View style={[styles.insightIconBox, { backgroundColor: colors.primary }]}>
+                                                <Ionicons name="sparkles" size={20} color="#fff" />
+                                            </View>
+                                            <Text style={[styles.insightText, { color: colors.text, fontFamily: fonts.bodyMedium }]}>
+                                                {previewData?.coachInsight || "This journey is balanced for steady growth. We've optimized the intensity to match your 30-day rhythm."}
+                                            </Text>
+                                        </View>
+
+                                        {/* Details Grid */}
+                                        <View style={styles.reviewGrid}>
+                                            <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
+                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>DURATION</Text>
+                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{timeframe} Days</Text>
+                                            </View>
+                                            <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
+                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>INVESTMENT</Text>
+                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{dailyMinutes} Min</Text>
+                                            </View>
+                                            <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
+                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>PEAK INTENSITY</Text>
+                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>
+                                                    {previewData ? Math.max(...previewData.weeklyIntensity) + '%' : 'Balanced'}
+                                                </Text>
+                                            </View>
+                                            <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
+                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>PRIMARY FOCUS</Text>
+                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.bodyMedium, fontSize: 14 }]} numberOfLines={2}>
+                                                    {previewData?.primaryGoal || 'Growth & Mastery'}
+                                                </Text>
+                                            </View>
+                                    </View>
                                 </View>
+                                
                                 {renderFooterActions()}
                             </View>
                         )}
@@ -769,5 +833,89 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 16,
         top: 16,
+    },
+    // New Review Styles
+    loadingPreviewContainer: {
+        height: 400,
+        borderRadius: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    reviewContent: {
+        gap: 24,
+    },
+    reviewSummaryCard: {
+        height: 240,
+        borderRadius: 32,
+        overflow: 'hidden',
+    },
+    reviewSummaryBg: {
+        flex: 1,
+    },
+    reviewSummaryOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        padding: 32,
+        justifyContent: 'flex-end',
+        gap: 12,
+    },
+    categoryBadge: {
+        alignSelf: 'flex-start',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.3)',
+    },
+    categoryBadgeText: {
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    reviewSummaryTitle: {
+        fontSize: 28,
+        lineHeight: 34,
+        fontWeight: '900',
+    },
+    insightPanel: {
+        flexDirection: 'row',
+        padding: 24,
+        borderRadius: 24,
+        borderWidth: 1,
+        alignItems: 'center',
+        gap: 20,
+    },
+    insightIconBox: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    insightText: {
+        flex: 1,
+        fontSize: 15,
+        lineHeight: 22,
+    },
+    reviewGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    reviewGridItem: {
+        width: '48%',
+        padding: 20,
+        borderRadius: 24,
+        gap: 8,
+    },
+    gridLabel: {
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    gridValue: {
+        fontSize: 20,
+        fontWeight: '900',
     }
 });

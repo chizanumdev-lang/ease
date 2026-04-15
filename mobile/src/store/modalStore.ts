@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 
-export type ModalType = 'success' | 'error' | 'confirmation' | 'info';
+export type ModalType = 'success' | 'error' | 'confirmation' | 'info' | 'loading';
 
 interface ModalAction {
     label: string;
     onPress: () => void;
+    autoClose?: boolean;
 }
 
 interface ModalState {

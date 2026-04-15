@@ -19,7 +19,12 @@ export default function AudioPreviewScreen() {
     const [mood, setMood] = useState('meditation');
 
     const generatePreview = async () => {
-        setLoading(true);
+        showModal({
+            type: 'loading',
+            title: 'Symphony in Progress',
+            description: 'Gemini is crafting a personalized 5-minute script, while we mix atmospheric layers for your unique session...'
+        });
+
         try {
             console.log(`[PREVIEW] Requesting audio preview: ${theme}, ${mood}`);
             const response = await axios.post(`${API_BASE_URL}/audio/preview`, {
@@ -34,6 +39,9 @@ export default function AudioPreviewScreen() {
 
                 console.log(`[PREVIEW] Audio generated: ${audioUrl}`);
 
+                // Close modal before navigation
+                useModalStore.getState().hideModal();
+
                 // Navigate to the existing AudioPlayerScreen
                 navigation.navigate('AudioPlayer', {
                     track: {
@@ -47,8 +55,8 @@ export default function AudioPreviewScreen() {
             } else {
                 showModal({
                     type: 'error',
-                    title: 'Error',
-                    description: 'No audio URL returned from server.'
+                    title: 'Composition Error',
+                    description: 'The server completed the request but no audio path was returned. Please try again.'
                 });
             }
         } catch (error: any) {
@@ -56,10 +64,8 @@ export default function AudioPreviewScreen() {
             showModal({
                 type: 'error',
                 title: 'Generation Failed',
-                description: 'Please check your internet connection or try again later.'
+                description: 'The creative void was too deep this time. Please check your connection and try one more time.'
             });
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -105,25 +111,11 @@ export default function AudioPreviewScreen() {
                     style={[
                         styles.button, 
                         { backgroundColor: colors.primary, borderRadius: borderRadius.lg, paddingVertical: spacing.lg },
-                        loading && { backgroundColor: colors.textMuted }
                     ]}
                     onPress={generatePreview}
-                    disabled={loading}
                 >
-                    {loading ? (
-                        <View style={styles.loadingContainer}>
-                            <LoadingState variant="compact" title="Generating (Estimated 45s)..." />
-                        </View>
-                    ) : (
-                        <Text style={[styles.buttonText, { color: isDark ? colors.background : "#fff" }]}>Generate 5-Min Preview</Text>
-                    )}
+                    <Text style={[styles.buttonText, { color: isDark ? colors.background : "#fff" }]}>Generate 5-Min Preview</Text>
                 </TouchableOpacity>
-
-                {loading && (
-                    <Text style={[styles.infoText, { color: colors.textMuted, marginTop: spacing.md }]}>
-                        Gemini is crafting an 800-word script and mixing it with local background layers. This takes a moment.
-                    </Text>
-                )}
             </View>
         </ScrollView>
     );

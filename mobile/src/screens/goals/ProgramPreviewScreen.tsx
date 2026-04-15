@@ -34,11 +34,50 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
         );
     }
 
+    const metadata = currentProgram.metadata || {};
+    const intensityData = metadata.weeklyIntensity || [20, 40, 60, 80, 70, 90, 100];
+    const sampleDays = metadata.sampleDays || [];
+
+    const renderIntensityChart = () => (
+        <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Growth Velocity</Text>
+                <View style={[styles.intensityIndicator, { backgroundColor: colors.primaryContainer }]}>
+                    <Text style={[styles.intensityIndicatorText, { color: colors.primary }]}>{currentProgram.duration} Day Arc</Text>
+                </View>
+            </View>
+            
+            <View style={[styles.chartContainer, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                <View style={styles.chartBars}>
+                    {intensityData.map((val: number, i: number) => (
+                        <View key={i} style={styles.barWrapper}>
+                            <View 
+                                style={[
+                                    styles.bar, 
+                                    { 
+                                        height: `${val}%`, 
+                                        backgroundColor: i === 0 ? colors.primary : colors.secondaryContainer 
+                                    }
+                                ]} 
+                            />
+                            <Text style={[styles.barLabel, { color: colors.textMuted }]}>W{i+1}</Text>
+                        </View>
+                    ))}
+                </View>
+                <View style={[styles.chartOverlay, { borderColor: colors.outlineVariant }]}>
+                    <Text style={[styles.chartHint, { color: colors.textMuted }]}>Intensity increases to ensure progress</Text>
+                </View>
+            </View>
+        </View>
+    );
+
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
             <View style={[styles.topNav, { borderBottomColor: colors.outlineVariant, flexDirection: 'row', justifyContent: 'space-between' }]}>
-                <View style={{ width: 40 }} />
-                <Text style={[styles.navTitle, { color: colors.text }]}>Plan Preview</Text>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Ionicons name="chevron-back" size={24} color={colors.primary} />
+                </TouchableOpacity>
+                <Text style={[styles.navTitle, { color: colors.text }]}>Program Roadmap</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -50,69 +89,60 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.header}>
-                    <View style={[styles.badge, { backgroundColor: colors.surfaceContainerLow }]}>
-                        <Ionicons name="sparkles" size={16} color={colors.primary} />
-                        <Text style={[styles.badgeText, { color: colors.textMuted }]}>Personalized for you</Text>
+                    <View style={[styles.badge, { backgroundColor: colors.primaryContainer }]}>
+                        <Ionicons name="sparkles" size={14} color={colors.primary} />
+                        <Text style={[styles.badgeText, { color: colors.primary }]}>AI CRAFTED JOURNEY</Text>
                     </View>
                     <Text style={[styles.title, { color: colors.text }]}>{currentProgram.title}</Text>
                     <Text style={[styles.description, { color: colors.textMuted }]}>{currentProgram.description}</Text>
                 </View>
 
-                <View style={[styles.statsRow, { backgroundColor: colors.surfaceContainerLow }]}>
-                    <View style={styles.statItem}>
-                        <Ionicons name="calendar-outline" size={20} color={colors.primary} />
-                        <Text style={[styles.statValue, { color: colors.text }]}>{currentProgram.duration} Days</Text>
-                        <Text style={[styles.statLabel, { color: colors.textMuted }]}>Duration</Text>
-                    </View>
-                    <View style={[styles.statDivider, { backgroundColor: colors.outlineVariant }]} />
-                    <View style={styles.statItem}>
-                        <Ionicons name="time-outline" size={20} color={colors.primary} />
-                        <Text style={[styles.statValue, { color: colors.text }]}>30 min</Text>
-                        <Text style={[styles.statLabel, { color: colors.textMuted }]}>Daily</Text>
-                    </View>
-                    <View style={[styles.statDivider, { backgroundColor: colors.outlineVariant }]} />
-                    <View style={styles.statItem}>
-                        <Ionicons name="layers-outline" size={20} color={colors.primary} />
-                        <Text style={[styles.statValue, { color: colors.text }]}>{currentProgram.dayPlans?.length || 0}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textMuted }]}>Steps</Text>
+                {renderIntensityChart()}
+
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>The First Step</Text>
+                    <View style={[styles.mainDayCard, { backgroundColor: colors.surfaceContainerHigh }]}>
+                        <View style={styles.dayBadge}>
+                            <Text style={styles.dayBadgeText}>DAY 1</Text>
+                        </View>
+                        <Text style={[styles.mainDayTitle, { color: colors.text }]}>
+                            {currentProgram.dayPlans?.[0]?.theme || "Foundation Core"}
+                        </Text>
+                        <View style={styles.focusList}>
+                            {currentProgram.dayPlans?.[0]?.focusAreas?.map((area, i) => (
+                                <View key={i} style={[styles.focusTag, { backgroundColor: colors.surfaceContainerLow }]}>
+                                    <View style={[styles.tagDot, { backgroundColor: colors.primary }]} />
+                                    <Text style={[styles.focusTagText, { color: colors.text }]}>{area}</Text>
+                                </View>
+                            ))}
+                        </View>
                     </View>
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Learning Path</Text>
-                    {currentProgram.dayPlans?.slice(0, 7).map((dayPlan, index) => (
-                        <View key={dayPlan.id} style={styles.timelineItem}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Coming Up</Text>
+                    {sampleDays.map((sample: any, index: number) => (
+                        <View key={index} style={styles.timelineItem}>
                             <View style={styles.timelineLeft}>
-                                <View style={[
-                                    styles.timelineDot,
-                                    dayPlan.status === 'ready' && { backgroundColor: colors.primary },
-                                    dayPlan.status === 'pending' && { backgroundColor: colors.outlineVariant }
-                                ]} />
-                                {index < 6 && <View style={[styles.timelineLine, { backgroundColor: colors.outlineVariant }]} />}
+                                <View style={[styles.timelineDot, { backgroundColor: colors.outlineVariant }]} />
+                                {index < sampleDays.length - 1 && <View style={[styles.timelineLine, { backgroundColor: colors.outlineVariant }]} />}
                             </View>
                             <View style={styles.timelineRight}>
-                                <View style={styles.dayHeader}>
-                                    <Text style={[styles.dayLabel, { color: colors.primary }]}>Day {dayPlan.dayNumber}</Text>
-                                    {dayPlan.status === 'pending' && (
-                                        <View style={[styles.statusBadge, { backgroundColor: colors.surfaceContainerLow }]}>
-                                            <LoadingState variant="compact" title="Preparing" />
-                                        </View>
-                                    )}
-                                </View>
-                                <Text style={[styles.themeTitle, { color: colors.text }]}>{dayPlan.theme}</Text>
-                                {dayPlan.focusAreas && dayPlan.focusAreas.length > 0 && (
-                                    <Text style={[styles.focusAreasText, { color: colors.textMuted }]}>
-                                        Focus: {dayPlan.focusAreas.join(', ')}
-                                    </Text>
-                                )}
+                                <Text style={[styles.dayLabelSmall, { color: colors.textMuted }]}>DAY {index + 2}</Text>
+                                <Text style={[styles.themeTitle, { color: colors.text }]}>{sample.title}</Text>
+                                <Text style={[styles.sampleDesc, { color: colors.textMuted }]}>{sample.focus}</Text>
                             </View>
                         </View>
                     ))}
-                    {(currentProgram.dayPlans?.length || 0) > 7 && (
-                        <View style={styles.moreIndicator}>
-                            <Text style={[styles.moreText, { color: colors.textMuted }]}>+ {(currentProgram.dayPlans?.length || 0) - 7} more segments in your journey</Text>
+                    
+                    <View style={styles.lockedSection}>
+                        <View style={[styles.lockIconBox, { backgroundColor: colors.surfaceContainerLow }]}>
+                            <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
                         </View>
-                    )}
+                        <Text style={[styles.lockedText, { color: colors.textMuted }]}>
+                            Days 4–{currentProgram.duration} are uniquely generated as you progress
+                        </Text>
+                    </View>
                 </View>
             </ScrollView>
 
@@ -288,4 +318,130 @@ const styles = StyleSheet.create({
         padding: 24,
         borderTopWidth: 1,
     },
+    // New Modernized Styles
+    sectionHeaderRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    intensityIndicator: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+    },
+    intensityIndicatorText: {
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 0.5,
+    },
+    chartContainer: {
+        padding: 24,
+        borderRadius: 32,
+        borderWidth: 1,
+    },
+    chartBars: {
+        flexDirection: 'row',
+        height: 140,
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    barWrapper: {
+        alignItems: 'center',
+        width: '12%',
+        gap: 8,
+    },
+    bar: {
+        width: '100%',
+        borderRadius: 6,
+        minHeight: 4,
+    },
+    barLabel: {
+        fontSize: 10,
+        fontWeight: '700',
+    },
+    chartOverlay: {
+        borderTopWidth: 1,
+        paddingTop: 16,
+        alignItems: 'center',
+    },
+    chartHint: {
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    mainDayCard: {
+        padding: 24,
+        borderRadius: 32,
+        gap: 16,
+    },
+    dayBadge: {
+        backgroundColor: '#000',
+        alignSelf: 'flex-start',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    dayBadgeText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 1,
+    },
+    mainDayTitle: {
+        fontSize: 22,
+        fontWeight: '900',
+    },
+    focusList: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    focusTag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        gap: 6,
+    },
+    tagDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    focusTagText: {
+        fontSize: 12,
+        fontWeight: '700',
+    },
+    dayLabelSmall: {
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1,
+        marginBottom: 4,
+    },
+    sampleDesc: {
+        fontSize: 14,
+        lineHeight: 20,
+    },
+    lockedSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 20,
+        gap: 16,
+        marginTop: 8,
+    },
+    lockIconBox: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    lockedText: {
+        flex: 1,
+        fontSize: 13,
+        lineHeight: 18,
+        fontWeight: '600',
+    }
 });

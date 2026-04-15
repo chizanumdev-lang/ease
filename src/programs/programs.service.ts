@@ -361,6 +361,27 @@ export class ProgramsService {
 
     // ── generateProgram ──────────────────────────────────────────────────────
 
+    async getProgramPreview(userId: string, dto: GenerateProgramDto): Promise<any> {
+        let goalText = '';
+        if (dto.goalId) {
+            const goal = await this.goalRepository.findOne({ where: { id: dto.goalId, userId } });
+            if (goal) goalText = goal.description || goal.title;
+        }
+
+        // If goalId not provided or not found, we might be previewing before goal creation
+        // We can accept a raw goal string in the DTO if needed later, but for now we rely on existing goals or a default
+        if (!goalText) goalText = 'Self Improvement'; 
+
+        const options = {
+            duration: dto.duration,
+            minutesPerDay: dto.minutesPerDay,
+            learningStyle: dto.learningStyle,
+            constraints: dto.constraints,
+        };
+
+        return this.aiService.generateProgramPreview(goalText, options);
+    }
+
     async generateProgram(
         userId: string,
         generateProgramDto: GenerateProgramDto,
@@ -382,19 +403,26 @@ export class ProgramsService {
 
         // ─── PHASE 1: Create skeleton (~150ms) — return immediately ───────────
         let program = await this.programRepository.findOne({ where: { goalId, userId } });
+        const programTitle = generateProgramDto.metadata?.title || goal.title;
+        const programDesc = generateProgramDto.metadata?.description || `A $${duration}-day $${learningStyle} program for $${goal.title}. Daily commitment: $${minutesPerDay} min.`;
+
         if (!program) {
             program = this.programRepository.create({
-                title: goal.title,
-                description: `A ${duration}-day ${learningStyle} program for ${goal.title}. Daily commitment: ${minutesPerDay} min.`,
+                title: programTitle,
+                description: programDesc,
                 duration,
                 goalId,
                 userId,
                 status: 'generating',
+                metadata: generateProgramDto.metadata,
             });
             await this.programRepository.save(program);
         } else {
             // Re-hydrate existing program
             program.status = 'generating';
+            program.title = programTitle;
+            program.description = programDesc;
+            program.metadata = generateProgramDto.metadata;
             await this.programRepository.save(program);
         }
 
@@ -475,15 +503,11 @@ export class ProgramsService {
     }
 
     async deleteProgram(id: string, userId: string): Promise<void> {
-        const program = await this.programRepository.findOne({
-            where: { id, userId },
-        });
-
-        if (!program) {
-            throw new NotFoundException('Program not found');
+        const result = await this.programRepository.delete({ id, userId });
+        
+        if (result.affected === 0) {
+            throw new NotFoundException('Program not found or already deleted');
         }
-
-        await this.programRepository.remove(program);
     }
 
     async getTodaysPlan(programId: string, userId: string) {

@@ -125,10 +125,30 @@ export default function SettingsScreen({ navigation }: Props) {
         showModal({
             type: 'confirmation',
             title: 'Logout',
-            description: 'Are you sure you want to logout?',
+            description: 'Are you sure you want to logout? Your progress is safely stored in the cloud.',
             primaryAction: {
                 label: 'Logout',
-                onPress: logout
+                autoClose: false,
+                onPress: async () => {
+                    showModal({
+                        type: 'loading',
+                        title: 'Logging out...',
+                        description: 'Securing your session and cleaning up. See you soon.'
+                    });
+                    
+                    try {
+                        const logoutPromise = logout();
+                        // Minimal delay for visual feedback if logout is too fast
+                        await Promise.all([
+                            logoutPromise,
+                            new Promise(resolve => setTimeout(resolve, 800))
+                        ]);
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                        // Fallback: simple hide if error, though logout usually clears state and reloads app
+                        useModalStore.getState().hideModal();
+                    }
+                }
             },
             secondaryAction: {
                 label: 'Cancel',
@@ -142,13 +162,25 @@ export default function SettingsScreen({ navigation }: Props) {
 
         showModal({
             type: 'confirmation',
-            title: 'Delete Plan',
-            description: `Are you sure you want to delete "${currentProgram.title}"? This will clear all progress and cannot be undone.`,
+            title: 'Delete Plan?',
+            description: 'This will permanently remove your progress and schedule for this goal. This action cannot be undone.',
             primaryAction: {
                 label: 'Delete Plan',
+                autoClose: false, // Stay open to transition to loading
                 onPress: async () => {
                     try {
+                        // Transition to loading state
+                        showModal({
+                            type: 'loading',
+                            title: 'Deleting plan...',
+                            description: 'We are removing your schedule and cleaning up your dashboard.'
+                        });
+
                         await deleteProgram(currentProgram.id);
+                        
+                        // Wait a tiny bit for the UI to feel natural
+                        await new Promise(resolve => setTimeout(resolve, 800));
+
                         showModal({
                             type: 'success',
                             title: 'Success',

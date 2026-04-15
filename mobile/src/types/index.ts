@@ -37,6 +37,7 @@ export interface Program {
     goalId: string;
     userId: string;
     status: string;
+    metadata?: any;
     goal?: Goal;
     dayPlans?: DayPlan[];
     createdAt: string;

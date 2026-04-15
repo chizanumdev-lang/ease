@@ -23,15 +23,24 @@ export default function LoginScreen({ navigation }: Props) {
         if (!email || !password) {
             showModal({
                 type: 'error',
-                title: 'Error',
-                description: 'Please enter both email and password'
+                title: 'Missing Fields',
+                description: 'Please enter both your email and password to continue your journey.'
             });
             return;
         }
 
+        showModal({
+            type: 'loading',
+            title: 'Welcome Back',
+            description: 'Securing your session and personalizing your dashboard...'
+        });
+
         try {
             await login(email, password);
-            // Navigation is handled by RootNavigator observing auth state
+            // Modal will be cleared by the global modal state manager 
+            // once the app state changes and the screen unmounts,
+            // or we can call hideModal() for extra safety.
+            useModalStore.getState().hideModal();
         } catch (err: any) {
             let errorMessage = 'Something went wrong';
             if (err.response) {
@@ -95,7 +104,6 @@ export default function LoginScreen({ navigation }: Props) {
                         <StitchButton
                             title="Log In"
                             onPress={handleLogin}
-                            isLoading={isLoading}
                             variant="primary"
                             style={styles.loginButton}
                         />

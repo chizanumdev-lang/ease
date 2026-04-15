@@ -1,16 +1,24 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, Pressable, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Modal,
+    useWindowDimensions,
+    Pressable,
+} from 'react-native';
 import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import StitchButton from '../StitchButton';
+import LoadingState from '../LoadingState';
 
 interface StitchModalProps {
     visible: boolean;
     onClose: () => void;
     title: string;
     description: string;
-    type?: 'success' | 'confirmation' | 'error' | 'info';
+    type?: 'success' | 'confirmation' | 'error' | 'info' | 'loading';
     primaryAction?: {
         label: string;
         onPress: () => void;
@@ -21,7 +29,7 @@ interface StitchModalProps {
     };
 }
 
-const { width } = Dimensions.get('window');
+
 
 export default function StitchModal({
     visible,
@@ -32,6 +40,7 @@ export default function StitchModal({
     primaryAction,
     secondaryAction,
 }: StitchModalProps) {
+    const { width } = useWindowDimensions();
     const { colors, fonts, spacing, borderRadius, isDark } = useTheme();
 
     const getIcon = () => {
@@ -64,12 +73,14 @@ export default function StitchModal({
         }
     };
 
+    const isLoading = type === 'loading';
+
     return (
         <Modal
             visible={visible}
             transparent
             animationType="fade"
-            onRequestClose={onClose}
+            onRequestClose={isLoading ? undefined : onClose}
         >
             <View style={styles.overlay}>
                 <BlurView 
@@ -77,7 +88,10 @@ export default function StitchModal({
                     intensity={20} 
                     style={StyleSheet.absoluteFill} 
                 >
-                    <Pressable style={styles.backdrop} onPress={onClose} />
+                    <Pressable 
+                        style={styles.backdrop} 
+                        onPress={isLoading ? undefined : onClose} 
+                    />
                 </BlurView>
                 
                 <View 
@@ -87,39 +101,49 @@ export default function StitchModal({
                             backgroundColor: colors.surface, 
                             borderRadius: 32,
                             padding: spacing.xl,
+                            width: width * 0.85,
                         }
                     ]}
                 >
-                    <View style={[styles.iconContainer, { backgroundColor: getIconBgColor() }]}>
-                        <Ionicons name={getIcon()} size={42} color={getIconColor()} />
-                    </View>
-
-                    <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>
-                        {title}
-                    </Text>
-
-                    <Text style={[styles.description, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                        {description}
-                    </Text>
-
-                    <View style={styles.actions}>
-                        {primaryAction && (
-                            <StitchButton 
-                                title={primaryAction.label} 
-                                onPress={primaryAction.onPress}
-                                style={styles.button}
-                                variant={type === 'error' || type === 'confirmation' && primaryAction.label.toLowerCase().includes('end') ? 'destructive' : 'primary'}
+                    {isLoading ? (
+                        <View style={styles.loadingWrapper}>
+                            <LoadingState 
+                                variant="component" 
+                                title={title}
+                                subtitle={description}
                             />
-                        )}
-                        {secondaryAction && (
-                            <StitchButton 
-                                title={secondaryAction.label} 
-                                onPress={secondaryAction.onPress}
-                                variant="tonal"
-                                style={styles.button}
-                            />
-                        )}
-                    </View>
+                        </View>
+                    ) : (
+                        <>
+                            <View style={[styles.iconContainer, { backgroundColor: getIconBgColor() }]}>
+                                <Ionicons name={getIcon()} size={42} color={getIconColor()} />
+                            </View>
+                            <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>
+                                {title}
+                            </Text>
+                            <Text style={[styles.description, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                                {description}
+                            </Text>
+                            <View style={styles.actions}>
+                                {primaryAction && (
+                                    <StitchButton 
+                                        title={primaryAction.label} 
+                                        onPress={primaryAction.onPress}
+                                        style={styles.button}
+                                        variant={type === 'error' || (type === 'confirmation' && primaryAction.label.toLowerCase().includes('delete')) ? 'destructive' : 'primary'}
+                                    />
+                                )}
+                                {secondaryAction && (
+                                    <StitchButton 
+                                        title={secondaryAction.label} 
+                                        onPress={secondaryAction.onPress}
+                                        variant="tonal"
+                                        style={styles.button}
+                                    />
+                                )}
+                            </View>
+                        </>
+                    )}
                 </View>
             </View>
         </Modal>
@@ -137,13 +161,17 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.3)',
     },
     content: {
-        width: width * 0.85,
         alignItems: 'center',
         shadowColor: '#225344',
         shadowOffset: { width: 0, height: 20 },
         shadowOpacity: 0.1,
         shadowRadius: 30,
         elevation: 10,
+    },
+    loadingWrapper: {
+        width: '100%',
+        alignItems: 'center',
+        paddingVertical: 10,
     },
     iconContainer: {
         width: 72,
@@ -175,3 +203,4 @@ const styles = StyleSheet.create({
         width: '100%',
     },
 });
+
