@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../types';
+import { useAuthStore } from '../../store/authStore';
 import { useGoalsStore } from '../../store/goalsStore';
 import { useProgramsStore } from '../../store/programsStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -116,7 +117,9 @@ export default function GoalWizardScreen({ navigation }: Props) {
     const [dailyMinutes, setDailyMinutes] = useState<number>(30);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Stores
     const { createGoal } = useGoalsStore();
+    const { isAuthenticated } = useAuthStore();
     const { generateProgram, fetchPreviewMetadata } = useProgramsStore();
     const { showModal } = useModalStore();
     const [previewData, setPreviewData] = useState<any>(null);
@@ -142,6 +145,17 @@ export default function GoalWizardScreen({ navigation }: Props) {
             });
             
             try {
+                // Ensure we are authenticated before proceeding
+                if (!isAuthenticated) {
+                    console.error('[WIZARD] Not authenticated. Cannot fetch preview.');
+                    showModal({
+                        type: 'error',
+                        title: 'Session Expired',
+                        description: 'Your session has expired. Please log in again to continue manifesting your journey.'
+                    });
+                    return;
+                }
+
                 // Fetch preview metadata for the Review screen
                 // We omit the goalId as it hasn't been created yet
                 const data = await fetchPreviewMetadata(undefined, timeframe, {
@@ -152,9 +166,19 @@ export default function GoalWizardScreen({ navigation }: Props) {
                 setPreviewData(data);
                 useModalStore.getState().hideModal();
                 setStep('REVIEW');
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Preview error:', error);
-                // Fallback: Proceed to review anyway but without AI projections
+                
+                if (error.response?.status === 401) {
+                    showModal({
+                        type: 'error',
+                        title: 'Session Inactive',
+                        description: 'We couldn\'t verify your identity. Please try logging out and back in.'
+                    });
+                    return;
+                }
+
+                // Fallback: Proceed to review anyway but without AI projections for generic errors
                 useModalStore.getState().hideModal();
                 setStep('REVIEW');
             }
