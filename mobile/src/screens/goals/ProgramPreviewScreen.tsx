@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../types';
 import { useProgramsStore } from '../../store/programsStore';
@@ -7,6 +7,7 @@ import { useTheme } from '../../hooks/useTheme';
 import StitchButton from '../../components/StitchButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import LoadingState from '../../components/LoadingState';
 
 const { width } = Dimensions.get('window');
 
@@ -25,17 +26,22 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
 
     if (isLoading || !currentProgram || currentProgram.status === 'generating') {
         return (
-            <View style={[styles.loading, { backgroundColor: colors.background }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={[styles.loadingText, { color: colors.textMuted }]}>Finalizing your journey...</Text>
-            </View>
+            <LoadingState 
+                title="Finalizing your journey" 
+                subtitle="Weaving together your curriculum and setting up your growth intervals."
+                variant="full"
+            />
         );
     }
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-            <View style={[styles.topNav, { borderBottomColor: colors.outlineVariant }]}>
+            <View style={[styles.topNav, { borderBottomColor: colors.outlineVariant, flexDirection: 'row', justifyContent: 'space-between' }]}>
+                <View style={{ width: 40 }} />
                 <Text style={[styles.navTitle, { color: colors.text }]}>Plan Preview</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+                    <Ionicons name="settings-outline" size={24} color={colors.primary} />
+                </TouchableOpacity>
             </View>
 
             <ScrollView
@@ -89,8 +95,7 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
                                     <Text style={[styles.dayLabel, { color: colors.primary }]}>Day {dayPlan.dayNumber}</Text>
                                     {dayPlan.status === 'pending' && (
                                         <View style={[styles.statusBadge, { backgroundColor: colors.surfaceContainerLow }]}>
-                                            <ActivityIndicator size="small" color={colors.textMuted} style={{ marginRight: 4 }} />
-                                            <Text style={[styles.statusBadgeText, { color: colors.textMuted }]}>Preparing</Text>
+                                            <LoadingState variant="compact" title="Preparing" />
                                         </View>
                                     )}
                                 </View>

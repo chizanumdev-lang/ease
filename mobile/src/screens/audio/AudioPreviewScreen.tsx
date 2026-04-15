@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 
 import { useTheme } from '../../hooks/useTheme';
 import { useModalStore } from '../../store/modalStore';
+import LoadingState from '../../components/LoadingState';
 
 export default function AudioPreviewScreen() {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
@@ -111,8 +112,7 @@ export default function AudioPreviewScreen() {
                 >
                     {loading ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator color={isDark ? colors.background : "#fff"} style={{ marginRight: spacing.sm }} />
-                            <Text style={[styles.buttonText, { color: isDark ? colors.background : "#fff" }]}>Generating (Estimated 45s)...</Text>
+                            <LoadingState variant="compact" title="Generating (Estimated 45s)..." />
                         </View>
                     ) : (
                         <Text style={[styles.buttonText, { color: isDark ? colors.background : "#fff" }]}>Generate 5-Min Preview</Text>

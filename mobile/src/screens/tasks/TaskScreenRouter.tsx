@@ -73,12 +73,20 @@ export default function TaskScreenRouter({ route, navigation }: Props) {
                         </Text>
                     </View>
 
-                    <TouchableOpacity 
-                        style={[styles.skipButton, { backgroundColor: colors.surfaceContainerLow }]}
-                        onPress={() => skipTask(task.id)}
-                    >
-                        <Text style={[styles.skipText, { color: colors.textMuted }]}>Skip</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <TouchableOpacity 
+                            style={[styles.skipButton, { backgroundColor: colors.surfaceContainerLow }]}
+                            onPress={() => skipTask(task.id)}
+                        >
+                            <Text style={[styles.skipText, { color: colors.textMuted }]}>Skip</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                            onPress={() => navigation.navigate('Settings')}
+                            style={[styles.skipButton, { backgroundColor: colors.surfaceContainerLow, width: 36, height: 36, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 0 }]}
+                        >
+                            <Ionicons name="settings-outline" size={20} color={colors.textMuted} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Task-wide Progress Bar */}

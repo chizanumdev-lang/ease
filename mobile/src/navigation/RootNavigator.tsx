@@ -5,10 +5,11 @@ import { RootStackParamList } from '../types';
 import { useAuthStore } from '../store/authStore';
 import AuthStack from './AuthStack';
 import MainStack from './MainStack';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { notificationService } from '../services/notification.service';
 import { createNavigationContainerRef } from '@react-navigation/native';
 import GlobalModal from '../components/stitch/GlobalModal';
+import LoadingState from '../components/LoadingState';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -61,9 +62,11 @@ export default function RootNavigator() {
 
     if (isLoading) {
         return (
-            <View style={styles.loading}>
-                <ActivityIndicator size="large" color="#007AFF" />
-            </View>
+            <LoadingState 
+                title="Ease" 
+                subtitle="Initializing your personalized focus engine."
+                variant="full"
+            />
         );
     }
 

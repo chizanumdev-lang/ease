@@ -8,7 +8,6 @@ import {
     Platform, 
     StatusBar, 
     Animated, 
-    ActivityIndicator,
     ScrollView,
     Dimensions,
     Image

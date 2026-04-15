@@ -185,13 +185,13 @@ export type MainStackParamList = {
     Quiz: { quizId: string; taskId: string };
     AudioPlayer: { track: AudioTrack };
     AudioPreview: undefined;
+    Settings: undefined;
 };
 
 export type TabParamList = {
     Home: undefined;
     Progress: undefined;
     Coach: undefined;
-    Settings: undefined;
 };
 
 // Analytics types

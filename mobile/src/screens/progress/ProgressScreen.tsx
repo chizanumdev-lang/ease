@@ -1,27 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    ActivityIndicator,
-    RefreshControl,
-    Dimensions,
-    Image,
-    TouchableOpacity,
+    View, 
+    Text, 
+    StyleSheet, 
+    ScrollView, 
+    RefreshControl, 
+    Dimensions, 
+    Image, 
+    TouchableOpacity, 
     StatusBar,
-    Platform
+    Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../hooks/useTheme';
 import { analyticsService } from '../../services/analytics.service';
 import { WeeklyAnalytics } from '../../types';
-import { useTheme } from '../../hooks/useTheme';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import LoadingState from '../../components/LoadingState';
 
 const { width } = Dimensions.get('window');
 
 export default function ProgressScreen({ navigation }: any) {
-    const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
+    const { colors, spacing, borderRadius, isDark, shadows, fonts } = useTheme();
     const [analytics, setAnalytics] = useState<WeeklyAnalytics | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -49,9 +49,11 @@ export default function ProgressScreen({ navigation }: any) {
 
     if (loading) {
         return (
-            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            <LoadingState 
+                title="Curating your journey" 
+                subtitle="We're measuring the growth of your spirit tree."
+                variant="full"
+            />
         );
     }
 

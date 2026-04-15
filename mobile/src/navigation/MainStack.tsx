@@ -10,6 +10,7 @@ import VideoLessonScreen from '../screens/tasks/VideoLessonScreen';
 import QuizScreen from '../screens/tasks/QuizScreen';
 import AudioPlayerScreen from '../screens/audio/AudioPlayerScreen';
 import AudioPreviewScreen from '../screens/audio/AudioPreviewScreen';
+import SettingsScreen from '../screens/settings/SettingsScreen';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -69,6 +70,13 @@ export default function MainStack() {
                 component={AudioPreviewScreen}
                 options={{
                     title: 'Audio Preview',
+                }}
+            />
+            <Stack.Screen
+                name="Settings"
+                component={SettingsScreen}
+                options={{
+                    title: 'Settings',
                 }}
             />
         </Stack.Navigator>

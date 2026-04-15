@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -6,97 +6,145 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
-    Dimensions
+    Dimensions,
+    ImageBackground,
+    StatusBar
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../types';
 import { useGoalsStore } from '../../store/goalsStore';
 import { useProgramsStore } from '../../store/programsStore';
-import SelectionCard from '../../components/SelectionCard';
-import StitchButton from '../../components/StitchButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useModalStore } from '../../store/modalStore';
 
+import LoadingState from '../../components/LoadingState';
+import BentoCategoryGrid from '../../components/stitch/BentoCategoryGrid';
+import EditorialCard from '../../components/stitch/EditorialCard';
+import StitchButton from '../../components/StitchButton';
+
 const { width } = Dimensions.get('window');
 
-type Step = 'CATEGORY' | 'SETTINGS' | 'DURATION' | 'TIME' | 'GENERATING';
+type Step = 'CATEGORY' | 'DEFINITION' | 'COMMITMENT' | 'REVIEW' | 'GENERATING';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'GoalWizard'>;
 
 const CATEGORIES = [
-    { id: 'skill', title: 'Skill Acquisition', description: 'Learn a new skill like a language or instrument', icon: 'musical-notes-outline' },
-    { id: 'habit_build', title: 'Habit Building', description: 'Establish a new daily routine', icon: 'calendar-outline' },
-    { id: 'career', title: 'Career Growth', description: 'Develop professional skills and leadership', icon: 'briefcase-outline' },
-    { id: 'mental', title: 'Mental Well-being', description: 'Focus on mindfulness and emotional health', icon: 'heart-outline' },
-    { id: 'fitness', title: 'Fitness & Health', description: 'Improve physical health and energy', icon: 'fitness-outline' },
+    { 
+        id: 'skill', 
+        title: 'Skill', 
+        description: 'Master new abilities and technical expertise.', 
+        icon: 'bulb-outline', 
+        color: '#225344', 
+        onPrimaryContainer: '#ffffff',
+        span: 3,
+        bgImage: require('../../../assets/images/skill_bg.png')
+    },
+    { 
+        id: 'habit', 
+        title: 'Habit', 
+        description: 'Build consistency through small daily actions.', 
+        icon: 'sync-outline', 
+        color: '#d7e4c7', 
+        onPrimaryContainer: '#5a664f',
+        span: 3,
+        bgImage: require('../../../assets/images/time_mindfulness_bg.png')
+    },
+    { 
+        id: 'career', 
+        title: 'Career', 
+        description: 'Professional growth and milestones.', 
+        icon: 'briefcase-outline', 
+        color: '#6c5891', 
+        onPrimaryContainer: '#ffffff',
+        span: 3,
+        bgImage: require('../../../assets/images/career_bg.png')
+    },
+    { 
+        id: 'mental', 
+        title: 'Mental', 
+        description: 'Mindfulness, focus, and health.', 
+        icon: 'leaf-outline', 
+        color: '#e3e3de', 
+        onPrimaryContainer: '#1a1c19',
+        span: 3,
+        bgImage: require('../../../assets/images/mental_bg.png')
+    },
+    { 
+        id: 'fitness', 
+        title: 'Fitness', 
+        description: 'Strength and physical vitality.', 
+        icon: 'fitness-outline', 
+        color: '#f4f4ef', 
+        onPrimaryContainer: '#1a1c19',
+        span: 3,
+        bgImage: require('../../../assets/images/fitness_bg.png')
+    },
 ];
 
 const DURATIONS = [
-    { id: 30, title: '30 Days', description: 'Short-term intensive sprint' },
-    { id: 60, title: '60 Days', description: 'Medium-term steady progress' },
-    { id: 90, title: '90 Days', description: 'Long-term transformation journey' },
+    { id: 30, title: '30 Days', subtitle: 'The Sprint', description: 'Intensive focus for rapid growth.' },
+    { id: 60, title: '60 Days', subtitle: 'The Rhythm', description: 'Sustainable pace for lasting change.' },
+    { id: 90, title: '90 Days', subtitle: 'The Transformation', description: 'Full architectural rebuild of spirit.' },
 ];
 
 const COMMITMENTS = [
-    { id: 15, title: '15 min', description: 'Micro-learning' },
-    { id: 30, title: '30 min', description: 'Balanced study' },
-    { id: 45, title: '45 min', description: 'Deep focus' },
-    { id: 60, title: '60+ min', description: 'Mastery pursuit' },
+    { id: 15, title: '15 min', type: 'Gentle' },
+    { id: 30, title: '30 min', type: 'Standard' },
+    { id: 60, title: '60 min', type: 'Deep' },
+];
+
+const GOAL_INSPIRATIONS = [
+    "Run a half-marathon in October",
+    "Read 2 books every month",
+    "Learn intermediate pottery skills",
+    "Daily 10-minute meditation"
 ];
 
 export default function GoalWizardScreen({ navigation }: Props) {
-    const { colors, spacing, borderRadius, shadows, isDark, fonts } = useTheme();
-    const [step, setStep] = React.useState<Step>('CATEGORY');
+    const { colors, spacing, borderRadius, isDark, fonts, shadows } = useTheme();
+    const [step, setStep] = useState<Step>('CATEGORY');
 
     // Form State
-    const [category, setCategory] = React.useState('');
-    const [goalDescription, setGoalDescription] = React.useState('');
-    const [targetDate, setTargetDate] = React.useState('');
-    const [timeframe, setTimeframe] = React.useState<number>(30);
-    const [dailyMinutes, setDailyMinutes] = React.useState<number>(30);
+    const [category, setCategory] = useState('');
+    const [goalDescription, setGoalDescription] = useState('');
+    const [targetDate, setTargetDate] = useState('');
+    const [timeframe, setTimeframe] = useState<number>(60);
+    const [dailyMinutes, setDailyMinutes] = useState<number>(30);
 
     const { createGoal } = useGoalsStore();
-    const { generateProgram, isLoading: isProgramLoading } = useProgramsStore();
+    const { generateProgram } = useProgramsStore();
     const { showModal } = useModalStore();
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleNext = () => {
         if (step === 'CATEGORY') {
             if (!category) {
-                showModal({
-                    type: 'info',
-                    title: 'Selection Required',
-                    description: 'Please choose a growth goal category to continue.'
-                });
+                showModal({ type: 'info', title: 'Selection Required', description: 'Choose your journey foundation.' });
                 return;
             }
-            setStep('SETTINGS');
-        } else if (step === 'SETTINGS') {
+            setStep('DEFINITION');
+        } else if (step === 'DEFINITION') {
             if (!goalDescription.trim()) {
-                showModal({
-                    type: 'info',
-                    title: 'Input Required',
-                    description: 'Please describe your goal in detail.'
-                });
+                showModal({ type: 'info', title: 'Define Your Path', description: 'Tell us a bit about your goal.' });
                 return;
             }
-            setStep('DURATION');
-        } else if (step === 'DURATION') {
-            setStep('TIME');
-        } else if (step === 'TIME') {
+            setStep('COMMITMENT');
+        } else if (step === 'COMMITMENT') {
+            setStep('REVIEW');
+        } else if (step === 'REVIEW') {
             handleSubmit();
         }
     };
 
     const handleBack = () => {
-        if (step === 'SETTINGS') setStep('CATEGORY');
-        else if (step === 'DURATION') setStep('SETTINGS');
-        else if (step === 'TIME') setStep('DURATION');
+        if (step === 'DEFINITION') setStep('CATEGORY');
+        else if (step === 'COMMITMENT') setStep('DEFINITION');
+        else if (step === 'REVIEW') setStep('COMMITMENT');
+        else navigation.goBack();
     };
 
     const handleSubmit = async () => {
@@ -124,38 +172,23 @@ export default function GoalWizardScreen({ navigation }: Props) {
             console.error('Wizard Error:', error);
             showModal({
                 type: 'error',
-                title: 'Error',
-                description: 'Failed to create your personalized program. Please try again.'
+                title: 'Manifestation Failed',
+                description: 'We couldn\'t weave your path right now. Please try again.'
             });
-            setStep('TIME');
+            setStep('REVIEW');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const renderProgress = () => {
-        const steps = ['CATEGORY', 'SETTINGS', 'DURATION', 'TIME'];
-        const currentIndex = steps.indexOf(step);
-        if (currentIndex === -1) return null;
-
-        return (
-            <View style={styles.progressContainer}>
-                {steps.map((_, index) => (
-                    <View
-                        key={index}
-                        style={[
-                            styles.progressBar,
-                            { backgroundColor: index <= currentIndex ? colors.primary : colors.surfaceContainerHighest },
-                            { width: (width - 64) / steps.length }
-                        ]}
-                    />
-                ))}
+    const renderHeader = (stepNum: number, title: string, subtitle: string) => (
+        <View style={styles.header}>
+            <View style={styles.stepIndicator}>
+                <Text style={[styles.stepText, { color: colors.primary, fontFamily: fonts.label }]}>Step {stepNum} of 5</Text>
             </View>
-        );
-    };
-
-    const renderHeader = (title: string, subtitle: string) => (
-        <View style={[styles.header, { marginBottom: spacing.xl }]}>
+            <View style={[styles.progressTrack, { backgroundColor: colors.surfaceContainerLow }]}>
+                <View style={[styles.progressFill, { width: `${stepNum * 20}%`, backgroundColor: colors.primary }]} />
+            </View>
             <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>{title}</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>{subtitle}</Text>
         </View>
@@ -163,129 +196,278 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
     if (step === 'GENERATING') {
         return (
-            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={[styles.loadingText, { color: colors.text }]}>Designing your program...</Text>
-                <Text style={[styles.loadingSubtext, { color: colors.textMuted }]}>Analyzing goal • Structuring curriculum • Scheduling tasks</Text>
-            </View>
+            <LoadingState 
+                title="Manifesting your journey" 
+                subtitle="Analyzing goal • Structuring curriculum • Scheduling tasks"
+                variant="full"
+            />
         );
     }
 
-    return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-            >
-                <View style={[styles.topNav, { paddingHorizontal: spacing.md, paddingVertical: spacing.sm }]}>
-                    {step !== 'CATEGORY' ? (
-                        <TouchableOpacity onPress={handleBack} style={[styles.backButton, { backgroundColor: colors.surfaceContainerLow }]}>
-                            <Ionicons name="chevron-back" size={24} color={colors.text} />
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.surfaceContainerLow }]}>
-                            <Ionicons name="close" size={24} color={colors.text} />
-                        </TouchableOpacity>
-                    )}
-                    {renderProgress()}
-                    <View style={{ width: 40 }} />
-                </View>
+    const renderFooterActions = () => {
+        if (step === 'CATEGORY') return null;
 
-                <ScrollView
-                    style={styles.container}
-                    contentContainerStyle={[styles.contentContainer, { padding: spacing.lg }]}
-                    showsVerticalScrollIndicator={false}
+        return (
+            <View style={styles.footerButtons}>
+                <StitchButton 
+                    title={step === 'REVIEW' ? "Manifest My Path" : (step === 'DEFINITION' ? "Continue to Details" : "Continue")} 
+                    onPress={handleNext}
+                    showArrow={step !== 'REVIEW'}
+                    style={styles.primaryFooterButton}
+                />
+                <TouchableOpacity 
+                    style={styles.secondaryFooterButton}
+                    onPress={() => {
+                        showModal({
+                            type: 'info',
+                            title: 'Draft Saved',
+                            description: 'Your progress has been preserved in the local weave.'
+                        });
+                    }}
                 >
-                    {step === 'CATEGORY' && (
-                        <>
-                            {renderHeader("Choose Your Growth Goal", "What area of your life would you like to focus on today?")}
-                            {CATEGORIES.map((cat) => (
-                                <SelectionCard
-                                    key={cat.id}
-                                    title={cat.title}
-                                    description={cat.description}
-                                    selected={category === cat.id}
-                                    onPress={() => setCategory(cat.id)}
-                                    icon={<Ionicons name={cat.icon as any} size={24} color={category === cat.id ? colors.primary : colors.slate[400]} />}
+                    <Text style={[styles.secondaryButtonText, { color: colors.primary, fontFamily: fonts.display }]}>Save as Draft</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    };
+
+    return (
+        <ImageBackground 
+            source={require('../../../assets/images/paper_texture.png')}
+            style={[styles.bgContainer, { backgroundColor: colors.background }]}
+            imageStyle={{ opacity: 0.3 }}
+        >
+            <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+                
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                >
+                    <View style={styles.topNav}>
+                        <TouchableOpacity onPress={handleBack} style={[styles.navIconButton, { backgroundColor: colors.background }]}>
+                            <Ionicons name="arrow-back" size={24} color={colors.primary} />
+                        </TouchableOpacity>
+                        <View style={styles.logoContainer}>
+                            <Text style={[styles.logoText, { color: colors.primary, fontFamily: fonts.display }]}>MIND/SET</Text>
+                        </View>
+                        <TouchableOpacity style={[styles.navIconButton, { opacity: 0 }]}>
+                            <Ionicons name="settings-outline" size={24} color={colors.primary} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView
+                        style={styles.scrollView}
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {step === 'CATEGORY' && (
+                            <>
+                                {renderHeader(1, "Select Category", "What do you want to work on? Each path offers specialized coaching insights.")}
+                                <BentoCategoryGrid 
+                                    categories={CATEGORIES}
+                                    selectedId={category}
+                                    onSelect={(id) => {
+                                        setCategory(id);
+                                        // Auto-advance with a slight delay for visual feedback
+                                        setTimeout(() => setStep('DEFINITION'), 300);
+                                    }}
                                 />
-                            ))}
-                        </>
+                                
+                                <EditorialCard style={styles.tipCard}>
+                                    <View style={styles.tipIconBox}>
+                                        <Ionicons name="sparkles" size={24} color={colors.primary} />
+                                    </View>
+                                    <View style={styles.tipTextContent}>
+                                        <Text style={[styles.tipTitle, { color: colors.text, fontFamily: fonts.display }]}>Expert Tip</Text>
+                                        <Text style={[styles.tipDesc, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                                            Research suggests starting with a <Text style={{ color: colors.primary, fontWeight: '700' }}>Habit</Text> goal if you're looking to build long-term sustainable change.
+                                        </Text>
+                                    </View>
+                                </EditorialCard>
+                                {renderFooterActions()}
+                            </>
+                        )}
+
+                        {step === 'DEFINITION' && (
+                            <View style={styles.stepContainer}>
+                                {renderHeader(2, "Describe Goal", "Bring your vision to life by detailing what you want to achieve.")}
+                                
+                                <View style={styles.inputSection}>
+                                    <View style={[styles.editorialTextAreaContainer, { backgroundColor: colors.surfaceContainerHighest }]}>
+                                        <TextInput
+                                            style={[styles.editorialTextArea, { color: colors.text, fontFamily: fonts.body }]}
+                                            placeholder="Describe your goal..."
+                                            placeholderTextColor={colors.outlineVariant}
+                                            multiline
+                                            numberOfLines={6}
+                                            value={goalDescription}
+                                            onChangeText={setGoalDescription}
+                                            textAlignVertical="top"
+                                        />
+                                        <View style={styles.textAreaIcon}>
+                                            <Ionicons name="pencil-outline" size={16} color={colors.outlineVariant} />
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.inspirationSection}>
+                                        <Text style={[styles.inspirationLabel, { color: colors.primary, fontFamily: fonts.label }]}>INSPIRATION</Text>
+                                        <View style={styles.chipContainer}>
+                                            {GOAL_INSPIRATIONS.map((text, idx) => (
+                                                <TouchableOpacity 
+                                                    key={idx} 
+                                                    style={[styles.chip, { backgroundColor: colors.secondaryContainer, borderColor: 'rgba(34, 83, 68, 0.1)' }]}
+                                                    onPress={() => setGoalDescription(text)}
+                                                >
+                                                    <Text style={[styles.chipText, { color: colors.primary, fontFamily: fonts.bodyMedium }]}>"{text}"</Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View style={[styles.dateCard, { backgroundColor: colors.surfaceContainerLow, borderRadius: 40 }]}>
+                                    <View style={styles.dateCardBgIcon}>
+                                        <Ionicons name="calendar-outline" size={120} color={colors.primary} style={{ opacity: 0.05 }} />
+                                    </View>
+                                    <View style={styles.dateCardContent}>
+                                        <Text style={[styles.dateCardTitle, { color: colors.text, fontFamily: fonts.display }]}>Target Date</Text>
+                                        <Text style={[styles.dateCardSubtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                                            When do you want to cross the finish line? This is optional but helps with focus.
+                                        </Text>
+                                        
+                                        <View style={styles.dateInputWrapper}>
+                                            <TextInput
+                                                style={[styles.dateInput, { backgroundColor: colors.surface, color: colors.text, fontFamily: fonts.body }]}
+                                                placeholder="YYYY-MM-DD"
+                                                placeholderTextColor={colors.outlineVariant}
+                                                value={targetDate}
+                                                onChangeText={setTargetDate}
+                                            />
+                                            <View style={styles.dateIconWrapper}>
+                                                <Ionicons name="calendar" size={20} color={colors.primary} />
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+                                {renderFooterActions()}
+                            </View>
+                        )}
+
+                        {step === 'COMMITMENT' && (
+                            <View style={styles.stepContainer}>
+                                {renderHeader(3, "The Commitment", "Sustainable change happens at the intersection of ambition and reality.")}
+                                
+                                <View style={styles.inputSection}>
+                                    <View style={styles.groupHeader}>
+                                        <View style={[styles.groupLine, { backgroundColor: colors.primary }]} />
+                                        <Text style={[styles.sectionLabel, { color: colors.text, fontFamily: fonts.label }]}>JOURNEY LENGTH</Text>
+                                    </View>
+                                    <View style={styles.selectionGrid}>
+                                        {DURATIONS.map(dur => (
+                                            <TouchableOpacity 
+                                                key={dur.id}
+                                                style={[
+                                                    styles.selectionItem, 
+                                                    { 
+                                                        backgroundColor: timeframe === dur.id ? colors.primary : colors.surfaceContainerLow,
+                                                        borderColor: timeframe === dur.id ? colors.primary : 'rgba(0,0,0,0.05)',
+                                                    },
+                                                    timeframe === dur.id && shadows.ambient
+                                                ]}
+                                                onPress={() => setTimeframe(dur.id)}
+                                            >
+                                                <Text style={[styles.selectionTitle, { color: timeframe === dur.id ? colors.background : colors.text, fontFamily: fonts.display }]}>{dur.title}</Text>
+                                                <Text style={[styles.selectionSub, { color: timeframe === dur.id ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontFamily: fonts.body }]}>{dur.subtitle}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+
+                                    <View style={[styles.groupHeader, { marginTop: 16 }]}>
+                                        <View style={[styles.groupLine, { backgroundColor: colors.secondary }]} />
+                                        <Text style={[styles.sectionLabel, { color: colors.text, fontFamily: fonts.label }]}>DAILY TIME INVESTMENT</Text>
+                                    </View>
+                                    <View style={styles.selectionGrid}>
+                                        {COMMITMENTS.map(comm => (
+                                            <TouchableOpacity 
+                                                key={comm.id}
+                                                style={[
+                                                    styles.selectionItem, 
+                                                    { 
+                                                        backgroundColor: dailyMinutes === comm.id ? colors.secondary : colors.surfaceContainerLow,
+                                                        borderColor: dailyMinutes === comm.id ? colors.secondary : 'rgba(0,0,0,0.05)',
+                                                    },
+                                                    dailyMinutes === comm.id && shadows.ambient
+                                                ]}
+                                                onPress={() => setDailyMinutes(comm.id)}
+                                            >
+                                                <Text style={[styles.selectionTitle, { color: dailyMinutes === comm.id ? colors.background : colors.text, fontFamily: fonts.display }]}>{comm.title}</Text>
+                                                <Text style={[styles.selectionSub, { color: dailyMinutes === comm.id ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontFamily: fonts.body }]}>{comm.type}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                </View>
+                                
+                                <View style={styles.coachQuoteBox}>
+                                    <View style={[styles.quoteLine, { backgroundColor: colors.primary }]} />
+                                    <Text style={[styles.quoteText, { color: colors.text, fontFamily: fonts.display }]}>
+                                        "Commitment is the bridge between intention and accomplishment."
+                                    </Text>
+                                </View>
+                                {renderFooterActions()}
+                            </View>
+                        )}
+
+                        {step === 'REVIEW' && (
+                            <View style={styles.stepContainer}>
+                                {renderHeader(4, "Final Alignment", "Review your journey foundations before we manifest the path.")}
+                                
+                                <View style={[styles.reviewCard, { backgroundColor: colors.surface, borderRadius: 40 }, shadows.ambient]}>
+                                    <View style={styles.reviewRow}>
+                                        <Text style={[styles.reviewLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>GOAL</Text>
+                                        <Text style={[styles.reviewValue, { color: colors.text, fontFamily: fonts.body }]}>{goalDescription}</Text>
+                                    </View>
+                                    <View style={[styles.divider, { marginVertical: 16 }]} />
+                                    <View style={styles.reviewRow}>
+                                        <Text style={[styles.reviewLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>CATEGORY</Text>
+                                        <Text style={[styles.reviewValue, { color: colors.text, fontFamily: fonts.body, textTransform: 'capitalize' }]}>{category}</Text>
+                                    </View>
+                                    <View style={[styles.divider, { marginVertical: 16 }]} />
+                                    <View style={styles.reviewRow}>
+                                        <Text style={[styles.reviewLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>DURATION</Text>
+                                        <Text style={[styles.reviewValue, { color: colors.text, fontFamily: fonts.body }]}>{timeframe} Days</Text>
+                                    </View>
+                                    <View style={[styles.divider, { marginVertical: 16 }]} />
+                                    <View style={styles.reviewRow}>
+                                        <Text style={[styles.reviewLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>FREQUENCY</Text>
+                                        <Text style={[styles.reviewValue, { color: colors.text, fontFamily: fonts.body }]}>{dailyMinutes}m / Daily</Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.coachQuoteBox}>
+                                    <View style={[styles.quoteLine, { backgroundColor: colors.primary }]} />
+                                    <Text style={[styles.quoteText, { color: colors.text, fontFamily: fonts.display }]}>
+                                        {`"The secret to permanence is small, rhythmic steps. This ${timeframe}-day journey is perfectly balanced for your current stamina."`}
+                                    </Text>
+                                </View>
+                                {renderFooterActions()}
+                            </View>
+                        )}
+                    </ScrollView>
+
+                    {step !== 'CATEGORY' && (
+                        <View style={{ height: 20 }} />
                     )}
-
-                    {step === 'SETTINGS' && (
-                        <>
-                            {renderHeader("Goal Settings & Timeframe", "Describe what you want to achieve and when.")}
-                            <Text style={[styles.label, { color: colors.text }]}>Detailed Description</Text>
-                            <TextInput
-                                style={[styles.textArea, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.outlineVariant }]}
-                                placeholder="I want to learn confirmational guitar playing, focusing on fingerstyle techniques..."
-                                value={goalDescription}
-                                onChangeText={setGoalDescription}
-                                multiline
-                                numberOfLines={6}
-                                textAlignVertical="top"
-                                placeholderTextColor={colors.textMuted}
-                            />
-
-                            <Text style={[styles.label, { marginTop: 24, color: colors.text }]}>Target Achievement Date (Optional)</Text>
-                            <TextInput
-                                style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.outlineVariant }]}
-                                placeholder="YYYY-MM-DD (e.g. 2026-06-01)"
-                                value={targetDate}
-                                onChangeText={setTargetDate}
-                                placeholderTextColor={colors.textMuted}
-                            />
-                            <Text style={[styles.hint, { color: colors.textMuted }]}>Leaving this blank will use the timeframe from the next step.</Text>
-                        </>
-                    )}
-
-                    {step === 'DURATION' && (
-                        <>
-                            {renderHeader("Select Program Duration", "How long would you like this transformation journey to take?")}
-                            {DURATIONS.map((dur) => (
-                                <SelectionCard
-                                    key={dur.id}
-                                    title={dur.title}
-                                    description={dur.description}
-                                    selected={timeframe === dur.id}
-                                    onPress={() => setTimeframe(dur.id)}
-                                    icon={<Ionicons name="time-outline" size={24} color={timeframe === dur.id ? colors.primary : colors.slate[400]} />}
-                                />
-                            ))}
-                        </>
-                    )}
-
-                    {step === 'TIME' && (
-                        <>
-                            {renderHeader("Daily Time Investment", "How many minutes can you realistically commit each day?")}
-                            {COMMITMENTS.map((comm) => (
-                                <SelectionCard
-                                    key={comm.id}
-                                    title={comm.title}
-                                    description={comm.description}
-                                    selected={dailyMinutes === comm.id}
-                                    onPress={() => setDailyMinutes(comm.id)}
-                                    icon={<Ionicons name="flash-outline" size={24} color={dailyMinutes === comm.id ? colors.primary : colors.slate[400]} />}
-                                />
-                            ))}
-                        </>
-                    )}
-                </ScrollView>
-
-                <View style={[styles.footer, { borderTopColor: colors.outlineVariant }]}>
-                    <StitchButton
-                        title={step === 'TIME' ? "Generate My Plan" : "Continue"}
-                        onPress={handleNext}
-                        showArrow={step !== 'TIME'}
-                    />
-                </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
+    bgContainer: {
+        flex: 1,
+    },
     safeArea: {
         flex: 1,
     },
@@ -293,79 +475,299 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        paddingHorizontal: 24,
+        paddingTop: 12,
+        paddingBottom: 16,
     },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+    navIconButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.05)',
     },
-    progressContainer: {
-        flexDirection: 'row',
-        gap: 4,
+    logoContainer: {
+        flex: 1,
+        alignItems: 'center',
     },
-    progressBar: {
-        height: 4,
-        borderRadius: 2,
+    logoText: {
+        fontSize: 16,
+        fontWeight: '900',
+        letterSpacing: 2,
     },
-    container: {
+    scrollView: {
         flex: 1,
     },
-    contentContainer: {
+    scrollContent: {
+        paddingHorizontal: 24,
+        paddingBottom: 40,
     },
     header: {
+        marginBottom: 32,
+    },
+    stepIndicator: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+        marginBottom: 12,
+    },
+    stepText: {
+        fontSize: 12,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 2,
+    },
+    stepPercent: {
+        fontSize: 24,
+        fontWeight: '900',
+    },
+    progressTrack: {
+        height: 6,
+        borderRadius: 3,
+        marginBottom: 32,
+        overflow: 'hidden',
+    },
+    progressFill: {
+        height: '100%',
+        borderRadius: 3,
     },
     title: {
-        fontSize: 28,
-        fontWeight: '800',
-        marginBottom: 8,
+        fontSize: 32,
+        fontWeight: '900',
+        marginBottom: 12,
+        letterSpacing: -0.5,
     },
     subtitle: {
-        fontSize: 16,
-        lineHeight: 24,
+        fontSize: 18,
+        lineHeight: 28,
+    },
+    tipCard: {
+        flexDirection: 'row',
+        marginTop: 32,
+        padding: 24,
+        borderRadius: 32,
+        backgroundColor: '#f4f4ef',
+    },
+    tipIconBox: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 20,
+    },
+    tipTextContent: {
+        flex: 1,
+    },
+    tipTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        marginBottom: 4,
+    },
+    tipDesc: {
+        fontSize: 14,
+        lineHeight: 22,
+    },
+    definitionCard: {
+        paddingVertical: 40,
     },
     label: {
-        fontSize: 16,
-        fontWeight: '700',
-        marginBottom: 8,
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 1.5,
+        marginBottom: 12,
     },
     textArea: {
-        borderRadius: 16,
-        padding: 16,
-        height: 160,
-        fontSize: 16,
-        borderWidth: 1,
+        fontSize: 18,
+        lineHeight: 28,
+        height: 120,
     },
-    input: {
-        borderRadius: 16,
-        padding: 16,
-        fontSize: 16,
-        borderWidth: 1,
+    divider: {
+        height: 1,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        marginVertical: 24,
     },
-    hint: {
-        marginTop: 8,
+    fieldInput: {
+        fontSize: 18,
+    },
+    sectionLabel: {
+        fontSize: 12,
+        fontWeight: '800',
+        letterSpacing: 2,
+    },
+    groupHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 16,
+    },
+    groupLine: {
+        width: 4,
+        height: 18,
+        borderRadius: 2,
+    },
+    selectionGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    selectionItem: {
+        width: '48%',
+        padding: 24,
+        borderRadius: 24,
+        borderWidth: 1,
+        justifyContent: 'center',
+    },
+    selectionTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        marginBottom: 4,
+    },
+    selectionSub: {
         fontSize: 13,
+    },
+    reviewCard: {
+        padding: 32,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.05)',
+    },
+    reviewRow: {
+        gap: 8,
+    },
+    reviewLabel: {
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1.5,
+    },
+    reviewValue: {
+        fontSize: 18,
+        lineHeight: 26,
+    },
+    coachQuoteBox: {
+        flexDirection: 'row',
+        marginTop: 24,
+        paddingHorizontal: 8,
+    },
+    quoteLine: {
+        width: 4,
+        borderRadius: 2,
+        marginRight: 20,
+    },
+    quoteText: {
+        flex: 1,
+        fontSize: 22,
+        fontWeight: '800',
+        lineHeight: 32,
         fontStyle: 'italic',
     },
     footer: {
         padding: 24,
-        borderTopWidth: 1,
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+        backgroundColor: 'rgba(255,255,255,0.8)',
     },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
+    footerButtons: {
+        gap: 16,
         alignItems: 'center',
-        padding: 32,
+        paddingVertical: 32,
     },
-    loadingText: {
-        marginTop: 24,
-        fontSize: 20,
+    primaryFooterButton: {
+        width: '100%',
+    },
+    secondaryFooterButton: {
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        width: '100%',
+        alignItems: 'center',
+    },
+    secondaryButtonText: {
+        fontSize: 16,
         fontWeight: '700',
     },
-    loadingSubtext: {
-        marginTop: 8,
-        fontSize: 15,
-        textAlign: 'center',
+    stepContainer: {
+        gap: 40,
     },
+    inputSection: {
+        gap: 32,
+    },
+    editorialTextAreaContainer: {
+        borderRadius: 24,
+        padding: 24,
+        minHeight: 180,
+    },
+    editorialTextArea: {
+        fontSize: 20,
+        lineHeight: 28,
+        flex: 1,
+    },
+    textAreaIcon: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+    },
+    inspirationSection: {
+        gap: 12,
+    },
+    inspirationLabel: {
+        fontSize: 12,
+        fontWeight: '800',
+        letterSpacing: 1.5,
+        paddingHorizontal: 4,
+    },
+    chipContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    chip: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 99,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.03)',
+    },
+    chipText: {
+        fontSize: 14,
+    },
+    dateCard: {
+        padding: 32,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.05)',
+    },
+    dateCardBgIcon: {
+        position: 'absolute',
+        top: -20,
+        right: -20,
+    },
+    dateCardContent: {
+        gap: 16,
+    },
+    dateCardTitle: {
+        fontSize: 24,
+        fontWeight: '800',
+    },
+    dateCardSubtitle: {
+        fontSize: 16,
+        lineHeight: 24,
+        maxWidth: '90%',
+    },
+    dateInputWrapper: {
+        marginTop: 8,
+        maxWidth: 240,
+    },
+    dateInput: {
+        borderRadius: 16,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        fontSize: 16,
+    },
+    dateIconWrapper: {
+        position: 'absolute',
+        right: 16,
+        top: 16,
+    }
 });

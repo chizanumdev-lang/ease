@@ -5,9 +5,9 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    ActivityIndicator,
     StatusBar,
 } from 'react-native';
+import LoadingState from '../../components/LoadingState';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList, Quiz, QuizQuestion } from '../../types';
 import { quizzesService } from '../../services/quizzes.service';
@@ -110,10 +110,11 @@ export default function QuizScreen({ route, navigation }: Props) {
 
     if (loading) {
         return (
-            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading quiz...</Text>
-            </View>
+            <LoadingState 
+                title="Sharpening your focus" 
+                subtitle="We're preparing your validation questions and optimizing your feedback loop."
+                variant="full"
+            />
         );
     }
 

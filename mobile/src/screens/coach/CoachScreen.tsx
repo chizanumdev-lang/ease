@@ -8,7 +8,6 @@ import {
     StyleSheet,
     KeyboardAvoidingView,
     Platform,
-    ActivityIndicator,
     SafeAreaView,
     Dimensions,
     StatusBar
@@ -27,8 +26,10 @@ interface Message {
 
 const { width } = Dimensions.get('window');
 
+import LoadingState from '../../components/LoadingState';
+
 export default function CoachScreen({ navigation }: any) {
-    const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
+    const { colors, spacing, borderRadius, isDark, shadows, fonts } = useTheme();
     const insets = useSafeAreaInsets();
     
     const [messages, setMessages] = useState<Message[]>([
@@ -93,14 +94,15 @@ export default function CoachScreen({ navigation }: any) {
                 )}
                 
                 <View style={[styles.bubbleWrapper, isUser ? styles.userWrapper : styles.aiWrapper]}>
-                    <Text style={[styles.senderName, { color: colors.textMuted }]}>{isUser ? 'You' : 'Ease Bo'}</Text>
+                    <Text style={[styles.senderName, { color: colors.textMuted, fontFamily: fonts.label }]}>{isUser ? 'You' : 'Ease Bo'}</Text>
                     <View style={[
                         styles.messageBubble, 
                         isUser ? [styles.userBubble, { backgroundColor: colors.primary }] : [styles.aiBubble, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]
                     ]}>
                         <Text style={[
                             styles.messageText, 
-                            isUser ? { color: isDark ? colors.background : "#fff" } : { color: colors.text }
+                            isUser ? { color: isDark ? colors.background : "#fff" } : { color: colors.text },
+                            { fontFamily: fonts.body }
                         ]}>
                             {item.text}
                         </Text>
@@ -121,7 +123,7 @@ export default function CoachScreen({ navigation }: any) {
                                             color={colors.primary} 
                                         />
                                     </View>
-                                    <Text style={[styles.actionText, { color: colors.primary }]}>{action.details}</Text>
+                                    <Text style={[styles.actionText, { color: colors.primary, fontFamily: fonts.label }]}>{action.details}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -147,10 +149,10 @@ export default function CoachScreen({ navigation }: any) {
                     <Ionicons name="chevron-back" size={24} color={colors.primary} />
                 </TouchableOpacity>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Ease AI</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.display }]}>Ease AI</Text>
                     <View style={styles.statusRow}>
                         <View style={[styles.statusDot, { backgroundColor: isDark ? '#10b981' : '#22c55e' }]} />
-                        <Text style={[styles.statusText, { color: colors.textMuted }]}>Always here for you</Text>
+                        <Text style={[styles.statusText, { color: colors.textMuted, fontFamily: fonts.label }]}>Always here for you</Text>
                     </View>
                 </View>
                 <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
@@ -168,9 +170,11 @@ export default function CoachScreen({ navigation }: any) {
             />
 
             {isLoading && (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text style={[styles.loadingText, { color: colors.textMuted }]}>Ease AI is typing...</Text>
+                <View style={styles.loadingWrapper}>
+                    <LoadingState 
+                        variant="compact"
+                        title="Ease AI is typing..."
+                    />
                 </View>
             )}
 
@@ -326,15 +330,9 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '700',
     },
-    loadingContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    loadingWrapper: {
         paddingHorizontal: 20,
         paddingBottom: 20,
-    },
-    loadingText: {
-        marginLeft: 10,
-        fontSize: 14,
     },
     inputArea: {
         padding: 16,

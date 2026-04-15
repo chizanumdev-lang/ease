@@ -3,12 +3,12 @@ import {
     View,
     Text,
     StyleSheet,
-    ActivityIndicator,
     ScrollView,
     TouchableOpacity,
     StatusBar,
     Dimensions
 } from 'react-native';
+import LoadingState from '../../components/LoadingState';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { Ionicons } from '@expo/vector-icons';
@@ -95,7 +95,7 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                 <View style={[styles.playerWrapper, { borderColor: colors.outlineVariant, backgroundColor: '#000' }]}>
                     {loading && (
                         <View style={styles.loadingOverlay}>
-                            <ActivityIndicator size="large" color={colors.primary} />
+                            <LoadingState variant="compact" title="Preparing cinematic lesson..." />
                         </View>
                     )}
                     <YoutubePlayer

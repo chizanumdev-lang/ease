@@ -59,14 +59,6 @@ export default function TabNavigator() {
                         tabBarIcon: ({ color }: { color: string }) => <Ionicons name="chatbubbles-outline" size={20} color={color} />,
                     }}
                 />
-                <Tab.Screen
-                    name="Settings"
-                    component={SettingsScreen}
-                    options={{
-                        tabBarLabel: 'Settings',
-                        tabBarIcon: ({ color }: { color: string }) => <Ionicons name="settings-outline" size={20} color={color} />,
-                    }}
-                />
             </Tab.Navigator>
             <MiniAudioPlayer />
         </View>

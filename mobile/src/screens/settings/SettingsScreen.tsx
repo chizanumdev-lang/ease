@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Image, Dimensions, Platform } from 'react-native';
 import { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { TabParamList, NotificationSettings } from '../../types';
+import { MainStackParamList, NotificationSettings } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +13,7 @@ import Logo from '../../components/Logo';
 import { useProgramsStore } from '../../store/programsStore';
 import { useModalStore } from '../../store/modalStore';
 
-type Props = NativeStackScreenProps<TabParamList, 'Settings'>;
+type Props = NativeStackScreenProps<MainStackParamList, 'Settings'>;
 
 const { width } = Dimensions.get('window');
 
@@ -174,7 +174,12 @@ export default function SettingsScreen({ navigation }: Props) {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.topNav}>
-                    <Logo size={32} style={styles.navLogo} />
+                    <TouchableOpacity 
+                        style={styles.backButton}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Ionicons name="chevron-back" size={28} color={colors.text} />
+                    </TouchableOpacity>
                     <Text style={[styles.navTitle, { color: colors.text }]}>Settings</Text>
                 </View>
 
@@ -465,6 +470,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 16,
         gap: 12,
+    },
+    backButton: {
+        padding: 4,
+        marginLeft: -4,
     },
     navLogo: {
         // small branding in settings

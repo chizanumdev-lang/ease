@@ -4,7 +4,6 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    ActivityIndicator,
     Image,
     Animated,
     Dimensions,
@@ -19,6 +18,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useModalStore } from '../../store/modalStore';
 import { canAutoPlayAudio } from '../../utils/sleepWindow.util';
+import LoadingState from '../../components/LoadingState';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'AudioPlayer'>;
 
@@ -134,8 +134,8 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
                     <Text style={[styles.headerLabel, { color: colors.textMuted }]}>NIGHTLY RITUAL</Text>
                     <Text style={[styles.headerTitle, { color: colors.text }]}>Deep Sleep Ambient</Text>
                 </View>
-                <TouchableOpacity style={styles.headerBtn}>
-                    <Ionicons name="ellipsis-horizontal" size={24} color={colors.textMuted} />
+                <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Settings')}>
+                    <Ionicons name="settings-outline" size={24} color={colors.textMuted} />
                 </TouchableOpacity>
             </View>
 
@@ -196,7 +196,7 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
 
                         <TouchableOpacity style={[styles.playPauseButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]} onPress={handlePlayPause}>
                             {isLoading ? (
-                                <ActivityIndicator color={isDark ? colors.background : "#fff"} />
+                                <LoadingState variant="compact" title="" />
                             ) : (
                                 <Ionicons name={isPlaying ? "pause" : "play"} size={40} color={isDark ? colors.background : "#fff"} />
                             )}

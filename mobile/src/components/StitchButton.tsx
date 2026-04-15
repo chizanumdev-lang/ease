@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-    ActivityIndicator, 
     TextStyle,
     Animated,
     Pressable,
@@ -12,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
+import LoadingState from './LoadingState';
 
 interface StitchButtonProps {
     title: string;
@@ -137,9 +137,7 @@ export default function StitchButton({
     const renderContent = () => {
         if (isLoading) {
             return (
-                <ActivityIndicator 
-                    color={variant === 'primary' ? '#ffffff' : colors.primary} 
-                />
+                <LoadingState variant="compact" title="" />
             );
         }
 
