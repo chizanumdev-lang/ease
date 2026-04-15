@@ -362,21 +362,21 @@ export class ProgramsService {
     // ── generateProgram ──────────────────────────────────────────────────────
 
     async getProgramPreview(userId: string, dto: GenerateProgramDto): Promise<any> {
-        let goalText = '';
+        let goalText = dto.goalDescription || '';
         if (dto.goalId) {
             const goal = await this.goalRepository.findOne({ where: { id: dto.goalId, userId } });
             if (goal) goalText = goal.description || goal.title;
         }
 
-        // If goalId not provided or not found, we might be previewing before goal creation
-        // We can accept a raw goal string in the DTO if needed later, but for now we rely on existing goals or a default
-        if (!goalText) goalText = 'Self Improvement'; 
+        // If still no text, use category or default
+        if (!goalText) goalText = dto.category || 'Self Improvement'; 
 
         const options = {
             duration: dto.duration,
             minutesPerDay: dto.minutesPerDay,
             learningStyle: dto.learningStyle,
             constraints: dto.constraints,
+            category: dto.category,
         };
 
         return this.aiService.generateProgramPreview(goalText, options);

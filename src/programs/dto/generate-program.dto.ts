@@ -2,7 +2,16 @@ import { IsUUID, IsInt, Min, Max, IsOptional, IsString, IsArray } from 'class-va
 
 export class GenerateProgramDto {
     @IsUUID()
-    goalId: string;
+    @IsOptional()
+    goalId?: string;
+
+    @IsString()
+    @IsOptional()
+    goalDescription?: string;
+
+    @IsString()
+    @IsOptional()
+    category?: string;
 
     @IsInt()
     @Min(1)
