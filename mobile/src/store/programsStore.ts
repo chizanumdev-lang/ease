@@ -164,14 +164,16 @@ export const useProgramsStore = create<ProgramsState>()(
                     // Migrate tasks to new schema
                     if (todayPlan && todayPlan.tasks) {
                         let prevCompleted = true;
-                        todayPlan.tasks = todayPlan.tasks.map((t, idx) => {
-                            const task = migrateTask(t, idx, todayPlan.tasks!.length);
-                            if (prevCompleted && task.status === TaskStatus.LOCKED) {
-                                task.status = TaskStatus.PENDING;
-                            }
-                            prevCompleted = task.status === TaskStatus.COMPLETED || task.status === TaskStatus.SKIPPED;
-                            return task;
-                        });
+                        todayPlan.tasks = todayPlan.tasks
+                            .map((t, idx) => {
+                                const task = migrateTask(t, idx, todayPlan.tasks!.length);
+                                if (prevCompleted && task.status === TaskStatus.LOCKED) {
+                                    task.status = TaskStatus.PENDING;
+                                }
+                                prevCompleted = task.status === TaskStatus.COMPLETED || task.status === TaskStatus.SKIPPED;
+                                return task;
+                            })
+                            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)); // Explicitly sort by order
                     }
 
                     set({

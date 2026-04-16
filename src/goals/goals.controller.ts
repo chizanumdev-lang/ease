@@ -20,6 +20,11 @@ export class GoalsController {
         return this.goalsService.findAllByUser(user.id);
     }
 
+    @Get(':id')
+    async findOne(@GetUser() user: User, @Param('id') id: string) {
+        return this.goalsService.findById(id, user.id);
+    }
+
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     async remove(@GetUser() user: User, @Param('id') id: string) {

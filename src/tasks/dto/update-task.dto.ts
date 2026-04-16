@@ -7,4 +7,7 @@ export class UpdateTaskDto {
 
     @IsOptional()
     scheduledAt?: Date | string;
+
+    @IsOptional()
+    content?: string;
 }

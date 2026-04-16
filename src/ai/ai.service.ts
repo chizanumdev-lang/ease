@@ -243,10 +243,11 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         const midEnd = Math.floor(duration * 0.7);
         const lateStart = midEnd + 1;
 
-        const videoDuration = Math.round(minutesPerDay * 0.25);
-        const exerciseDuration = Math.round(minutesPerDay * 0.20);
-        const lessonDuration = Math.round(minutesPerDay * 0.15);
-        const audioDuration = Math.round(minutesPerDay * 0.15);
+        const videoDuration = Math.round(minutesPerDay * 0.30);
+        const quizDuration = Math.round(minutesPerDay * 0.10);
+        const audioDuration = Math.round(minutesPerDay * 0.20);
+        const journalDuration = Math.round(minutesPerDay * 0.15);
+        const consistencyDuration = 2; // Fixed short commitment
 
         const systemInstruction = `You are an expert curriculum designer and personal coach specializing in 
 structured habit and skill development programs.
@@ -258,87 +259,36 @@ Daily commitment: ${minutesPerDay} minutes
 Learning style: ${learningStyle}
 Constraints: ${constraints.join(', ') || 'none'}
 
-PROGRESSION RULES
-- Days 1-${earlyPhase}: Foundation. Introduce core concepts. Keep tasks simple and confidence-building.
-- Days ${midStart}-${midEnd}: Development. Increase complexity. Build on prior days explicitly.
-- Days ${lateStart}-${duration}: Mastery. Challenge the user. Reference and synthesize earlier learning.
-- Each day's theme must be a specific, distinct subtopic of the goal — not a generic label.
-- No exercise, technique, or journal prompt may repeat across days.
-
-DAILY FLOW (Follow this order for better habit formation)
-1. Lesson (Theory) → 2. Video (Demo) → 3. Quiz (Check) → 4. Exercise (Practice) → 5. Journal (Insights) → 6. Mindfulness (Reset) → 7. Audio (Integration)
+DAILY FLOW (STRICT ORDER - Indexing 0-5)
+0. Video (Concept)
+1. Quiz (Comprehension)
+2. Audio (Integration - Binaural/Subliminal)
+3. Consistency (Tomorrow's Commitment)
+4. Journal (Intention)
+5. Reflection (Daily Win/Preview)
 
 OUTPUT SCHEMA
 Return a raw JSON array — no markdown, no code fences, no commentary, no trailing commas. Every object must have ALL of these keys:
 
 {
   "dayNumber": integer,
-  "theme": string (specific subtopic, e.g. "Fingerstyle Thumb Independence" not "Basics"),
+  "theme": string (specific subtopic),
   "focusAreas": string[], (exactly 3 key concepts for today)
   
-  "lessonTask": {
-    "title": string (action-oriented or question-based, e.g. "The Science of Habit Loops"),
-    "description": string (explain what the user will understand after reading),
-    "keyPoints": string[] (exactly 4 points, each a complete insight or actionable fact)
-  },
-
-  "videoTask": {
-    "title": string,
-    "description": string,
-    "searchQuery": string (precise YouTube query including level/modality)
-  },
-
-  "quiz": {
-    "title": string,
-    "questions": [
-      {
-        "question": string (tests comprehension of today's lesson/video),
-        "options": string[] (exactly 4 options, one clearly correct),
-        "correctAnswer": integer (0-based index),
-        "explanation": string (why it's correct — shown after answer)
-      }
-    ]
-    // exactly 2 questions
-  },
-  
-  "exerciseTask": {
-    "title": string (Verb + Outcome, e.g. "Master the Pomodoro Sprint"),
-    "description": string (what they'll accomplish and why it matters),
-    "steps": string[] (exactly 4 actionable steps, specific to today's theme),
-    "durationMinutes": ${exerciseDuration}
-  },
-  
-  "journalTask": {
-    "title": string (e.g. "Focus Reflection"),
-    "prompt": string (open-ended, personal — connects today's theme to the user's life)
-  },
-  
-  "mindfulnessTask": {
-    "title": string,
-    "description": string,
-    "technique": string (named technique with brief how-to, vary daily)
-  },
-  
-  "reflectionTask": {
-    "title": string,
-    "description": string,
-    "reviewPoints": string[] (exactly 2 points: one for today's win, one for tomorrow's prep)
-  },
-
-  "audioTask": {
-    "title": string,
-    "description": string,
-    "mood": "meditation" | "focus" | "ambient",
-    "theme": string (1-sentence prompt for AI audio script generation)
-  }
+  "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
+  "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
+  "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
+  "consistencyTask": { "title": "Tomorrow's Commitment", "description": string (short commitment prompt), "duration": ${consistencyDuration} },
+  "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
+  "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] }
 }
 
 QUALITY RULES
-- Each task must be scannable and mobile-friendly (no walls of text).
-- Avoid medical claims; use coaching/wellness framing.
-- Steps should be ONE clear action; use "→" logic in your mind when writing them.
+- QUIZ GROUNDING: Questions MUST test comprehension of the day's specific theme and video content. Do not ask generic life-coaching questions.
+- AUDIO SCRIPT: The description should be a script summary for a voice-guided session designed for binaural beat background.
+- Each task must be scannable and mobile-friendly.
 - videoTask.searchQuery must be specific enough to return a real tutorial.
-- reflectionTask.reviewPoints must vary (e.g., "What went well?" vs "What will I prep tonight?").`;
+- reflectionTask.reviewPoints must be exactly 2 (one today's win, one tomorrow's prep).`;
 
         try {
             // Call through the fallback chain (Gemini → Groq → Cohere)
@@ -385,10 +335,11 @@ QUALITY RULES
         const phase = dayNumber <= earlyPhase ? 'Foundation' :
                       dayNumber <= midEnd ? 'Development' : 'Mastery';
 
-        const videoDuration = Math.round(minutesPerDay * 0.25);
-        const exerciseDuration = Math.round(minutesPerDay * 0.20);
-        const lessonDuration = Math.round(minutesPerDay * 0.15);
-        const audioDuration = Math.round(minutesPerDay * 0.15);
+        const videoDuration = Math.round(minutesPerDay * 0.30);
+        const quizDuration = Math.round(minutesPerDay * 0.10);
+        const audioDuration = Math.round(minutesPerDay * 0.20);
+        const journalDuration = Math.round(minutesPerDay * 0.15);
+        const consistencyDuration = 2; // Fixed short commitment
 
         const prompt = `You are an expert curriculum designer creating a single day of a ${totalDays}-day learning plan.
 
@@ -399,8 +350,13 @@ Daily commitment: ${minutesPerDay} minutes
 Learning style: ${learningStyle}
 Constraints: ${constraints.join(', ') || 'none'}
 
-DAILY FLOW (Follow this order)
-1. Lesson → 2. Video → 3. Quiz → 4. Exercise → 5. Journal → 6. Mindfulness → 7. Audio
+DAILY FLOW (STRICT ORDER - Indexing 0-5)
+0. Video (Concept)
+1. Quiz (Comprehension)
+2. Audio (Integration - Binaural/Subliminal)
+3. Consistency (Tomorrow's Commitment)
+4. Journal (Intention)
+5. Reflection (Daily Win/Preview)
 
 OUTPUT SCHEMA
 Return a single raw JSON object — no markdown, no code fences, no commentary:
@@ -410,20 +366,19 @@ Return a single raw JSON object — no markdown, no code fences, no commentary:
   "theme": string (specific subtopic),
   "focusAreas": string[], (exactly 3 key points)
   
-  "lessonTask": { "title": string (action-oriented), "description": string, "keyPoints": string[4] },
-  "videoTask": { "title": string, "description": string, "searchQuery": string },
+  "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
   "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
-  "exerciseTask": { "title": string (Verb + Outcome), "description": string, "steps": string[4], "durationMinutes": ${exerciseDuration} },
-  "journalTask": { "title": string, "prompt": string },
-  "mindfulnessTask": { "title": string, "description": string, "technique": string },
-  "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] },
-  "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string }
+  "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
+  "consistencyTask": { "title": "Tomorrow's Commitment", "description": string (short commitment prompt), "duration": ${consistencyDuration} },
+  "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
+  "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] }
 }
 
 QUALITY RULES
+- QUIZ GROUNDING: Questions MUST test comprehension of the day's specific theme and content. No generic questions.
+- AUDIO SCRIPT: The description should be a script summary designed for binaural beat background.
 - Scannable, mobile-friendly content.
 - Action-oriented titles.
-- Varied mindfulness techniques.
 - Reflection points: one today's win, one tomorrow's prep.
 
 Return ONLY the raw JSON object starting with { and ending with }.`;
@@ -634,8 +589,7 @@ Return ONLY the raw JSON object starting with { and ending with }.
     }
 
     private validateDay(day: any, dayIndex: number): void {
-        const required = ['focusAreas', 'videoTask', 'exerciseTask', 'lessonTask', 'quiz',
-            'journalTask', 'audioTask', 'mindfulnessTask', 'reflectionTask'];
+        const required = ['focusAreas', 'videoTask', 'quiz', 'audioTask', 'consistencyTask', 'journalTask', 'reflectionTask'];
 
         for (const field of required) {
             if (!day[field]) throw new Error(`Day ${dayIndex} missing field: ${field}`);
@@ -651,100 +605,45 @@ Return ONLY the raw JSON object starting with { and ending with }.
     }
 
     private getFallbackDay(dayNumber: number, goalCategory: string = 'default') {
-        const categories: Record<string, string[]> = {
-            'language': [
-                'Basic Greetings & Alphabet',
-                'Common Vocabulary',
-                'Simple Sentence Structure',
-                'Listening Comprehension',
-                'Speaking Practice',
-                'Review & Conversation',
-                'Immersive Practice'
-            ],
-            'fitness': [
-                'Form & Technique',
-                'Core Activation',
-                'Strength Foundations',
-                'Cardio Endurance',
-                'Active Recovery & Flex',
-                'High Intensity Intervals',
-                'Full Body Flow'
-            ],
-            'productivity': [
-                'Time Blocking Basics',
-                'Prioritization Techniques',
-                'Managing Distractions',
-                'Deep Work Strategies',
-                'Workflow Optimization',
-                'Review & Rest',
-                'System Consolidation'
-            ],
-            'study': [
-                'Setting Up the Environment',
-                'Information Intake Methods',
-                'Active Recall & Spaced Repetition',
-                'Synthesizing Notes',
-                'Mock Testing',
-                'Reviewing Mistakes',
-                'Final Consolidation'
-            ]
-        };
-
-        const themes = categories[(goalCategory || '').toLowerCase()] || [
-            'Introduction & Foundations',
-            'Core Skills',
-            'Building Momentum',
-            'Deepening Understanding',
-            'Practice & Refinement',
-            'Review & Consolidation',
-            'Application',
-        ];
-        
-        const theme = themes[(dayNumber - 1) % themes.length];
         return {
-            dayNumber: dayNumber,
-            theme,
+            dayNumber,
+            theme: 'Building Foundations',
+            focusAreas: ['Core Concepts', 'Action Steps', 'Future Growth'],
             videoTask: {
-                title: `Day ${dayNumber}: ${theme} — Video Lesson`,
-                description: `Watch a focused lesson on ${theme}.`,
-                searchQuery: `${theme} beginner tutorial`,
-            },
-            exerciseTask: {
-                title: `Day ${dayNumber}: Guided Exercise`,
-                description: `A hands-on exercise to reinforce ${theme}.`,
-                steps: ['Step 1: Warm up', 'Step 2: Core drill', 'Step 3: Apply the concept', 'Step 4: Cool down'],
-            },
-            lessonTask: {
-                title: `Day ${dayNumber}: Reading Lesson`,
-                description: `Study the key concepts of ${theme}.`,
-                keyPoints: ['Key concept 1', 'Key concept 2', 'Key concept 3'],
+                title: 'Introduction to Today',
+                description: 'A quick overview of our focus for today.',
+                searchQuery: 'productivity foundations',
+                duration: 10
             },
             quiz: {
-                title: `Day ${dayNumber} Quiz`,
+                title: 'Quick Check',
                 questions: [
-                    { question: 'What was the main focus today?', options: ['Consistency', 'Speed', 'Technique'], correctAnswer: 0 },
-                    { question: 'What is the next step?', options: ['Practice more', 'Move on', 'Skip it'], correctAnswer: 0 },
-                ],
-            },
-            journalTask: {
-                title: `Day ${dayNumber}: Journal Check-in`,
-                prompt: `What did you find most challenging about ${theme} today, and how will you approach it tomorrow?`,
+                    { question: 'What is our focus today?', options: ['Growth', 'Stagnation', 'Fear', 'Loss'], correctAnswer: 0, explanation: 'Growth is our primary objective.' },
+                    { question: 'Ready to proceed?', options: ['Yes', 'Not yet', 'Maybe', 'No'], correctAnswer: 0, explanation: 'Action is key.' }
+                ]
             },
             audioTask: {
-                title: `Day ${dayNumber}: Nightly Audio`,
-                description: `A calming audio session to close out the day.`,
-                mood: dayNumber % 3 === 0 ? 'ambient' : dayNumber % 2 === 0 ? 'focus' : 'meditation',
+                title: 'Integration Audio',
+                description: 'Calmly process today\'s insights.',
+                mood: 'meditation',
+                theme: 'Calm growth',
+                duration: 8
             },
-            mindfulnessTask: {
-                title: `Day ${dayNumber}: Mindfulness Break`,
-                description: 'Take a short break to reset your focus.',
-                technique: ['4-7-8 breathing', 'body scan', '5-4-3-2-1 grounding', 'box breathing'][(dayNumber - 1) % 4],
+            consistencyTask: {
+                title: 'Tomorrow\'s Commitment',
+                description: 'Commit to showing up tomorrow for the next step.',
+                duration: 2
+            },
+            journalTask: {
+                title: 'Today\'s Reflection',
+                prompt: 'What was your biggest takeaway from today\'s session?',
+                duration: 5
             },
             reflectionTask: {
-                title: `Day ${dayNumber}: Evening Reflection`,
-                description: `Review what you learned about ${theme}.`,
-                reviewPoints: ['What went well?', 'What was challenging?', 'What will I do differently tomorrow?'],
-            },
+                title: 'Daily Wrap-up',
+                description: 'Review your progress and prep for tomorrow.',
+                reviewPoints: ['Today went well.', 'Tomorrow will be better.']
+            }
         };
     }
 

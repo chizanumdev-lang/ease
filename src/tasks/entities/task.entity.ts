@@ -42,6 +42,12 @@ export class Task {
     @Column({ nullable: true, name: 'quiz_id' })
     quizId?: string;
 
+    @Column({ type: 'text', nullable: true })
+    content?: string;
+
+    @Column({ default: 0 })
+    order: number;
+
     @Index()
     @Column({ name: 'day_plan_id' })
     dayPlanId: string;

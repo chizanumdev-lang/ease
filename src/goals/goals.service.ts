@@ -33,6 +33,14 @@ export class GoalsService {
         });
     }
 
+    async findById(id: string, userId: string): Promise<Goal> {
+        const goal = await this.goalRepository.findOne({ where: { id, userId } });
+        if (!goal) {
+            throw new NotFoundException('Goal not found');
+        }
+        return goal;
+    }
+
     async delete(userId: string, goalId: string): Promise<void> {
         const goal = await this.goalRepository.findOne({ where: { id: goalId } });
         if (!goal) {

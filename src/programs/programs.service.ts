@@ -34,24 +34,18 @@ import * as os from 'os';
 import * as fs from 'fs';
 
 // Curated royalty-free, directly-streamable MP3s by mood (Mixkit, no auth required)
+// Binaural beat tracks mapped by experience category
 const AUDIO_TRACKS: Record<string, string[]> = {
     meditation: [
-        'https://cdn.pixabay.com/audio/2022/10/30/audio_acea86d9bb.mp3', // Calm meditation
-        'https://cdn.pixabay.com/audio/2022/03/10/audio_2d2bf9a9ef.mp3', // Deep calm
-        'https://cdn.pixabay.com/audio/2024/01/09/audio_6ca9cbf5f6.mp3', // Gentle morning
-        'https://cdn.pixabay.com/audio/2022/05/16/audio_1b6ad90af4.mp3', // Mindful moment
+        'https://res.cloudinary.com/duooultxc/video/upload/v1774276955/ease/audio/static_binaural_4hz.mp3', // Theta (Deep)
+        'https://res.cloudinary.com/duooultxc/video/upload/v1774269228/ease/audio/static_binaural_6hz.mp3', // Theta (Light)
     ],
     focus: [
-        'https://cdn.pixabay.com/audio/2022/08/02/audio_2dde668d05.mp3', // Lo-fi study
-        'https://cdn.pixabay.com/audio/2023/01/13/audio_a4ee6649e0.mp3', // Deep focus
-        'https://cdn.pixabay.com/audio/2022/11/22/audio_febc508520.mp3', // Concentration
-        'https://cdn.pixabay.com/audio/2022/12/23/audio_2dd5734a57.mp3', // Study beats
+        'https://res.cloudinary.com/duooultxc/video/upload/v1774269306/ease/audio/static_binaural_10hz.mp3', // Alpha (Focus)
+        'https://res.cloudinary.com/duooultxc/video/upload/v1774277400/ease/audio/static_binaural_15hz.mp3', // Beta (Active)
     ],
     ambient: [
-        'https://cdn.pixabay.com/audio/2022/05/13/audio_47a0a59fc3.mp3', // Forest rain
-        'https://cdn.pixabay.com/audio/2022/03/09/audio_c610232a6d.mp3', // Ocean waves
-        'https://cdn.pixabay.com/audio/2024/02/28/audio_b8da3cd1da.mp3', // White noise
-        'https://cdn.pixabay.com/audio/2022/03/15/audio_c8c8a73467.mp3', // Night sounds
+        'https://res.cloudinary.com/duooultxc/video/upload/v1774269382/ease/audio/static_binaural_20hz.mp3', // Beta (High)
     ],
 };
 
@@ -120,12 +114,10 @@ export class ProgramsService {
             d.setHours(h, m, 0, 0);
             
             const offsets: Record<string, number> = {
-                'exercise': 0,         // first thing after wake
-                'lesson': 60,          // 1hr after wake
-                'video': 120,          // mid-morning
-                'quiz': 135,           // right after video
-                'journal': 6 * 60,     // 6 hours after wake
-                'mindfulness': 8 * 60, // 8 hours after wake
+                'video': 60,           // 1 hr after wake
+                'quiz': 75,            // right after video
+                'consistency': 90,     // commitment
+                'journal': 120,        // intention
             };
             
             d.setMinutes(d.getMinutes() + (offsets[type] || 0));
@@ -176,35 +168,22 @@ export class ProgramsService {
     private async saveDayContent(day: DayPlan, content: any, params: any, options: { forceSyncAudio?: boolean } = {}): Promise<void> {
         const wakeStart = params.wakeStart || '07:00';
         const sleepStart = params.sleepStart || '23:00';
-        const constraints = params.constraints || [];
         const dayOffset = day.dayNumber - 1;
         const total = params.minutesPerDay || 30;
+
+        // Duration mapping based on AI suggestions and ratios
         const dur = {
-            video: Math.max(5, Math.floor(total * 0.25)),
-            exercise: Math.max(5, Math.floor(total * 0.15)),
-            lesson: Math.max(3, Math.floor(total * 0.10)),
-            quiz: Math.max(3, Math.floor(total * 0.08)),
-            journal: Math.max(3, Math.floor(total * 0.07)),
-            audio: Math.max(5, Math.floor(total * 0.15)),
-            mindfulness: Math.max(3, Math.floor(total * 0.10)),
+            video: content.videoTask?.duration || Math.max(5, Math.floor(total * 0.30)),
+            quiz: Math.max(3, Math.floor(total * 0.10)),
+            audio: content.audioTask?.duration || Math.max(5, Math.floor(total * 0.20)),
+            consistency: 2,
+            journal: content.journalTask?.duration || Math.max(3, Math.floor(total * 0.15)),
             reflection: Math.max(3, Math.floor(total * 0.10)),
         };
 
         const tasks: Promise<any>[] = [];
 
-        // 1. Lesson (Theory)
-        if (content.lessonTask) {
-            const keyPoints = (content.lessonTask.keyPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
-            tasks.push(this.upsertTask({
-                type: 'lesson', dayPlanId: day.id,
-                title: content.lessonTask.title,
-                description: `${content.lessonTask.description}\n\nKey Points:\n${keyPoints}`,
-                duration: dur.lesson, completed: false,
-                scheduledAt: this.scheduleTask('lesson', dayOffset, wakeStart, sleepStart),
-            }));
-        }
-
-        // 2. Video (Demo)
+        // 0. Video (Concept)
         if (content.videoTask) {
             tasks.push((async () => {
                 const topic = content.videoTask.searchQuery || `${content.theme} ${content.videoTask.title}`;
@@ -216,7 +195,7 @@ export class ProgramsService {
                     videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}`;
                 }
                 await this.upsertTask({
-                    type: 'video', dayPlanId: day.id,
+                    type: 'video', dayPlanId: day.id, order: 0,
                     title: content.videoTask.title, description: content.videoTask.description,
                     duration: dur.video, completed: false, videoUrl,
                     scheduledAt: this.scheduleTask('video', dayOffset, wakeStart, sleepStart),
@@ -224,7 +203,7 @@ export class ProgramsService {
             })());
         }
 
-        // 3. Quiz (Check)
+        // 1. Quiz (Check)
         if (content.quiz) {
             tasks.push((async () => {
                 let quiz = await this.quizRepository.findOne({ where: { dayPlanId: day.id } });
@@ -236,50 +215,17 @@ export class ProgramsService {
                 }
                 await this.quizRepository.save(quiz);
                 await this.upsertTask({
-                    type: 'quiz', dayPlanId: day.id,
+                    type: 'quiz', dayPlanId: day.id, order: 1,
                     title: content.quiz.title || `Quiz: ${content.theme}`,
-                    description: `Test your understanding of today's lesson.`,
+                    description: `Knowledge check on today's focus.`,
                     duration: dur.quiz, completed: false, quizId: quiz.id,
                     scheduledAt: this.scheduleTask('quiz', dayOffset, wakeStart, sleepStart),
                 });
             })());
         }
 
-        // 4. Exercise (Practice)
-        if (content.exerciseTask) {
-            const steps = (content.exerciseTask.steps as string[] ?? []).join(' → ');
-            tasks.push(this.upsertTask({
-                type: 'exercise', dayPlanId: day.id,
-                title: content.exerciseTask.title,
-                description: `${content.exerciseTask.description}\n\nSteps: ${steps}`,
-                duration: dur.exercise, completed: false,
-                scheduledAt: this.scheduleTask('exercise', dayOffset, wakeStart, sleepStart),
-            }));
-        }
-
-        // 5. Journal (Insights)
-        if (content.journalTask) {
-            tasks.push(this.upsertTask({
-                type: 'journal', dayPlanId: day.id,
-                title: content.journalTask.title, description: content.journalTask.prompt,
-                duration: dur.journal, completed: false,
-                scheduledAt: this.scheduleTask('journal', dayOffset, wakeStart, sleepStart),
-            }));
-        }
-
-        // 6. Mindfulness (Reset)
-        if (content.mindfulnessTask) {
-            tasks.push(this.upsertTask({
-                type: 'mindfulness', dayPlanId: day.id,
-                title: content.mindfulnessTask.title,
-                description: `${content.mindfulnessTask.description}\n\nTechnique: ${content.mindfulnessTask.technique}`,
-                duration: dur.mindfulness, completed: false,
-                scheduledAt: this.scheduleTask('mindfulness', dayOffset, wakeStart, sleepStart),
-            }));
-        }
-
-        // 7. Audio (Integration)
-        if (content.audioTask && !constraints.includes('no_audio')) {
+        // 2. Audio (Integration)
+        if (content.audioTask) {
             tasks.push((async () => {
                 const mood = content.audioTask.mood || 'meditation';
                 const audioFilename = `program_${day.programId}_day_${day.dayNumber}`;
@@ -288,55 +234,25 @@ export class ProgramsService {
                     audioTrack = this.audioTrackRepository.create({ dayPlanId: day.id, title: '', url: pickAudioUrl(mood, day.dayNumber), duration: 0, type: '' });
                 }
                 audioTrack.title = content.audioTask.title;
-                audioTrack.url = pickAudioUrl(mood, day.dayNumber); // Changed as per instruction
+                audioTrack.url = pickAudioUrl(mood, day.dayNumber);
                 audioTrack.duration = dur.audio;
                 audioTrack.type = mood;
 
                 if (options.forceSyncAudio) {
                     try {
-                        const scriptData = await this.aiService.generateAudioScript(
-                            content.audioTask.theme || content.theme,
-                            5
-                        );
-                        
-                        const tempDir = path.join(os.tmpdir(), 'ease-audio-binaural-sync');
-                        const audioPath = await this.audioMixerService.createBinauralSubliminalTrack(
-                            scriptData,
-                            tempDir
-                        );
-
-                        // Wait 1s to ensure file flush (safety)
-                        await new Promise(r => setTimeout(r, 1000));
-                        
-                        const audioUrl = await this.audioService.uploadToCloudinary(audioPath, audioFilename);
-                        audioTrack.url = audioUrl;
-                        audioTrack.type = scriptData.sessionType;
-                        audioTrack.metadata = {
-                            sessionType: scriptData.sessionType,
-                            frequency: scriptData.binauralFrequency,
-                            affirmations: scriptData.affirmations,
-                        };
-
-                        // Cleanup sync temp file
-                        try { if (require('fs').existsSync(audioPath)) require('fs').unlinkSync(audioPath); } catch {}
+                        const scriptData = await this.aiService.generateAudioScript(content.audioTask.theme || content.theme, 5);
+                        audioTrack.metadata = { sessionType: scriptData.sessionType, frequency: scriptData.binauralFrequency, affirmations: scriptData.affirmations };
                     } catch (error) {
-                        const errMsg = error instanceof Error ? error.message : JSON.stringify(error);
-                        this.logger.error(`Failed to generate sync binaural audio for Day 1: ${errMsg}`);
+                        this.logger.error(`Failed to generate sync audio: ${error.message}`);
                     }
                 } else {
-                    // Fire-and-forget: audio generation is async for non-Day 1
-                    this.audioQueue.add('generate-audio', {
-                        audioTrackId: audioTrack.id,
-                        theme: content.audioTask.theme || content.theme,
-                        audioFilename,
-                    });
+                    this.audioQueue.add('generate-audio', { audioTrackId: audioTrack.id, theme: content.audioTask.theme || content.theme, audioFilename });
                 }
 
                 await this.audioTrackRepository.save(audioTrack);
-
                 await this.upsertTask({
-                    type: 'audio', dayPlanId: day.id,
-                    title: content.audioTask.title || 'Nightly Audio',
+                    type: 'audio', dayPlanId: day.id, order: 2,
+                    title: content.audioTask.title || 'Focus Audio',
                     description: content.audioTask.description || '',
                     duration: dur.audio, completed: false,
                     scheduledAt: this.scheduleTask('audio', dayOffset, wakeStart, sleepStart),
@@ -344,18 +260,37 @@ export class ProgramsService {
             })());
         }
 
-        // 8. Reflection
+        // 3. Consistency (Commitment)
+        if (content.consistencyTask) {
+            tasks.push(this.upsertTask({
+                type: 'consistency', dayPlanId: day.id, order: 3,
+                title: content.consistencyTask.title, description: content.consistencyTask.description,
+                duration: dur.consistency, completed: false,
+                scheduledAt: this.scheduleTask('consistency', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 4. Journal (Intention)
+        if (content.journalTask) {
+            tasks.push(this.upsertTask({
+                type: 'journal', dayPlanId: day.id, order: 4,
+                title: content.journalTask.title, description: content.journalTask.prompt,
+                duration: dur.journal, completed: false,
+                scheduledAt: this.scheduleTask('journal', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 5. Reflection (Evaluation)
         if (content.reflectionTask) {
             const points = (content.reflectionTask.reviewPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
             tasks.push(this.upsertTask({
-                type: 'reflection', dayPlanId: day.id,
+                type: 'reflection', dayPlanId: day.id, order: 5,
                 title: content.reflectionTask.title,
                 description: `${content.reflectionTask.description}\n\nReflection Points:\n${points}`,
                 duration: dur.reflection, completed: false,
                 scheduledAt: this.scheduleTask('reflection', dayOffset, wakeStart, sleepStart),
             }));
         }
-
         await Promise.all(tasks);
     }
 

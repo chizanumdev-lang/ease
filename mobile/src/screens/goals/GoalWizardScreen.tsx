@@ -116,6 +116,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
     const [timeframe, setTimeframe] = useState<number>(60);
     const [dailyMinutes, setDailyMinutes] = useState<number>(30);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
     // Stores
     const { createGoal } = useGoalsStore();
@@ -138,12 +139,12 @@ export default function GoalWizardScreen({ navigation }: Props) {
             }
             setStep('COMMITMENT');
         } else if (step === 'COMMITMENT') {
+            setIsLoadingPreview(true);
             showModal({
                 type: 'loading',
                 title: 'Preparing Your Review',
                 description: 'Our AI is analyzing your goals to provide personalized insights and intensity projections...'
             });
-            
             try {
                 // Ensure we are authenticated before proceeding
                 if (!isAuthenticated) {
@@ -181,6 +182,8 @@ export default function GoalWizardScreen({ navigation }: Props) {
                 // Fallback: Proceed to review anyway but without AI projections for generic errors
                 useModalStore.getState().hideModal();
                 setStep('REVIEW');
+            } finally {
+                setIsLoadingPreview(false);
             }
         } else if (step === 'REVIEW') {
             handleSubmit();
@@ -271,6 +274,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                 <StitchButton 
                     title={step === 'REVIEW' ? "Manifest My Path" : (step === 'DEFINITION' ? "Continue to Details" : "Continue")} 
                     onPress={handleNext}
+                    isLoading={step === 'REVIEW' ? isSubmitting : (step === 'COMMITMENT' ? isLoadingPreview : false)}
                     showArrow={step !== 'REVIEW'}
                     style={styles.primaryFooterButton}
                 />

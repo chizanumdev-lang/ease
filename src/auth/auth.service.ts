@@ -122,4 +122,29 @@ export class AuthService {
             refreshToken,
         };
     }
+
+    async refreshTokens(userId: string, refreshToken: string) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user || !user.refreshToken) {
+            throw new UnauthorizedException('Access Denied');
+        }
+
+        const refreshTokenMatches = await bcrypt.compare(
+            refreshToken,
+            user.refreshToken,
+        );
+
+        if (!refreshTokenMatches) {
+            throw new UnauthorizedException('Access Denied');
+        }
+
+        const tokens = await this.generateTokens(user.id, user.email);
+        
+        // Update stored refresh token
+        const hashedRefreshToken = await bcrypt.hash(tokens.refreshToken, 10);
+        user.refreshToken = hashedRefreshToken;
+        await this.userRepository.save(user);
+
+        return tokens;
+    }
 }

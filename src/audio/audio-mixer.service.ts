@@ -301,8 +301,8 @@ export class AudioMixerService {
 
       command
         .complexFilter([
-          '[0:a]volume=1.0,aloop=loop=-1:size=2e9[bg]', // Loop the 1min beat if needed
-          '[1:a]volume=0.1[voice]',
+          '[0:a]volume=0.3,aloop=loop=-1:size=2e9[bg]', // Reduced background volume to 30%
+          '[1:a]volume=1.0[voice]', // Increased voice volume to 100%
           '[bg][voice]amix=inputs=2:duration=first[out]'
         ])
         .setDuration(duration * 60)

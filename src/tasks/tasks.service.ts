@@ -23,6 +23,10 @@ export class TasksService {
             task.completedAt = updateTaskDto.completed ? new Date() : undefined;
         }
 
+        if (updateTaskDto.content !== undefined) {
+            task.content = updateTaskDto.content;
+        }
+
         return this.taskRepository.save(task);
     }
 
