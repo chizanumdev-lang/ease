@@ -4,6 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AudioTrack } from '../types';
 import { audioService } from '../services/audio.service';
 
+interface RitualTracks {
+    morning: AudioTrack | null;
+    night: AudioTrack | null;
+}
+
+export type ProximityStatus = 'IDLE' | 'APPROACHING' | 'READY';
+
 interface AudioState {
     // Playback state
     currentTrack: AudioTrack | null;
@@ -12,6 +19,13 @@ interface AudioState {
     position: number;
     duration: number;
     volume: number;
+
+    // Rituals & Proximity
+    ritualTracks: RitualTracks;
+    morningRitualTime: string; // HH:mm
+    nightRitualTime: string; // HH:mm
+    proximityStatus: ProximityStatus;
+    ebbFactor: number; // 1.0 (full) to 0.2 (ebbed)
 
     // Timer
     stopTimer: number | null; // minutes: 15, 30, 60, or null
@@ -30,6 +44,11 @@ interface AudioState {
     setPosition: (position: number) => void;
     setDuration: (duration: number) => void;
     setStopTimer: (minutes: number | null) => void;
+    setRitualTimes: (morning: string, night: string) => void;
+    setRitualTracks: (tracks: RitualTracks) => void;
+    setEbbFactor: (factor: number) => void;
+    checkProximity: () => void;
+    fetchRituals: (date: string) => Promise<void>;
     toggleAutoPlay: () => void;
     downloadTrack: (track: AudioTrack) => Promise<void>;
     setIsPlaying: (isPlaying: boolean) => void;
@@ -46,10 +65,67 @@ export const useAudioStore = create<AudioState>()(
             position: 0,
             duration: 0,
             volume: 0.7,
+            ritualTracks: { morning: null, night: null },
+            morningRitualTime: '07:00',
+            nightRitualTime: '22:00',
+            proximityStatus: 'IDLE',
+            ebbFactor: 1.0,
             stopTimer: null,
             timerStartTime: null,
             autoPlayEnabled: false,
             downloadedTracks: [],
+
+            setRitualTimes: (morning, night) => set({ morningRitualTime: morning, nightRitualTime: night }),
+            setRitualTracks: (tracks) => set({ ritualTracks: tracks }),
+            setEbbFactor: (factor) => set({ ebbFactor: factor }),
+
+            checkProximity: () => {
+                const now = new Date();
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+                const parseTime = (timeStr: string) => {
+                    const [h, m] = timeStr.split(':').map(Number);
+                    return h * 60 + m;
+                };
+
+                const rituals = [
+                    parseTime(get().morningRitualTime),
+                    parseTime(get().nightRitualTime)
+                ];
+
+                let newStatus: ProximityStatus = 'IDLE';
+
+                for (const ritualMins of rituals) {
+                    const diff = ritualMins - currentMinutes;
+                    
+                    if (currentMinutes >= ritualMins && currentMinutes < ritualMins + 60) {
+                        newStatus = 'READY';
+                        break;
+                    } else if (diff > 0 && diff <= 30) {
+                        newStatus = 'APPROACHING';
+                    }
+                }
+
+                if (get().proximityStatus !== newStatus) {
+                    set({ proximityStatus: newStatus });
+                }
+            },
+
+            fetchRituals: async (date: string) => {
+                try {
+                    const data = await audioService.getRituals(date);
+                    if (data.status === 'ready') {
+                        set({
+                            ritualTracks: {
+                                morning: data.morning,
+                                night: data.night
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('[AUDIO_STORE] Failed to fetch rituals:', error);
+                }
+            },
 
             // Load and prepare track
             loadTrack: async (track: AudioTrack) => {

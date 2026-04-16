@@ -28,6 +28,7 @@ import StatCard from '../../components/stitch/StatCard';
 import TaskCard from '../../components/stitch/TaskCard';
 import StitchModal from '../../components/stitch/StitchModal';
 import HomeEmptyState from '../../components/stitch/HomeEmptyState';
+import AudioWidget from '../../components/home/AudioWidget';
 
 type Props = NativeStackScreenProps<MainStackParamList> & {
     navigation: any;
@@ -147,6 +148,8 @@ export default function HomeScreen({ navigation }: Props) {
                     phase="Growth Phase 3"
                 />
             )}
+
+            <AudioWidget />
 
             {/* Stats Scroll */}
             <View style={styles.statsSection}>

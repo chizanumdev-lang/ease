@@ -29,6 +29,7 @@ import { AiService } from '../ai/ai.service';
 import { YoutubeService } from '../video/youtube/youtube.service';
 import { AudioService } from '../audio/audio.service';
 import { AudioMixerService } from '../audio/audio-mixer.service';
+import { RitualsService } from '../audio/rituals.service';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
@@ -95,6 +96,7 @@ export class ProgramsService {
         private youtubeService: YoutubeService,
         private audioService: AudioService,
         private audioMixerService: AudioMixerService,
+        private ritualsService: RitualsService,
     ) { }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
@@ -156,6 +158,12 @@ export class ProgramsService {
                 focusAreas: content.focusAreas,
                 status: 'ready',
             });
+
+            // Trigger ritual generation for the current date (non-blocking)
+            const todayStr = new Date().toISOString().split('T')[0];
+            this.ritualsService.generateDailyRituals(day.program.userId, todayStr).catch(err => 
+                this.logger.error(`Initial ritual generation failed: ${err.message}`)
+            );
 
             this.logger.log(`Day ${day.dayNumber} of program ${day.programId} hydrated`);
         } catch (error) {

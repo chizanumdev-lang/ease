@@ -1,7 +1,9 @@
-import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Request, UseGuards, Logger } from '@nestjs/common';
 import { AudioService } from './audio.service';
 import { AiService } from '../ai/ai.service';
 import { AudioMixerService } from './audio-mixer.service';
+import { RitualsService } from './rituals.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import * as os from 'os';
 import * as path from 'path';
 
@@ -13,6 +15,7 @@ export class AudioController {
         private readonly audioService: AudioService,
         private readonly aiService: AiService,
         private readonly audioMixerService: AudioMixerService,
+        private readonly ritualsService: RitualsService,
     ) { }
 
     @Post('preview')
@@ -75,5 +78,29 @@ export class AudioController {
         if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
 
         return { url: audioUrl };
+    }
+    @Get('rituals/:date')
+    @UseGuards(JwtAuthGuard)
+    async getRituals(@Param('date') date: string, @Request() req) {
+        const userId = req.user.id;
+        const rituals = await this.ritualsService.findByDate(userId, date);
+
+        if (rituals.length === 0) {
+            // Background generation if missing
+            this.ritualsService.generateDailyRituals(userId, date).catch(err => 
+                this.logger.error(`Lazy ritual generation failed: ${err.message}`)
+            );
+            return {
+                morning: null,
+                night: null,
+                status: 'generating'
+            };
+        }
+
+        return {
+            morning: rituals.find(r => r.ritualType === 'morning'),
+            night: rituals.find(r => r.ritualType === 'night'),
+            status: 'ready'
+        };
     }
 }

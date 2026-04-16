@@ -2,6 +2,7 @@ import { Audio, AVPlaybackStatus } from 'expo-av';
 import { documentDirectory, downloadAsync } from 'expo-file-system/legacy';
 import { AudioTrack } from '../types';
 import { useAudioStore } from '../store/audioStore';
+import api from './api';
 
 class AudioService {
     private sound: Audio.Sound | null = null;
@@ -284,6 +285,17 @@ class AudioService {
         if (this.sound) {
             await this.sound.unloadAsync();
             this.sound = null;
+        }
+    }
+
+    // Fetch rituals for a date
+    async getRituals(date: string) {
+        try {
+            const response = await api.get(`/audio/rituals/${date}`);
+            return response.data;
+        } catch (error) {
+            console.error('[AUDIO_SERVICE] Failed to fetch rituals:', error);
+            throw error;
         }
     }
 }
