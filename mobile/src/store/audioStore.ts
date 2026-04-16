@@ -57,7 +57,11 @@ interface AudioState {
 
 export const useAudioStore = create<AudioState>()(
     persist(
-        (set, get) => ({
+        (set, get) => {
+            // Internal state to track initialization
+            let isInitialized = false;
+
+            return {
             // Initial state
             currentTrack: null,
             isPlaying: false,
@@ -146,8 +150,37 @@ export const useAudioStore = create<AudioState>()(
 
             // Play audio
             play: async () => {
+                // Ensure service callback is registered on first use
+                if (!isInitialized) {
+                    audioService.setStatusCallback((status) => {
+                        if (!status.isLoaded) return;
+                        
+                        set({
+                            position: status.positionMillis / 1000,
+                            duration: (status.durationMillis || 0) / 1000,
+                            isPlaying: status.isPlaying
+                        });
+
+                        // Check if finished
+                        if (status.didJustFinish) {
+                            get().stop();
+                        }
+
+                        // Check Timer
+                        const { stopTimer, timerStartTime } = get();
+                        if (stopTimer && timerStartTime) {
+                            const elapsedMinutes = (Date.now() - timerStartTime) / (1000 * 60);
+                            if (elapsedMinutes >= stopTimer) {
+                                get().stop();
+                            }
+                        }
+                    });
+                    isInitialized = true;
+                }
+
                 try {
-                    await audioService.play();
+                    const volume = get().volume;
+                    await audioService.play(2000, volume);
                     set({
                         isPlaying: true,
                         timerStartTime: Date.now(),
@@ -245,7 +278,8 @@ export const useAudioStore = create<AudioState>()(
                     stopTimer: null,
                     timerStartTime: null,
                 }),
-        }),
+            };
+        },
         {
             name: 'audio-storage',
             storage: createJSONStorage(() => AsyncStorage),

@@ -41,6 +41,13 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+        
+        // 404 is an expected state (e.g. no active program), not a real error — log as warn
+        if (error.response?.status === 404) {
+            console.warn(`[API] 404 Not Found: ${originalRequest?.url}`);
+            return Promise.reject(error);
+        }
+
         console.error(`[API] Response Error: ${error.response?.status} from ${originalRequest?.url}`);
 
         // If 401 and not already retried, try to refresh token

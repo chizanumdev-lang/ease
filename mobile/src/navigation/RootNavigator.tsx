@@ -10,8 +10,8 @@ import { notificationService } from '../services/notification.service';
 import { createNavigationContainerRef } from '@react-navigation/native';
 import GlobalModal from '../components/stitch/GlobalModal';
 import LoadingState from '../components/LoadingState';
-import { AudioParticle } from '../components/audio/AudioParticle';
 import { useAudioStore } from '../store/audioStore';
+import AudioParticle from '../components/audio/AudioParticle';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

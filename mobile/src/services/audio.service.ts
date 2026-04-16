@@ -1,7 +1,6 @@
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import { documentDirectory, downloadAsync } from 'expo-file-system/legacy';
 import { AudioTrack } from '../types';
-import { useAudioStore } from '../store/audioStore';
 import api from './api';
 
 class AudioService {
@@ -9,6 +8,7 @@ class AudioService {
     private fadeInterval: NodeJS.Timeout | null = null;
     private timerInterval: NodeJS.Timeout | null = null;
     private isInitialized = false;
+    private statusCallback: ((status: AVPlaybackStatus) => void) | null = null;
 
     // Initialize audio mode for background playback
     async initialize() {
@@ -57,38 +57,26 @@ class AudioService {
         }
     }
 
+    // Registration for status updates
+    setStatusCallback(callback: (status: AVPlaybackStatus) => void) {
+        this.statusCallback = callback;
+    }
+
     // Playback status update callback
     private onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
         if (!status.isLoaded) return;
-
-        const store = useAudioStore.getState();
-
-        // Update position and duration
-        store.setPosition(status.positionMillis / 1000);
-        if (status.durationMillis) {
-            store.setDuration(status.durationMillis / 1000);
-        }
-
-        // Update playing state
-        if (status.isPlaying !== store.isPlaying) {
-            store.setIsPlaying(status.isPlaying);
-        }
-
-        // Check if finished
-        if (status.didJustFinish) {
-            console.log('[AUDIO_SERVICE] Playback finished');
-            store.stop();
+        
+        // Notify listener if registered
+        if (this.statusCallback) {
+            this.statusCallback(status);
         }
     };
 
     // Play with fade-in
-    async play(fadeInDuration: number = 2000) {
+    async play(fadeInDuration: number = 2000, targetVolume: number = 1.0) {
         if (!this.sound) {
             throw new Error('No audio loaded');
         }
-
-        const store = useAudioStore.getState();
-        const targetVolume = store.volume;
 
         try {
             if (fadeInDuration > 0) {
@@ -102,10 +90,8 @@ class AudioService {
                 await this.sound.playAsync();
             }
 
-            // Start timer check if timer is set
-            if (store.stopTimer) {
-                this.startTimerCheck();
-            }
+            // Start timer check
+            // Note: Timer check is now managed by the store using the status callback
 
             console.log(`[AUDIO_SERVICE] Playing (fade-in: ${fadeInDuration}ms)`);
         } catch (error) {
@@ -218,29 +204,8 @@ class AudioService {
         });
     }
 
-    // Start timer check
-    private startTimerCheck() {
-        this.clearTimerInterval();
-
-        this.timerInterval = setInterval(() => {
-            const store = useAudioStore.getState();
-            if (!store.stopTimer || !store.timerStartTime) {
-                this.clearTimerInterval();
-                return;
-            }
-
-            const elapsedMs = Date.now() - store.timerStartTime;
-            const elapsedMinutes = elapsedMs / (1000 * 60);
-
-            if (elapsedMinutes >= store.stopTimer) {
-                console.log('[AUDIO_SERVICE] Timer reached, stopping playback');
-                this.clearTimerInterval();
-                this.fadeOut(5000).then(() => {
-                    store.stop();
-                });
-            }
-        }, 1000); // Check every second
-    }
+    // Timer check removed from service to break store dependency
+    // Store now handles timer logic based on status callbacks
 
     // Download track to device
     async downloadTrack(track: AudioTrack): Promise<string> {

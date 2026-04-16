@@ -16,6 +16,11 @@ import {
 
 import RootNavigator from './src/navigation/RootNavigator';
 import { Theme } from './src/constants/theme';
+import { secureStorage } from './src/services/storage.service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// NUCLEAR RESET: Implementation complete, clearing temporary code
+// secureStorage.clearTokens().then(() => AsyncStorage.clear());
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
