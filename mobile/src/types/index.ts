@@ -100,6 +100,9 @@ export interface Task {
     completedAt?: string;
     type: TaskType;
     duration?: number;
+    watchedSeconds?: number;
+    totalDuration?: number;
+    content?: string;
     scheduledAt?: string;
     videoUrl?: string;
     quizId?: string;

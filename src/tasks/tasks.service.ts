@@ -27,6 +27,14 @@ export class TasksService {
             task.content = updateTaskDto.content;
         }
 
+        if (updateTaskDto.watchedSeconds !== undefined) {
+            task.watchedSeconds = updateTaskDto.watchedSeconds;
+        }
+
+        if (updateTaskDto.totalDuration !== undefined) {
+            task.totalDuration = updateTaskDto.totalDuration;
+        }
+
         return this.taskRepository.save(task);
     }
 

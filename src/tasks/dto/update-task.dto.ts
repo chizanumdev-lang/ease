@@ -10,4 +10,10 @@ export class UpdateTaskDto {
 
     @IsOptional()
     content?: string;
+
+    @IsOptional()
+    watchedSeconds?: number;
+
+    @IsOptional()
+    totalDuration?: number;
 }

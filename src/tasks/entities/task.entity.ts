@@ -45,6 +45,12 @@ export class Task {
     @Column({ type: 'text', nullable: true })
     content?: string;
 
+    @Column({ default: 0, name: 'watched_seconds' })
+    watchedSeconds: number;
+
+    @Column({ nullable: true, name: 'total_duration' })
+    totalDuration?: number;
+
     @Column({ default: 0 })
     order: number;
 
