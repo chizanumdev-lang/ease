@@ -135,7 +135,9 @@ export class AudioMixerService {
     const tempWavPath = path.join(os.tmpdir(), `ease-tts-${tempId}.wav`);
 
     try {
-      await this.edgeTts.setMetadata('en-US-GuyNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+      // Pass empty metadataOptions to prevent "Cannot read properties of undefined (reading 'voiceLocale')"
+      // The library infers voiceLocale from the voice name regex when not explicitly provided.
+      await this.edgeTts.setMetadata('en-US-GuyNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, {});
       
       // Use toStream and manually write to file because toFile expects a directory
       const { audioStream } = this.edgeTts.toStream(fullScript);

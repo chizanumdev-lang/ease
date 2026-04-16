@@ -6,6 +6,7 @@ import { useProgramsStore } from './programsStore';
 import { useGoalsStore } from './goalsStore';
 import { useAudioStore } from './audioStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setUnauthorizedHandler } from '../services/api';
 
 interface AuthState {
     user: User | null;
@@ -173,3 +174,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     clearError: () => set({ error: null }),
 }));
+
+// Register the global 401 handler so expired tokens trigger a proper logout
+// from anywhere in the app without the API layer importing the store directly.
+setUnauthorizedHandler(() => {
+    const { logout } = useAuthStore.getState();
+    logout();
+});

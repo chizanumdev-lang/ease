@@ -17,30 +17,28 @@ const PARTICLE_SIZE = 64;
 const MARGIN = 20;
 const EXCLUSION_ZONE = 64;
 
+const INITIAL_X = SCREEN_WIDTH - PARTICLE_SIZE - MARGIN;
+const INITIAL_Y = SCREEN_HEIGHT * 0.4;
+
 /**
  * AudioParticle — floating audio companion bubble.
- * Uses React Native's built-in Animated API (NOT Reanimated) to avoid HostFunction crashes.
- * The pulse scale is applied on a separate inner Animated.View so we can safely
- * use useNativeDriver: true for the scale while keeping position on useNativeDriver: false.
+ *
+ * Architecture (avoids nativeDriver conflicts):
+ *   - Outer Animated.View: position only via translateX/translateY
+ *     → PanResponder sets values; useNativeDriver: false
+ *   - Inner Animated.View: scale + opacity
+ *     → pulse loop + ebbFactor fade; useNativeDriver: true
  */
 const AudioParticle = () => {
-    const {
-        proximityStatus,
-        isPlaying,
-        ebbFactor,
-        checkProximity,
-        fetchRituals,
-    } = useAudioStore();
+    const { proximityStatus, isPlaying, ebbFactor, checkProximity, fetchRituals } = useAudioStore();
 
-    // ── Position (cannot use nativeDriver — layout props)
-    const posX = useRef(new Animated.Value(SCREEN_WIDTH - PARTICLE_SIZE - MARGIN)).current;
-    const posY = useRef(new Animated.Value(SCREEN_HEIGHT * 0.4)).current;
-    const panOffset = useRef({ x: SCREEN_WIDTH - PARTICLE_SIZE - MARGIN, y: SCREEN_HEIGHT * 0.4 });
+    // ── Position — NOT native driver (layout computation required)
+    const posX = useRef(new Animated.Value(INITIAL_X)).current;
+    const posY = useRef(new Animated.Value(INITIAL_Y)).current;
+    const panOffset = useRef({ x: INITIAL_X, y: INITIAL_Y });
 
-    // ── Pulse scale (safe to use nativeDriver — transform only)
+    // ── Scale + Opacity — CAN use native driver (transform/opacity only)
     const pulseAnim = useRef(new Animated.Value(1)).current;
-
-    // ── Opacity (nativeDriver: true — transform only)
     const opacityAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
@@ -48,19 +46,10 @@ const AudioParticle = () => {
         fetchRituals(todayStr);
         checkProximity();
 
-        // Breathing pulse on the inner view
         Animated.loop(
             Animated.sequence([
-                Animated.timing(pulseAnim, {
-                    toValue: 1.08,
-                    duration: 1800,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(pulseAnim, {
-                    toValue: 1,
-                    duration: 1800,
-                    useNativeDriver: true,
-                }),
+                Animated.timing(pulseAnim, { toValue: 1.08, duration: 1800, useNativeDriver: true }),
+                Animated.timing(pulseAnim, { toValue: 1.0,  duration: 1800, useNativeDriver: true }),
             ])
         ).start();
 
@@ -69,9 +58,8 @@ const AudioParticle = () => {
     }, []);
 
     useEffect(() => {
-        const targetOpacity = ebbFactor < 0.5 ? 0.35 : 1;
         Animated.timing(opacityAnim, {
-            toValue: targetOpacity,
+            toValue: ebbFactor < 0.5 ? 0.35 : 1,
             duration: 400,
             useNativeDriver: true,
         }).start();
@@ -81,80 +69,84 @@ const AudioParticle = () => {
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
             onPanResponderGrant: () => {
+                // Capture current translate values before dragging
                 posX.stopAnimation(x => { panOffset.current.x = x; });
                 posY.stopAnimation(y => { panOffset.current.y = y; });
             },
-            onPanResponderMove: (_, gestureState) => {
-                posX.setValue(panOffset.current.x + gestureState.dx);
-                posY.setValue(panOffset.current.y + gestureState.dy);
+            onPanResponderMove: (_, gs) => {
+                posX.setValue(panOffset.current.x + gs.dx);
+                posY.setValue(panOffset.current.y + gs.dy);
             },
-            onPanResponderRelease: (_, gestureState) => {
-                const currentX = panOffset.current.x + gestureState.dx;
-                const currentY = panOffset.current.y + gestureState.dy;
+            onPanResponderRelease: (_, gs) => {
+                const releaseX = panOffset.current.x + gs.dx;
+                const releaseY = panOffset.current.y + gs.dy;
 
-                const snapX = currentX < SCREEN_WIDTH / 2
+                // Snap to nearest horizontal edge
+                const snapX = releaseX + PARTICLE_SIZE / 2 < SCREEN_WIDTH / 2
                     ? MARGIN
                     : SCREEN_WIDTH - PARTICLE_SIZE - MARGIN;
 
-                let snapY = currentY;
-                if (snapY < EXCLUSION_ZONE) snapY = EXCLUSION_ZONE;
-                if (snapY > SCREEN_HEIGHT - EXCLUSION_ZONE - PARTICLE_SIZE) {
-                    snapY = SCREEN_HEIGHT - EXCLUSION_ZONE - PARTICLE_SIZE;
-                }
+                // Clamp vertically within safe zone
+                const snapY = Math.min(
+                    Math.max(releaseY, EXCLUSION_ZONE),
+                    SCREEN_HEIGHT - EXCLUSION_ZONE - PARTICLE_SIZE
+                );
 
                 panOffset.current = { x: snapX, y: snapY };
 
-                Animated.spring(posX, {
-                    toValue: snapX,
-                    useNativeDriver: false,
-                    velocity: gestureState.vx,
-                    tension: 50,
-                    friction: 9,
-                }).start();
-                Animated.spring(posY, {
-                    toValue: snapY,
-                    useNativeDriver: false,
-                    velocity: gestureState.vy,
-                    tension: 50,
-                    friction: 9,
-                }).start();
+                Animated.parallel([
+                    Animated.spring(posX, { toValue: snapX, useNativeDriver: false, velocity: gs.vx, tension: 50, friction: 9 }),
+                    Animated.spring(posY, { toValue: snapY, useNativeDriver: false, velocity: gs.vy, tension: 50, friction: 9 }),
+                ]).start();
             },
         })
     ).current;
 
-    // Colours based on state
-    const stateColors: Record<string, [string, string]> = {
-        IDLE:       ['rgba(99,102,241,0.85)', 'rgba(139,92,246,0.7)'],
-        APPROACHING:['rgba(245,158,11,0.9)',  'rgba(251,191,36,0.75)'],
-        READY:      ['rgba(16,185,129,0.9)',  'rgba(52,211,153,0.75)'],
-    };
-    const gradientColors = isPlaying
-        ? ['rgba(139,92,246,0.95)', 'rgba(167,139,250,0.8)'] as [string, string]
-        : (stateColors[proximityStatus] ?? stateColors.IDLE);
+    // State-driven visuals
+    const gradientColors: [string, string] = isPlaying
+        ? ['rgba(139,92,246,0.95)', 'rgba(167,139,250,0.8)']
+        : proximityStatus === 'READY'
+        ? ['rgba(16,185,129,0.92)', 'rgba(52,211,153,0.78)']
+        : proximityStatus === 'APPROACHING'
+        ? ['rgba(245,158,11,0.92)', 'rgba(251,191,36,0.78)']
+        : ['rgba(79,70,229,0.88)',  'rgba(99,102,241,0.72)'];
 
     const shadowColor = isPlaying
         ? '#8B5CF6'
-        : proximityStatus === 'READY'   ? '#10B981'
+        : proximityStatus === 'READY'      ? '#10B981'
         : proximityStatus === 'APPROACHING' ? '#F59E0B'
         : '#6366F1';
 
-    const iconName: any = isPlaying ? 'pause' : proximityStatus === 'READY' ? 'musical-notes' : 'headset';
+    const iconName: any = isPlaying
+        ? 'pause'
+        : proximityStatus === 'READY'
+        ? 'musical-notes'
+        : 'headset';
 
     return (
+        // ── Outer: position only — useNativeDriver: false
         <Animated.View
             {...panResponder.panHandlers}
             style={[
                 styles.outerContainer,
                 {
-                    left: posX,
-                    top: posY,
                     shadowColor,
-                    opacity: opacityAnim,
+                    transform: [
+                        { translateX: posX },
+                        { translateY: posY },
+                    ],
                 },
             ]}
         >
-            {/* Inner view handles pulse scale with nativeDriver: true */}
-            <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            {/* ── Inner: scale + opacity — useNativeDriver: true */}
+            <Animated.View
+                style={{
+                    transform: [{ scale: pulseAnim }],
+                    opacity: opacityAnim,
+                    borderRadius: PARTICLE_SIZE / 2,
+                    overflow: 'hidden',
+                }}
+            >
                 <BlurView intensity={20} tint="light" style={styles.blurContainer}>
                     <LinearGradient
                         colors={gradientColors}
@@ -162,17 +154,12 @@ const AudioParticle = () => {
                         end={{ x: 1, y: 1 }}
                         style={styles.gradient}
                     >
-                        {/* Main icon */}
-                        <Ionicons name={iconName} size={22} color="#FFFFFF" />
+                        <Ionicons name={iconName} size={24} color="#FFFFFF" />
 
-                        {/* Playing indicator dot */}
-                        {isPlaying && (
-                            <View style={styles.playingDot} />
-                        )}
+                        {isPlaying && <View style={styles.playingDot} />}
 
-                        {/* Proximity label */}
                         {proximityStatus === 'READY' && !isPlaying && (
-                            <Text style={styles.readyLabel}>Now</Text>
+                            <Text style={styles.readyLabel}>NOW</Text>
                         )}
                     </LinearGradient>
                 </BlurView>
@@ -186,6 +173,8 @@ export default AudioParticle;
 const styles = StyleSheet.create({
     outerContainer: {
         position: 'absolute',
+        top: 0,
+        left: 0,
         width: PARTICLE_SIZE,
         height: PARTICLE_SIZE,
         borderRadius: PARTICLE_SIZE / 2,
@@ -201,17 +190,16 @@ const styles = StyleSheet.create({
         borderRadius: PARTICLE_SIZE / 2,
         overflow: 'hidden',
         borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.4)',
+        borderColor: 'rgba(255,255,255,0.45)',
     },
     gradient: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: PARTICLE_SIZE / 2,
     },
     playingDot: {
         position: 'absolute',
-        bottom: 10,
+        bottom: 11,
         width: 6,
         height: 6,
         borderRadius: 3,
@@ -220,11 +208,10 @@ const styles = StyleSheet.create({
     },
     readyLabel: {
         position: 'absolute',
-        bottom: 7,
-        fontSize: 8,
-        fontWeight: '700',
+        bottom: 8,
+        fontSize: 7,
+        fontWeight: '800',
         color: '#FFFFFF',
-        letterSpacing: 0.5,
-        textTransform: 'uppercase',
+        letterSpacing: 0.8,
     },
 });

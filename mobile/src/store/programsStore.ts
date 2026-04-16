@@ -157,6 +157,13 @@ export const useProgramsStore = create<ProgramsState>()(
             },
 
             fetchTodayPlan: async (programId) => {
+                // Guard: skip if programId looks like a mock/seed ID
+                if (!programId || programId.startsWith('mock-')) {
+                    console.warn('[ProgramsStore] Skipping fetchTodayPlan for mock ID:', programId);
+                    set({ currentProgram: null, todayPlan: null, isLoading: false });
+                    return;
+                }
+
                 set({ isLoading: true, error: null });
                 try {
                     const todayPlan = await programsService.getTodayPlan(programId);
@@ -173,18 +180,22 @@ export const useProgramsStore = create<ProgramsState>()(
                                 prevCompleted = task.status === TaskStatus.COMPLETED || task.status === TaskStatus.SKIPPED;
                                 return task;
                             })
-                            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)); // Explicitly sort by order
+                            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
                     }
 
-                    set({
-                        todayPlan,
-                        isLoading: false,
-                    });
+                    set({ todayPlan, isLoading: false });
                 } catch (error: any) {
-                    set({
-                        error: error.response?.data?.message || 'Failed to fetch today\'s plan',
-                        isLoading: false,
-                    });
+                    const status = error.response?.status;
+                    if (status === 404 || status === 500) {
+                        // Plan doesn't exist or server error for this program — clear stale state
+                        console.warn('[ProgramsStore] fetchTodayPlan failed with', status, '— clearing stale program');
+                        set({ currentProgram: null, todayPlan: null, isLoading: false, error: null });
+                    } else {
+                        set({
+                            error: error.response?.data?.message || "Failed to fetch today's plan",
+                            isLoading: false,
+                        });
+                    }
                 }
             },
 
@@ -396,8 +407,8 @@ export const useProgramsStore = create<ProgramsState>()(
             name: 'programs-storage',
             storage: createJSONStorage(() => AsyncStorage),
             partialize: (state) => ({
-                currentProgram: state.currentProgram,
-                todayPlan: state.todayPlan,
+                // Do NOT persist currentProgram or todayPlan — they are always fetched fresh from the
+                // server on login. Persisting them causes stale/mock IDs to trigger real API calls.
                 syncQueue: state.syncQueue
             }),
         }
