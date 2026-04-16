@@ -7,6 +7,7 @@ import { mmkvStorage } from '../services/storage.service';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { notificationService } from '../services/notification.service';
+import { journalService } from '../services/journalService';
 
 interface ProgramsState {
     currentProgram: Program | null;
@@ -208,19 +209,26 @@ export const useProgramsStore = create<ProgramsState>()(
                 );
                 set({ todayPlan: { ...todayPlan, tasks: updatedTasks } });
 
-                const state = await NetInfo.fetch();
-                if (state.isConnected) {
-                    try {
-                        await tasksService.update(taskId, updates);
-                    } catch {
+                // Strip frontend-only fields before syncing — backend DTO only accepts
+                // completed, scheduledAt, content, watchedSeconds, totalDuration
+                const { status: _s, metadata: _m, ...apiPayload } = updates as any;
+
+                // Only call the API if there's something the backend cares about
+                if (Object.keys(apiPayload).length > 0) {
+                    const netState = await NetInfo.fetch();
+                    if (netState.isConnected) {
+                        try {
+                            await tasksService.update(taskId, apiPayload);
+                        } catch {
+                            set(state => ({
+                                syncQueue: [...state.syncQueue, { id: taskId, type: 'UPDATE', payload: apiPayload }]
+                            }));
+                        }
+                    } else {
                         set(state => ({
-                            syncQueue: [...state.syncQueue, { id: taskId, type: 'UPDATE', payload: updates }]
+                            syncQueue: [...state.syncQueue, { id: taskId, type: 'UPDATE', payload: apiPayload }]
                         }));
                     }
-                } else {
-                    set(state => ({
-                        syncQueue: [...state.syncQueue, { id: taskId, type: 'UPDATE', payload: updates }]
-                    }));
                 }
             },
 
@@ -242,7 +250,6 @@ export const useProgramsStore = create<ProgramsState>()(
                 let finalMetadata = { ...metadata };
                 if (metadata?.journalEntry) {
                     try {
-                        const { journalService } = await import('../services/journalService');
                         const encrypted = await journalService.encrypt(metadata.journalEntry);
                         finalMetadata.journalEntry = encrypted;
                     } catch (e) {
@@ -283,9 +290,9 @@ export const useProgramsStore = create<ProgramsState>()(
 
                 set({ todayPlan: { ...todayPlan, tasks: updatedTasks } });
 
-                // Sync
+                // Sync — translate frontend status to backend's completed boolean
                 const state = await NetInfo.fetch();
-                const payload = { status: TaskStatus.COMPLETED, metadata: finalMetadata };
+                const payload = { completed: true };
                 if (state.isConnected) {
                     try {
                         await tasksService.update(taskId, payload);

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Audio } from 'expo-av';
 import { useTheme } from '../../hooks/useTheme';
-import { Task, TaskMetadata, TaskStatus } from '../../types';
+import { Task, TaskMetadata } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
 import StitchButton from '../StitchButton';
 import Slider from '@react-native-community/slider';
+import { useProgramsStore } from '../../store/programsStore';
 
 interface AudioTaskProps {
     task: Task;
@@ -14,15 +15,52 @@ interface AudioTaskProps {
 
 export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps) {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    const { todayPlan, fetchTodayPlan, currentProgram } = useProgramsStore();
     const [sound, setSound] = useState<Audio.Sound | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [isMixing, setIsMixing] = useState(false);
 
-    // Mock Audio URL for demo
-    const audioUrl = task.metadata?.externalLink || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+    // Resolve audio URL: the backend stores the URL on the DayPlan's audioTracks relation.
+    // The task itself only has an id; we match by dayPlanId or just grab the first track.
+    const audioTrack = todayPlan?.audioTracks?.find(t => t.dayPlanId === task.dayPlanId)
+        ?? todayPlan?.audioTracks?.[0];
+    const audioUrl = audioTrack?.url ?? task.metadata?.externalLink ?? null;
+
+    // Detect if we're still on the static placeholder (the async job hasn't finished yet).
+    // Static URLs contain 'static_binaural' — the mixed/generated ones are uploaded to Cloudinary
+    // under a different path.
+    const isStillGenerating = audioUrl?.includes('static_binaural') ?? false;
+
+    // Poll every 8s while still generating to pick up the mixed URL when the job completes
+    useEffect(() => {
+        if (!isStillGenerating) {
+            setIsMixing(false);
+            return;
+        }
+        setIsMixing(true);
+        const interval = setInterval(async () => {
+            if (currentProgram?.id) {
+                await fetchTodayPlan(currentProgram.id);
+            }
+        }, 8000);
+        return () => clearInterval(interval);
+    }, [isStillGenerating, currentProgram?.id]);
+
+    // When URL changes (job finished), reload the sound
+    useEffect(() => {
+        if (!audioUrl || isStillGenerating) return;
+        if (sound) {
+            sound.stopAsync().then(() => sound.unloadAsync()).catch(() => {});
+            setSound(null);
+            setIsPlaying(false);
+            setPosition(0);
+        }
+    }, [audioUrl]);
 
     async function playPause() {
+        if (!audioUrl || isStillGenerating) return;
         if (!sound) {
             const { sound: newSound } = await Audio.Sound.createAsync(
                 { uri: audioUrl },
@@ -72,12 +110,33 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
 
     return (
         <View style={styles.container}>
+            {!audioUrl ? (
+                <View style={styles.artworkSection}>
+                    <Text style={[styles.title, { color: colors.text }]}>Audio not available yet</Text>
+                    <Text style={[styles.subtitle, { color: colors.textMuted }]}>The audio for this session is still being generated. Check back shortly.</Text>
+                </View>
+            ) : (
+            <>
             <View style={styles.artworkSection}>
                 <View style={[styles.artworkContainer, { backgroundColor: colors.surfaceContainerLow, borderRadius: borderRadius.xxl }]}>
                     <Ionicons name="musical-notes" size={80} color={colors.primary} />
                 </View>
-                <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>{task.title}</Text>
-                <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>Relaxing Guidance • {task.duration || 10} MIN</Text>
+                <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>
+                    {audioTrack?.title || task.title}
+                </Text>
+                <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                    {audioTrack?.type ? audioTrack.type.charAt(0).toUpperCase() + audioTrack.type.slice(1) : 'Guided Session'} • {audioTrack?.duration || task.duration || 10} MIN
+                </Text>
+
+                {/* Mixing banner — shown while the voiceover job hasn't finished yet */}
+                {isStillGenerating && (
+                    <View style={[styles.mixingBanner, { backgroundColor: colors.primaryContainer + '30', borderColor: colors.primaryContainer }]}>
+                        <Ionicons name="musical-notes" size={14} color={colors.primary} />
+                        <Text style={[styles.mixingText, { color: colors.primary }]}>
+                            Mixing your AI voiceover… usually takes ~30 seconds
+                        </Text>
+                    </View>
+                )}
             </View>
 
             <View style={styles.controlsSection}>
@@ -88,7 +147,8 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                     value={position}
                     minimumTrackTintColor={colors.primary}
                     maximumTrackTintColor={colors.surfaceContainerHighest}
-                    thumbTintColor={colors.primary}
+                    thumbTintColor={isStillGenerating ? colors.outlineVariant : colors.primary}
+                    disabled={isStillGenerating}
                     onSlidingComplete={async (value) => {
                         if (sound) {
                             await sound.setPositionAsync(value);
@@ -106,8 +166,9 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
-                        style={[styles.playButton, { backgroundColor: colors.primary }]}
+                        style={[styles.playButton, { backgroundColor: isStillGenerating ? colors.outlineVariant : colors.primary, opacity: isStillGenerating ? 0.5 : 1 }]}
                         onPress={playPause}
+                        disabled={isStillGenerating}
                     >
                         <Ionicons name={isPlaying ? "pause" : "play"} size={40} color="#fff" />
                     </TouchableOpacity>
@@ -118,6 +179,8 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                 </View>
             </View>
 
+            </>
+            )}
             <View style={styles.footer}>
                 <StitchButton 
                     title="Finish Listening"
@@ -203,5 +266,19 @@ const styles = StyleSheet.create({
     },
     footer: {
         marginTop: 'auto',
-    }
+    },
+    mixingBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        borderWidth: 1,
+    },
+    mixingText: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
 });
