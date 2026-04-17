@@ -56,6 +56,7 @@ function pickAudioUrl(mood: string, dayNumber: number): string {
 }
 
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ProgressionService } from './progression.service';
 
 @Injectable()
 export class ProgramsService {
@@ -99,6 +100,7 @@ export class ProgramsService {
         private audioService: AudioService,
         private audioMixerService: AudioMixerService,
         private ritualsService: RitualsService,
+        private progressionService: ProgressionService,
     ) { }
 
     /** Hourly check for users whose local time is 20:00, then queue their next day. */
@@ -244,6 +246,15 @@ export class ProgramsService {
             reflection: Math.max(3, Math.floor(total * 0.10)),
         };
 
+        const xp = {
+            video: 40,
+            quiz: 20,
+            audio: 40,
+            consistency: 10,
+            journal: 60,
+            reflection: 80,
+        };
+
         const tasks: Promise<any>[] = [];
 
         // 0. Video (Concept)
@@ -261,6 +272,7 @@ export class ProgramsService {
                     type: 'video', dayPlanId: day.id, order: 0,
                     title: content.videoTask.title, description: content.videoTask.description,
                     duration: dur.video, completed: false, videoUrl,
+                    xpReward: xp.video,
                     scheduledAt: this.scheduleTask('video', dayOffset, wakeStart, sleepStart),
                 });
             })());
@@ -282,6 +294,7 @@ export class ProgramsService {
                     title: content.quiz.title || `Quiz: ${content.theme}`,
                     description: `Knowledge check on today's focus.`,
                     duration: dur.quiz, completed: false, quizId: quiz.id,
+                    xpReward: xp.quiz,
                     scheduledAt: this.scheduleTask('quiz', dayOffset, wakeStart, sleepStart),
                 });
             })());
@@ -318,6 +331,7 @@ export class ProgramsService {
                     title: content.audioTask.title || 'Focus Audio',
                     description: content.audioTask.description || '',
                     duration: dur.audio, completed: false,
+                    xpReward: xp.audio,
                     scheduledAt: this.scheduleTask('audio', dayOffset, wakeStart, sleepStart),
                 });
             })());
@@ -329,6 +343,7 @@ export class ProgramsService {
                 type: 'consistency', dayPlanId: day.id, order: 3,
                 title: content.consistencyTask.title, description: content.consistencyTask.description,
                 duration: dur.consistency, completed: false,
+                xpReward: xp.consistency,
                 scheduledAt: this.scheduleTask('consistency', dayOffset, wakeStart, sleepStart),
             }));
         }
@@ -339,6 +354,7 @@ export class ProgramsService {
                 type: 'journal', dayPlanId: day.id, order: 4,
                 title: content.journalTask.title, description: content.journalTask.prompt,
                 duration: dur.journal, completed: false,
+                xpReward: xp.journal,
                 scheduledAt: this.scheduleTask('journal', dayOffset, wakeStart, sleepStart),
             }));
         }
@@ -351,6 +367,7 @@ export class ProgramsService {
                 title: content.reflectionTask.title,
                 description: `${content.reflectionTask.description}\n\nReflection Points:\n${points}`,
                 duration: dur.reflection, completed: false,
+                xpReward: xp.reflection,
                 scheduledAt: this.scheduleTask('reflection', dayOffset, wakeStart, sleepStart),
             }));
         }

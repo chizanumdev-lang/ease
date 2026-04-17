@@ -47,14 +47,40 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         // Falls back to localhost for local dev (same as BullMQ fallback).
         const redisUrl = this.configService.get<string>('KV_URL') ||
                          this.configService.get<string>('REDIS_URL');
+        const options: any = {
+            tls: redisUrl?.startsWith('rediss://') ? {} : undefined,
+            lazyConnect: true,
+            maxRetriesPerRequest: 1, // Don't hang if Redis is down
+            retryStrategy: (times: number) => {
+                if (times > 3) {
+                    this.logger.error('Redis connection failed after 3 attempts. Caching disabled.');
+                    return null; // stop retrying
+                }
+                return Math.min(times * 200, 1000);
+            }
+        };
+
         if (redisUrl) {
-            this.redis = new Redis(redisUrl, { tls: redisUrl.startsWith('rediss://') ? {} : undefined, lazyConnect: true });
+            this.redis = new Redis(redisUrl, options);
         } else {
             const host = this.configService.get<string>('REDIS_HOST', 'localhost');
             const port = this.configService.get<number>('REDIS_PORT', 6379);
-            this.redis = new Redis({ host, port, lazyConnect: true });
+            this.redis = new Redis({ ...options, host, port });
         }
-        this.redis.connect().catch(() => this.logger.warn('Redis not reachable — caching and quota tracking disabled'));
+
+        // Add explicit error listener to stop ioredis from throwing unhandled errors to process.stderr
+        this.redis.on('error', (err) => {
+            if ((err as any).code === 'ETIMEDOUT' || (err as any).code === 'ECONNREFUSED') {
+                // Silently log once or handle gracefully
+                this.logger.debug(`Redis Background connection issue: ${err.message}`);
+            } else {
+                this.logger.warn(`Redis Error: ${err.message}`);
+            }
+        });
+
+        this.redis.connect().catch((err) => {
+            this.logger.warn(`Redis not reachable — caching and quota tracking disabled: ${err.message}`);
+        });
 
         this.providers = [
             {

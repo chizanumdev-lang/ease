@@ -213,6 +213,29 @@ export interface DailyCompletion {
     completionRate: number;
 }
 
+export interface PhaseInfo {
+    id: string;
+    title: string;
+    subtitle: string;
+    imageUrl: string;
+    levelRange: string;
+}
+
+export interface JourneyPhase extends PhaseInfo {
+    unlocked: boolean;
+    active: boolean;
+}
+
+export interface ProgressionData {
+    level: number;
+    totalXp: number;
+    currentLevelXp: number;
+    nextLevelXp: number;
+    progressPercentage: number;
+    currentPhase: PhaseInfo;
+    journey: JourneyPhase[];
+}
+
 export interface WeeklyAnalytics {
     currentStreak: number;
     completionRate: number;
@@ -221,4 +244,5 @@ export interface WeeklyAnalytics {
     pointsEarned: number;
     badges: Badge[];
     dailyCompletions: DailyCompletion[];
+    progression: ProgressionData;
 }

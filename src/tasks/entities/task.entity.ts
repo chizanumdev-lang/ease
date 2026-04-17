@@ -24,6 +24,9 @@ export class Task {
     @Column({ nullable: true })
     type: string;
 
+    @Column({ default: 10, name: 'xp_reward' })
+    xpReward: number;
+
     @Column({ nullable: true })
     duration: number;
 

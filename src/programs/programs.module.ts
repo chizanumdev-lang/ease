@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { ProgramsController } from './programs.controller';
 import { ProgramsService } from './programs.service';
+import { ProgressionService } from './progression.service';
 import { ProgramProcessor } from './program.processor';
 import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
@@ -41,7 +42,7 @@ import { AudioModule } from '../audio/audio.module';
         AudioModule,
     ],
     controllers: [ProgramsController],
-    providers: [ProgramsService, ProgramProcessor],
-    exports: [ProgramsService],
+    providers: [ProgramsService, ProgressionService, ProgramProcessor],
+    exports: [ProgramsService, ProgressionService],
 })
 export class ProgramsModule { }

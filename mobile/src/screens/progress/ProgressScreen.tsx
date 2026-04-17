@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     View, 
     Text, 
@@ -9,7 +9,8 @@ import {
     Image, 
     TouchableOpacity, 
     StatusBar,
-    Platform,
+    Animated,
+    Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,13 +26,33 @@ export default function ProgressScreen({ navigation }: any) {
     const [analytics, setAnalytics] = useState<WeeklyAnalytics | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    
+    // Pulse animation for the tree glow
+    const pulseAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
         loadAnalytics();
+        
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: 1.2,
+                    duration: 3000,
+                    easing: Easing.bezier(0.4, 0, 0.6, 1),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1,
+                    duration: 3000,
+                    easing: Easing.bezier(0.4, 0, 0.6, 1),
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
     }, []);
 
     const loadAnalytics = async () => {
-        try {
+        try { 
             const data = await analyticsService.getWeeklyAnalytics();
             setAnalytics(data);
         } catch (error) {
@@ -50,12 +71,14 @@ export default function ProgressScreen({ navigation }: any) {
     if (loading) {
         return (
             <LoadingState 
-                title="Curating your journey" 
-                subtitle="We're measuring the growth of your spirit tree."
+                title="Sensing your spirit" 
+                subtitle="Calculating the growth of your spirit tree..."
                 variant="full"
             />
         );
     }
+
+    const { progression } = analytics || {};
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
@@ -65,7 +88,7 @@ export default function ProgressScreen({ navigation }: any) {
                 <TouchableOpacity style={styles.headerButton} onPress={() => navigation?.goBack()}>
                     <Ionicons name="chevron-back" size={24} color={colors.primary} />
                 </TouchableOpacity>
-                <Text style={[styles.navTitle, { color: colors.text }]}>Tree Evolution</Text>
+                <Text style={[styles.navTitle, { color: colors.text }]}>Spirit Evolution</Text>
                 <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -79,110 +102,125 @@ export default function ProgressScreen({ navigation }: any) {
                 }
                 showsVerticalScrollIndicator={false}
             >
-                {/* Main Tree Display */}
+                {/* Main Evolution Display */}
                 <View style={styles.treeSection}>
-                    <View style={[styles.glowEffect, { backgroundColor: colors.primary, opacity: isDark ? 0.15 : 0.05 }]} />
-                    <View style={[styles.artworkContainer, { borderColor: colors.outlineVariant }, shadows.ambient]}>
+                    <Animated.View 
+                        style={[
+                            styles.glowEffect, 
+                            { 
+                                backgroundColor: colors.primary, 
+                                opacity: isDark ? 0.2 : 0.1,
+                                transform: [{ scale: pulseAnim }]
+                            }
+                        ]} 
+                    />
+                    <View style={[styles.artworkContainer, { borderColor: isDark ? colors.outline : colors.outlineVariant }, shadows.ambient]}>
                         <Image
-                            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1CRy9jYWzHhlYo9T613RCDCh6OP5AfuzesfC5EYBaXcKeyKFMByUhHaMmbb0Q1UdXVGfsCuUtgIppvFbTgd1sMPggqO4mPobxvAo1A9bfJeVAzgiH-NsOszvPDzZYe5lnMCHwJ-z38RI3e89q2pPEP3cTPk42eXmcE6I7HOuvVEOqHZzevoJn-HF5o4LOpnht6zgbzIpGKzea6ub-pl1623f_NiTvxsPyFA5iBbqgdqVIGFZ9ZlkplkQANAlU0XB3b1Ci8O4k-uWD' }}
+                            source={{ uri: progression?.currentPhase.imageUrl }}
                             style={styles.artwork}
+                            loadingIndicatorSource={require('../../../assets/icon.png')} // Fallback
                         />
                     </View>
+                    
                     <View style={styles.treeMeta}>
-                        <Text style={[styles.treeName, { color: colors.text }]}>Ancient Guardian</Text>
+                        <Text style={[styles.treeName, { color: colors.text }]}>{progression?.currentPhase.title}</Text>
+                        <Text style={[styles.treeSubtitle, { color: colors.textMuted }]}>{progression?.currentPhase.subtitle}</Text>
+                        
                         <View style={styles.levelRow}>
-                            <View style={[styles.levelBadge, { backgroundColor: colors.surfaceContainerLow }]}>
-                                <Text style={[styles.levelText, { color: colors.primary }]}>LEVEL {Math.floor((analytics?.pointsEarned || 0) / 100) || 42}</Text>
+                            <View style={[styles.levelBadge, { backgroundColor: colors.primaryContainer }]}>
+                                <Text style={[styles.levelText, { color: colors.primary }]}>LEVEL {progression?.level}</Text>
                             </View>
-                            <Text style={[styles.rankText, { color: colors.textMuted }]}>Master of Growth</Text>
+                            <Text style={[styles.rankText, { color: colors.textMuted }]}>{progression?.currentPhase.levelRange}</Text>
                         </View>
-                        <Text style={[styles.streakInfo, { color: colors.textMuted }]}>{analytics?.currentStreak || 0} days of consistent mindfulness</Text>
                     </View>
                 </View>
 
-                {/* Progress Card */}
-                <View style={[styles.progressCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                {/* Progress Card (Glassmorphism inspired) */}
+                <View style={[styles.progressCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                     <View style={styles.progressHeader}>
                         <View>
-                            <Text style={[styles.progressLabel, { color: colors.primary }]}>NEXT EVOLUTION</Text>
-                            <Text style={[styles.evolutionTarget, { color: colors.text }]}>Eternal Bloom</Text>
+                            <Text style={[styles.progressLabel, { color: colors.primary }]}>NEXT MILESTONE</Text>
+                            <Text style={[styles.evolutionTarget, { color: colors.text }]}>
+                                {progression?.journey.find(p => !p.unlocked)?.title || 'Max Sovereignty'}
+                            </Text>
                         </View>
-                        <Text style={[styles.xpText, { color: colors.primary }]}>
-                            {(analytics?.pointsEarned || 0) % 1000} <Text style={[styles.xpMax, { color: colors.textMuted }]}>/ 1000 XP</Text>
+                        <Text style={[styles.xpText, { color: colors.text }]}>
+                            {progression?.currentLevelXp} <Text style={[styles.xpMax, { color: colors.textMuted }]}>/ {progression?.nextLevelXp} XP</Text>
                         </Text>
                     </View>
-                    <View style={[styles.progressTrack, { backgroundColor: colors.outlineVariant }]}>
-                        <View style={[styles.progressFill, { width: `${((analytics?.pointsEarned || 0) % 1000) / 10}%`, backgroundColor: colors.primary }]} />
+                    
+                    <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                        <View style={[styles.progressFill, { width: `${progression?.progressPercentage || 0}%`, backgroundColor: colors.primary }]} />
                     </View>
+
                     <View style={styles.xpMeta}>
                         <Ionicons name="sparkles" size={14} color={colors.primary} />
-                        <Text style={[styles.xpRemaining, { color: colors.textMuted }]}>{1000 - ((analytics?.pointsEarned || 0) % 1000)} XP remaining to reach transcendence</Text>
+                        <Text style={[styles.xpRemaining, { color: colors.textMuted }]}>
+                            {Math.max(0, (progression?.nextLevelXp || 0) - (progression?.currentLevelXp || 0))} XP until your next evolution.
+                        </Text>
                     </View>
                 </View>
 
-                {/* Evolution Journey */}
+                {/* Quick Stats Grid */}
+                <View style={styles.statsGrid}>
+                    <View style={[styles.statBox, { backgroundColor: colors.surfaceContainerLow }]}>
+                        <Ionicons name="flame" size={24} color="#FF6B6B" />
+                        <View>
+                            <Text style={[styles.statValue, { color: colors.text }]}>{analytics?.currentStreak}</Text>
+                            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Day Streak</Text>
+                        </View>
+                    </View>
+                    <View style={[styles.statBox, { backgroundColor: colors.surfaceContainerLow }]}>
+                        <Ionicons name="checkmark-circle" size={24} color="#4ECDC4" />
+                        <View>
+                            <Text style={[styles.statValue, { color: colors.text }]}>{analytics?.completionRate}%</Text>
+                            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Completion</Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Evolution Roadmap */}
                 <View style={styles.journeySection}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Evolution Journey</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Evolution Roadmap</Text>
 
-                    {/* Stage 1 */}
-                    <View style={styles.stageItem}>
-                        <View style={styles.stageTimeline}>
-                            <View style={[styles.stageIconBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
-                                <Ionicons name="leaf-outline" size={20} color={colors.textMuted} />
+                    {progression?.journey.map((phase, index) => (
+                        <View key={phase.id} style={styles.stageItem}>
+                            <View style={styles.stageTimeline}>
+                                <View style={[
+                                    styles.stageIconBox, 
+                                    { 
+                                        backgroundColor: phase.active ? colors.primary : phase.unlocked ? colors.primaryContainer : colors.surfaceContainerHigh,
+                                        borderColor: phase.active ? colors.primary : colors.outlineVariant,
+                                        borderWidth: phase.active ? 0 : 1
+                                    }
+                                ]}>
+                                    <Ionicons 
+                                        name={phase.unlocked ? "checkmark" : "lock-closed"} 
+                                        size={18} 
+                                        color={phase.active ? (isDark ? colors.background : '#fff') : phase.unlocked ? colors.primary : colors.textMuted} 
+                                    />
+                                </View>
+                                {index < (progression?.journey.length - 1) && (
+                                    <View style={[styles.stageLine, { backgroundColor: phase.unlocked ? colors.primary : colors.outlineVariant, opacity: phase.unlocked ? 0.3 : 1 }]} />
+                                )}
                             </View>
-                            <View style={[styles.stageLine, { backgroundColor: colors.outlineVariant }]} />
-                        </View>
-                        <View style={styles.stageContent}>
-                            <Text style={[styles.stageTitle, { color: colors.text }]}>The Seedling</Text>
-                            <Text style={[styles.stageDesc, { color: colors.textMuted }]}>Day 1: Where intention begins</Text>
-                        </View>
-                    </View>
-
-                    {/* Stage 2 */}
-                    <View style={styles.stageItem}>
-                        <View style={styles.stageTimeline}>
-                            <View style={[styles.stageIconBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
-                                <Ionicons name="analytics-outline" size={20} color={colors.textMuted} />
-                            </View>
-                            <View style={[styles.stageLine, { backgroundColor: colors.outlineVariant }]} />
-                        </View>
-                        <View style={styles.stageContent}>
-                            <Text style={[styles.stageTitle, { color: colors.text }]}>Sprouting Spirit</Text>
-                            <Text style={[styles.stageDesc, { color: colors.textMuted }]}>Day 15: Habit foundation locked</Text>
-                        </View>
-                    </View>
-
-                    {/* Stage 3 */}
-                    <View style={styles.stageItem}>
-                        <View style={styles.stageTimeline}>
-                            <View style={[styles.stageIconBox, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
-                                <Ionicons name="bonfire-outline" size={20} color={colors.textMuted} />
-                            </View>
-                            <View style={[styles.stageLine, { backgroundColor: colors.outlineVariant }]} />
-                        </View>
-                        <View style={styles.stageContent}>
-                            <Text style={[styles.stageTitle, { color: colors.text }]}>Branching Wisdom</Text>
-                            <Text style={[styles.stageDesc, { color: colors.textMuted }]}>Day 60: Deep-rooted resilience</Text>
-                        </View>
-                    </View>
-
-                    {/* Stage 4 (Active) */}
-                    <View style={styles.stageItem}>
-                        <View style={styles.stageTimeline}>
-                            <View style={[styles.stageIconBox, { backgroundColor: colors.primary, borderColor: colors.outlineVariant, borderWidth: 4 }]}>
-                                <Ionicons name="sunny-outline" size={20} color={isDark ? colors.background : "#fff"} />
+                            <View style={styles.stageContent}>
+                                <View style={styles.activeLabelRow}>
+                                    <Text style={[
+                                        styles.stageTitle, 
+                                        { color: phase.active ? colors.primary : phase.unlocked ? colors.text : colors.textMuted }
+                                    ]}>
+                                        {phase.title}
+                                    </Text>
+                                    {phase.active && <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />}
+                                </View>
+                                <Text style={[styles.stageDesc, { color: colors.textMuted }]}>
+                                    {phase.levelRange} {phase.unlocked ? '— Achieved' : '— Locked'}
+                                </Text>
                             </View>
                         </View>
-                        <View style={styles.stageContent}>
-                            <View style={styles.activeLabelRow}>
-                                <Text style={[styles.stageTitleActive, { color: colors.primary }]}>Ancient Guardian</Text>
-                                <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
-                            </View>
-                            <Text style={[styles.stageDesc, { color: colors.textMuted }]}>Day 100: Peak mental vitality</Text>
-                        </View>
-                    </View>
+                    ))}
                 </View>
-
 
             </ScrollView>
         </SafeAreaView>
@@ -218,12 +256,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingTop: 20,
-        paddingBottom: 120,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        paddingBottom: 40,
     },
     treeSection: {
         alignItems: 'center',
@@ -231,36 +264,44 @@ const styles = StyleSheet.create({
     },
     glowEffect: {
         position: 'absolute',
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        top: 10,
+    },
+    artworkContainer: {
         width: 240,
         height: 240,
         borderRadius: 120,
-        top: 20,
-    },
-    artworkContainer: {
-        width: 220,
-        height: 220,
-        borderRadius: 110,
-        borderWidth: 4,
+        borderWidth: 1,
         overflow: 'hidden',
+        padding: 4,
     },
     artwork: {
         width: '100%',
         height: '100%',
+        borderRadius: 116,
     },
     treeMeta: {
         marginTop: 32,
         alignItems: 'center',
     },
     treeName: {
-        fontSize: 26,
+        fontSize: 28,
         fontWeight: '900',
         letterSpacing: -0.5,
+    },
+    treeSubtitle: {
+        fontSize: 14,
+        marginTop: 4,
+        fontStyle: 'italic',
+        opacity: 0.8,
     },
     levelRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        marginTop: 12,
+        gap: 12,
+        marginTop: 16,
     },
     levelBadge: {
         paddingHorizontal: 12,
@@ -274,18 +315,13 @@ const styles = StyleSheet.create({
     },
     rankText: {
         fontSize: 14,
-        fontWeight: '600',
-    },
-    streakInfo: {
-        fontSize: 13,
-        fontStyle: 'italic',
-        marginTop: 16,
+        fontWeight: '700',
     },
     progressCard: {
         marginHorizontal: 20,
-        marginTop: 40,
+        marginTop: 32,
         padding: 24,
-        borderRadius: 24,
+        borderRadius: 32,
         borderWidth: 1,
     },
     progressHeader: {
@@ -300,7 +336,7 @@ const styles = StyleSheet.create({
         letterSpacing: 2,
     },
     evolutionTarget: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '800',
         marginTop: 4,
     },
@@ -310,15 +346,16 @@ const styles = StyleSheet.create({
     },
     xpMax: {
         fontWeight: '500',
+        fontSize: 12,
     },
     progressTrack: {
-        height: 10,
-        borderRadius: 5,
+        height: 12,
+        borderRadius: 6,
         overflow: 'hidden',
     },
     progressFill: {
         height: '100%',
-        borderRadius: 5,
+        borderRadius: 6,
     },
     xpMeta: {
         flexDirection: 'row',
@@ -330,14 +367,36 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
     },
+    statsGrid: {
+        flexDirection: 'row',
+        marginHorizontal: 20,
+        marginTop: 16,
+        gap: 12,
+    },
+    statBox: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 20,
+        gap: 12,
+    },
+    statValue: {
+        fontSize: 18,
+        fontWeight: '900',
+    },
+    statLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+    },
     journeySection: {
-        paddingHorizontal: 20,
+        paddingHorizontal: 24,
         marginTop: 48,
     },
     sectionTitle: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: '900',
-        marginBottom: 24,
+        marginBottom: 28,
     },
     stageItem: {
         flexDirection: 'row',
@@ -345,13 +404,12 @@ const styles = StyleSheet.create({
     },
     stageTimeline: {
         alignItems: 'center',
-        width: 44,
+        width: 40,
     },
     stageIconBox: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        borderWidth: 1,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2,
@@ -363,26 +421,21 @@ const styles = StyleSheet.create({
     },
     stageContent: {
         flex: 1,
-        paddingBottom: 40,
-        paddingTop: 6,
+        paddingBottom: 32,
     },
     stageTitle: {
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: '800',
     },
-    stageTitleActive: {
-        fontSize: 17,
-        fontWeight: '900',
-    },
     stageDesc: {
-        fontSize: 14,
-        lineHeight: 20,
-        marginTop: 6,
+        fontSize: 13,
+        fontWeight: '500',
+        marginTop: 4,
     },
     activeLabelRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: 12,
     },
     activeDot: {
         width: 8,

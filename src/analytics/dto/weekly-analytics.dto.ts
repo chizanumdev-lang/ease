@@ -12,6 +12,8 @@ export interface DailyCompletion {
     completionRate: number;
 }
 
+import { ProgressionData } from '../../programs/progression.service';
+
 export class WeeklyAnalyticsDto {
     currentStreak: number;
     completionRate: number;
@@ -20,4 +22,5 @@ export class WeeklyAnalyticsDto {
     pointsEarned: number;
     badges: Badge[];
     dailyCompletions: DailyCompletion[];
+    progression: ProgressionData;
 }

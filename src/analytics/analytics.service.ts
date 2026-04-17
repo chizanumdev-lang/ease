@@ -6,6 +6,7 @@ import { Task } from '../tasks/entities/task.entity';
 import { QuizAttempt } from '../quizzes/entities/quiz-attempt.entity';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { WeeklyAnalyticsDto, Badge, DailyCompletion } from './dto/weekly-analytics.dto';
+import { ProgressionService } from '../programs/progression.service';
 
 @Injectable()
 export class AnalyticsService {
@@ -18,6 +19,7 @@ export class AnalyticsService {
         private quizAttemptRepository: Repository<QuizAttempt>,
         @InjectRepository(DayPlan)
         private dayPlanRepository: Repository<DayPlan>,
+        private progressionService: ProgressionService,
     ) { }
 
     async getWeeklyAnalytics(userId: string): Promise<WeeklyAnalyticsDto> {
@@ -58,6 +60,9 @@ export class AnalyticsService {
             now,
         );
 
+        // Get Progression Data
+        const progression = this.progressionService.getProgression(pointsEarned);
+
         return {
             currentStreak,
             completionRate,
@@ -66,6 +71,7 @@ export class AnalyticsService {
             pointsEarned,
             badges,
             dailyCompletions,
+            progression,
         };
     }
 
@@ -179,8 +185,8 @@ export class AnalyticsService {
             where: { dayPlan: { program: { userId } }, completed: true },
         });
 
-        // Points system: 10 points per completed task
-        return tasks.length * 10;
+        // Sum up xpReward from all completed tasks
+        return tasks.reduce((sum, task) => sum + (task.xpReward || 0), 0);
     }
 
     private async getBadges(
