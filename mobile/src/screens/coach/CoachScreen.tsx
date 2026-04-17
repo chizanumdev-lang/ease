@@ -181,7 +181,11 @@ export default function CoachScreen({ navigation }: any) {
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-                style={[styles.inputArea, { borderTopColor: colors.outlineVariant, backgroundColor: colors.background, paddingBottom: Math.max(insets.bottom, 16) }]}
+                style={[styles.inputArea, { 
+                    borderTopColor: colors.outlineVariant, 
+                    backgroundColor: colors.background, 
+                    marginBottom: 120,
+                }]}
             >
                 <View style={[styles.inputWrapper, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
                     <TouchableOpacity style={styles.addButton}>
