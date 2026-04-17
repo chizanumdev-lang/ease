@@ -16,6 +16,7 @@ import { CoachService, CoachResponse } from '../../services/coach.service';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Sentry from '@sentry/react-native';
 
 interface Message {
     id: string;
@@ -155,6 +156,16 @@ export default function CoachScreen({ navigation }: any) {
                         <Text style={[styles.statusText, { color: colors.textMuted, fontFamily: fonts.label }]}>Always here for you</Text>
                     </View>
                 </View>
+                <TouchableOpacity 
+                    style={styles.headerButton} 
+                    onPress={() => {
+                        console.log('Testing Sentry...');
+                        Sentry.captureException(new Error('Sentry Mobile Test Error'));
+                        alert('Test error sent to Sentry!');
+                    }}
+                >
+                    <Ionicons name="bug-outline" size={24} color={colors.primary} />
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -184,7 +195,7 @@ export default function CoachScreen({ navigation }: any) {
                 style={[styles.inputArea, { 
                     borderTopColor: colors.outlineVariant, 
                     backgroundColor: colors.background, 
-                    marginBottom: 120,
+                    marginBottom: 90
                 }]}
             >
                 <View style={[styles.inputWrapper, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>

@@ -22,7 +22,7 @@ export default function TaskScreenRouter({ route, navigation }: Props) {
     const { task: initialTask } = route.params;
     
     // We use the store task to get real-time status updates
-    const { todayPlan, completeTask, skipTask } = useProgramsStore();
+    const { todayPlan, completeTask } = useProgramsStore();
     
     const task = useMemo(() => {
         return todayPlan?.tasks?.find(t => t.id === initialTask.id) || initialTask;
@@ -75,14 +75,8 @@ export default function TaskScreenRouter({ route, navigation }: Props) {
 
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <TouchableOpacity 
-                            style={[styles.skipButton, { backgroundColor: colors.surfaceContainerLow }]}
-                            onPress={() => skipTask(task.id)}
-                        >
-                            <Text style={[styles.skipText, { color: colors.textMuted }]}>Skip</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
                             onPress={() => navigation.navigate('Settings')}
-                            style={[styles.skipButton, { backgroundColor: colors.surfaceContainerLow, width: 36, height: 36, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 0 }]}
+                            style={[styles.headerButton, { backgroundColor: colors.surfaceContainerLow, width: 36, height: 36, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 0 }]}
                         >
                             <Ionicons name="settings-outline" size={20} color={colors.textMuted} />
                         </TouchableOpacity>
@@ -146,14 +140,10 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
         marginTop: 2,
     },
-    skipButton: {
+    headerButton: {
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
-    },
-    skipText: {
-        fontSize: 12,
-        fontWeight: '700',
     },
     progressContainer: {
         height: 4,

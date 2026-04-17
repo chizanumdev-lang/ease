@@ -25,7 +25,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
-export default function App() {
+import * as Sentry from '@sentry/react-native';
+
+// Initialize Sentry
+Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
+    // We recommend adjusting this value in production.
+    tracesSampleRate: 1.0,
+});
+
+function App() {
     const [appIsReady, setAppIsReady] = useState(false);
 
     useEffect(() => {
@@ -73,6 +83,8 @@ export default function App() {
         </View>
     );
 }
+
+export default Sentry.wrap(App);
 
 const styles = StyleSheet.create({
     container: {

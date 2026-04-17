@@ -1,8 +1,17 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { AppModule } from './app.module';
+import * as Sentry from '@sentry/nestjs';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 console.log('--- STARTING VERCEL BOOTSTRAP (v1.0.7-VOLUME-ADJUSTED) ---');
+
+// Initialize Sentry before everything else
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    nodeProfilingIntegration(),
+  ],
+  // Tracing
+  tracesSampleRate: 1.0, //  Capture 100% of the transactions
+});
 
 async function bootstrap() {
   console.log('Initializing Nest application (v1.0.7-VOLUME-ADJUSTED)...');

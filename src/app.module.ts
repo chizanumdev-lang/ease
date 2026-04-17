@@ -20,9 +20,12 @@ import { AiModule } from './ai/ai.module';
 import { VideoModule } from './video/video.module';
 import { AudioModule } from './audio/audio.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
+import { APP_FILTER } from '@nestjs/core';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
       serveRoot: '/public', // Optional: adds a prefix
@@ -88,6 +91,12 @@ import { ScheduleModule } from '@nestjs/schedule';
     AudioModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
+  ],
 })
 export class AppModule { }

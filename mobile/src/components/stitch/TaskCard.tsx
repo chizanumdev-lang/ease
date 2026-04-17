@@ -19,7 +19,6 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
     const isCompleted = task.status === TaskStatus.COMPLETED;
     const isInProgress = task.status === TaskStatus.IN_PROGRESS;
     const isLocked = task.status === TaskStatus.LOCKED;
-    const isSkipped = task.status === TaskStatus.SKIPPED;
 
     useEffect(() => {
         if (isInProgress) {
@@ -46,7 +45,6 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
         if (isCompleted) return 'checkmark-circle';
         if (isInProgress) return 'radio-button-on';
         if (isLocked) return 'lock-closed';
-        if (isSkipped) return 'play-skip-forward';
         return 'radio-button-off';
     };
 
@@ -67,7 +65,6 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
         if (isCompleted) return colors.primary;
         if (isInProgress) return colors.primary;
         if (isLocked) return colors.textMuted;
-        if (isSkipped) return colors.secondary;
         return colors.outline;
     };
 
