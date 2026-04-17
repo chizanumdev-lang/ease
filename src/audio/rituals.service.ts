@@ -24,7 +24,7 @@ export class RitualsService {
         private audioMixerService: AudioMixerService,
     ) {}
 
-    async generateDailyRituals(userId: string, date: string): Promise<{ morning: RitualTrack; night: RitualTrack }> {
+    async generateDailyRituals(userId: string, date: string): Promise<{ morning: RitualTrack | null; night: RitualTrack | null }> {
         this.logger.log(`Generating daily rituals for user ${userId} on date ${date}`);
 
         // 1. Get current program to provide context
@@ -35,13 +35,24 @@ export class RitualsService {
 
         const contextTopic = program?.title || 'Personal Growth';
         
-        // 2. Generate Morning Affirmations
-        const morningTrack = await this.generateRitual(userId, 'morning', contextTopic, date);
-        
-        // 3. Generate Nightly Subliminals
-        const nightTrack = await this.generateRitual(userId, 'night', contextTopic, date);
+        // 2. Generate morning and night rituals in parallel so a timeout/failure
+        //    on one doesn't block or cancel the other
+        const [morningResult, nightResult] = await Promise.allSettled([
+            this.generateRitual(userId, 'morning', contextTopic, date),
+            this.generateRitual(userId, 'night', contextTopic, date),
+        ]);
 
-        return { morning: morningTrack, night: nightTrack };
+        const morning = morningResult.status === 'fulfilled' ? morningResult.value : null;
+        const night = nightResult.status === 'fulfilled' ? nightResult.value : null;
+
+        if (morningResult.status === 'rejected') {
+            this.logger.error(`Morning ritual failed for user ${userId}`, morningResult.reason);
+        }
+        if (nightResult.status === 'rejected') {
+            this.logger.error(`Night ritual failed for user ${userId}`, nightResult.reason);
+        }
+
+        return { morning, night };
     }
 
     private async generateRitual(
@@ -94,7 +105,9 @@ export class RitualsService {
 
             return saved;
         } catch (error) {
-            this.logger.error(`Failed to generate ${type} ritual for user ${userId}:`, error);
+            // Cloudinary errors wrap their message under error.error.message
+            const msg = error?.message || error?.error?.message || JSON.stringify(error);
+            this.logger.error(`Failed to generate ${type} ritual for user ${userId}: ${msg}`);
             throw error;
         }
     }

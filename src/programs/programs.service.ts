@@ -140,7 +140,7 @@ export class ProgramsService {
     }
 
     async hydrateDay(dayId: string, goalText: string, params: any): Promise<void> {
-        const day = await this.dayPlanRepository.findOne({ where: { id: dayId } });
+        const day = await this.dayPlanRepository.findOne({ where: { id: dayId }, relations: ['program'] });
         if (!day) return;
 
         try {

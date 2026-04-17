@@ -8,10 +8,22 @@ import { useTheme } from '../../hooks/useTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+/** True if the current time is in the "morning" window (before noon). */
+const isCurrentlyMorning = () => new Date().getHours() < 12;
+
 const AudioWidget = () => {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
-    const { morningRitualTime, nightRitualTime, proximityStatus, ritualTracks, loadTrack, play } = useAudioStore();
+    const { morningRitualTime, nightRitualTime, proximityStatus, ritualTracks, loadTrack, play, checkProximity, fetchRituals } = useAudioStore();
     const [timeLeft, setTimeLeft] = useState<string>('');
+
+    // Fetch rituals and start proximity checks on mount
+    useEffect(() => {
+        const today = new Date().toISOString().split('T')[0];
+        fetchRituals(today);
+        checkProximity();
+        const interval = setInterval(checkProximity, 60000);
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         const updateTimer = () => {
@@ -27,25 +39,18 @@ const AudioWidget = () => {
             const nightMins = parseTime(nightRitualTime);
 
             let nextRitualMins = morningMins;
-            let label = 'Morning';
 
             if (currentMinutes >= morningMins && currentMinutes < nightMins) {
                 nextRitualMins = nightMins;
-                label = 'Night';
             } else if (currentMinutes >= nightMins) {
                 nextRitualMins = morningMins + 1440; // Next day
-                label = 'Morning';
             }
 
             const diff = nextRitualMins - currentMinutes;
             const h = Math.floor(diff / 60);
             const m = diff % 60;
 
-            if (diff <= 0) {
-                setTimeLeft('Ready');
-            } else {
-                setTimeLeft(`${h}h ${m}m`);
-            }
+            setTimeLeft(diff <= 0 ? 'Ready' : `${h}h ${m}m`);
         };
 
         const interval = setInterval(updateTimer, 60000);
@@ -54,31 +59,34 @@ const AudioWidget = () => {
     }, [morningRitualTime, nightRitualTime]);
 
     const handleStartRitual = async () => {
-        const now = new Date();
-        const currentHour = now.getHours();
-        const isMorning = currentHour < 12;
-        
-        const track = isMorning ? ritualTracks.morning : ritualTracks.night;
-        
-        if (track) {
+        // Use the same morning/night determination everywhere
+        const morning = isCurrentlyMorning();
+        const track = morning ? ritualTracks.morning : ritualTracks.night;
+
+        if (!track) {
+            console.warn('[AudioWidget] Ritual track not generated yet for', morning ? 'morning' : 'night');
+            return;
+        }
+
+        try {
             await loadTrack(track);
             await play();
-        } else {
-            console.log('No ritual track generated yet.');
+        } catch (e) {
+            console.error('[AudioWidget] Failed to start ritual:', e);
         }
     };
 
+    // Unified label — single source of truth used by both title and button
+    const morning = isCurrentlyMorning();
+    const nextRitualLabel = morning ? 'Morning Affirmations' : 'Nightly Subliminals';
+    const activeTrack = morning ? ritualTracks.morning : ritualTracks.night;
+    const trackReady = !!activeTrack;
+    const canPlay = proximityStatus === 'READY' && trackReady;
+
     const getStatusColor = () => {
-        if (proximityStatus === 'READY') return '#10B981';
+        if (proximityStatus === 'READY' && trackReady) return '#10B981';
         if (proximityStatus === 'APPROACHING') return '#F59E0B';
         return colors.textMuted;
-    };
-
-    const getNextRitualLabel = () => {
-        const now = new Date();
-        const currentHour = now.getHours();
-        if (currentHour >= 22 || currentHour < 7) return 'Morning Affirmations';
-        return 'Nightly Subliminals';
     };
 
     return (
@@ -91,7 +99,7 @@ const AudioWidget = () => {
                     <View style={styles.header}>
                         <View style={styles.titleGroup}>
                             <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-                            <Text style={[styles.title, { color: colors.text }]}>{getNextRitualLabel()}</Text>
+                            <Text style={[styles.title, { color: colors.text }]}>{nextRitualLabel}</Text>
                         </View>
                         <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{timeLeft}</Text>
                     </View>
@@ -99,32 +107,32 @@ const AudioWidget = () => {
                     <View style={styles.footer}>
                         <View style={styles.ritualInfo}>
                             <Ionicons 
-                                name={getNextRitualLabel().includes('Morning') ? 'sunny-outline' : 'moon-outline'} 
+                                name={morning ? 'sunny-outline' : 'moon-outline'} 
                                 size={16} 
                                 color={colors.primary} 
                             />
                             <Text style={[styles.ritualTime, { color: colors.text }]}>
-                                {getNextRitualLabel().includes('Morning') ? morningRitualTime : nightRitualTime}
+                                {morning ? morningRitualTime : nightRitualTime}
                             </Text>
                         </View>
 
                         <TouchableOpacity 
                             style={[styles.startButton, { 
-                                backgroundColor: proximityStatus === 'READY' ? colors.primary : 'rgba(0,0,0,0.05)',
-                                opacity: proximityStatus === 'READY' ? 1 : 0.6
+                                backgroundColor: canPlay ? colors.primary : 'rgba(0,0,0,0.05)',
+                                opacity: canPlay ? 1 : 0.6
                             }]}
-                            disabled={proximityStatus !== 'READY'}
+                            disabled={!canPlay}
                             onPress={handleStartRitual}
                         >
                             <Text style={[styles.buttonText, { 
-                                color: proximityStatus === 'READY' ? '#fff' : colors.textMuted 
+                                color: canPlay ? '#fff' : colors.textMuted 
                             }]}>
-                                {proximityStatus === 'READY' ? 'BEGIN' : 'LOCKED'}
+                                {!trackReady ? 'GENERATING' : proximityStatus === 'READY' ? 'BEGIN' : 'LOCKED'}
                             </Text>
                             <Ionicons 
-                                name={proximityStatus === 'READY' ? "play-outline" : "lock-closed-outline"} 
+                                name={canPlay ? 'play-outline' : trackReady ? 'lock-closed-outline' : 'hourglass-outline'} 
                                 size={14} 
-                                color={proximityStatus === 'READY' ? "#fff" : colors.textMuted} 
+                                color={canPlay ? '#fff' : colors.textMuted} 
                             />
                         </TouchableOpacity>
                     </View>

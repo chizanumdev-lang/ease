@@ -169,13 +169,22 @@ export const useProgramsStore = create<ProgramsState>()(
                 try {
                     const todayPlan = await programsService.getTodayPlan(programId);
                     
-                    // Migrate tasks to new schema
+                    // Migrate tasks to new schema — but preserve any statuses already set
+                    // locally (e.g. SKIPPED or COMPLETED) so polling doesn't re-lock tasks
+                    // that the user has already interacted with.
                     if (todayPlan && todayPlan.tasks) {
+                        const existingStatuses = new Map(
+                            (get().todayPlan?.tasks ?? []).map(t => [t.id, t.status])
+                        );
                         let prevCompleted = true;
                         todayPlan.tasks = todayPlan.tasks
                             .map((t, idx) => {
                                 const task = migrateTask(t, idx, todayPlan.tasks!.length);
-                                if (prevCompleted && task.status === TaskStatus.LOCKED) {
+                                // If we already have a richer local status, keep it
+                                const localStatus = existingStatuses.get(task.id);
+                                if (localStatus && localStatus !== TaskStatus.LOCKED) {
+                                    task.status = localStatus;
+                                } else if (prevCompleted && task.status === TaskStatus.LOCKED) {
                                     task.status = TaskStatus.PENDING;
                                 }
                                 prevCompleted = task.status === TaskStatus.COMPLETED || task.status === TaskStatus.SKIPPED;
@@ -343,9 +352,10 @@ export const useProgramsStore = create<ProgramsState>()(
 
                 set({ todayPlan: { ...todayPlan, tasks: updatedTasks } });
 
-                // Sync
+                // Sync — send completed:true so skip is persisted (skip is dev-only,
+                // treating it as a completion is intentional so it survives re-fetches)
                 const state = await NetInfo.fetch();
-                const payload = { status: TaskStatus.SKIPPED };
+                const payload = { completed: true };
                 if (state.isConnected) {
                     try {
                         await tasksService.update(taskId, payload);

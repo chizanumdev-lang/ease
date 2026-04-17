@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { AudioService } from './audio.service';
 import { AudioController } from './audio.controller';
 import { AiModule } from '../ai/ai.module';
@@ -14,7 +15,8 @@ import { RitualsService } from './rituals.service';
 @Module({
     imports: [
         TypeOrmModule.forFeature([AudioTrack, RitualTrack, Program]),
-        AiModule
+        AiModule,
+        BullModule.registerQueue({ name: 'audio-generation' }),
     ],
     controllers: [AudioController],
     providers: [AudioService, AudioProcessor, AudioMixerService, RitualsService],

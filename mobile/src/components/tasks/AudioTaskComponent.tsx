@@ -21,6 +21,7 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(0);
     const [isMixing, setIsMixing] = useState(false);
+    const [gaveUp, setGaveUp] = useState(false);
 
     // Resolve audio URL: the backend stores the URL on the DayPlan's audioTracks relation.
     // The task itself only has an id; we match by dayPlanId or just grab the first track.
@@ -31,22 +32,34 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     // Detect if we're still on the static placeholder (the async job hasn't finished yet).
     // Static URLs contain 'static_binaural' — the mixed/generated ones are uploaded to Cloudinary
     // under a different path.
-    const isStillGenerating = audioUrl?.includes('static_binaural') ?? false;
+    const isStillGenerating = (audioUrl?.includes('static_binaural') ?? false) && !gaveUp;
 
-    // Poll every 8s while still generating to pick up the mixed URL when the job completes
+    // Poll every 8s while still generating to pick up the mixed URL when the job completes.
+    // Give up after 90s — if the job hasn't finished by then (e.g. Redis is down), let the
+    // user play the static binaural fallback rather than waiting indefinitely.
     useEffect(() => {
-        if (!isStillGenerating) {
+        if (!isStillGenerating && !gaveUp) {
             setIsMixing(false);
             return;
         }
+        if (gaveUp) return;
+
         setIsMixing(true);
+        let polls = 0;
         const interval = setInterval(async () => {
+            polls++;
+            if (polls >= 11) { // ~90s (11 × 8s)
+                clearInterval(interval);
+                setGaveUp(true);
+                setIsMixing(false);
+                return;
+            }
             if (currentProgram?.id) {
                 await fetchTodayPlan(currentProgram.id);
             }
         }, 8000);
         return () => clearInterval(interval);
-    }, [isStillGenerating, currentProgram?.id]);
+    }, [isStillGenerating, currentProgram?.id, gaveUp]);
 
     // When URL changes (job finished), reload the sound
     useEffect(() => {
