@@ -373,6 +373,49 @@ export default function SettingsScreen({ navigation }: Props) {
                     </View>
                 </View>
 
+                {/* Ritual Audio Source Section */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Ritual Audio Source</Text>
+                    <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+                        Choose how your morning affirmations and nightly subliminals are created.
+                    </Text>
+                    <View style={styles.sourceRow}>
+                        {[
+                            { id: 'auto', label: 'Smart Select', icon: 'flash-outline', desc: 'Best of both. Pro YouTube audio with AI fallback.' },
+                            { id: 'ai', label: 'AI Only', icon: 'sparkles-outline', desc: 'Always use custom generated AI affirmations.' },
+                        ].map((source) => {
+                            const isSelected = (user?.settings?.ritualSource || 'auto') === source.id;
+                            return (
+                                <TouchableOpacity 
+                                    key={source.id}
+                                    style={[
+                                        styles.sourceCard,
+                                        { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant },
+                                        isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }
+                                    ]}
+                                    onPress={() => handleUpdatePreference('ritualSource', source.id)}
+                                >
+                                    <Ionicons 
+                                        name={source.icon as any} 
+                                        size={24} 
+                                        color={isSelected ? (isDark ? colors.background : colors.white) : colors.primary} 
+                                    />
+                                    <Text style={[
+                                        styles.sourceLabel,
+                                        { color: colors.text },
+                                        isSelected && { color: isDark ? colors.background : colors.white }
+                                    ]}>{source.label}</Text>
+                                    <Text style={[
+                                        styles.sourceDesc,
+                                        { color: colors.textMuted },
+                                        isSelected && { color: isDark ? colors.background : "rgba(255, 255, 255, 0.7)" }
+                                    ]}>{source.desc}</Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                </View>
+
                 {/* Notifications Section */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Notifications</Text>
@@ -750,9 +793,39 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 20,
     },
-    chipText: {
-        fontSize: 14,
-        fontWeight: '600',
+    chartLabel: {
+        fontSize: 10,
+        fontWeight: '700',
+        letterSpacing: 1,
+    },
+    sectionSubtitle: {
+        fontSize: 13,
+        marginBottom: 16,
+        marginTop: -12,
+        lineHeight: 18,
+    },
+    sourceRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    sourceCard: {
+        flex: 1,
+        borderRadius: 20,
+        padding: 20,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    sourceLabel: {
+        fontSize: 15,
+        fontWeight: '700',
+        marginTop: 10,
+    },
+    sourceDesc: {
+        fontSize: 11,
+        marginTop: 4,
+        textAlign: 'center',
+        lineHeight: 15,
     },
     settingsGroup: {
         borderRadius: 20,

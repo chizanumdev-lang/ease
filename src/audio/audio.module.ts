@@ -8,6 +8,9 @@ import { AudioTrack } from './entities/audio-track.entity';
 import { RitualTrack } from './entities/ritual-track.entity';
 import { AudioProcessor } from './audio.processor';
 import { AudioMixerService } from './audio-mixer.service';
+import { YoutubeAudioService } from './youtube-audio.service';
+import { VideoModule } from '../video/video.module';
+import { UsersModule } from '../users/users.module';
 
 import { Program } from '../programs/entities/program.entity';
 import { RitualsService } from './rituals.service';
@@ -16,10 +19,12 @@ import { RitualsService } from './rituals.service';
     imports: [
         TypeOrmModule.forFeature([AudioTrack, RitualTrack, Program]),
         AiModule,
+        VideoModule,
+        UsersModule,
         BullModule.registerQueue({ name: 'audio-generation' }),
     ],
     controllers: [AudioController],
-    providers: [AudioService, AudioProcessor, AudioMixerService, RitualsService],
-    exports: [AudioService, AudioMixerService, RitualsService],
+    providers: [AudioService, AudioProcessor, AudioMixerService, RitualsService, YoutubeAudioService],
+    exports: [AudioService, AudioMixerService, RitualsService, YoutubeAudioService],
 })
 export class AudioModule { }

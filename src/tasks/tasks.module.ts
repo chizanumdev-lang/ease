@@ -4,8 +4,14 @@ import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 import { Task } from './entities/task.entity';
 
+import { BullModule } from '@nestjs/bullmq';
+import { DayPlan } from '../programs/entities/day-plan.entity';
+
 @Module({
-    imports: [TypeOrmModule.forFeature([Task])],
+    imports: [
+        TypeOrmModule.forFeature([Task, DayPlan]),
+        BullModule.registerQueue({ name: 'program-generation' }),
+    ],
     controllers: [TasksController],
     providers: [TasksService],
     exports: [TasksService],

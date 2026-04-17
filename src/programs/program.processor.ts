@@ -15,8 +15,8 @@ import { YoutubeService } from '../video/youtube/youtube.service';
 import { ProgramsService } from './programs.service';
 
 @Processor('program-generation', {
-    lockDuration: 300000, // 5 minutes (to accommodate 15s batch delays)
-    lockRenewTime: 60000,
+    concurrency: 2,
+    lockDuration: 300000, 
 })
 @Injectable()
 export class ProgramProcessor extends WorkerHost {
@@ -43,30 +43,37 @@ export class ProgramProcessor extends WorkerHost {
     }
 
     async process(job: Job<any, any, string>): Promise<any> {
-        const { programId, goalText, params } = job.data;
-        this.logger.log(`Hydrating program ${programId} for goal: ${goalText}`);
+        const { dayPlanId, goalText, params } = job.data;
+        
+        if (job.name === 'hydrate-day') {
+            this.logger.log(`Hydrating DayPlan ${dayPlanId} [Attempt ${job.attemptsMade + 1}]`);
+            
+            const day = await this.dayPlanRepository.findOne({ 
+                where: { id: dayPlanId },
+                relations: ['program'] 
+            });
+            
+            if (!day) {
+                this.logger.warn(`DayPlan ${dayPlanId} not found. Skipping.`);
+                return;
+            }
 
-        const days = await this.dayPlanRepository.find({
-            where: { programId, status: 'pending' },
-            order: { dayNumber: 'ASC' },
-        });
+            if (day.status === 'ready') {
+                this.logger.log(`DayPlan ${dayPlanId} already ready. Skipping.`);
+                return;
+            }
 
-        if (days.length === 0) {
-            this.logger.log(`No pending days to hydrate for program ${programId}`);
-            await this.programRepository.update(programId, { status: 'ready' });
-            return { success: true };
+            try {
+                await this.dayPlanRepository.update(dayPlanId, { status: 'hydrating' });
+                await this.programsService.hydrateDay(dayPlanId, goalText, params);
+                this.logger.log(`DayPlan ${dayPlanId} hydrated successfully`);
+            } catch (error) {
+                this.logger.error(`Failed to hydrate DayPlan ${dayPlanId}: ${error.message}`);
+                await this.dayPlanRepository.update(dayPlanId, { status: 'pending' }); // Reset so it can be picked up again if needed
+                throw error; // Re-throw for BullMQ retry logic
+            }
         }
 
-        // Concurrency-limited batch processing (2 at a time) with 15s pause
-        // NOTE: We are limiting generation to only Day 1 to preserve AI quota.
-        /*
-        await this.processInBatches(days, 2, 15000, async (day) => {
-            await this.programsService.hydrateDay(day.id, goalText, params);
-        });
-        */
-
-        await this.programRepository.update(programId, { status: 'ready' });
-        this.logger.log(`Program ${programId} fully hydrated and marked ready`);
         return { success: true };
     }
 

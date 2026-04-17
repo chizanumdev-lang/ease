@@ -136,6 +136,91 @@ export class YoutubeService {
         }
     }
 
+    async getBestRitualAudio(topic: string, type: 'morning' | 'night'): Promise<any> {
+        const cacheKey = `yt_ritual_${type}_${topic.toLowerCase().replace(/\s+/g, '_')}`;
+        const cached = await this.cacheManager.get(cacheKey);
+        if (cached) return cached;
+
+        // 1. Construct specialized query
+        let query: string;
+        if (type === 'morning') {
+            query = `${topic} positive morning affirmations high quality`;
+        } else {
+            query = `${topic} subliminal audio binaural beats no talking`;
+        }
+
+        this.logger.log(`Searching YouTube for ${type} ritual: "${query}"`);
+
+        // 2. Search
+        const searchResults = await this.searchVideos(query);
+        if (!searchResults || searchResults.length === 0) {
+            this.logger.warn(`No ritual videos found for query: ${query}`);
+            return null;
+        }
+
+        // 3. Filter and Rank for RITUAL criteria
+        // Rituals need to be clean, so we filter more strictly.
+        const videoIds = searchResults
+            .map((item) => item.id?.videoId)
+            .filter((id): id is string => !!id);
+
+        const videos = await this.getVideoDetailsAndRank(videoIds);
+        
+        // 4. Score and filter
+        const scored = videos.map(video => {
+            const title = video.snippet?.title || '';
+            const desc = video.snippet?.description || '';
+            const duration = this.parseDuration(video.contentDetails?.duration || '');
+            
+            let score = 0;
+            const themeLower = topic.toLowerCase();
+            const titleLower = title.toLowerCase();
+            
+            // Keyword Matching
+            const themeWords = themeLower.split(' ').filter(w => w.length > 2);
+            const matchCount = themeWords.filter(word => titleLower.includes(word)).length;
+            score += (matchCount / Math.max(themeWords.length, 1)) * 60; // Up to 60 points for topic match
+
+            // Type Matching
+            if (type === 'morning') {
+                if (titleLower.includes('affirmation')) score += 20;
+                if (titleLower.includes('morning')) score += 10;
+                if (titleLower.includes('positive')) score += 10;
+                if (duration >= 300 && duration <= 600) score += 10; // Ideal 5-10 mins
+            } else { // night
+                if (titleLower.includes('subliminal')) score += 20;
+                if (titleLower.includes('sleep') || titleLower.includes('night')) score += 10;
+                if (titleLower.includes('binaural') || titleLower.includes('432')) score += 10;
+                if (duration >= 600) score += 10; // Ideal 10+ mins
+            }
+
+            return { video, score };
+        });
+
+        // Additional Ritual-Specific Ranking
+        const ranked = scored
+            .filter(s => s.score >= 40) // Minimum relevance threshold
+            .sort((a, b) => b.score - a.score);
+
+        if (ranked.length === 0) {
+            this.logger.warn(`No relevant YouTube video found for topic: ${topic} (Ranked results were too low score)`);
+            return null;
+        }
+
+        const best = ranked[0];
+        const result = {
+            title: best.video.snippet?.title || 'Unknown Title',
+            videoId: best.video.id,
+            url: `https://www.youtube.com/watch?v=${best.video.id}`,
+            thumbnail: best.video.snippet?.thumbnails?.high?.url || '',
+            channel: best.video.snippet?.channelTitle || 'Unknown Channel',
+            relevanceScore: best.score,
+        };
+
+        await this.cacheManager.set(cacheKey, result, 7 * 24 * 60 * 60 * 1000); // 1 week cache
+        return result;
+    }
+
     private parseDuration(isoDuration: string): number {
         // PT1H2M10S -> seconds
         const match = isoDuration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);

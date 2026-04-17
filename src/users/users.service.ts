@@ -31,4 +31,8 @@ export class UsersService {
         user.settings = { ...user.settings, ...updateSettingsDto.settings };
         return this.userRepository.save(user);
     }
+
+    async findAll(): Promise<User[]> {
+        return this.userRepository.find();
+    }
 }

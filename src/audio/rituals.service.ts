@@ -5,6 +5,9 @@ import { RitualTrack } from './entities/ritual-track.entity';
 import { AiService } from '../ai/ai.service';
 import { AudioService } from './audio.service';
 import { AudioMixerService } from './audio-mixer.service';
+import { YoutubeService } from '../video/youtube/youtube.service';
+import { YoutubeAudioService } from './youtube-audio.service';
+import { UsersService } from '../users/users.service';
 import { Program } from '../programs/entities/program.entity';
 import * as path from 'path';
 import * as os from 'os';
@@ -22,6 +25,9 @@ export class RitualsService {
         private aiService: AiService,
         private audioService: AudioService,
         private audioMixerService: AudioMixerService,
+        private youtubeService: YoutubeService,
+        private youtubeAudioService: YoutubeAudioService,
+        private usersService: UsersService,
     ) {}
 
     async generateDailyRituals(userId: string, date: string): Promise<{ morning: RitualTrack | null; night: RitualTrack | null }> {
@@ -71,23 +77,62 @@ export class RitualsService {
         if (existing) return existing;
 
         try {
-            // 1. Generate script
-            const scriptData = await this.aiService.generateAudioScript(theme, type === 'morning' ? 5 : 10, type);
+            // 1. Get user settings to check preference
+            const user = await this.usersService.findById(userId);
+            const sourcePreference = user.settings?.ritualSource || 'auto'; // Default to auto
             
-            // 2. Create audio track
-            const tempDir = path.join(os.tmpdir(), 'ease-rituals');
-            if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-            
-            const audioPath = await this.audioMixerService.createBinauralSubliminalTrack(
-                scriptData,
-                tempDir,
-                type === 'morning' ? 5 : 10
-            );
+            let publicUrl = '';
+            let metadata: any = {};
+            let usedSource: 'youtube' | 'ai' = 'ai';
 
-            // 3. Upload to Cloudinary
-            const publicUrl = await this.audioService.uploadToCloudinary(audioPath, audioFilename);
+            // ATTEMPT YOUTUBE if preference is 'auto' or 'youtube'
+            if (sourcePreference === 'auto' || sourcePreference === 'youtube') {
+                try {
+                    this.logger.log(`Attempting YouTube source for ${type} ritual: ${theme}`);
+                    const ytVideo = await this.youtubeService.getBestRitualAudio(theme, type);
+                    
+                    if (ytVideo) {
+                        const audioPath = await this.youtubeAudioService.extractAudio(ytVideo.videoId);
+                        publicUrl = await this.audioService.uploadToCloudinary(audioPath, audioFilename);
+                        
+                        metadata = {
+                            source: 'youtube',
+                            videoId: ytVideo.videoId,
+                            ytTitle: ytVideo.title,
+                            channel: ytVideo.channel,
+                            originUrl: ytVideo.url,
+                            relevanceScore: ytVideo.relevanceScore
+                        };
+                        usedSource = 'youtube';
+                        this.youtubeAudioService.cleanup(audioPath);
+                    } else {
+                        this.logger.log(`No relevant YouTube video found for ${theme}. Falling back to AI.`);
+                    }
+                } catch (ytError) {
+                    this.logger.warn(`YouTube path failed for ${theme}, falling back to AI: ${ytError.message}`);
+                }
+            }
 
-            // 4. Save to DB
+            // FALLBACK TO AI if YouTube failed or preference is 'ai'
+            if (usedSource === 'ai') {
+                this.logger.log(`Generating AI ${type} ritual for ${theme}`);
+                const scriptData = await this.aiService.generateAudioScript(theme, type === 'morning' ? 5 : 10, type);
+                metadata = { ...scriptData, source: 'ai' };
+                
+                const tempDir = path.join(os.tmpdir(), 'ease-rituals');
+                if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+                
+                const audioPath = await this.audioMixerService.createBinauralSubliminalTrack(
+                    scriptData,
+                    tempDir,
+                    type === 'morning' ? 5 : 10
+                );
+
+                publicUrl = await this.audioService.uploadToCloudinary(audioPath, audioFilename);
+                if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
+            }
+
+            // 3. Save to DB
             const ritual = this.ritualTrackRepository.create({
                 userId,
                 ritualType: type,
@@ -95,19 +140,12 @@ export class RitualsService {
                 title,
                 url: publicUrl,
                 duration: type === 'morning' ? 300 : 600,
-                metadata: scriptData
+                metadata
             });
 
-            const saved = await this.ritualTrackRepository.save(ritual);
-
-            // Cleanup
-            if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
-
-            return saved;
+            return await this.ritualTrackRepository.save(ritual);
         } catch (error) {
-            // Cloudinary errors wrap their message under error.error.message
-            const msg = error?.message || error?.error?.message || JSON.stringify(error);
-            this.logger.error(`Failed to generate ${type} ritual for user ${userId}: ${msg}`);
+            this.logger.error(`Failed to generate ${type} ritual for user ${userId}: ${error.message}`);
             throw error;
         }
     }

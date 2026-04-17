@@ -55,6 +55,8 @@ function pickAudioUrl(mood: string, dayNumber: number): string {
     return tracks[(dayNumber - 1) % tracks.length];
 }
 
+import { Cron, CronExpression } from '@nestjs/schedule';
+
 @Injectable()
 export class ProgramsService {
     private readonly logger = new Logger(ProgramsService.name);
@@ -98,6 +100,59 @@ export class ProgramsService {
         private audioMixerService: AudioMixerService,
         private ritualsService: RitualsService,
     ) { }
+
+    /** Hourly check for users whose local time is 20:00, then queue their next day. */
+    @Cron(CronExpression.EVERY_HOUR)
+    async handleNightlySync(): Promise<void> {
+        this.logger.log('Starting hourly nightly-sync check...');
+        const users = await this.usersService.findAll(); // Optimization: could query by active programs
+        const now = new Date();
+
+        for (const user of users) {
+            try {
+                // Get user's local hour
+                const userTz = user.settings?.timezone || 'UTC';
+                const localDateStr = now.toLocaleString('en-US', { timeZone: userTz });
+                const localHour = new Date(localDateStr).getHours();
+
+                if (localHour === 20) {
+                    const program = await this.programRepository.findOne({
+                        where: { userId: user.id, status: 'ready' }, // OR 'day1_ready'
+                        order: { createdAt: 'DESC' }
+                    });
+
+                    if (program) {
+                        const todayNum = await this.calculateCurrentDayNumber(program);
+                        const tomorrowNum = todayNum + 1;
+
+                        if (tomorrowNum <= program.duration) {
+                            const tomorrow = await this.dayPlanRepository.findOne({
+                                where: { programId: program.id, dayNumber: tomorrowNum }
+                            });
+
+                            if (tomorrow && tomorrow.status === 'pending') {
+                                this.logger.log(`Scheduled sync for user ${user.id}: Queuing Day ${tomorrowNum}`);
+                                await this.programQueue.add('hydrate-day', {
+                                    dayPlanId: tomorrow.id,
+                                    goalText: program.goal?.description || 'Goal',
+                                    params: { ...program.metadata, duration: program.duration }
+                                }, { priority: 100, attempts: 10, backoff: { type: 'exponential', delay: 5000 } });
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                this.logger.error(`Nightly sync failed for user ${user.id}: ${err.message}`);
+            }
+        }
+    }
+
+    private async calculateCurrentDayNumber(program: Program): Promise<number> {
+        // Simple logic: days since program.createdAt (capped by duration)
+        const start = program.createdAt.getTime();
+        const diff = Date.now() - start;
+        return Math.min(program.duration, Math.floor(diff / (1000 * 60 * 60 * 24)) + 1);
+    }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -411,12 +466,25 @@ export class ProgramsService {
             }
         }
 
-        // ─── PHASE 3: Dispatch remaining days to background queue ─────────────
-        await this.programQueue.add('hydrate-program', {
-            programId: program.id,
-            goalText: generationParams.goalText,
-            params: generationParams,
+        // ─── PHASE 3: Dispatch Day 2 to background queue (JIT) ─────────────
+        const day2 = await this.dayPlanRepository.findOne({ 
+            where: { programId: program.id, dayNumber: 2 } 
         });
+
+        if (day2 && day2.status === 'pending') {
+            await this.programQueue.add('hydrate-day', {
+                dayPlanId: day2.id,
+                goalText: generationParams.goalText,
+                params: generationParams,
+            }, { 
+                priority: 2, // Standard high for initial onboarding
+                attempts: 10,
+                backoff: { type: 'exponential', delay: 5000 }
+            });
+        }
+
+        program.status = 'ready'; // Mark program ready as skeleton + Day 1 are good
+        await this.programRepository.save(program);
 
         return program;
     }

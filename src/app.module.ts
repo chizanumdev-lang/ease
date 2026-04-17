@@ -17,9 +17,11 @@ import { CoachModule } from './coach/coach.module';
 import { AiModule } from './ai/ai.module';
 import { VideoModule } from './video/video.module';
 import { AudioModule } from './audio/audio.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
