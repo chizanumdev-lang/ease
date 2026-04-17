@@ -11,7 +11,7 @@ type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
 export default function MiniAudioPlayer() {
     const navigation = useNavigation<NavigationProp>();
-    const { currentTrack, isPlaying, pause, play } = useAudioStore();
+    const { currentTrack, isPlaying, pause, play, stop, reset } = useAudioStore();
     const { colors, spacing, borderRadius, isDark } = useTheme();
 
     // Don't show if no track is loaded
@@ -26,6 +26,15 @@ export default function MiniAudioPlayer() {
             }
         } catch (error) {
             console.error('[MINI_PLAYER] Play/pause error:', error);
+        }
+    };
+
+    const handleDismiss = async () => {
+        try {
+            await stop();
+            reset(); // Clear currentTrack to hide UI
+        } catch (error) {
+            console.error('[MINI_PLAYER] Dismiss error:', error);
         }
     };
 
@@ -63,17 +72,33 @@ export default function MiniAudioPlayer() {
                     </Text>
                 </View>
 
-                <TouchableOpacity
-                    style={styles.playButton}
-                    onPress={handlePlayPause}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                    <Ionicons
-                        name={isPlaying ? 'pause' : 'play'}
-                        size={28}
-                        color={colors.primary}
-                    />
-                </TouchableOpacity>
+                <View style={styles.controls}>
+                    <TouchableOpacity
+                        style={styles.playButton}
+                        onPress={handlePlayPause}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <Ionicons
+                            name={isPlaying ? 'pause' : 'play'}
+                            size={28}
+                            color={colors.primary}
+                        />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.closeButton, { marginLeft: spacing.sm }]}
+                        onPress={handleDismiss}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <View style={[styles.closeIconWrapper, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                            <Ionicons
+                                name="close"
+                                size={18}
+                                color={colors.textMuted}
+                            />
+                        </View>
+                    </TouchableOpacity>
+                </View>
             </View>
         </TouchableOpacity>
     );
@@ -112,7 +137,21 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 13,
     },
+    controls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     playButton: {
-        padding: 8,
+        padding: 4,
+    },
+    closeButton: {
+        padding: 4,
+    },
+    closeIconWrapper: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

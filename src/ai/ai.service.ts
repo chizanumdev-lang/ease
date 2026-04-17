@@ -17,6 +17,7 @@ const DAILY_LIMITS: Record<string, number> = {
     gemini: 450,  // keep buffer below 500 hard limit
     groq:   1000, // conservative — free tier is 14,400/day
     cohere: 30,   // ~1k/month ÷ 30 days
+    openrouter: 1000,
 };
 
 @Injectable()
@@ -29,6 +30,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         gemini: false,
         groq: false,
         cohere: false,
+        openrouter: false,
     };
 
     constructor(private configService: ConfigService) {
@@ -72,6 +74,12 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                 priority: 3,
                 cooldownUntil: null,
                 generate: (prompt) => this.callCohere(prompt),
+            },
+            {
+                name: 'openrouter',
+                priority: 4,
+                cooldownUntil: null,
+                generate: (prompt) => this.callOpenRouter(prompt),
             },
         ];
     }
@@ -227,6 +235,29 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         if (!res.ok) throw new Error(`Cohere HTTP ${res.status}: ${await res.text()}`);
         const data = await res.json();
         return data.text;
+    }
+
+    private async callOpenRouter(prompt: string): Promise<string> {
+        const apiKey = this.configService.get<string>('OPENROUTER_API_KEY');
+        if (!apiKey) throw new Error('OPENROUTER_API_KEY not configured');
+
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${apiKey}`,
+                'HTTP-Referer': 'https://ease.app', // Optional, for OpenRouter tracking
+                'X-Title': 'Ease App',
+            },
+            body: JSON.stringify({
+                model: 'google/gemini-2.0-flash-lite:free', // Great free model
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.7,
+            }),
+        });
+        if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}: ${await res.text()}`);
+        const data = await res.json();
+        return data.choices[0].message.content;
     }
 
     async generateProgramPlan(goal: string, options: any): Promise<any> {
