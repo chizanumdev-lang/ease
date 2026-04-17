@@ -337,21 +337,10 @@ export class ProgramsService {
             })());
         }
 
-        // 3. Consistency (Commitment)
-        if (content.consistencyTask) {
-            tasks.push(this.upsertTask({
-                type: 'consistency', dayPlanId: day.id, order: 3,
-                title: content.consistencyTask.title, description: content.consistencyTask.description,
-                duration: dur.consistency, completed: false,
-                xpReward: xp.consistency,
-                scheduledAt: this.scheduleTask('consistency', dayOffset, wakeStart, sleepStart),
-            }));
-        }
-
-        // 4. Journal (Intention)
+        // 3. Journal (Intention)
         if (content.journalTask) {
             tasks.push(this.upsertTask({
-                type: 'journal', dayPlanId: day.id, order: 4,
+                type: 'journal', dayPlanId: day.id, order: 3,
                 title: content.journalTask.title, description: content.journalTask.prompt,
                 duration: dur.journal, completed: false,
                 xpReward: xp.journal,
@@ -359,16 +348,30 @@ export class ProgramsService {
             }));
         }
 
-        // 5. Reflection (Evaluation)
+        // 4. Reflection (Evaluation)
         if (content.reflectionTask) {
             const points = (content.reflectionTask.reviewPoints as string[] ?? []).map((p, i) => `${i + 1}. ${p}`).join('\n');
             tasks.push(this.upsertTask({
-                type: 'reflection', dayPlanId: day.id, order: 5,
+                type: 'reflection', dayPlanId: day.id, order: 4,
                 title: content.reflectionTask.title,
                 description: `${content.reflectionTask.description}\n\nReflection Points:\n${points}`,
                 duration: dur.reflection, completed: false,
                 xpReward: xp.reflection,
                 scheduledAt: this.scheduleTask('reflection', dayOffset, wakeStart, sleepStart),
+            }));
+        }
+
+        // 5. Consistency (Commitment)
+        if (content.consistencyTask) {
+            const streak = await this.calculateCurrentStreak(day.program.userId);
+            const nextStreak = streak + 1;
+            tasks.push(this.upsertTask({
+                type: 'consistency', dayPlanId: day.id, order: 5,
+                title: content.consistencyTask.title, 
+                description: `i will complete my routine tommorrow. this will be day ${nextStreak} of my streak.`,
+                duration: dur.consistency, completed: false,
+                xpReward: xp.consistency,
+                scheduledAt: this.scheduleTask('consistency', dayOffset, wakeStart, sleepStart),
             }));
         }
         await Promise.all(tasks);
@@ -759,5 +762,53 @@ export class ProgramsService {
             actionTaken: action
         });
         await this.adaptationLogRepository.save(log);
+    }
+
+    private async calculateCurrentStreak(userId: string): Promise<number> {
+        const checkIns = await this.progressRepository.find({
+            where: { userId },
+            order: { checkinDate: 'DESC' },
+            take: 30,
+        });
+
+        if (checkIns.length === 0) return 0;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const latestCheckIn = new Date(checkIns[0].checkinDate);
+        latestCheckIn.setHours(0, 0, 0, 0);
+
+        const daysDiff = Math.floor(
+            (today.getTime() - latestCheckIn.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        if (daysDiff > 1) return 0; // Streak broken
+
+        let streak = 0;
+        for (let i = 0; i < checkIns.length; i++) {
+            const currentDate = new Date(checkIns[i].checkinDate);
+            currentDate.setHours(0, 0, 0, 0);
+
+            if (i === 0) {
+                streak = 1;
+                continue;
+            }
+
+            const prevDate = new Date(checkIns[i - 1].checkinDate);
+            prevDate.setHours(0, 0, 0, 0);
+
+            const diff = Math.floor(
+                (prevDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24),
+            );
+
+            if (diff === 1) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+
+        return streak;
     }
 }

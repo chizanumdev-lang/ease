@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 export interface PhaseInfo {
   id: string;
@@ -34,7 +35,7 @@ export class ProgressionService {
       id: 'phase1_seed',
       title: 'Primordial Seed',
       subtitle: 'Pure potential, waiting to awaken.',
-      imageUrl: 'https://storage.googleapis.com/ease-assets/spirit-tree/phase1_seed.png',
+      imageUrl: 'https://res.cloudinary.com/duooultxc/image/upload/v1776454648/ease/spirit-tree/phase1_seed.jpg',
       minLevel: 1,
       maxLevel: 5,
       levelRange: 'Level 1 - 5',
@@ -43,7 +44,7 @@ export class ProgressionService {
       id: 'phase2_sprout',
       title: 'Sprouting Awareness',
       subtitle: 'Your intention begins to take root.',
-      imageUrl: 'https://storage.googleapis.com/ease-assets/spirit-tree/phase2_sprout.png',
+      imageUrl: 'https://res.cloudinary.com/duooultxc/image/upload/v1776454656/ease/spirit-tree/phase2_sprout.jpg',
       minLevel: 6,
       maxLevel: 15,
       levelRange: 'Level 6 - 15',
@@ -52,7 +53,7 @@ export class ProgressionService {
       id: 'phase3_sapling',
       title: 'Resilient Sapling',
       subtitle: 'Steady growth through consistent practice.',
-      imageUrl: 'https://storage.googleapis.com/ease-assets/spirit-tree/phase3_sapling.png',
+      imageUrl: 'https://res.cloudinary.com/duooultxc/image/upload/v1776454668/ease/spirit-tree/phase3_sapling.jpg',
       minLevel: 16,
       maxLevel: 30,
       levelRange: 'Level 16 - 30',
@@ -61,7 +62,7 @@ export class ProgressionService {
       id: 'phase4_tree',
       title: 'Branching Expansion',
       subtitle: 'Your reach grows as deep as your roots.',
-      imageUrl: 'https://storage.googleapis.com/ease-assets/spirit-tree/phase4_tree.png',
+      imageUrl: 'https://res.cloudinary.com/duooultxc/image/upload/v1776454678/ease/spirit-tree/phase4_tree.jpg',
       minLevel: 31,
       maxLevel: 50,
       levelRange: 'Level 31 - 50',
@@ -70,7 +71,7 @@ export class ProgressionService {
       id: 'phase5_wisdom',
       title: 'Blossoming Wisdom',
       subtitle: 'A peak state of enlightened presence.',
-      imageUrl: 'https://storage.googleapis.com/ease-assets/spirit-tree/phase5_wisdom.png',
+      imageUrl: 'https://res.cloudinary.com/duooultxc/image/upload/v1776454698/ease/spirit-tree/phase5_wisdom.jpg',
       minLevel: 51,
       maxLevel: 80,
       levelRange: 'Level 51 - 80',
@@ -79,12 +80,14 @@ export class ProgressionService {
       id: 'phase6_ancient',
       title: 'Infinite Ancient',
       subtitle: 'Transcendent connection to the universe.',
-      imageUrl: 'https://storage.googleapis.com/ease-assets/spirit-tree/phase6_ancient.png',
+      imageUrl: 'https://res.cloudinary.com/duooultxc/image/upload/v1776454714/ease/spirit-tree/phase6_ancient.jpg',
       minLevel: 81,
       maxLevel: 999,
       levelRange: 'Level 81+',
     },
   ];
+
+  constructor(private configService: ConfigService) {}
 
   getXpForLevel(level: number): number {
     if (level <= 1) return 0;

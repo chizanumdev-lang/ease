@@ -22,6 +22,8 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     const [duration, setDuration] = useState(0);
     const [isMixing, setIsMixing] = useState(false);
     const [gaveUp, setGaveUp] = useState(false);
+    const [maxPosition, setMaxPosition] = useState(0);
+    const [isCompleted, setIsCompleted] = useState(task.completed || false);
 
     // Resolve audio URL: the backend stores the URL on the DayPlan's audioTracks relation.
     // The task itself only has an id; we match by dayPlanId or just grab the first track.
@@ -93,12 +95,30 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
         }
     }
 
-    const onPlaybackStatusUpdate = (status: any) => {
+    const onPlaybackStatusUpdate = async (status: any) => {
         if (status.isLoaded) {
-            setPosition(status.positionMillis);
+            const currentPos = status.positionMillis;
+            setPosition(currentPos);
             setDuration(status.durationMillis || 0);
+
+            // Anti-Skip Logic (only for Ritual tasks that aren't already completed)
+            if (!isCompleted && currentPos > maxPosition + 3000) {
+                // User jumped ahead more than 3 seconds
+                if (sound) {
+                    await sound.setPositionAsync(maxPosition);
+                }
+            } else if (!isCompleted && currentPos > maxPosition) {
+                setMaxPosition(currentPos);
+            }
+
+            // 80% Threshold Check
+            if (!isCompleted && status.durationMillis && currentPos >= status.durationMillis * 0.8) {
+                setIsCompleted(true);
+            }
+
             if (status.didJustFinish) {
                 setIsPlaying(false);
+                setIsCompleted(true);
             }
         }
     };
@@ -164,7 +184,12 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                     disabled={isStillGenerating}
                     onSlidingComplete={async (value) => {
                         if (sound) {
-                            await sound.setPositionAsync(value);
+                            // Don't allow seeking ahead of max position if not completed
+                            if (!isCompleted && value > maxPosition) {
+                                await sound.setPositionAsync(maxPosition);
+                            } else {
+                                await sound.setPositionAsync(value);
+                            }
                         }
                     }}
                 />
@@ -196,10 +221,12 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
             )}
             <View style={styles.footer}>
                 <StitchButton 
-                    title="Finish Listening"
-                    variant="primary"
+                    title={isCompleted ? "Finish Listening" : `Finish (${Math.ceil(Math.max(0, (duration * 0.8 - position) / 1000))}s remaining)`}
+                    variant={isCompleted ? "primary" : "secondary"}
                     onPress={handleComplete}
-                    rightIcon="checkmark-circle"
+                    disabled={!isCompleted}
+                    rightIcon={isCompleted ? "checkmark-circle" : "lock-closed"}
+                    style={{ opacity: isCompleted ? 1 : 0.6 }}
                 />
             </View>
         </View>

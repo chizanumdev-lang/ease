@@ -8,6 +8,7 @@ import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { notificationService } from '../services/notification.service';
 import { journalService } from '../services/journalService';
+import { useAnalyticsStore } from './analyticsStore';
 
 interface ProgramsState {
     currentProgram: Program | null;
@@ -305,6 +306,7 @@ export const useProgramsStore = create<ProgramsState>()(
                 if (state.isConnected) {
                     try {
                         await tasksService.update(taskId, payload);
+                        useAnalyticsStore.getState().fetchAnalytics();
                     } catch {
                         set(state => ({
                             syncQueue: [...state.syncQueue, { id: taskId, type: 'COMPLETE', payload }]
@@ -359,6 +361,7 @@ export const useProgramsStore = create<ProgramsState>()(
                 if (state.isConnected) {
                     try {
                         await tasksService.update(taskId, payload);
+                        useAnalyticsStore.getState().fetchAnalytics();
                     } catch {
                         set(state => ({
                             syncQueue: [...state.syncQueue, { id: taskId, type: 'SKIP', payload }]

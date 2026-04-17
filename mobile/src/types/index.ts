@@ -239,6 +239,7 @@ export interface ProgressionData {
 export interface WeeklyAnalytics {
     currentStreak: number;
     completionRate: number;
+    todayCompletionRate: number;
     weeklyCompletionRate: number;
     quizAverage: number;
     pointsEarned: number;

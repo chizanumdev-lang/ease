@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
@@ -21,6 +23,10 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      serveRoot: '/public', // Optional: adds a prefix
+    }),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,

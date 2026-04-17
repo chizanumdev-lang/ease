@@ -3,8 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThan } from 'typeorm';
 import { CheckIn } from '../progress/entities/check-in.entity';
 import { Task } from '../tasks/entities/task.entity';
+import { RewardEvent } from '../rewards/entities/reward-event.entity';
 import { QuizAttempt } from '../quizzes/entities/quiz-attempt.entity';
 import { DayPlan } from '../programs/entities/day-plan.entity';
+import { Program } from '../programs/entities/program.entity';
 import { WeeklyAnalyticsDto, Badge, DailyCompletion } from './dto/weekly-analytics.dto';
 import { ProgressionService } from '../programs/progression.service';
 
@@ -19,6 +21,10 @@ export class AnalyticsService {
         private quizAttemptRepository: Repository<QuizAttempt>,
         @InjectRepository(DayPlan)
         private dayPlanRepository: Repository<DayPlan>,
+        @InjectRepository(RewardEvent)
+        private rewardEventRepository: Repository<RewardEvent>,
+        @InjectRepository(Program)
+        private programRepository: Repository<Program>,
         private progressionService: ProgressionService,
     ) { }
 
@@ -31,6 +37,9 @@ export class AnalyticsService {
 
         // Calculate overall completion rate
         const completionRate = await this.calculateCompletionRate(userId);
+
+        // Calculate today's completion rate
+        const todayCompletionRate = await this.calculateTodayCompletionRate(userId);
 
         // Calculate weekly completion rate
         const weeklyCompletionRate = await this.calculateWeeklyCompletionRate(
@@ -66,6 +75,7 @@ export class AnalyticsService {
         return {
             currentStreak,
             completionRate,
+            todayCompletionRate,
             weeklyCompletionRate,
             quizAverage,
             pointsEarned,
@@ -143,6 +153,34 @@ export class AnalyticsService {
         return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     }
 
+    private async calculateTodayCompletionRate(userId: string): Promise<number> {
+        const program = await this.programRepository.findOne({
+            where: { userId },
+            order: { createdAt: 'DESC' },
+        });
+
+        if (!program) return 0;
+
+        // Calculate current day number (consistent with ProgramsService)
+        const startDate = new Date(program.createdAt);
+        startDate.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const diffMs = today.getTime() - startDate.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const dayNumber = Math.min(Math.max(diffDays + 1, 1), program.duration);
+
+        const plan = await this.dayPlanRepository.findOne({
+            where: { program: { id: program.id }, dayNumber },
+            relations: ['tasks'],
+        });
+
+        if (!plan || plan.tasks.length === 0) return 0;
+
+        const completed = plan.tasks.filter((t) => t.completed).length;
+        return Math.round((completed / plan.tasks.length) * 100);
+    }
+
     private async calculateWeeklyCompletionRate(
         userId: string,
         startDate: Date,
@@ -185,8 +223,15 @@ export class AnalyticsService {
             where: { dayPlan: { program: { userId } }, completed: true },
         });
 
-        // Sum up xpReward from all completed tasks
-        return tasks.reduce((sum, task) => sum + (task.xpReward || 0), 0);
+        const taskPoints = tasks.reduce((sum, task) => sum + (task.xpReward || 0), 0);
+
+        const rewards = await this.rewardEventRepository.find({
+            where: { userId }
+        });
+
+        const rewardPoints = rewards.reduce((sum, reward) => sum + (reward.points || 0), 0);
+
+        return taskPoints + rewardPoints;
     }
 
     private async getBadges(

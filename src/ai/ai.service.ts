@@ -320,9 +320,9 @@ DAILY FLOW (STRICT ORDER - Indexing 0-5)
 0. Video (Concept)
 1. Quiz (Comprehension)
 2. Audio (Integration - Binaural/Subliminal)
-3. Consistency (Tomorrow's Commitment)
-4. Journal (Intention)
-5. Reflection (Daily Win/Preview)
+3. Journal (Intention)
+4. Reflection (Daily Win/Preview)
+5. Consistency (Tomorrow's Commitment)
 
 OUTPUT SCHEMA
 Return a raw JSON array — no markdown, no code fences, no commentary, no trailing commas. Every object must have ALL of these keys:
@@ -335,7 +335,7 @@ Return a raw JSON array — no markdown, no code fences, no commentary, no trail
   "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
   "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
   "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
-  "consistencyTask": { "title": "Tomorrow's Commitment", "description": string (short commitment prompt), "duration": ${consistencyDuration} },
+  "consistencyTask": { "title": "Tomorrow's Commitment", "description": "i will complete my routine tommorrow.", "duration": ${consistencyDuration} },
   "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
   "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] }
 }
@@ -411,9 +411,9 @@ DAILY FLOW (STRICT ORDER - Indexing 0-5)
 0. Video (Concept)
 1. Quiz (Comprehension)
 2. Audio (Integration - Binaural/Subliminal)
-3. Consistency (Tomorrow's Commitment)
-4. Journal (Intention)
-5. Reflection (Daily Win/Preview)
+3. Journal (Intention)
+4. Reflection (Daily Win/Preview)
+5. Consistency (Tomorrow's Commitment)
 
 OUTPUT SCHEMA
 Return a single raw JSON object — no markdown, no code fences, no commentary:
@@ -426,7 +426,7 @@ Return a single raw JSON object — no markdown, no code fences, no commentary:
   "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
   "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
   "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
-  "consistencyTask": { "title": "Tomorrow's Commitment", "description": string (short commitment prompt), "duration": ${consistencyDuration} },
+  "consistencyTask": { "title": "Tomorrow's Commitment", "description": "i will complete my routine tommorrow.", "duration": ${consistencyDuration} },
   "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
   "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] }
 }
@@ -528,19 +528,24 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             task: `an immersive focus session reinforcing a lesson about "${dayTheme}"`
         };
 
+        const wordCount = duration * 150; // Targeting ~150 words per minute
         const prompt = `
 You are creating ${typeContext[type]} for a ${duration}-minute session.
 
 **Goal/Theme**: "${dayTheme}"
 
+**Session Structure**:
+1. **Introduction (1 min)**: Set the space, focus on breathing, and introduce today's theme: "${dayTheme}".
+2. **Core Lesson & Affirmations (Remaining time)**: 
+   - Weave affirmations specific to the goal (I am..., I have...) into a continuous, flowing narrative.
+   - Deeply explore the implications of mastering "${dayTheme}".
+3. **Closing (1 min)**: Gently bring the focus back while grounding the new subconscious patterns.
+
 **Requirements**:
-1. Generate affirmations specific to this goal (8-12 statements)
-2. Each affirmation should be:
-   - Present tense ("I am...", "My...")
-   - Specific to the theme
-   - Emotionally resonant
-3. Create a gentle background narration (~600 words) for ambient voiceover
-4. Specify the optimal binaural beat frequency for this session type:
+1. **Word Count**: You MUST generate at least ${wordCount} words for the "backgroundNarration" to fill the ${duration}-minute duration properly.
+2. **Pacing**: Use descriptive, evocative language.
+3. **Affirmations**: Provide 10-15 powerful statements in the "affirmations" array.
+4. **Binaural Frequency**: Specify the optimal frequency for this session type:
    ${type === 'morning' ? '- Recommended: 10-14 Hz (Alpha/Beta for alertness)' : ''}
    ${type === 'night' ? '- Recommended: 0.5-4 Hz (Delta for deep sleep preparation)' : ''}
    ${type === 'task' ? '- Recommended: 8-12 Hz (Alpha for flow state and learning)' : ''}
@@ -554,7 +559,7 @@ You are creating ${typeContext[type]} for a ${duration}-minute session.
     "I am mastering...",
     "My mind is..."
   ],
-  "backgroundNarration": "...",
+  "backgroundNarration": "...", // Long, continuous script of at least ${wordCount} words
   "theme": "${dayTheme}"
 }
 
@@ -701,7 +706,7 @@ Return ONLY the raw JSON object.
             },
             consistencyTask: {
                 title: 'Tomorrow\'s Commitment',
-                description: 'Commit to showing up tomorrow for the next step.',
+                description: 'i will complete my routine tommorrow.',
                 duration: 2
             },
             journalTask: {

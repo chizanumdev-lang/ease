@@ -6,11 +6,13 @@ import { Task } from './entities/task.entity';
 
 import { BullModule } from '@nestjs/bullmq';
 import { DayPlan } from '../programs/entities/day-plan.entity';
+import { ProgressModule } from '../progress/progress.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Task, DayPlan]),
         BullModule.registerQueue({ name: 'program-generation' }),
+        ProgressModule,
     ],
     controllers: [TasksController],
     providers: [TasksService],

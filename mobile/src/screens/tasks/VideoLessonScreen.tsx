@@ -84,6 +84,22 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
         }
     }, [task.id, updateTask]);
 
+    // Helper to handle task completion
+    const triggerCompletion = useCallback(async () => {
+        if (!tutorialCompleteTriggered.current) {
+            tutorialCompleteTriggered.current = true;
+            setIsCompleted(true);
+            
+            // Automatic Completion in backend
+            await completeTask(task.id);
+            
+            // Provide visual feedback/delay before back navigation
+            setTimeout(() => {
+                navigation.goBack();
+            }, 2500);
+        }
+    }, [task.id, completeTask, navigation]);
+
     // Anti-Skip & Progress Polling
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -94,18 +110,23 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                     const time = await playerRef.current.getCurrentTime();
                     setCurrentTime(time);
                     
-                    // Anti-Skip Enforcement
-                    if (time > maxWatched + 2) {
+                    // 1. Anti-Skip Enforcement: Don't allow seeking more than 2s ahead of max watched
+                    if (time > maxWatched + 2.5) {
                         playerRef.current.seekTo(maxWatched, true);
                     } else if (time > maxWatched) {
                         setMaxWatched(time);
+                    }
+
+                    // 2. 80% Completion Threshold Trigger
+                    if (duration > 0 && time >= duration * 0.8) {
+                        triggerCompletion();
                     }
 
                     syncProgress(time);
                 }
             }, 1000);
         } else if (playing && isCompleted) {
-            // If completed, just track current time for the UI slider/timer
+            // If completed, just track current time for the UI slider/timer without anti-skip
             interval = setInterval(async () => {
                 if (playerRef.current) {
                     const time = await playerRef.current.getCurrentTime();
@@ -115,7 +136,7 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
         }
 
         return () => clearInterval(interval);
-    }, [playing, maxWatched, isCompleted, syncProgress]);
+    }, [playing, maxWatched, isCompleted, syncProgress, duration, triggerCompletion]);
 
     // Handle back button and final sync
     useFocusEffect(
@@ -138,19 +159,10 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
         if (state === 'playing') setPlaying(true);
         if (state === 'paused') setPlaying(false);
         
-        if (state === 'ended' && !tutorialCompleteTriggered.current) {
-            tutorialCompleteTriggered.current = true;
-            setIsCompleted(true);
-            
-            // Automatic Completion
-            await completeTask(task.id);
-            
-            // Wait a moment for the user to see the "Well Done" state before going back
-            setTimeout(() => {
-                navigation.goBack();
-            }, 2500);
+        if (state === 'ended') {
+            triggerCompletion();
         }
-    }, [task, completeTask, navigation]);
+    }, [triggerCompletion]);
 
     const onReady = useCallback(async () => {
         setLoading(false);

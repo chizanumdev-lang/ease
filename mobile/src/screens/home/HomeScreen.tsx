@@ -16,11 +16,13 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { MainStackParamList, Task } from '../../types';
+import { MainStackParamList, Task, WeeklyAnalytics } from '../../types';
 import { useProgramsStore } from '../../store/programsStore';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useModalStore } from '../../store/modalStore';
+import { useAnalyticsStore } from '../../store/analyticsStore';
+import { useFocusEffect } from '@react-navigation/native';
 
 import Logo from '../../components/Logo';
 import GoalBanner from '../../components/stitch/GoalBanner';
@@ -44,8 +46,16 @@ export default function HomeScreen({ navigation }: Props) {
     
     const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+    const { analytics, fetchAnalytics } = useAnalyticsStore();
 
-    // Initial Data Fetch
+    // Fetch Analytics Data on Focus
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchAnalytics();
+        }, [])
+    );
+
+    // Initial Data Fetch for Tasks
     React.useEffect(() => {
         const loadData = async () => {
             if (currentProgram) {
@@ -143,9 +153,9 @@ export default function HomeScreen({ navigation }: Props) {
             {currentProgram && (
                 <GoalBanner 
                     title={currentProgram.title || "Your Spirit Tree is flourishing"}
-                    subtitle="Today's progress starts with one small step. You're closer to your goal than yesterday."
-                    progress={0.66}
-                    phase="Growth Phase 3"
+                    subtitle={analytics?.progression?.currentPhase?.subtitle || "Today's progress starts with one small step. You're closer to your goal than yesterday."}
+                    progress={(analytics?.progression?.progressPercentage || 0) / 100}
+                    phase={analytics?.progression?.currentPhase?.title || "Growth Phase"}
                 />
             )}
 
@@ -160,22 +170,22 @@ export default function HomeScreen({ navigation }: Props) {
                 >
                     <StatCard 
                         label="Day Streak" 
-                        value="12" 
+                        value={analytics?.currentStreak?.toString() || "0"} 
                         unit="days"
                         icon="flame-outline"
-                        trend={{ value: "+2 from yesterday", isPositive: true }}
+                        trend={analytics?.currentStreak && analytics.currentStreak > 0 ? { value: "+1 from yesterday", isPositive: true } : undefined}
                     />
                     <StatCard 
                         label="Completion" 
-                        value="65" 
+                        value={analytics?.todayCompletionRate?.toString() || "0"} 
                         unit="%"
                         icon="checkmark-done-outline"
                         color="#006D77"
                     />
                     <StatCard 
-                        label="Vitality" 
-                        value="88" 
-                        icon="heart-outline"
+                        label="Spirit Level" 
+                        value={analytics?.progression?.level?.toString() || "1"} 
+                        icon="sparkles-outline"
                         color="#56624b"
                         trend={{ value: "Steady", isPositive: true }}
                     />

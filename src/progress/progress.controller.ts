@@ -15,6 +15,6 @@ export class ProgressController {
         @GetUser() user: User,
         @Body() createCheckinDto: CreateCheckinDto,
     ) {
-        return this.progressService.createCheckin(user.id, createCheckinDto);
+        return this.progressService.createMoodCheckin(user.id, createCheckinDto);
     }
 }

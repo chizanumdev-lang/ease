@@ -12,27 +12,30 @@ import {
     Animated,
     Easing,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
-import { analyticsService } from '../../services/analytics.service';
-import { WeeklyAnalytics } from '../../types';
+import { useAnalyticsStore } from '../../store/analyticsStore';
 import LoadingState from '../../components/LoadingState';
 
 const { width } = Dimensions.get('window');
 
 export default function ProgressScreen({ navigation }: any) {
     const { colors, spacing, borderRadius, isDark, shadows, fonts } = useTheme();
-    const [analytics, setAnalytics] = useState<WeeklyAnalytics | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { analytics, isLoading, fetchAnalytics } = useAnalyticsStore();
     const [refreshing, setRefreshing] = useState(false);
     
     // Pulse animation for the tree glow
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchAnalytics();
+        }, [])
+    );
+
     useEffect(() => {
-        loadAnalytics();
-        
         Animated.loop(
             Animated.sequence([
                 Animated.timing(pulseAnim, {
@@ -51,24 +54,13 @@ export default function ProgressScreen({ navigation }: any) {
         ).start();
     }, []);
 
-    const loadAnalytics = async () => {
-        try { 
-            const data = await analyticsService.getWeeklyAnalytics();
-            setAnalytics(data);
-        } catch (error) {
-            console.error('[PROGRESS] Failed to load analytics:', error);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
-
-    const onRefresh = () => {
+    const onRefresh = async () => {
         setRefreshing(true);
-        loadAnalytics();
+        await fetchAnalytics();
+        setRefreshing(false);
     };
 
-    if (loading) {
+    if (isLoading && !analytics) {
         return (
             <LoadingState 
                 title="Sensing your spirit" 
@@ -256,7 +248,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingTop: 20,
-        paddingBottom: 40,
+        paddingBottom: 120, // Increased padding to stay above navbar
     },
     treeSection: {
         alignItems: 'center',
