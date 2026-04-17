@@ -1,5 +1,8 @@
 import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
 
 console.log('--- STARTING VERCEL BOOTSTRAP (v1.0.7-VOLUME-ADJUSTED) ---');
 
