@@ -464,41 +464,44 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
         }
     }
 
-    async generateAudioScript(dayTheme: string, duration: number = 5): Promise<AudioScriptData> {
-        const prompt = `
-You are creating a subliminal audio script for a ${duration}-minute session.
+    async generateAudioScript(dayTheme: string, duration: number = 5, type: 'morning' | 'night' | 'task' = 'task'): Promise<AudioScriptData> {
+        const typeContext = {
+            morning: 'a morning affirmation session to start the day with energy and focus',
+            night: 'a nightly subliminal session for subconscious processing during deep rest',
+            task: `an immersive focus session reinforcing a lesson about "${dayTheme}"`
+        };
 
-**Context**: The user just completed a learning task about: "${dayTheme}"
+        const prompt = `
+You are creating ${typeContext[type]} for a ${duration}-minute session.
+
+**Goal/Theme**: "${dayTheme}"
 
 **Requirements**:
-1. Generate affirmations that reinforce today's lesson (8-12 statements)
+1. Generate affirmations specific to this goal (8-12 statements)
 2. Each affirmation should be:
-   - Present tense ("I am mastering...", "My skills grow...")
-   - Specific to the theme (mention concrete techniques/concepts from today)
-   - Emotionally resonant (confidence, capability, progress)
+   - Present tense ("I am...", "My...")
+   - Specific to the theme
+   - Emotionally resonant
 3. Create a gentle background narration (~600 words) for ambient voiceover
-4. Specify the optimal binaural beat frequency for this session type
-
-**Session Types & Frequencies**:
-- Focus/Learning: 14-30 Hz (Beta waves) - Active concentration
-- Relaxation/Integration: 8-13 Hz (Alpha waves) - Calm alertness  
-- Deep meditation: 4-7 Hz (Theta waves) - Subconscious processing
-- Sleep preparation: 0.5-3 Hz (Delta waves) - Deep rest
+4. Specify the optimal binaural beat frequency for this session type:
+   ${type === 'morning' ? '- Recommended: 10-14 Hz (Alpha/Beta for alertness)' : ''}
+   ${type === 'night' ? '- Recommended: 0.5-4 Hz (Delta for deep sleep preparation)' : ''}
+   ${type === 'task' ? '- Recommended: 8-12 Hz (Alpha for flow state and learning)' : ''}
 
 **Output strict JSON**:
 {
-  "sessionType": "focus" | "relaxation" | "meditation" | "sleep",
-  "binauralFrequency": 14.5,  // Target brainwave Hz
+  "sessionType": "${type === 'morning' ? 'relaxation' : type === 'night' ? 'sleep' : 'focus'}",
+  "binauralFrequency": number, // Target brainwave Hz
   "carrierFrequency": 200,    // Base tone (100-300 Hz recommended)
   "affirmations": [
-    "I am mastering thumb independence in fingerstyle guitar",
-    "My muscle memory improves with each practice session"
+    "I am mastering...",
+    "My mind is..."
   ],
-  "backgroundNarration": "As you settle into this moment, notice how your body remembers the movements you practiced today...",
+  "backgroundNarration": "...",
   "theme": "${dayTheme}"
 }
 
-Return ONLY the raw JSON object starting with { and ending with }.
+Return ONLY the raw JSON object.
 `;
 
         try {
@@ -508,20 +511,30 @@ Return ONLY the raw JSON object starting with { and ending with }.
             const jsonMatch = response.match(/\{[\s\S]*\}/);
             if (!jsonMatch) throw new Error('Failed to extract JSON from AI response');
             
-            return JSON.parse(jsonMatch[0]);
+            const data = JSON.parse(jsonMatch[0]);
+            
+            // Validation & Sanitization
+            return {
+                sessionType: data.sessionType || (type === 'night' ? 'sleep' : 'relaxation'),
+                binauralFrequency: Number(data.binauralFrequency) || (type === 'night' ? 2 : 10),
+                carrierFrequency: Number(data.carrierFrequency) || 200,
+                affirmations: Array.isArray(data.affirmations) ? data.affirmations : ["I am growing every day"],
+                backgroundNarration: data.backgroundNarration || "Take a deep breath and settle into focus...",
+                theme: data.theme || dayTheme
+            };
         } catch (error) {
             this.logger.error('Failed to generate audio script', error);
             // Fallback
             return {
-                sessionType: 'relaxation',
-                binauralFrequency: 10,
+                sessionType: type === 'night' ? 'sleep' : 'relaxation',
+                binauralFrequency: type === 'night' ? 2 : 10,
                 carrierFrequency: 200,
                 affirmations: [
                     "I am absorbing today's lessons with ease",
                     "My mind is calm and ready to integrate new skills",
                     "I am growing more capable every day"
                 ],
-                backgroundNarration: "As you settle into this moment, allow your mind to drift back through what you've learned today. Feel the progress you've made, and let it settle deep within your foundation.",
+                backgroundNarration: "As you settle into this moment, allow your mind to drift back through what you want to achieve. Feel the progress you've made, and let it settle deep within your foundation.",
                 theme: dayTheme
             };
         }

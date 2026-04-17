@@ -85,7 +85,7 @@ export class AudioProcessor extends WorkerHost implements OnModuleInit {
             }
 
             // 1. Generate script with AI
-            const scriptData = await this.aiService.generateAudioScript(theme, 5);
+            const scriptData = await this.aiService.generateAudioScript(theme, 5, 'task');
 
             // 2. Create mixed audio file via AudioMixerService
             const tempDir = path.join(os.tmpdir(), 'ease-audio-binaural');

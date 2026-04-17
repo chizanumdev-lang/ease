@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
     // Audio Test
     AUDIO_PREVIEW: '/audio/preview',
     AUDIO_BINAURAL_PREVIEW: '/audio/preview-binaural',
+    AUDIO_IMMERSIVE_TEST: '/audio/test-immersive',
 };
 
 export const BACKGROUND_AUDIO = {

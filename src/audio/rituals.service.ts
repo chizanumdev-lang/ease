@@ -72,7 +72,7 @@ export class RitualsService {
 
         try {
             // 1. Generate script
-            const scriptData = await this.aiService.generateAudioScript(theme, type === 'morning' ? 5 : 10);
+            const scriptData = await this.aiService.generateAudioScript(theme, type === 'morning' ? 5 : 10, type);
             
             // 2. Create audio track
             const tempDir = path.join(os.tmpdir(), 'ease-rituals');

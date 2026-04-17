@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Image, Dimensions, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Image, Dimensions, Platform, TextInput } from 'react-native';
 import { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList, NotificationSettings } from '../../types';
@@ -42,6 +42,9 @@ export default function SettingsScreen({ navigation }: Props) {
     const [isGeneratingBinaural, setIsGeneratingBinaural] = useState(false);
     const [testTheme, setTestTheme] = useState('Forest');
     const [testFrequency, setTestFrequency] = useState(10); // Default Alpha
+    const [testGoal, setTestGoal] = useState('');
+    const [isGeneratingImmersive, setIsGeneratingImmersive] = useState(false);
+    const [immersiveResults, setImmersiveResults] = useState<{ morningUrl?: string; nightUrl?: string; taskUrl?: string } | null>(null);
 
     const handleTestAudio = async () => {
         setIsGenerating(true);
@@ -95,6 +98,54 @@ export default function SettingsScreen({ navigation }: Props) {
             });
         } finally {
             setIsGeneratingBinaural(false);
+        }
+    };
+
+    const handleImmersiveTest = async () => {
+        if (!testGoal.trim()) {
+            showModal({
+                type: 'error',
+                title: 'Required',
+                description: 'Please enter a goal to test'
+            });
+            return;
+        }
+
+        setIsGeneratingImmersive(true);
+        setImmersiveResults(null);
+        try {
+            const results = await programsService.generateImmersiveTest(testGoal);
+            setImmersiveResults(results);
+            showModal({
+                type: 'success',
+                title: 'Generation Complete',
+                description: '3 test tracks created. You can play them below.'
+            });
+        } catch (error) {
+            console.error('Immersive test failed:', error);
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Failed to generate immersive suite'
+            });
+        } finally {
+            setIsGeneratingImmersive(false);
+        }
+    };
+
+    const playTestTrack = async (id: string, url: string, title: string) => {
+        if (!url) return;
+        try {
+            await loadTrack({
+                id,
+                url,
+                title,
+                duration: 60,
+                type: 'meditation'
+            });
+            await play();
+        } catch (error) {
+            console.error('Play test track failed:', error);
         }
     };
 
@@ -449,6 +500,66 @@ export default function SettingsScreen({ navigation }: Props) {
                             </TouchableOpacity>
                         )}
                     </View>
+
+                    <View style={[styles.debugCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant, marginTop: 16 }]}>
+                        <Text style={[styles.debugLabel, { color: colors.text }]}>Full Immersive Set (Goal Based)</Text>
+                        <TextInput
+                            style={[
+                                styles.debugInput, 
+                                { 
+                                    backgroundColor: colors.surface, 
+                                    color: colors.text, 
+                                    borderColor: colors.outlineVariant 
+                                }
+                            ]}
+                            placeholder="Enter test goal (e.g. Master Guitar)"
+                            placeholderTextColor={colors.textMuted}
+                            value={testGoal}
+                            onChangeText={setTestGoal}
+                        />
+
+                        <TouchableOpacity 
+                            style={[styles.debugButton, { backgroundColor: colors.primary, marginTop: 12 }, isGeneratingImmersive && styles.debugButtonDisabled]}
+                            onPress={handleImmersiveTest}
+                            disabled={isGeneratingImmersive}
+                        >
+                            {isGeneratingImmersive ? (
+                                <Text style={[styles.debugButtonText, { color: isDark ? colors.background : colors.white }]}>Generating 3 Tracks...</Text>
+                            ) : (
+                                <View style={styles.row}>
+                                    <Ionicons name="rocket-outline" size={20} color={isDark ? colors.background : colors.white} style={{ marginRight: 8 }} />
+                                    <Text style={[styles.debugButtonText, { color: isDark ? colors.background : colors.white }]}>Generate Immersive Suite</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        {immersiveResults && (
+                            <View style={styles.immersiveResults}>
+                                {[
+                                    { id: 'morning', label: 'Morning Affirmation', url: immersiveResults.morningUrl },
+                                    { id: 'night', label: 'Night Subliminal', url: immersiveResults.nightUrl },
+                                    { id: 'task', label: 'Audio Task (Lesson)', url: immersiveResults.taskUrl },
+                                ].map(res => (
+                                    <View key={res.id} style={styles.resultRow}>
+                                        <Text style={[styles.resultLabel, { color: colors.text }]}>{res.label}</Text>
+                                        {res.url ? (
+                                            <TouchableOpacity 
+                                                onPress={() => isPlaying && currentTrack?.id === `test-${res.id}` ? stop() : playTestTrack(`test-${res.id}`, res.url!, res.label)}
+                                            >
+                                                <Ionicons 
+                                                    name={isPlaying && currentTrack?.id === `test-${res.id}` ? "stop-circle" : "play-circle"} 
+                                                    size={32} 
+                                                    color={colors.primary} 
+                                                />
+                                            </TouchableOpacity>
+                                        ) : (
+                                            <Text style={{ color: colors.error, fontSize: 12 }}>Failed</Text>
+                                        )}
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    </View>
                 </View>
 
                 {/* Plan Management */}
@@ -775,5 +886,31 @@ const styles = StyleSheet.create({
     deletePlanText: {
         fontSize: 14,
         fontWeight: '700',
+    },
+    debugInput: {
+        borderRadius: 12,
+        padding: 12,
+        borderWidth: 1,
+        fontSize: 14,
+        marginBottom: 8,
+    },
+    immersiveResults: {
+        marginTop: 16,
+        gap: 12,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+    },
+    resultRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: 'rgba(0,0,0,0.02)',
+        padding: 10,
+        borderRadius: 10,
+    },
+    resultLabel: {
+        fontSize: 13,
+        fontWeight: '600',
     },
 });

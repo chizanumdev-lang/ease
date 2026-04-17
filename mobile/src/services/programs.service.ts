@@ -71,4 +71,12 @@ export const programsService = {
         });
         return response.data;
     },
+    
+    async generateImmersiveTest(goal: string): Promise<{ morningUrl: string; nightUrl: string; taskUrl: string }> {
+        const response = await api.post<{ morningUrl: string; nightUrl: string; taskUrl: string }>(
+            API_ENDPOINTS.AUDIO_IMMERSIVE_TEST,
+            { goal }
+        );
+        return response.data;
+    },
 };

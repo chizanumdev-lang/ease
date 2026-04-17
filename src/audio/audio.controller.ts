@@ -103,4 +103,49 @@ export class AudioController {
             status: 'ready'
         };
     }
+
+    @Post('test-immersive')
+    @UseGuards(JwtAuthGuard)
+    async generateFullTest(@Body() body: { goal: string }) {
+        const { goal } = body;
+        this.logger.log(`Generating FULL IMMERSIVE TEST for goal: ${goal}`);
+
+        // We'll generate all 3 in parallel to save time
+        const results = await Promise.all([
+            this.generateSingleTestTrack(goal, 'morning', 1),
+            this.generateSingleTestTrack(goal, 'night', 1),
+            this.generateSingleTestTrack(goal, 'task', 1)
+        ]);
+
+        return {
+            morningUrl: results[0],
+            nightUrl: results[1],
+            taskUrl: results[2]
+        };
+    }
+
+    private async generateSingleTestTrack(goal: string, type: 'morning' | 'night' | 'task', duration: number): Promise<string> {
+        try {
+            const scriptData = await this.aiService.generateAudioScript(goal, duration, type);
+            const filename = `test_${type}_${Date.now()}`;
+            const outputDir = path.join(os.tmpdir(), 'ease-test');
+            if (!require('fs').existsSync(outputDir)) require('fs').mkdirSync(outputDir, { recursive: true });
+
+            const localPath = await this.audioMixerService.createBinauralSubliminalTrack(
+                scriptData,
+                outputDir,
+                duration
+            );
+
+            const audioUrl = await this.audioService.uploadToCloudinary(localPath, filename);
+            
+            // Cleanup
+            if (require('fs').existsSync(localPath)) require('fs').unlinkSync(localPath);
+            
+            return audioUrl;
+        } catch (error) {
+            this.logger.error(`Failed to generate test track for ${type}: ${error.message}`);
+            return ''; // Return empty so the frontend knows this one failed
+        }
+    }
 }
