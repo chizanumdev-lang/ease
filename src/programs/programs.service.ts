@@ -124,19 +124,21 @@ export class ProgramsService {
                     day: '2-digit'
                 };
                 
-                const fmt = new Intl.DateTimeFormat('en-GB', options); // en-GB uses DD/MM/YYYY
+                const fmt = new Intl.DateTimeFormat('en-GB', options);
                 const parts = fmt.formatToParts(now);
-                const localHour = parseInt(parts.find(p => p.type === 'hour').value, 10);
-                const year = parts.find(p => p.type === 'year').value;
-                const month = parts.find(p => p.type === 'month').value;
-                const day = parts.find(p => p.type === 'day').value;
-                const localDateStr = `${year}-${month}-${day}`;
+                const partsMap = parts.reduce((acc, part) => {
+                    acc[part.type] = part.value;
+                    return acc;
+                }, {} as Record<string, string>);
+
+                const localHour = parseInt(partsMap.hour, 10);
+                const localDateStr = `${partsMap.year}-${partsMap.month}-${partsMap.day}`;
 
                 // 1. Midnight: Generate Morning Ritual for Today
                 if (localHour === 0) {
                     this.logger.log(`Generating morning ritual for user ${user.id} at midnight local time`);
                     this.ritualsService.generateRitual(user.id, 'morning', localDateStr).catch(err => 
-                        this.logger.error(`Scheduled morning ritual failed for ${user.id}: ${err.message}`)
+                        this.logger.error(`Scheduled morning ritual failed for user ${user.id}: ${err.message}`)
                     );
                 }
 
@@ -144,7 +146,7 @@ export class ProgramsService {
                 if (localHour === 12) {
                     this.logger.log(`Generating night ritual for user ${user.id} at noon local time`);
                     this.ritualsService.generateRitual(user.id, 'night', localDateStr).catch(err => 
-                        this.logger.error(`Scheduled night ritual failed for ${user.id}: ${err.message}`)
+                        this.logger.error(`Scheduled night ritual failed for user ${user.id}: ${err.message}`)
                     );
                 }
 
@@ -152,6 +154,7 @@ export class ProgramsService {
                 if (localHour === 20) {
                     const program = await this.programRepository.findOne({
                         where: { userId: user.id, status: 'ready' },
+                        relations: ['goal'],
                         order: { createdAt: 'DESC' }
                     });
 
