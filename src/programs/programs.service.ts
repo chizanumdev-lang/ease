@@ -103,23 +103,55 @@ export class ProgramsService {
         private progressionService: ProgressionService,
     ) { }
 
-    /** Hourly check for users whose local time is 20:00, then queue their next day. */
+    /** Hourly check for users to trigger rituals and plan hydration based on their local time. */
     @Cron(CronExpression.EVERY_HOUR)
-    async handleNightlySync(): Promise<void> {
-        this.logger.log('Starting hourly nightly-sync check...');
-        const users = await this.usersService.findAll(); // Optimization: could query by active programs
+    async handleHourlySync(): Promise<void> {
+        this.logger.log('Starting hourly user-sync check...');
+        const users = await this.usersService.findAll();
         const now = new Date();
 
         for (const user of users) {
             try {
-                // Get user's local hour
                 const userTz = user.settings?.timezone || 'UTC';
-                const localDateStr = now.toLocaleString('en-US', { timeZone: userTz });
-                const localHour = new Date(localDateStr).getHours();
+                
+                // Get user's local hour and date
+                const options: Intl.DateTimeFormatOptions = {
+                    timeZone: userTz,
+                    hour: 'numeric',
+                    hour12: false,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                };
+                
+                const fmt = new Intl.DateTimeFormat('en-GB', options); // en-GB uses DD/MM/YYYY
+                const parts = fmt.formatToParts(now);
+                const localHour = parseInt(parts.find(p => p.type === 'hour').value, 10);
+                const year = parts.find(p => p.type === 'year').value;
+                const month = parts.find(p => p.type === 'month').value;
+                const day = parts.find(p => p.type === 'day').value;
+                const localDateStr = `${year}-${month}-${day}`;
 
+                // 1. Midnight: Generate Morning Ritual for Today
+                if (localHour === 0) {
+                    this.logger.log(`Generating morning ritual for user ${user.id} at midnight local time`);
+                    this.ritualsService.generateRitual(user.id, 'morning', localDateStr).catch(err => 
+                        this.logger.error(`Scheduled morning ritual failed for ${user.id}: ${err.message}`)
+                    );
+                }
+
+                // 2. Midday (12:00): Generate Night Ritual for Today
+                if (localHour === 12) {
+                    this.logger.log(`Generating night ritual for user ${user.id} at noon local time`);
+                    this.ritualsService.generateRitual(user.id, 'night', localDateStr).catch(err => 
+                        this.logger.error(`Scheduled night ritual failed for ${user.id}: ${err.message}`)
+                    );
+                }
+
+                // 3. 20:00 (8 PM): Hydrate Tomorrow's Plan
                 if (localHour === 20) {
                     const program = await this.programRepository.findOne({
-                        where: { userId: user.id, status: 'ready' }, // OR 'day1_ready'
+                        where: { userId: user.id, status: 'ready' },
                         order: { createdAt: 'DESC' }
                     });
 
@@ -133,7 +165,7 @@ export class ProgramsService {
                             });
 
                             if (tomorrow && tomorrow.status === 'pending') {
-                                this.logger.log(`Scheduled sync for user ${user.id}: Queuing Day ${tomorrowNum}`);
+                                this.logger.log(`Scheduled hydration for user ${user.id}: Queuing Day ${tomorrowNum}`);
                                 await this.programQueue.add('hydrate-day', {
                                     dayPlanId: tomorrow.id,
                                     goalText: program.goal?.description || 'Goal',
@@ -144,7 +176,7 @@ export class ProgramsService {
                     }
                 }
             } catch (err) {
-                this.logger.error(`Nightly sync failed for user ${user.id}: ${err.message}`);
+                this.logger.error(`Hourly sync failed for user ${user.id}: ${err.message}`);
             }
         }
     }
@@ -216,10 +248,13 @@ export class ProgramsService {
                 status: 'ready',
             });
 
-            // Trigger ritual generation for the current date (non-blocking)
-            const todayStr = new Date().toISOString().split('T')[0];
-            this.ritualsService.generateDailyRituals(day.program.userId, todayStr).catch(err => 
-                this.logger.error(`Initial ritual generation failed: ${err.message}`)
+            // Trigger ritual generation for the user's current local date (non-blocking)
+            const user = await this.usersService.findById(day.program.userId);
+            const userTz = user?.settings?.timezone || 'UTC';
+            const localDateStr = new Intl.DateTimeFormat('sv-SE', { timeZone: userTz }).format(new Date());
+            
+            this.ritualsService.generateDailyRituals(day.program.userId, localDateStr).catch(err => 
+                this.logger.error(`Initial ritual generation failed for user ${day.program.userId} on ${localDateStr}: ${err.message}`)
             );
 
             this.logger.log(`Day ${day.dayNumber} of program ${day.programId} hydrated`);

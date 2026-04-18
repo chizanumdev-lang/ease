@@ -31,21 +31,12 @@ export class RitualsService {
     ) {}
 
     async generateDailyRituals(userId: string, date: string): Promise<{ morning: RitualTrack | null; night: RitualTrack | null }> {
-        this.logger.log(`Generating daily rituals for user ${userId} on date ${date}`);
-
-        // 1. Get current program to provide context
-        const program = await this.programRepository.findOne({
-            where: { userId },
-            order: { createdAt: 'DESC' },
-        });
-
-        const contextTopic = program?.title || 'Personal Growth';
+        this.logger.log(`Syncing daily rituals for user ${userId} on date ${date}`);
         
-        // 2. Generate morning and night rituals in parallel so a timeout/failure
-        //    on one doesn't block or cancel the other
+        // Generate in parallel for the daily sync trigger
         const [morningResult, nightResult] = await Promise.allSettled([
-            this.generateRitual(userId, 'morning', contextTopic, date),
-            this.generateRitual(userId, 'night', contextTopic, date),
+            this.generateRitual(userId, 'morning', date),
+            this.generateRitual(userId, 'night', date),
         ]);
 
         const morning = morningResult.status === 'fulfilled' ? morningResult.value : null;
@@ -61,12 +52,18 @@ export class RitualsService {
         return { morning, night };
     }
 
-    private async generateRitual(
+    async generateRitual(
         userId: string,
         type: 'morning' | 'night',
-        theme: string,
         date: string
     ): Promise<RitualTrack> {
+        // 1. Get current program to provide context
+        const program = await this.programRepository.findOne({
+            where: { userId },
+            order: { createdAt: 'DESC' },
+        });
+
+        const theme = program?.title || 'Personal Growth';
         const title = type === 'morning' ? `Morning Affirmations: ${theme}` : `Nightly Subliminals: ${theme}`;
         const audioFilename = `ritual_${type}_${userId}_${date.replace(/-/g, '_')}`;
 

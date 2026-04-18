@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
-import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import { WaveFile } from 'wavefile';
 import { Readable } from 'stream';
 import * as fs from 'fs/promises';
@@ -27,7 +26,6 @@ const STATIC_BINAURAL_MAP: Record<number, string> = {
 export class AudioMixerService {
   private readonly logger = new Logger(AudioMixerService.name);
   private ttsClient: TextToSpeechClient | null = null;
-  private edgeTts = new MsEdgeTTS();
 
   constructor(private configService: ConfigService) {
     const googleCredentialsJson = this.configService.get<string>('GOOGLE_SERVICE_ACCOUNT_JSON');
@@ -127,6 +125,10 @@ export class AudioMixerService {
     // Edge TTS Fallback (Zero Config)
     this.logger.log('Generating voiceover using Edge TTS (Zero Config)...');
     
+    // Create local instance to prevent concurrency issues with shared WebSocket state
+    const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts');
+    const edgeTts = new MsEdgeTTS();
+
     // Use temporary files to avoid stream closure issues with fluent-ffmpeg
     const os = require('os');
     const crypto = require('crypto');
@@ -136,11 +138,9 @@ export class AudioMixerService {
 
     try {
       // Pass empty metadataOptions to prevent "Cannot read properties of undefined (reading 'voiceLocale')"
-      // The library infers voiceLocale from the voice name regex when not explicitly provided.
-      await this.edgeTts.setMetadata('en-US-GuyNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, {});
+      await edgeTts.setMetadata('en-US-GuyNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, {});
       
-      // Use toStream and manually write to file because toFile expects a directory
-      const { audioStream } = this.edgeTts.toStream(fullScript);
+      const { audioStream } = edgeTts.toStream(fullScript);
       const fsCore = require('fs');
       const writeStream = fsCore.createWriteStream(tempMp3Path);
       
