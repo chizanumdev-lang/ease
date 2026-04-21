@@ -1,5 +1,5 @@
-//export const API_BASE_URL = 'http://192.168.0.250:3000/api';
-export const API_BASE_URL = 'http://localhost:3000/api';
+// export const API_BASE_URL = 'http://localhost:3000/api';
+export const API_BASE_URL = 'https://ease-amber.vercel.app/api';
 
 export const API_ENDPOINTS = {
     // Auth
