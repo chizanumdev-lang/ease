@@ -209,6 +209,15 @@ export class AdminService {
         return this.userRepository.remove(user);
     }
 
+    async toggleAdminStatus(id: string) {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new Error('User not found');
+        }
+        user.isAdmin = !user.isAdmin;
+        return this.userRepository.save(user);
+    }
+
     async getSystemHealth() {
         const now = new Date();
         const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);

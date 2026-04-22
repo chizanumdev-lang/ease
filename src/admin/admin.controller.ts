@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Query, Delete, Param } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, Delete, Param, Patch } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminGuard } from './guards/admin.guard';
 
@@ -31,13 +31,19 @@ export class AdminController {
     getSystemHealth() {
         return this.adminService.getSystemHealth();
     }
+
+    @Get('users/:id')
+    getUserDetail(@Param('id') id: string) {
+        return this.adminService.getUserDetails(id);
+    }
+
     @Delete('users/:id')
     deleteUser(@Param('id') id: string) {
         return this.adminService.deleteUser(id);
     }
 
-    @Get('users/:id')
-    getUserDetail(@Param('id') id: string) {
-        return this.adminService.getUserDetails(id);
+    @Patch('users/:id/role')
+    toggleAdmin(@Param('id') id: string) {
+        return this.adminService.toggleAdminStatus(id);
     }
 }

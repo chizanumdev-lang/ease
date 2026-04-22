@@ -29,7 +29,7 @@ export class BrevoService {
         const data = {
             sender: { name: this.senderName, email: this.senderEmail },
             to: [{ email: to }],
-            subject: 'Verify Your Email - Cookeaze',
+            subject: 'Verify Your Email - Ease',
             htmlContent,
         };
 
@@ -57,7 +57,7 @@ export class BrevoService {
         const data = {
             sender: { name: this.senderName, email: this.senderEmail },
             to: [{ email: to }],
-            subject: 'Reset Your Password - Cookeaze',
+            subject: 'Reset Your Password - Ease',
             htmlContent,
         };
 

@@ -30,6 +30,7 @@ export default function UserAnalytics() {
     const [selectedUser, setSelectedUser] = useState<UserMetric | null>(null);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isUpdatingRole, setIsUpdatingRole] = useState(false);
 
     const [status, setStatus] = useState<'all' | 'verified' | 'unverified'>('all');
 
@@ -61,6 +62,20 @@ export default function UserAnalytics() {
         } finally {
             setLoadingDetails(false);
         }
+    };
+
+    const handleToggleAdmin = async (id: string) => {
+      setIsUpdatingRole(true);
+      try {
+        const updatedUser = await adminService.toggleAdmin(id);
+        setSelectedUser(prev => prev ? { ...prev, isAdmin: updatedUser.isAdmin } : null);
+        fetchUsers();
+      } catch (error) {
+        console.error('Failed to toggle admin status:', error);
+        alert('Failed to update admin status.');
+      } finally {
+        setIsUpdatingRole(false);
+      }
     };
 
     const handleDeleteUser = async (id: string) => {
@@ -148,11 +163,21 @@ export default function UserAnalytics() {
                                   >
                                       <td className="px-8 py-5">
                                           <div className="flex items-center gap-4">
-                                              <div className="w-12 h-12 rounded-2xl bg-ease-blue/10 border border-ease-blue/5 flex items-center justify-center text-ease-blue font-black text-sm shadow-sm group-hover:scale-105 transition-transform">
+                                              <div className="w-12 h-12 rounded-2xl bg-ease-blue/10 border border-ease-blue/5 flex items-center justify-center text-ease-blue font-black text-sm shadow-sm group-hover:scale-105 transition-transform relative">
                                                   {getInitials(user.name)}
+                                                  {user.isAdmin && (
+                                                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-ease-blue rounded-full border-2 border-white flex items-center justify-center">
+                                                       <Shield className="w-2 h-2 text-white fill-current" />
+                                                     </div>
+                                                   )}
                                               </div>
                                               <div>
-                                                  <p className="font-bold text-ease-text-primary text-base">{user.name}</p>
+                                                  <div className="flex items-center gap-2">
+                                                    <p className="font-bold text-ease-text-primary text-base">{user.name}</p>
+                                                    {user.isAdmin && (
+                                                      <span className="px-1.5 py-0.5 bg-ease-blue/10 text-ease-blue text-[8px] font-black uppercase rounded-md tracking-tighter">Admin</span>
+                                                    )}
+                                                  </div>
                                                   <p className="text-xs text-ease-text-secondary font-medium tracking-tight">{user.email}</p>
                                               </div>
                                           </div>
@@ -240,7 +265,7 @@ export default function UserAnalytics() {
                           disabled={page * 10 >= total}
                           className="flex items-center justify-center w-12 h-12 rounded-2xl bg-ease-surface border border-ease-border text-ease-text-secondary disabled:opacity-30 hover:border-ease-blue hover:text-ease-blue transition-all shadow-sm active:scale-95"
                         >
-                            <ChevronRight className="w-5 h-5" />
+                          <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -275,14 +300,24 @@ export default function UserAnalytics() {
                         <Shield className="w-32 h-32" />
                       </div>
                       <div className="flex flex-col items-center text-center space-y-5 relative z-10">
-                        <div className="w-28 h-28 rounded-[2.2rem] bg-gradient-to-br from-ease-blue to-blue-600 border-4 border-white shadow-2xl flex items-center justify-center text-white text-4xl font-black">
+                        <div className="w-28 h-28 rounded-[2.2rem] bg-gradient-to-br from-ease-blue to-blue-600 border-4 border-white shadow-2xl flex items-center justify-center text-white text-4xl font-black relative">
                           {getInitials(selectedUser.name)}
+                          {selectedUser.isAdmin && (
+                             <div className="absolute -top-2 -right-2 p-2 bg-white rounded-2xl shadow-xl border border-ease-blue/10">
+                               <Shield className="w-6 h-6 text-ease-blue fill-current" />
+                             </div>
+                          )}
                         </div>
                         <div>
                           <h3 className="text-3xl font-black text-ease-text-primary tracking-tight">{selectedUser.name}</h3>
                           <p className="text-ease-text-secondary font-semibold mt-1">{selectedUser.email}</p>
                         </div>
                         <div className="flex gap-3">
+                          {selectedUser.isAdmin && (
+                            <div className="px-5 py-2 bg-ease-blue text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-ease-blue shadow-lg shadow-blue-200">
+                              SYSTEM ADMIN
+                            </div>
+                          )}
                           <div className="px-5 py-2 bg-ease-blue/10 text-ease-blue rounded-2xl text-[10px] font-black uppercase tracking-widest border border-ease-blue/10">
                             PRO MEMBER
                           </div>
@@ -473,9 +508,20 @@ export default function UserAnalytics() {
                             <div className="w-10 h-10 rounded-2xl bg-ease-surface border border-ease-border flex items-center justify-center text-ease-text-secondary">
                               <Shield className="w-5 h-5" />
                             </div>
-                            <span className="text-sm font-bold text-ease-text-primary">Auth Provider</span>
+                            <span className="text-sm font-bold text-ease-text-primary">Admin Access</span>
                           </div>
-                          <span className="text-xs font-black text-ease-text-secondary uppercase">Database (Email)</span>
+                          <button 
+                            onClick={() => handleToggleAdmin(selectedUser.id)}
+                            disabled={isUpdatingRole}
+                            className={clsx(
+                              "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tight transition-all active:scale-95",
+                              selectedUser.isAdmin 
+                                ? "bg-ease-error/10 text-ease-error hover:bg-ease-error hover:text-white border border-ease-error/20" 
+                                : "bg-ease-blue/10 text-ease-blue hover:bg-ease-blue hover:text-white border border-ease-blue/20"
+                            )}
+                          >
+                            {isUpdatingRole ? 'Syncing...' : selectedUser.isAdmin ? 'REVOKE ACCESS' : 'GRANT ACCESS'}
+                          </button>
                         </div>
                       </div>
                     </div>

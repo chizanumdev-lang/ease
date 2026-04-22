@@ -35,6 +35,7 @@ export interface UserMetric {
   lastActive: string;
   status: 'active' | 'inactive';
   isVerified: boolean;
+  isAdmin?: boolean;
   completedTasks?: number;
   programs?: any[];
   stats?: {
@@ -87,6 +88,11 @@ export const adminService = {
 
   async getUserDetails(id: string): Promise<UserMetric> {
     const response = await api.get(`/admin/users/${id}`);
+    return response.data;
+  },
+
+  async toggleAdmin(id: string): Promise<UserMetric> {
+    const response = await api.patch(`/admin/users/${id}/role`);
     return response.data;
   }
 };

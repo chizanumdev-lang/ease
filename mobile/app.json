@@ -22,6 +22,7 @@
       }
     },
     "android": {
+      "package": "com.chizanumdev.ease",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -48,6 +49,12 @@
           "project": "mobile"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "33844d11-07d1-4619-92b6-a104260f31a0"
+      }
+    },
+    "owner": "chizanum"
   }
 }
