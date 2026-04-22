@@ -18,7 +18,7 @@ interface AuthState {
     login: (email: string, password: string) => Promise<void>;
     signup: (email: string, password: string, name: string) => Promise<void>;
     logout: () => Promise<void>;
-    loadUser: () => Promise<void>;
+    loadUser: (forceRefresh?: boolean) => Promise<void>;
     updateSettings: (settings: any) => Promise<void>;
     clearError: () => void;
 }
@@ -116,15 +116,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
     },
 
-    loadUser: async () => {
-        console.log('[AUTH] loadUser called');
+    loadUser: async (forceRefresh = false) => {
+        console.log('[AUTH] loadUser called, forceRefresh:', forceRefresh);
         set({ isLoading: true });
         try {
             const token = await secureStorage.getAccessToken();
             console.log('[AUTH] Has token:', !!token);
             if (token) {
-                const cachedUser = await mmkvStorage.getUserAsync();
+                const cachedUser = forceRefresh ? null : await mmkvStorage.getUserAsync();
                 console.log('[AUTH] Cached user:', cachedUser ? 'found' : 'not found');
+                
                 if (cachedUser) {
                     console.log('[AUTH] Using cached user, onboardingCompleted:', cachedUser.settings?.onboardingCompleted);
                     set({
@@ -133,10 +134,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         isLoading: false,
                     });
                 } else {
-                    // No cached user but has token - fetch from API
+                    // No cached user or forced - fetch from API
                     console.log('[AUTH] Fetching user from API...');
                     const user = await authService.getCurrentUser();
-                    console.log('[AUTH] Fetched user from API, onboardingCompleted:', user.settings?.onboardingCompleted);
+                    console.log('[AUTH] Fetched user from API, isVerified:', user.isVerified, 'onboardingCompleted:', user.settings?.onboardingCompleted);
+                    
+                    // Update cache with fresh data
+                    await mmkvStorage.setUser(user);
+                    
                     set({
                         user,
                         isAuthenticated: true,

@@ -20,6 +20,7 @@ import { AiModule } from './ai/ai.module';
 import { VideoModule } from './video/video.module';
 import { AudioModule } from './audio/audio.module';
 import { AdminModule } from './admin/admin.module';
+import { MailModule } from './mail/mail.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { APP_FILTER } from '@nestjs/core';
@@ -27,10 +28,17 @@ import { APP_FILTER } from '@nestjs/core';
 @Module({
   imports: [
     SentryModule.forRoot(),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
-      serveRoot: '/public', // Optional: adds a prefix
-    }),
+    ServeStaticModule.forRoot(
+      {
+        rootPath: join(process.cwd(), 'public'),
+        serveRoot: '/public',
+      },
+      {
+        rootPath: join(process.cwd(), 'public', 'admin'),
+        serveRoot: '/admin',
+        renderPath: '/admin',
+      },
+    ),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -91,6 +99,7 @@ import { APP_FILTER } from '@nestjs/core';
     VideoModule,
     AudioModule,
     AdminModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

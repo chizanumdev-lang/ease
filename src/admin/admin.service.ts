@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThan, CountValues } from 'typeorm';
+import { Repository, Between, MoreThan } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { Task } from '../tasks/entities/task.entity';
 import { Program } from '../programs/entities/program.entity';
@@ -68,10 +68,14 @@ export class AdminService {
 
         return {
             dau,
+            tasksToday: tasks24h,
+            aiGens: aiLogs,
             completionRate: Math.round(completionRate),
             aiHealth: Math.round(aiHealth),
+            avgStreak: 0, // Simplified for now
             totalUsers,
             timestamp: new Date(),
+            alerts: [] 
         };
     }
 
@@ -105,34 +109,55 @@ export class AdminService {
         };
     }
 
-    async getUserMetrics(page = 1, limit = 10, search?: string) {
-        const query = this.userRepository.createQueryBuilder('user')
-            .leftJoinAndSelect('user.programs', 'program')
-            .leftJoin('program.dayPlans', 'dayPlan')
-            .leftJoin('dayPlan.tasks', 'task')
+    async getUserMetrics(page = 1, limit = 10, search?: string, status?: string) {
+        const query = this.userRepository.createQueryBuilder('u')
+            .leftJoin('u.programs', 'p')
+            .leftJoin('p.dayPlans', 'dp')
+            .leftJoin('dp.tasks', 't')
             .select([
-                'user.id',
-                'user.name',
-                'user.email',
-                'user.createdAt',
-                'user.isAdmin'
+                'u.id',
+                'u.name',
+                'u.email',
+                'u.createdAt',
+                'u.isAdmin',
+                'u.isVerified',
             ])
-            .addSelect('COUNT(DISTINCT task.id) FILTER (WHERE task.completed = true)', 'completedTasks')
-            .groupBy('user.id')
-            .orderBy('user.createdAt', 'DESC')
+            .addSelect('COUNT(DISTINCT CASE WHEN t.completed = true THEN t.id END)', 'completedTasks')
+            .addSelect('MAX(p.created_at)', 'lastActive')
+            .groupBy('u.id')
+            .orderBy('u.createdAt', 'DESC')
             .skip((page - 1) * limit)
             .take(limit);
 
         if (search) {
-            query.andWhere('user.name ILIKE :search OR user.email ILIKE :search', { search: `%${search}%` });
+            query.andWhere('(u.name ILIKE :search OR u.email ILIKE :search)', { search: `%${search}%` });
+        }
+
+        if (status === 'verified') {
+            query.andWhere('u.isVerified = true');
+        } else if (status === 'unverified') {
+            query.andWhere('u.isVerified = false');
         }
 
         const { entities, raw } = await query.getRawAndEntities();
-        const total = await this.userRepository.count();
+        
+        // Count total for pagination
+        const countQuery = this.userRepository.createQueryBuilder('user');
+        if (search) {
+            countQuery.andWhere('user.name ILIKE :search OR user.email ILIKE :search', { search: `%${search}%` });
+        }
+        if (status === 'verified') {
+            countQuery.andWhere('user.isVerified = true');
+        } else if (status === 'unverified') {
+            countQuery.andWhere('user.isVerified = false');
+        }
+        const total = await countQuery.getCount();
 
         const users = entities.map((entity, index) => ({
             ...entity,
             completedTasks: parseInt(raw[index].completedTasks || '0'),
+            lastActive: raw[index].lastActive,
+            streak: 0, // Should be calculated if needed in list
         }));
 
         return {
@@ -141,6 +166,47 @@ export class AdminService {
             page,
             lastPage: Math.ceil(total / limit),
         };
+    }
+
+    async getUserDetails(id: string) {
+        const user = await this.userRepository.findOne({
+            where: { id },
+            relations: ['programs', 'programs.dayPlans', 'programs.dayPlans.tasks'],
+        });
+
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        // Calculate some stats
+        let totalTasks = 0;
+        let completedTasks = 0;
+        
+        user.programs.forEach(program => {
+            program.dayPlans.forEach(plan => {
+                totalTasks += plan.tasks.length;
+                completedTasks += plan.tasks.filter(t => t.completed).length;
+            });
+        });
+
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        return {
+            ...user,
+            stats: {
+                totalTasks,
+                completedTasks,
+                completionRate,
+            }
+        };
+    }
+
+    async deleteUser(id: string) {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return this.userRepository.remove(user);
     }
 
     async getSystemHealth() {

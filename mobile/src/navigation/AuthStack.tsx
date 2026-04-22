@@ -6,6 +6,7 @@ import SignupScreen from '../screens/auth/SignupScreen';
 import OnboardingScreen from '../screens/auth/OnboardingScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import OnboardingFlowScreen from '../screens/onboarding/OnboardingFlowScreen';
+import VerifyEmailScreen from '../screens/auth/VerifyEmailScreen';
 import { useAuthStore } from '../store/authStore';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -13,8 +14,23 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 export default function AuthStack() {
     const { isAuthenticated, user } = useAuthStore();
     const hasCompletedOnboarding = user?.settings?.onboardingCompleted === true;
+    const isVerified = user?.isVerified === true;
 
-    console.log('[AUTH_STACK] isAuth:', isAuthenticated, 'hasCompletedOnboarding:', hasCompletedOnboarding);
+    console.log('[AUTH_STACK] isAuth:', isAuthenticated, 'isVerified:', isVerified, 'hasCompletedOnboarding:', hasCompletedOnboarding);
+
+    // If user is authenticated but NOT verified, show verify email screen
+    if (isAuthenticated && !isVerified) {
+        console.log('[AUTH_STACK] Showing VerifyEmail');
+        return (
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Screen
+                    name="VerifyEmail"
+                    component={VerifyEmailScreen}
+                    initialParams={{ email: user?.email || '' }}
+                />
+            </Stack.Navigator>
+        );
+    }
 
     // If user is authenticated but hasn't completed onboarding, show onboarding flow
     if (isAuthenticated && !hasCompletedOnboarding) {
@@ -38,6 +54,7 @@ export default function AuthStack() {
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
+            <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
         </Stack.Navigator>
     );
 }

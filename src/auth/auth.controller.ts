@@ -2,6 +2,7 @@ import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import type { Request } from 'express';
 
@@ -17,6 +18,16 @@ export class AuthController {
     @Post('login')
     async login(@Body() loginDto: LoginDto) {
         return this.authService.login(loginDto);
+    }
+
+    @Post('verify')
+    async verify(@Body() verifyEmailDto: VerifyEmailDto) {
+        return this.authService.verifyEmail(verifyEmailDto);
+    }
+
+    @Post('resend-code')
+    async resendCode(@Body('email') email: string) {
+        return this.authService.resendVerificationCode(email);
     }
 
     @UseGuards(JwtRefreshGuard)

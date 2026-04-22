@@ -4,25 +4,23 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './layouts/AdminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import VideoLibrary from './pages/VideoLibrary';
-import GoalCategories from './pages/GoalCategories';
-import ProgramTemplates from './pages/ProgramTemplates';
 import UserAnalytics from './pages/UserAnalytics';
+import VideoLibrary from './pages/VideoLibrary';
+import SystemHealth from './pages/SystemHealth';
 
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route path="/login" element={<Login />} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AdminLayout />}>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/videos" element={<VideoLibrary />} />
-              <Route path="/goals" element={<GoalCategories />} />
-              <Route path="/programs" element={<ProgramTemplates />} />
-              <Route path="/analytics" element={<UserAnalytics />} />
+              <Route path="/users" element={<UserAnalytics />} />
+              <Route path="/content" element={<VideoLibrary />} />
+              <Route path="/health" element={<SystemHealth />} />
             </Route>
           </Route>
 
@@ -32,5 +30,6 @@ function App() {
     </AuthProvider>
   );
 }
+
 
 export default App;

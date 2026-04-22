@@ -119,6 +119,8 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
     // Anti-skip toast
     const [showSkipWarning, setShowSkipWarning] = useState(false);
 
+    const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
+
     const playerRef              = useRef<YoutubeIframeRef>(null);
     const completedOnce          = useRef(false);
     const lastSyncedTime         = useRef(0);
@@ -203,15 +205,18 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
     const onStateChange = useCallback(async (state: string) => {
         if (state === 'playing') setPlaying(true);
         if (state === 'paused')  setPlaying(false);
-        if (state === 'ended' && !completedOnce.current) {
-            completedOnce.current = true;
-            setIsCompleted(true);
+        if (state === 'ended') {
             setPlaying(false);
-            await updateTask(task.id, { totalDuration: Math.floor(duration) });
-            const meta: TaskMetadata = { videoTimestamp: Math.floor(duration) };
-            onComplete(meta);
+            setShowCompletionOverlay(true);
+            if (!completedOnce.current) {
+                completedOnce.current = true;
+                setIsCompleted(true);
+                await updateTask(task.id, { totalDuration: Math.floor(duration) });
+                // We don't call onComplete immediately here anymore, 
+                // we let the user click the "Next" button in the overlay
+            }
         }
-    }, [task.id, duration, updateTask, onComplete]);
+    }, [task.id, duration, updateTask]);
 
     // ── Player ready ──
     const onReady = useCallback(async () => {
@@ -285,36 +290,58 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                         }}
                     />
 
+                    {/* Completion Overlay to hide suggestions */}
+                    {showCompletionOverlay && (
+                        <BlurView intensity={90} style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
+                            <View style={styles.completionContent}>
+                                <View style={[styles.successIconCircle, { backgroundColor: colors.primary }]}>
+                                    <Ionicons name="checkmark" size={32} color="#FFF" />
+                                </View>
+                                <Text style={styles.completionTitle}>Lesson Complete</Text>
+                                <Text style={styles.completionSubtitle}>You've mastered today's core insight.</Text>
+                                <TouchableOpacity 
+                                    style={[styles.completionBtn, { backgroundColor: '#FFF' }]}
+                                    onPress={() => onComplete({ videoTimestamp: Math.floor(duration) })}
+                                >
+                                    <Text style={[styles.completionBtnText, { color: colors.primary }]}>Continue Circuit</Text>
+                                    <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+                                </TouchableOpacity>
+                            </View>
+                        </BlurView>
+                    )}
+
                     {/* Progress bar sits below the player inside the hero block */}
-                    <View style={styles.progressWrapper}>
-                        <View style={styles.progressTrack}>
-                            {/* Max-watched zone */}
-                            <View
-                                style={[
-                                    styles.progressMaxZone,
-                                    { width: `${maxPct}%`, backgroundColor: 'rgba(255,255,255,0.2)' },
-                                ]}
-                            />
-                            {/* Current playhead */}
-                            <Animated.View
-                                style={[
-                                    styles.progressFill,
-                                    {
-                                        width: progressBarAnim.interpolate({
-                                            inputRange: [0, 1],
-                                            outputRange: ['0%', '100%'],
-                                        }),
-                                        backgroundColor: colors.primary,
-                                        shadowColor: colors.primary,
-                                    },
-                                ]}
-                            />
+                    {!showCompletionOverlay && (
+                        <View style={styles.progressWrapper}>
+                            <View style={styles.progressTrack}>
+                                {/* Max-watched zone */}
+                                <View
+                                    style={[
+                                        styles.progressMaxZone,
+                                        { width: `${maxPct}%`, backgroundColor: 'rgba(255,255,255,0.2)' },
+                                    ]}
+                                />
+                                {/* Current playhead */}
+                                <Animated.View
+                                    style={[
+                                        styles.progressFill,
+                                        {
+                                            width: progressBarAnim.interpolate({
+                                                inputRange: [0, 1],
+                                                outputRange: ['0%', '100%'],
+                                            }),
+                                            backgroundColor: colors.primary,
+                                            shadowColor: colors.primary,
+                                        },
+                                    ]}
+                                />
+                            </View>
+                            <View style={styles.timeRow}>
+                                <Text style={styles.timeLabel}>{formatTime(currentTime)}</Text>
+                                <Text style={styles.timeLabel}>{formatTime(duration)}</Text>
+                            </View>
                         </View>
-                        <View style={styles.timeRow}>
-                            <Text style={styles.timeLabel}>{formatTime(currentTime)}</Text>
-                            <Text style={styles.timeLabel}>{formatTime(duration)}</Text>
-                        </View>
-                    </View>
+                    )}
                 </View>
 
                 {/* ── Content area ── */}
@@ -417,6 +444,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                 </TouchableOpacity>
             </View>
         </View>
+
     );
 }
 
@@ -666,5 +694,56 @@ const styles = StyleSheet.create({
     errorText: {
         fontSize: 18,
         fontWeight: '700',
+    },
+
+    // ── Completion Overlay ──
+    completionOverlay: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    completionContent: {
+        alignItems: 'center',
+        maxWidth: 280,
+    },
+    successIconCircle: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    completionTitle: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 24,
+        color: '#FFF',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    completionSubtitle: {
+        fontFamily: 'Inter-Regular',
+        fontSize: 15,
+        color: 'rgba(255,255,255,0.8)',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 20,
+    },
+    completionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        borderRadius: 30,
+        gap: 8,
+    },
+    completionBtnText: {
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 16,
     },
 });

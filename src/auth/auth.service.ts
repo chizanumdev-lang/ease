@@ -13,6 +13,9 @@ import { User } from '../users/entities/user.entity';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 
+import { BrevoService } from '../mail/brevo.service';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+
 @Injectable()
 export class AuthService {
     private readonly logger = new Logger(AuthService.name);
@@ -21,6 +24,7 @@ export class AuthService {
         private userRepository: Repository<User>,
         private jwtService: JwtService,
         private configService: ConfigService,
+        private brevoService: BrevoService,
     ) { }
 
     async signup(signupDto: SignupDto) {
@@ -39,14 +43,28 @@ export class AuthService {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Generate verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
         // Create user
         const user = this.userRepository.create({
             email,
             password: hashedPassword,
             name,
+            verificationCode,
+            verificationExpires,
+            isVerified: false,
         });
 
         await this.userRepository.save(user);
+
+        // Send verification email
+        try {
+            await this.brevoService.sendVerificationEmail(email, verificationCode);
+        } catch (error) {
+            this.logger.error(`Failed to send initial verification email to ${email}`);
+        }
 
         // Generate tokens
         const tokens = await this.generateTokens(user.id, user.email);
@@ -61,6 +79,7 @@ export class AuthService {
                 id: user.id,
                 email: user.email,
                 name: user.name,
+                isVerified: user.isVerified,
                 settings: user.settings,
             },
             ...tokens,
@@ -97,6 +116,7 @@ export class AuthService {
                 id: user.id,
                 email: user.email,
                 name: user.name,
+                isVerified: user.isVerified,
                 settings: user.settings,
             },
             ...tokens,
@@ -146,5 +166,54 @@ export class AuthService {
         await this.userRepository.save(user);
 
         return tokens;
+    }
+
+    async verifyEmail(verifyEmailDto: VerifyEmailDto) {
+        const { email, code } = verifyEmailDto;
+        const user = await this.userRepository.findOne({ where: { email } });
+
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
+
+        if (user.isVerified) {
+            return { message: 'Email already verified' };
+        }
+
+        if (!user.verificationCode || !user.verificationExpires) {
+            throw new UnauthorizedException('No verification code found');
+        }
+
+        if (user.verificationCode !== code) {
+            throw new UnauthorizedException('Invalid verification code');
+        }
+
+        if (new Date() > user.verificationExpires) {
+            throw new UnauthorizedException('Verification code expired');
+        }
+
+        user.isVerified = true;
+        user.verificationCode = null;
+        user.verificationExpires = null;
+        await this.userRepository.save(user);
+
+        return { message: 'Email verified successfully' };
+    }
+
+    async resendVerificationCode(email: string) {
+        const user = await this.userRepository.findOne({ where: { email } });
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
+
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+        user.verificationCode = verificationCode;
+        user.verificationExpires = verificationExpires;
+        await this.userRepository.save(user);
+
+        await this.brevoService.sendVerificationEmail(email, verificationCode);
+        return { message: 'Verification code resent' };
     }
 }

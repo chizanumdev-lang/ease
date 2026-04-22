@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, Delete, Param } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AdminGuard } from './guards/admin.guard';
 
@@ -22,12 +22,22 @@ export class AdminController {
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
         @Query('search') search?: string,
+        @Query('status') status?: string,
     ) {
-        return this.adminService.getUserMetrics(Number(page), Number(limit), search);
+        return this.adminService.getUserMetrics(Number(page), Number(limit), search, status);
     }
 
     @Get('system/health')
     getSystemHealth() {
         return this.adminService.getSystemHealth();
+    }
+    @Delete('users/:id')
+    deleteUser(@Param('id') id: string) {
+        return this.adminService.deleteUser(id);
+    }
+
+    @Get('users/:id')
+    getUserDetail(@Param('id') id: string) {
+        return this.adminService.getUserDetails(id);
     }
 }

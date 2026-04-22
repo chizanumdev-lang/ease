@@ -156,9 +156,19 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
                                 <View style={styles.activeIndicator}>
                                     <View style={[styles.pulseDot, { backgroundColor: colors.primary }]} />
                                     <Text style={[styles.activeText, { color: colors.primary }]}>CONTINUE TASK</Text>
+                                    <Ionicons name="arrow-forward" size={12} color={colors.primary} />
+                                </View>
+                            )}
+
+                            {isCompleted && task.next_task_id && (
+                                <View style={[styles.activeIndicator, { opacity: 0.8 }]}>
+                                    <Ionicons name="link-outline" size={12} color={colors.primary} />
+                                    <Text style={[styles.activeText, { color: colors.primary }]}>CONTINUE TO NEXT</Text>
+                                    <Ionicons name="arrow-forward" size={12} color={colors.primary} />
                                 </View>
                             )}
                         </View>
+
 
                         {!isLocked && (
                             <Ionicons 

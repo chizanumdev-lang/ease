@@ -65,4 +65,11 @@ export const authService = {
         const response = await api.patch(API_ENDPOINTS.UPDATE_SETTINGS, { settings });
         return response.data;
     },
+    async verifyEmail(email: string, code: string): Promise<void> {
+        await api.post('/auth/verify', { email, code });
+    },
+
+    async resendVerificationCode(email: string): Promise<void> {
+        await api.post('/auth/resend-code', { email });
+    },
 };

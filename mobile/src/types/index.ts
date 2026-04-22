@@ -2,6 +2,7 @@ export interface User {
     id: string;
     email: string;
     name: string;
+    isVerified: boolean;
     settings?: UserSettings;
     createdAt: string;
 }
@@ -176,6 +177,7 @@ export type AuthStackParamList = {
     Welcome: undefined;
     Login: undefined;
     Signup: undefined;
+    VerifyEmail: { email: string };
     Onboarding: undefined;
     OnboardingFlow: undefined;
 };

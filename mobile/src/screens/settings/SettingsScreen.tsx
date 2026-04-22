@@ -13,6 +13,9 @@ import Logo from '../../components/Logo';
 import { useProgramsStore } from '../../store/programsStore';
 import { useModalStore } from '../../store/modalStore';
 import { notificationService } from '../../services/notification.service';
+import { useAnalyticsStore } from '../../store/analyticsStore';
+import { useFocusEffect } from '@react-navigation/native';
+import React from 'react';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'Settings'>;
 
@@ -34,9 +37,16 @@ const FOCUS_AREAS = [
 export default function SettingsScreen({ navigation }: Props) {
     const { user, logout, updateSettings } = useAuthStore();
     const { currentProgram, deleteProgram } = useProgramsStore();
+    const { analytics, fetchAnalytics } = useAnalyticsStore();
     const { loadTrack, play, stop, isPlaying, currentTrack } = useAudioStore();
     const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
     const { showModal } = useModalStore();
+
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchAnalytics();
+        }, [])
+    );
     
     // Test Audio State
     const [isGenerating, setIsGenerating] = useState(false);
@@ -311,16 +321,16 @@ export default function SettingsScreen({ navigation }: Props) {
                             <Ionicons name="leaf" size={16} color={colors.primary} />
                             <Text style={[styles.cardLabel, { color: colors.textMuted }]}>SPIRIT TREE</Text>
                         </View>
-                        <Text style={[styles.cardValue, { color: colors.text }]}>Level 3</Text>
-                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>Flourishing</Text>
+                        <Text style={[styles.cardValue, { color: colors.text }]}>Level {analytics?.progression?.level || 1}</Text>
+                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>{analytics?.progression?.currentPhase?.title || 'Seeding'}</Text>
                     </View>
                     <View style={[styles.progressCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
                         <View style={styles.cardHeader}>
                             <Ionicons name="flame" size={16} color={colors.error} />
                             <Text style={[styles.cardLabel, { color: colors.textMuted }]}>STREAK</Text>
                         </View>
-                        <Text style={[styles.cardValue, { color: colors.text }]}>12 Days</Text>
-                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>Mindfulness</Text>
+                        <Text style={[styles.cardValue, { color: colors.text }]}>{analytics?.currentStreak || 0} Days</Text>
+                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>Active Flow</Text>
                     </View>
                 </View>
 

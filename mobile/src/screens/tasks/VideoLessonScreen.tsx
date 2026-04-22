@@ -37,7 +37,7 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
     const [duration, setDuration] = useState(task.totalDuration || 0);
     const [maxWatched, setMaxWatched] = useState(task.watchedSeconds || 0);
     const [isCompleted, setIsCompleted] = useState(task.completed || false);
-    const [showControls, setShowControls] = useState(true);
+    const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
 
     const playerRef = useRef<YoutubeIframeRef>(null);
     const tutorialCompleteTriggered = useRef(false);
@@ -92,13 +92,8 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
             
             // Automatic Completion in backend
             await completeTask(task.id);
-            
-            // Provide visual feedback/delay before back navigation
-            setTimeout(() => {
-                navigation.goBack();
-            }, 2500);
         }
-    }, [task.id, completeTask, navigation]);
+    }, [task.id, completeTask]);
 
     // Anti-Skip & Progress Polling
     useEffect(() => {
@@ -160,9 +155,12 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
         if (state === 'paused') setPlaying(false);
         
         if (state === 'ended') {
+            setPlaying(false);
+            setShowCompletionOverlay(true);
             triggerCompletion();
         }
     }, [triggerCompletion]);
+
 
     const onReady = useCallback(async () => {
         setLoading(false);
@@ -331,7 +329,7 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                                     onChangeState={onStateChange}
                                     onReady={onReady}
                                     initialPlayerParams={{
-                                        controls: isCompleted ? 1 : 0, // Allow scrubbing only if already completed
+                                        controls: 1,
                                         modestbranding: 1,
                                         rel: 0,
                                         cc_load_policy: 0,
@@ -340,68 +338,52 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                                 />
                             </View>
 
-                            {/* Custom Controls Overlay (Visible if not completed or manual toggle) */}
-                            {(!isCompleted && showControls) && (
-                                <TouchableOpacity 
-                                    activeOpacity={1} 
-                                    style={styles.controlsOverlay}
-                                    onPress={() => setShowControls(true)}
-                                >
-                                    <View style={styles.controlsRow}>
+                            {/* Completion Overlay to hide suggestions */}
+                            {showCompletionOverlay && (
+                                <BlurView intensity={90} style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
+                                    <View style={styles.completionContent}>
+                                        <View style={[styles.successIconCircle, { backgroundColor: colors.primary }]}>
+                                            <Ionicons name="checkmark" size={32} color="#FFF" />
+                                        </View>
+                                        <Text style={styles.completionTitle}>Lesson Complete</Text>
+                                        <Text style={styles.completionSubtitle}>You've mastered today's core insight.</Text>
                                         <TouchableOpacity 
-                                            style={styles.glassButton}
-                                            onPress={() => playerRef.current?.seekTo(currentTime - 10, true)}
+                                            style={[styles.completionBtn, { backgroundColor: '#FFF' }]}
+                                            onPress={() => navigation.goBack()}
                                         >
-                                            <MaterialIcons name="replay-10" size={32} color="#FFF" />
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity 
-                                            style={styles.playButton}
-                                            onPress={() => setPlaying(!playing)}
-                                        >
-                                            <MaterialIcons 
-                                                name={playing ? "pause" : "play-arrow"} 
-                                                size={48} 
-                                                color={colors.primary} 
-                                                style={{ marginLeft: playing ? 0 : 4 }}
-                                            />
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity 
-                                            style={[styles.glassButton, { opacity: (isCompleted || maxWatched > currentTime + 5) ? 1 : 0.3 }]}
-                                            disabled={!isCompleted && maxWatched <= currentTime + 5}
-                                            onPress={() => playerRef.current?.seekTo(currentTime + 10, true)}
-                                        >
-                                            <MaterialIcons name="forward-10" size={32} color="#FFF" />
+                                            <Text style={[styles.completionBtnText, { color: colors.primary }]}>Continue Circuit</Text>
+                                            <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                                         </TouchableOpacity>
                                     </View>
-                                </TouchableOpacity>
+                                </BlurView>
                             )}
                         </View>
 
                         {/* Sleek Progress Bar */}
-                        <View style={styles.progressBarWrapper}>
-                            <View style={[styles.progressBarTrack, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-                                <View 
-                                    style={[
-                                        styles.progressBarFill, 
-                                        { 
-                                            width: `${(currentTime / (duration || 1)) * 100}%`,
-                                            backgroundColor: colors.primary,
-                                        }
-                                    ]} 
-                                />
-                                <View 
-                                    style={[
-                                        styles.maxWatchIndicator, 
-                                        { 
-                                            left: `${(maxWatched / (duration || 1)) * 100}%`,
-                                            backgroundColor: isCompleted ? colors.primary : 'rgba(255,255,255,0.3)'
-                                        }
-                                    ]} 
-                                />
+                        {!showCompletionOverlay && (
+                            <View style={styles.progressBarWrapper}>
+                                <View style={[styles.progressBarTrack, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                                    <View 
+                                        style={[
+                                            styles.progressBarFill, 
+                                            { 
+                                                width: `${(currentTime / (duration || 1)) * 100}%`,
+                                                backgroundColor: colors.primary,
+                                            }
+                                        ]} 
+                                    />
+                                    <View 
+                                        style={[
+                                            styles.maxWatchIndicator, 
+                                            { 
+                                                left: `${(maxWatched / (duration || 1)) * 100}%`,
+                                                backgroundColor: isCompleted ? colors.primary : 'rgba(255,255,255,0.3)'
+                                            }
+                                        ]} 
+                                    />
+                                </View>
                             </View>
-                        </View>
+                        )}
                     </ImageBackground>
                 </View>
 
@@ -583,46 +565,55 @@ const styles = StyleSheet.create({
     playerContainer: {
         width: '100%',
     },
-    loadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        zIndex: 20,
+    // ── Completion Overlay ──
+    completionOverlay: {
         justifyContent: 'center',
         alignItems: 'center',
+        padding: 24,
     },
-    controlsOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        zIndex: 10,
+    completionContent: {
         alignItems: 'center',
-        justifyContent: 'center',
+        maxWidth: 280,
     },
-    controlsRow: {
+    successIconCircle: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    completionTitle: {
+        fontFamily: 'Inter-Bold',
+        fontSize: 24,
+        color: '#FFF',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    completionSubtitle: {
+        fontFamily: 'Inter-Regular',
+        fontSize: 15,
+        color: 'rgba(255,255,255,0.8)',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 20,
+    },
+    completionBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 40,
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        borderRadius: 30,
+        gap: 8,
     },
-    glassButton: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    playButton: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#FFF',
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
-        elevation: 10,
+    completionBtnText: {
+        fontFamily: 'Inter-SemiBold',
+        fontSize: 16,
     },
     progressBarWrapper: {
         position: 'absolute',

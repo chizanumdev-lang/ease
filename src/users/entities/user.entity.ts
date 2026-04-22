@@ -27,13 +27,22 @@ export class User {
     name: string;
 
     @Column({ type: 'jsonb', nullable: true })
-    settings: Record<string, any>;
+    settings: Record<string, any> | null;
 
-    @Column({ nullable: true })
-    refreshToken: string;
+    @Column({ type: 'varchar', nullable: true })
+    refreshToken: string | null;
 
     @Column({ default: false })
     isAdmin: boolean;
+
+    @Column({ default: false, name: 'is_verified' })
+    isVerified: boolean;
+
+    @Column({ type: 'varchar', nullable: true, name: 'verification_code' })
+    verificationCode: string | null;
+
+    @Column({ type: 'timestamp', nullable: true, name: 'verification_expires' })
+    verificationExpires: Date | null;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;

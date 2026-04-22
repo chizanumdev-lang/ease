@@ -16,7 +16,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { MainStackParamList, Task, WeeklyAnalytics } from '../../types';
+import { MainStackParamList, Task, TaskStatus, WeeklyAnalytics } from '../../types';
 import { useProgramsStore } from '../../store/programsStore';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
@@ -31,6 +31,8 @@ import TaskCard from '../../components/stitch/TaskCard';
 import StitchModal from '../../components/stitch/StitchModal';
 import HomeEmptyState from '../../components/stitch/HomeEmptyState';
 import AudioWidget from '../../components/home/AudioWidget';
+import { TutorialTour } from '../../components/onboarding/TutorialTour';
+
 
 type Props = NativeStackScreenProps<MainStackParamList> & {
     navigation: any;
@@ -41,12 +43,33 @@ const { width } = Dimensions.get('window');
 export default function HomeScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
     const { showModal } = useModalStore();
-    const { user } = useAuthStore();
+    const { user, updateSettings } = useAuthStore();
     const { todayPlan, currentProgram, updateTask } = useProgramsStore();
     
     const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+    const [isTutorialVisible, setIsTutorialVisible] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const { analytics, fetchAnalytics } = useAnalyticsStore();
+
+    // Trigger tutorial if not completed
+    React.useEffect(() => {
+        if (user && !user.settings?.tutorialCompleted) {
+            const timer = setTimeout(() => {
+                setIsTutorialVisible(true);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [user]);
+
+    const handleTutorialComplete = async () => {
+        setIsTutorialVisible(false);
+        try {
+            await updateSettings({ tutorialCompleted: true });
+        } catch (e) {
+            console.error("Failed to update tutorial setting", e);
+        }
+    };
+
 
     // Fetch Analytics Data on Focus
     useFocusEffect(
@@ -72,9 +95,19 @@ export default function HomeScreen({ navigation }: Props) {
     }, []);
 
     const handleTaskPress = (task: Task) => {
-        // The TaskScreenRouter now handles all task types internally
+        // If task is completed and has a next task, navigate to the next task to maintain "Circuit Flow"
+        if (task.status === TaskStatus.COMPLETED && task.next_task_id) {
+            const nextTask = todayPlan?.tasks?.find(t => t.id === task.next_task_id);
+            if (nextTask && nextTask.status !== TaskStatus.LOCKED) {
+                navigation.navigate('Task', { task: nextTask });
+                return;
+            }
+        }
+
+        // Standard navigation
         navigation.navigate('Task', { task });
     };
+
 
     const handleBeginStory = () => {
         navigation.navigate('GoalWizard');
@@ -235,7 +268,13 @@ export default function HomeScreen({ navigation }: Props) {
                     onPress: () => setIsSuccessModalVisible(false)
                 }}
             />
+
+            <TutorialTour 
+                visible={isTutorialVisible} 
+                onComplete={handleTutorialComplete} 
+            />
         </SafeAreaView>
+
     );
 }
 
