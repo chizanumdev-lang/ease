@@ -2,7 +2,8 @@ import axios from 'axios';
 
 // Get base URL from environment or hardcode for now based on mobile config
 // In Vite, use import.meta.env.VITE_API_URL
-export const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+export const baseURL = import.meta.env.VITE_API_URL || 
+    (import.meta.env.PROD ? '/api' : 'http://localhost:3000/api');
 
 const api = axios.create({
     baseURL,
@@ -30,7 +31,7 @@ api.interceptors.response.use(
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+            window.location.href = '/admin/login';
         }
         return Promise.reject(error);
     }
