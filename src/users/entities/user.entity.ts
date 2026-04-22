@@ -32,6 +32,9 @@ export class User {
     @Column({ nullable: true })
     refreshToken: string;
 
+    @Column({ default: false })
+    isAdmin: boolean;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 

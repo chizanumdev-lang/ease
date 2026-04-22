@@ -19,6 +19,7 @@ import { CoachModule } from './coach/coach.module';
 import { AiModule } from './ai/ai.module';
 import { VideoModule } from './video/video.module';
 import { AudioModule } from './audio/audio.module';
+import { AdminModule } from './admin/admin.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { APP_FILTER } from '@nestjs/core';
@@ -89,6 +90,7 @@ import { APP_FILTER } from '@nestjs/core';
     AiModule,
     VideoModule,
     AudioModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,10 +1,12 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import Redis from 'ioredis';
 import { AudioScriptData } from './interfaces/audio-script.interface';
-
+import { AiGenerationLog } from '../admin/entities/ai-generation-log.entity';
 
 interface AiProvider {
     name: string;
@@ -33,7 +35,11 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         openrouter: false,
     };
 
-    constructor(private configService: ConfigService) {
+    constructor(
+        private configService: ConfigService,
+        @InjectRepository(AiGenerationLog)
+        private aiLogRepository: Repository<AiGenerationLog>,
+    ) {
         const apiKey = this.configService.get<string>('GEMINI_API_KEY');
         if (!apiKey) {
             this.logger.error('GEMINI_API_KEY not found in configuration');
@@ -205,18 +211,44 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
             }
 
             this.locks[provider.name] = true;
+            const startTime = Date.now();
             try {
                 this.logger.log(`Calling provider: ${provider.name}`);
                 const result = await provider.generate(prompt);
+                const latency = Date.now() - startTime;
+
                 await this.incrementUsage(provider.name);
+
+                // Log success
+                this.aiLogRepository.save({
+                    type: 'ai_call',
+                    model: provider.name,
+                    prompt: prompt.substring(0, 500), // Truncate for log
+                    response: result.substring(0, 500),
+                    status: 'success',
+                    latency,
+                    createdAt: new Date(),
+                }).catch(err => this.logger.error('Failed to save AI log', err));
 
                 // Cache successful response for 7 days
                 try { await this.redis.setex(cacheKey, 604800, result); } catch { /* non-critical */ }
 
                 return result;
             } catch (error) {
+                const latency = Date.now() - startTime;
                 this.logger.error(`Provider ${provider.name} failed: ${error?.message || error}`);
                 this.handleProviderError(provider.name, error);
+
+                // Log failure
+                this.aiLogRepository.save({
+                    type: 'ai_call',
+                    model: provider.name,
+                    prompt: prompt.substring(0, 500),
+                    status: 'failure',
+                    errorMessage: error?.message || String(error),
+                    latency,
+                    createdAt: new Date(),
+                }).catch(err => this.logger.error('Failed to save AI log', err));
             } finally {
                 this.locks[provider.name] = false;
             }
