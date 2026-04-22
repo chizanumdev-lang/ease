@@ -9,6 +9,7 @@ import {
 import { HttpAdapterHost } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { join } from 'path';
 import { ErrorLog } from '../../admin/entities/error-log.entity';
 
 @Catch()
@@ -37,6 +38,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
             path: httpAdapter.getRequestUrl(request),
             message: exception?.message || 'Internal server error',
         };
+
+        // Smart Redirect for Admin SPA Fallback
+        if (httpStatus === HttpStatus.NOT_FOUND) {
+            const url = httpAdapter.getRequestUrl(request);
+            // If navigating to an admin page directly, serve index.html
+            // We avoid redirecting for API calls or specific file requests (containing a dot)
+            if (url.startsWith('/admin') && !url.startsWith('/api') && !url.includes('.')) {
+                const response = ctx.getResponse();
+                // Check if sendFile is available (Express)
+                if (response && typeof response.sendFile === 'function') {
+                    return response.sendFile(join(process.cwd(), 'public', 'admin', 'index.html'));
+                }
+            }
+        }
 
         // Log to console/Sentry (optional, Sentry already handles some)
         this.logger.error(
