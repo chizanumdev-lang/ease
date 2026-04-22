@@ -2,7 +2,8 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform, Alert } from 'react-native';
-import { DayPlan, Task, AudioTrack } from '../types';
+import { DayPlan, Task, AudioTrack, TaskStatus } from '../types';
+import { authService } from './auth.service';
 
 // Configure how notifications behave when app is in foreground
 Notifications.setNotificationHandler({
@@ -43,12 +44,28 @@ class NotificationService {
         }
 
         if (Device.isDevice) {
-            const token = (await Notifications.getExpoPushTokenAsync({
-                projectId: Constants.expoConfig?.extra?.eas?.projectId,
-            })).data;
-            return token;
+            try {
+                const token = (await Notifications.getExpoPushTokenAsync({
+                    projectId: Constants.expoConfig?.extra?.eas?.projectId,
+                })).data;
+                return token;
+            } catch (error) {
+                console.log('Error getting push token:', error);
+            }
         } else {
             console.log('Note: Physical device needed for Expo Push Token (remote), but local notifications may work.');
+        }
+    }
+
+    async syncPushToken() {
+        try {
+            const token = await this.registerForPushNotificationsAsync();
+            if (token) {
+                console.log('[NotificationService] Syncing push token:', token);
+                await authService.updateSettings({ pushToken: token });
+            }
+        } catch (error) {
+            console.error('[NotificationService] Failed to sync push token:', error);
         }
     }
 
@@ -95,6 +112,20 @@ class NotificationService {
             });
         }
 
+        // 3. Schedule Morning Kickoff (8:00 AM)
+        const morningKickoffTime = new Date();
+        morningKickoffTime.setHours(8, 0, 0, 0);
+        if (morningKickoffTime < new Date()) {
+            morningKickoffTime.setDate(morningKickoffTime.getDate() + 1);
+        }
+        notifications.push({
+            title: 'Good Morning!',
+            body: 'Your plan for today is ready. Let\'s make it count!',
+            date: morningKickoffTime,
+            type: 'system',
+            data: { type: 'kickoff' }
+        });
+
         // Sort by time
         notifications.sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -102,6 +133,8 @@ class NotificationService {
         const limitedNotifications = notifications.slice(0, 4);
 
         for (const notif of limitedNotifications) {
+            const secondsUntil = Math.max(1, Math.floor((notif.date.getTime() - Date.now()) / 1000));
+            
             await Notifications.scheduleNotificationAsync({
                 content: {
                     title: notif.title,
@@ -109,8 +142,10 @@ class NotificationService {
                     data: notif.data,
                 },
                 trigger: {
-                    date: notif.date,
-                } as any, // Type assertion due to expo version nuances
+                    seconds: secondsUntil,
+                    repeats: false,
+                    channelId: 'default',
+                } as any,
             });
         }
     }
@@ -134,9 +169,13 @@ class NotificationService {
             id: 'test-day',
             dayNumber: 1,
             programId: 'test-prog',
+            status: 'active',
             tasks: [{
                 id: 'test-task',
                 title: 'Test Notification',
+                status: TaskStatus.PENDING,
+                type: 'audio',
+                order: 0,
                 completed: false,
                 scheduledAt: new Date(Date.now() + 5000).toISOString(), // 5 seconds from now
                 dayPlanId: 'test-day',

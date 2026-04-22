@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Logo from '../../components/Logo';
 import { useProgramsStore } from '../../store/programsStore';
 import { useModalStore } from '../../store/modalStore';
+import { notificationService } from '../../services/notification.service';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'Settings'>;
 
@@ -98,6 +99,24 @@ export default function SettingsScreen({ navigation }: Props) {
             });
         } finally {
             setIsGeneratingBinaural(false);
+        }
+    };
+
+    const handleTestNotification = async () => {
+        try {
+            await notificationService.testNotification();
+            showModal({
+                type: 'success',
+                title: 'Scheduled',
+                description: 'A test notification has been scheduled for 5 seconds from now. Please lock your screen or put the app in background.'
+            });
+        } catch (error) {
+            console.error('Test notification failed:', error);
+            showModal({
+                type: 'error',
+                title: 'Error',
+                description: 'Failed to schedule test notification'
+            });
         }
     };
 
@@ -194,6 +213,7 @@ export default function SettingsScreen({ navigation }: Props) {
                             logoutPromise,
                             new Promise(resolve => setTimeout(resolve, 800))
                         ]);
+                        useModalStore.getState().hideModal();
                     } catch (error) {
                         console.error('Logout error:', error);
                         // Fallback: simple hide if error, though logout usually clears state and reloads app
@@ -603,6 +623,21 @@ export default function SettingsScreen({ navigation }: Props) {
                             </View>
                         )}
                     </View>
+
+                    <View style={[styles.debugCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant, marginTop: 16 }]}>
+                        <Text style={[styles.debugLabel, { color: colors.text }]}>Local Notifications</Text>
+                        <Text style={[styles.debugSubtitle, { color: colors.textMuted, marginTop: 0, marginBottom: 12 }]}>Test if local scheduling and permissions are working correctly.</Text>
+                        
+                        <TouchableOpacity 
+                            style={[styles.debugButton, { backgroundColor: colors.secondaryContainer }]}
+                            onPress={handleTestNotification}
+                        >
+                            <View style={styles.row}>
+                                <Ionicons name="notifications-outline" size={20} color={colors.text} style={{ marginRight: 8 }} />
+                                <Text style={[styles.debugButtonText, { color: colors.text }]}>Send Test Notification (5s)</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Plan Management */}
@@ -984,6 +1019,10 @@ const styles = StyleSheet.create({
     },
     resultLabel: {
         fontSize: 13,
+        fontWeight: '600',
+    },
+    chipText: {
+        fontSize: 14,
         fontWeight: '600',
     },
 });

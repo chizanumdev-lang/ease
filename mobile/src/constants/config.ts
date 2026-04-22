@@ -1,10 +1,14 @@
-// export const API_BASE_URL = 'http://localhost:3000/api';
-export const API_BASE_URL = 'https://ease-amber.vercel.app/api';
+const ENV = process.env.EXPO_PUBLIC_ENV || 'local';
+const LOCAL_URL = process.env.EXPO_PUBLIC_API_URL_LOCAL || 'http://localhost:3000/api';
+const STAGING_URL = process.env.EXPO_PUBLIC_API_URL_STAGING || 'https://ease-amber.vercel.app/api';
+
+export const API_BASE_URL = ENV === 'staging' ? STAGING_URL : LOCAL_URL;
 
 export const API_ENDPOINTS = {
     // Auth
     SIGNUP: '/auth/signup',
     LOGIN: '/auth/login',
+    REFRESH: '/auth/refresh',
 
     // User
     ME: '/me',

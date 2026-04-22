@@ -33,6 +33,24 @@ export const authService = {
         return response.data;
     },
 
+    async refreshTokens(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+        const response = await api.post<{ accessToken: string; refreshToken: string }>(
+            API_ENDPOINTS.REFRESH,
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${refreshToken}`,
+                },
+            }
+        );
+
+        // Store new tokens
+        await secureStorage.setAccessToken(response.data.accessToken);
+        await secureStorage.setRefreshToken(response.data.refreshToken);
+
+        return response.data;
+    },
+
     async logout(): Promise<void> {
         await secureStorage.clearTokens();
         mmkvStorage.clearAll();

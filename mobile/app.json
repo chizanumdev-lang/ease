@@ -32,6 +32,11 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#ffffff",
+      "iosDisplayInForeground": true
+    },
     "plugins": [
       "expo-localization",
       "@react-native-community/datetimepicker",

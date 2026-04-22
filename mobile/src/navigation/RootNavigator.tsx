@@ -43,8 +43,8 @@ export default function RootNavigator() {
         console.log('[NAV] RootNavigator mounted, calling loadUser');
         loadUser();
 
-        // Register for push notifications
-        notificationService.registerForPushNotificationsAsync();
+        // Register and sync push notifications
+        notificationService.syncPushToken();
 
         // Handle notification responses
         const subscription = notificationService.addResponseListener(response => {

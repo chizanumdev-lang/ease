@@ -433,8 +433,7 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                                     intensity={30} 
                                     style={[
                                         styles.glassCard, 
-                                        { borderLeftColor: idx % 2 === 0 ? colors.primary : colors.secondary },
-                                        idx === 2 && styles.wideCard
+                                        { borderLeftColor: idx % 2 === 0 ? colors.primary : colors.secondary }
                                     ]}
                                 >
                                     <View style={styles.cardHeader}>
@@ -693,9 +692,8 @@ const styles = StyleSheet.create({
         letterSpacing: -0.5,
     },
     takeawaysGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 12,
+        flexDirection: 'column',
+        gap: 16,
     },
     glassCard: {
         padding: 20,
@@ -703,10 +701,7 @@ const styles = StyleSheet.create({
         borderLeftWidth: 4,
         overflow: 'hidden',
         backgroundColor: 'rgba(255,255,255,0.03)',
-        width: (width - 60) / 2,
-    },
-    wideCard: {
-        width: width - 48,
+        width: '100%',
     },
     cardHeader: {
         flexDirection: 'row',

@@ -195,6 +195,11 @@ export const useProgramsStore = create<ProgramsState>()(
                     }
 
                     set({ todayPlan, isLoading: false });
+                    
+                    // Schedule notifications for the new plan
+                    if (todayPlan) {
+                        notificationService.scheduleForDay(todayPlan);
+                    }
                 } catch (error: any) {
                     const status = error.response?.status;
                     if (status === 404 || status === 500) {
@@ -390,7 +395,10 @@ export const useProgramsStore = create<ProgramsState>()(
             },
 
             clearError: () => set({ error: null }),
-            reset: () => set({ currentProgram: null, todayPlan: null, syncQueue: [], error: null, isLoading: false }),
+            reset: () => {
+                notificationService.cancelAll();
+                set({ currentProgram: null, todayPlan: null, syncQueue: [], error: null, isLoading: false });
+            },
 
             deleteProgram: async (programId: string) => {
                 if (programId.startsWith('mock-')) {
@@ -401,6 +409,7 @@ export const useProgramsStore = create<ProgramsState>()(
                 set({ isLoading: true, error: null });
                 try {
                     await programsService.deleteProgram(programId);
+                    notificationService.cancelAll();
                     set({ currentProgram: null, todayPlan: null, isLoading: false, error: null });
                 } catch (error: any) {
                     set({

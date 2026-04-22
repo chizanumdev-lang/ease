@@ -63,22 +63,40 @@ api.interceptors.response.use(
         if (status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
-            const refreshToken = await secureStorage.getRefreshToken();
+            try {
+                const refreshToken = await secureStorage.getRefreshToken();
+                if (refreshToken) {
+                    console.log('[API] Attempting to refresh token...');
+                    
+                    // Call refresh endpoint directly to avoid circular dependency with authService
+                    const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
+                        headers: { Authorization: `Bearer ${refreshToken}` }
+                    });
 
-            if (refreshToken) {
-                // TODO: Call /auth/refresh and retry the original request
-                // For now, fall through to logout
-                console.warn('[API] Refresh token found but refresh endpoint not yet implemented.');
-            }
+                    const { accessToken, refreshToken: newRefreshToken } = response.data;
+                    
+                    // Store new tokens
+                    await secureStorage.setAccessToken(accessToken);
+                    await secureStorage.setRefreshToken(newRefreshToken);
 
-            // Clear all local session data and trigger a proper logout
-            console.warn('[API] Session expired — clearing tokens and logging out.');
-            await secureStorage.clearTokens();
-            await mmkvStorage.clearAll();
+                    console.log('[API] Token refreshed successfully. Retrying original request.');
 
-            // Notify the auth store so the UI navigates to Login
-            if (onUnauthorized) {
-                onUnauthorized();
+                    // Update the original request's auth header and retry
+                    originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                    return api(originalRequest);
+                }
+            } catch (refreshError) {
+                console.error('[API] Token refresh failed:', refreshError);
+                
+                // Only logout if refresh actually fails
+                console.warn('[API] Refresh failed — clearing tokens and logging out.');
+                await secureStorage.clearTokens();
+                await mmkvStorage.clearAll();
+
+                if (onUnauthorized) {
+                    onUnauthorized();
+                }
+                return Promise.reject(refreshError);
             }
         }
 
