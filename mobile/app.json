@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "ease pro",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,15 +14,21 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.chizanumdev.ease",
+      "bundleIdentifier": "com.viicsoft.ease",
+      "buildNumber": "3",
       "infoPList": {
         "UIBackgroundModes": [
+          "audio",
           "audio"
         ]
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.chizanumdev.ease",
+      "package": "com.viicsoft.ease",
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
