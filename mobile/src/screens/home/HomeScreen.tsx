@@ -119,19 +119,7 @@ export default function HomeScreen({ navigation }: Props) {
                 <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
                 <View style={styles.topNavWrapper}>
                     <View style={styles.topNav}>
-                        <TouchableOpacity 
-                            style={styles.navButton}
-                            onPress={() => {
-                                useProgramsStore.getState().loadMockTaskChain();
-                                showModal({
-                                    type: 'success',
-                                    title: "Demo Loaded",
-                                    description: "The high-fidelity task circuit has been loaded."
-                                });
-                            }}
-                        >
-                            <Ionicons name="flask-outline" size={24} color={colors.primary} />
-                        </TouchableOpacity>
+                        <View style={styles.navButton} />
                         <Logo size={32} />
                         <TouchableOpacity 
                             style={[styles.profileButton, { backgroundColor: colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' }]}
@@ -150,19 +138,7 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={styles.header}>
             {/* Top Navigation */}
             <View style={styles.topNav}>
-                <TouchableOpacity 
-                    style={styles.navButton}
-                    onPress={() => {
-                        useProgramsStore.getState().loadMockTaskChain();
-                        showModal({
-                            type: 'success',
-                            title: "Demo Loaded",
-                            description: "The high-fidelity task circuit has been loaded."
-                        });
-                    }}
-                >
-                    <Ionicons name="flask-outline" size={24} color={colors.primary} />
-                </TouchableOpacity>
+                <View style={styles.navButton} />
                 <Logo size={32} />
                 <TouchableOpacity 
                     style={[styles.profileButton, { backgroundColor: colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' }]}
