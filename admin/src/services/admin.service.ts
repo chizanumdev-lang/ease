@@ -10,6 +10,8 @@ export interface PulseMetrics {
   aiGens?: number;
   avgStreak?: number;
   npsScore?: number;
+  uptime?: number;
+  latency?: number;
   alerts?: Array<{
     id: string;
     type: 'warning' | 'error' | 'info';
@@ -45,10 +47,20 @@ export interface UserMetric {
   };
 }
 
+export interface QueueStats {
+  waiting: number;
+  active: number;
+  completed: number;
+  failed: number;
+  delayed: number;
+  total: number;
+}
+
 export interface SystemHealthData {
   aiLogs: any[];
   recentErrors: any[];
   totalCost: number;
+  queueStats?: QueueStats;
 }
 
 export const adminService = {
@@ -93,6 +105,20 @@ export const adminService = {
 
   async toggleAdmin(id: string): Promise<UserMetric> {
     const response = await api.patch(`/admin/users/${id}/role`);
+    return response.data;
+  },
+
+  async getQueueStats(): Promise<QueueStats> {
+    const response = await api.get('/admin/system/queue');
+    return response.data;
+  },
+
+  async retryHydration(dayId: string): Promise<void> {
+    await api.post(`/admin/programs/hydrate/${dayId}`);
+  },
+
+  async getTaskTemplates(): Promise<any[]> {
+    const response = await api.get('/admin/task-templates');
     return response.data;
   }
 };

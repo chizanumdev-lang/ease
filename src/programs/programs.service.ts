@@ -241,6 +241,7 @@ export class ProgramsService {
                 day.dayNumber,
                 params.duration || 7,
                 params,
+                { dayPlanId: day.id },
             );
 
             await this.saveDayContent(day, content, params, { forceSyncAudio: day.dayNumber === 1 });

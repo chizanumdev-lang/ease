@@ -18,14 +18,18 @@ import { useAuthStore } from '../../store/authStore';
 import { useGoalsStore } from '../../store/goalsStore';
 import { useProgramsStore } from '../../store/programsStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useModalStore } from '../../store/modalStore';
-
+import { useForm, Controller } from 'react-hook-form';
+import { format, addDays } from 'date-fns';
+import LottieView from 'lottie-react-native';
+import { BarChart } from 'react-native-gifted-charts';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import LoadingState from '../../components/LoadingState';
 import BentoCategoryGrid from '../../components/stitch/BentoCategoryGrid';
 import EditorialCard from '../../components/stitch/EditorialCard';
 import StitchButton from '../../components/StitchButton';
+import { useTheme } from '../../hooks/useTheme';
 
 const { width } = Dimensions.get('window');
 
@@ -109,12 +113,17 @@ export default function GoalWizardScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, isDark, fonts, shadows } = useTheme();
     const [step, setStep] = useState<Step>('CATEGORY');
 
-    // Form State
-    const [category, setCategory] = useState('');
-    const [goalDescription, setGoalDescription] = useState('');
-    const [targetDate, setTargetDate] = useState('');
-    const [timeframe, setTimeframe] = useState<number>(60);
-    const [dailyMinutes, setDailyMinutes] = useState<number>(30);
+    const { control, handleSubmit, watch, setValue } = useForm({
+        defaultValues: {
+            category: '',
+            goalDescription: '',
+            targetDate: '',
+            timeframe: 60,
+            dailyMinutes: 30,
+        }
+    });
+
+    const formData = watch();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
@@ -124,16 +133,17 @@ export default function GoalWizardScreen({ navigation }: Props) {
     const { generateProgram, fetchPreviewMetadata } = useProgramsStore();
     const { showModal } = useModalStore();
     const [previewData, setPreviewData] = useState<any>(null);
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     const handleNext = async () => {
         if (step === 'CATEGORY') {
-            if (!category) {
+            if (!formData.category) {
                 showModal({ type: 'info', title: 'Selection Required', description: 'Choose your journey foundation.' });
                 return;
             }
             setStep('DEFINITION');
         } else if (step === 'DEFINITION') {
-            if (!goalDescription.trim()) {
+            if (!formData.goalDescription.trim()) {
                 showModal({ type: 'info', title: 'Define Your Path', description: 'Tell us a bit about your goal.' });
                 return;
             }
@@ -159,10 +169,10 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
                 // Fetch preview metadata for the Review screen
                 // We omit the goalId as it hasn't been created yet
-                const data = await fetchPreviewMetadata(undefined, timeframe, {
-                    minutesPerDay: dailyMinutes,
-                    category,
-                    goalDescription: goalDescription.trim()
+                const data = await fetchPreviewMetadata(undefined, formData.timeframe, {
+                    minutesPerDay: formData.dailyMinutes,
+                    category: formData.category,
+                    goalDescription: formData.goalDescription.trim()
                 });
                 setPreviewData(data);
                 useModalStore.getState().hideModal();
@@ -186,7 +196,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                 setIsLoadingPreview(false);
             }
         } else if (step === 'REVIEW') {
-            handleSubmit();
+            handleSubmit(handleFinalSubmit)();
         }
     };
 
@@ -197,7 +207,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
         else navigation.goBack();
     };
 
-    const handleSubmit = async () => {
+    const handleFinalSubmit = async (data: any) => {
         setIsSubmitting(true);
         
         showModal({
@@ -207,20 +217,20 @@ export default function GoalWizardScreen({ navigation }: Props) {
         });
 
         try {
-            const title = goalDescription.split('.')[0].substring(0, 50) + (goalDescription.length > 50 ? '...' : '');
+            const title = data.goalDescription.split('.')[0].substring(0, 50) + (data.goalDescription.length > 50 ? '...' : '');
 
             const goal = await createGoal({
                 title,
-                description: goalDescription,
-                category,
-                targetDate: targetDate || new Date(Date.now() + timeframe * 24 * 60 * 60 * 1000).toISOString(),
+                description: data.goalDescription,
+                category: data.category,
+                targetDate: data.targetDate || format(addDays(new Date(), data.timeframe), 'yyyy-MM-dd'),
             });
 
             const program = await generateProgram(
                 goal.id,
-                timeframe,
+                data.timeframe,
                 { 
-                    minutesPerDay: dailyMinutes, 
+                    minutesPerDay: data.dailyMinutes, 
                     learningStyle: 'mixed', 
                     constraints: [],
                     metadata: previewData // Pass the AI-generated preview to be saved
@@ -258,11 +268,16 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
     if (step === 'GENERATING') {
         return (
-            <LoadingState 
-                title="Manifesting your journey" 
-                subtitle="Analyzing goal • Structuring curriculum • Scheduling tasks"
-                variant="full"
-            />
+            <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+                <LottieView
+                    source={{ uri: 'https://assets9.lottiefiles.com/packages/lf20_toum81uz.json' }}
+                    autoPlay
+                    loop
+                    style={{ width: 300, height: 300 }}
+                />
+                <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginTop: 20 }}>Manifesting your journey</Text>
+                <Text style={{ color: colors.textMuted, fontFamily: fonts.body, marginTop: 10 }}>Analyzing goal • Structuring curriculum • Scheduling tasks</Text>
+            </View>
         );
     }
 
@@ -329,9 +344,9 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                 {renderHeader(1, "Select Category", "What do you want to work on? Each path offers specialized coaching insights.")}
                                 <BentoCategoryGrid 
                                     categories={CATEGORIES}
-                                    selectedId={category}
+                                    selectedId={formData.category}
                                     onSelect={(id) => {
-                                        setCategory(id);
+                                        setValue('category', id);
                                         // Auto-advance with a slight delay for visual feedback
                                         setTimeout(() => setStep('DEFINITION'), 300);
                                     }}
@@ -358,15 +373,23 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                 
                                 <View style={styles.inputSection}>
                                     <View style={[styles.editorialTextAreaContainer, { backgroundColor: colors.surfaceContainerHighest }]}>
-                                        <TextInput
-                                            style={[styles.editorialTextArea, { color: colors.text, fontFamily: fonts.body }]}
-                                            placeholder="Describe your goal..."
-                                            placeholderTextColor={colors.outlineVariant}
-                                            multiline
-                                            numberOfLines={6}
-                                            value={goalDescription}
-                                            onChangeText={setGoalDescription}
-                                            textAlignVertical="top"
+                                        <Controller
+                                            control={control}
+                                            name="goalDescription"
+                                            rules={{ required: true }}
+                                            render={({ field: { onChange, onBlur, value } }) => (
+                                                <TextInput
+                                                    style={[styles.editorialTextArea, { color: colors.text, fontFamily: fonts.body }]}
+                                                    placeholder="Describe your goal..."
+                                                    placeholderTextColor={colors.outlineVariant}
+                                                    multiline
+                                                    numberOfLines={6}
+                                                    value={value}
+                                                    onChangeText={onChange}
+                                                    onBlur={onBlur}
+                                                    textAlignVertical="top"
+                                                />
+                                            )}
                                         />
                                         <View style={styles.textAreaIcon}>
                                             <Ionicons name="pencil-outline" size={16} color={colors.outlineVariant} />
@@ -380,7 +403,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                                 <TouchableOpacity 
                                                     key={idx} 
                                                     style={[styles.chip, { backgroundColor: colors.secondaryContainer, borderColor: 'rgba(34, 83, 68, 0.1)' }]}
-                                                    onPress={() => setGoalDescription(text)}
+                                                    onPress={() => setValue('goalDescription', text)}
                                                 >
                                                     <Text style={[styles.chipText, { color: colors.primary, fontFamily: fonts.bodyMedium }]}>"{text}"</Text>
                                                 </TouchableOpacity>
@@ -400,16 +423,49 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                         </Text>
                                         
                                         <View style={styles.dateInputWrapper}>
-                                            <TextInput
-                                                style={[styles.dateInput, { backgroundColor: colors.surface, color: colors.text, fontFamily: fonts.body }]}
-                                                placeholder="YYYY-MM-DD"
-                                                placeholderTextColor={colors.outlineVariant}
-                                                value={targetDate}
-                                                onChangeText={setTargetDate}
+                                            <Controller
+                                                control={control}
+                                                name="targetDate"
+                                                render={({ field: { onChange, value } }) => (
+                                                    <>
+                                                        <TouchableOpacity 
+                                                            style={[styles.dateInput, { backgroundColor: colors.surface, justifyContent: 'center' }]}
+                                                            onPress={() => setShowDatePicker(true)}
+                                                        >
+                                                            <Text style={{ 
+                                                                color: value ? colors.text : colors.outlineVariant, 
+                                                                fontFamily: fonts.body,
+                                                                fontSize: 16 
+                                                            }}>
+                                                                {value ? format(new Date(value), 'PPP') : 'Pick a target date'}
+                                                            </Text>
+                                                            <View style={styles.dateIconWrapper}>
+                                                                <Ionicons name="calendar" size={20} color={colors.primary} />
+                                                            </View>
+                                                        </TouchableOpacity>
+
+                                                        {showDatePicker && (
+                                                            <DateTimePicker
+                                                                value={value ? new Date(value) : new Date()}
+                                                                mode="date"
+                                                                display="default"
+                                                                onChange={(event, selectedDate) => {
+                                                                    if (Platform.OS === 'android') {
+                                                                        setShowDatePicker(false);
+                                                                    }
+                                                                    
+                                                                    if (event.type === 'set' && selectedDate) {
+                                                                        onChange(selectedDate.toISOString().split('T')[0]);
+                                                                    } else if (event.type === 'dismissed') {
+                                                                        setShowDatePicker(false);
+                                                                    }
+                                                                }}
+                                                                minimumDate={new Date()}
+                                                            />
+                                                        )}
+                                                    </>
+                                                )}
                                             />
-                                            <View style={styles.dateIconWrapper}>
-                                                <Ionicons name="calendar" size={20} color={colors.primary} />
-                                            </View>
                                         </View>
                                     </View>
                                 </View>
@@ -433,15 +489,15 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                                 style={[
                                                     styles.selectionItem, 
                                                     { 
-                                                        backgroundColor: timeframe === dur.id ? colors.primary : colors.surfaceContainerLow,
-                                                        borderColor: timeframe === dur.id ? colors.primary : 'rgba(0,0,0,0.05)',
+                                                        backgroundColor: formData.timeframe === dur.id ? colors.primary : colors.surfaceContainerLow,
+                                                        borderColor: formData.timeframe === dur.id ? colors.primary : 'rgba(0,0,0,0.05)',
                                                     },
-                                                    timeframe === dur.id && shadows.ambient
+                                                    formData.timeframe === dur.id && shadows.ambient
                                                 ]}
-                                                onPress={() => setTimeframe(dur.id)}
+                                                onPress={() => setValue('timeframe', dur.id)}
                                             >
-                                                <Text style={[styles.selectionTitle, { color: timeframe === dur.id ? colors.background : colors.text, fontFamily: fonts.display }]}>{dur.title}</Text>
-                                                <Text style={[styles.selectionSub, { color: timeframe === dur.id ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontFamily: fonts.body }]}>{dur.subtitle}</Text>
+                                                <Text style={[styles.selectionTitle, { color: formData.timeframe === dur.id ? colors.background : colors.text, fontFamily: fonts.display }]}>{dur.title}</Text>
+                                                <Text style={[styles.selectionSub, { color: formData.timeframe === dur.id ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontFamily: fonts.body }]}>{dur.subtitle}</Text>
                                             </TouchableOpacity>
                                         ))}
                                     </View>
@@ -457,15 +513,15 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                                 style={[
                                                     styles.selectionItem, 
                                                     { 
-                                                        backgroundColor: dailyMinutes === comm.id ? colors.secondary : colors.surfaceContainerLow,
-                                                        borderColor: dailyMinutes === comm.id ? colors.secondary : 'rgba(0,0,0,0.05)',
+                                                        backgroundColor: formData.dailyMinutes === comm.id ? colors.secondary : colors.surfaceContainerLow,
+                                                        borderColor: formData.dailyMinutes === comm.id ? colors.secondary : 'rgba(0,0,0,0.05)',
                                                     },
-                                                    dailyMinutes === comm.id && shadows.ambient
+                                                    formData.dailyMinutes === comm.id && shadows.ambient
                                                 ]}
-                                                onPress={() => setDailyMinutes(comm.id)}
+                                                onPress={() => setValue('dailyMinutes', comm.id)}
                                             >
-                                                <Text style={[styles.selectionTitle, { color: dailyMinutes === comm.id ? colors.background : colors.text, fontFamily: fonts.display }]}>{comm.title}</Text>
-                                                <Text style={[styles.selectionSub, { color: dailyMinutes === comm.id ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontFamily: fonts.body }]}>{comm.type}</Text>
+                                                <Text style={[styles.selectionTitle, { color: formData.dailyMinutes === comm.id ? colors.background : colors.text, fontFamily: fonts.display }]}>{comm.title}</Text>
+                                                <Text style={[styles.selectionSub, { color: formData.dailyMinutes === comm.id ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontFamily: fonts.body }]}>{comm.type}</Text>
                                             </TouchableOpacity>
                                         ))}
                                     </View>
@@ -490,22 +546,44 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                         <View style={[styles.reviewSummaryCard, shadows.ambient]}>
                                             {/* TODO: Replace with specialized category-specific high-fidelity images in the future */}
                                             <ImageBackground
-                                                source={CATEGORIES.find(c => c.id === category)?.bgImage}
+                                                source={CATEGORIES.find(c => c.id === formData.category)?.bgImage}
                                                 style={styles.reviewSummaryBg}
                                                 imageStyle={{ borderRadius: 32 }}
                                             >
                                                 <View style={styles.reviewSummaryOverlay}>
                                                     <View style={[styles.categoryBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
                                                         <Text style={[styles.categoryBadgeText, { color: '#fff', fontFamily: fonts.label }]}>
-                                                            {previewData?.category?.toUpperCase() || category.toUpperCase()}
+                                                            {previewData?.category?.toUpperCase() || formData.category.toUpperCase()}
                                                         </Text>
                                                     </View>
                                                     <Text style={[styles.reviewSummaryTitle, { color: '#fff', fontFamily: fonts.display }]}>
-                                                        {previewData?.title || goalDescription.substring(0, 40) + '...'}
+                                                        {previewData?.title || formData.goalDescription.substring(0, 40) + '...'}
                                                     </Text>
                                                 </View>
                                             </ImageBackground>
                                         </View>
+                                        
+                                        {previewData?.weeklyIntensity && (
+                                            <View style={[styles.intensityCard, { backgroundColor: colors.surfaceContainerLow, borderRadius: 24, padding: 20, marginBottom: 20 }]}>
+                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label, marginBottom: 12 }]}>INTENSITY PROJECTION</Text>
+                                                <BarChart
+                                                    data={previewData.weeklyIntensity.map((val: number, i: number) => ({
+                                                        value: val,
+                                                        label: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]
+                                                    }))}
+                                                    height={80}
+                                                    barWidth={30}
+                                                    noOfSections={3}
+                                                    barBorderRadius={4}
+                                                    frontColor={colors.primary}
+                                                    yAxisThickness={0}
+                                                    xAxisThickness={0}
+                                                    hideRules
+                                                    hideYAxisText
+                                                    xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 10, fontWeight: '900' }}
+                                                />
+                                            </View>
+                                        )}
 
                                         {/* Coach Insight - Glassmorphism style */}
                                         <View style={[styles.insightPanel, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(34, 83, 68, 0.05)', borderColor: colors.primary + '20' }]}>
@@ -521,11 +599,11 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                         <View style={styles.reviewGrid}>
                                             <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
                                                 <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>DURATION</Text>
-                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{timeframe} Days</Text>
+                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{formData.timeframe} Days</Text>
                                             </View>
                                             <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
                                                 <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>INVESTMENT</Text>
-                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{dailyMinutes} Min</Text>
+                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{formData.dailyMinutes} Min</Text>
                                             </View>
                                             <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
                                                 <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>PEAK INTENSITY</Text>
@@ -945,5 +1023,9 @@ const styles = StyleSheet.create({
     gridValue: {
         fontSize: 20,
         fontWeight: '900',
+    },
+    intensityCard: {
+        padding: 24,
+        borderRadius: 24,
     }
 });

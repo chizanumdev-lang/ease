@@ -30,22 +30,46 @@ export default function TaskScreenRouter({ route, navigation }: Props) {
 
     const handleBack = () => navigation.goBack();
 
+    const handleTaskComplete = async (metadata: TaskMetadata) => {
+        // 1. Mark in store (this also marks next as IN_PROGRESS)
+        await completeTask(task.id, metadata);
+
+        // 2. Find next task for "Circuit Flow"
+        if (!todayPlan?.tasks) {
+            navigation.goBack();
+            return;
+        }
+
+        const currentIndex = todayPlan.tasks.findIndex(t => t.id === task.id);
+        const nextTask = todayPlan.tasks[currentIndex + 1];
+
+        if (nextTask) {
+            // Seemless transition to next task
+            navigation.replace('Task', { task: nextTask });
+        } else {
+            // End of circuit
+            navigation.goBack();
+        }
+    };
+
     const renderTaskContent = () => {
+        const props = { task, onComplete: handleTaskComplete };
+        
         switch (task.type) {
             case 'video':
-                return <VideoTaskComponent task={task} onComplete={(meta: TaskMetadata) => completeTask(task.id, meta)} />;
+                return <VideoTaskComponent {...props} />;
             case 'quiz':
-                return <QuizTaskComponent task={task} onComplete={(meta: TaskMetadata) => completeTask(task.id, meta)} />;
+                return <QuizTaskComponent {...props} />;
             case 'audio':
-                return <AudioTaskComponent task={task} onComplete={(meta: TaskMetadata) => completeTask(task.id, meta)} />;
+                return <AudioTaskComponent {...props} />;
             case 'micro-app':
-                return <MicroAppTaskComponent task={task} onComplete={(meta: TaskMetadata) => completeTask(task.id, meta)} />;
+                return <MicroAppTaskComponent {...props} />;
             case 'reflection':
-                return <ReflectionTaskComponent task={task} onComplete={(meta: TaskMetadata) => completeTask(task.id, meta)} />;
+                return <ReflectionTaskComponent {...props} />;
             case 'journal':
-                return <JournalTaskComponent task={task} onComplete={(meta: TaskMetadata) => completeTask(task.id, meta)} />;
+                return <JournalTaskComponent {...props} />;
             case 'consistency':
-                return <ConsistencyTaskComponent task={task} onComplete={(meta: TaskMetadata) => completeTask(task.id, meta)} />;
+                return <ConsistencyTaskComponent {...props} />;
             default:
                 return (
                     <View style={styles.emptyState}>
@@ -54,6 +78,7 @@ export default function TaskScreenRouter({ route, navigation }: Props) {
                 );
         }
     };
+
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>

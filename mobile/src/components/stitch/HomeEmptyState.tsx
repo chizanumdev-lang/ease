@@ -8,6 +8,7 @@ import {
     ScrollView, 
     Dimensions 
 } from 'react-native';
+import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../store/authStore';
@@ -42,6 +43,14 @@ export default function HomeEmptyState({ onStartPress }: HomeEmptyStateProps) {
             <View style={styles.tactileStack}>
                 {/* Genesis Card */}
                 <View style={[styles.card, styles.genesisCard, { backgroundColor: colors.surfaceContainerLow }]}>
+                    <View style={styles.lottieContainer}>
+                        <LottieView 
+                            source={{ uri: 'https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json' }} 
+                            autoPlay 
+                            loop 
+                            style={styles.lottie}
+                        />
+                    </View>
                     <View style={styles.cardHeader}>
                         <View style={[styles.iconBox, { backgroundColor: colors.primary }]}>
                             <Ionicons name="compass-outline" size={18} color="#fff" />
@@ -164,6 +173,17 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '700',
         letterSpacing: 2,
+    },
+    lottieContainer: {
+        width: '100%',
+        height: 120,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    lottie: {
+        width: 150,
+        height: 150,
     },
     quoteText: {
         fontSize: 15,

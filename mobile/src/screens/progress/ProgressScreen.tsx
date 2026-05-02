@@ -9,9 +9,8 @@ import {
     Image, 
     TouchableOpacity, 
     StatusBar,
-    Animated,
-    Easing,
 } from 'react-native';
+import LottieView from 'lottie-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,33 +25,13 @@ export default function ProgressScreen({ navigation }: any) {
     const { analytics, isLoading, fetchAnalytics } = useAnalyticsStore();
     const [refreshing, setRefreshing] = useState(false);
     
-    // Pulse animation for the tree glow
-    const pulseAnim = useRef(new Animated.Value(1)).current;
-
+    // Pulse animation logic removed in favor of LottieView
+    
     useFocusEffect(
         React.useCallback(() => {
             fetchAnalytics();
         }, [])
     );
-
-    useEffect(() => {
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(pulseAnim, {
-                    toValue: 1.2,
-                    duration: 3000,
-                    easing: Easing.bezier(0.4, 0, 0.6, 1),
-                    useNativeDriver: true,
-                }),
-                Animated.timing(pulseAnim, {
-                    toValue: 1,
-                    duration: 3000,
-                    easing: Easing.bezier(0.4, 0, 0.6, 1),
-                    useNativeDriver: true,
-                }),
-            ])
-        ).start();
-    }, []);
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -96,15 +75,11 @@ export default function ProgressScreen({ navigation }: any) {
             >
                 {/* Main Evolution Display */}
                 <View style={styles.treeSection}>
-                    <Animated.View 
-                        style={[
-                            styles.glowEffect, 
-                            { 
-                                backgroundColor: colors.primary, 
-                                opacity: isDark ? 0.2 : 0.1,
-                                transform: [{ scale: pulseAnim }]
-                            }
-                        ]} 
+                    <LottieView
+                        source={{ uri: 'https://assets5.lottiefiles.com/packages/lf20_96bovdur.json' }}
+                        autoPlay
+                        loop
+                        style={styles.glowLottie}
                     />
                     <View style={[styles.artworkContainer, { borderColor: isDark ? colors.outline : colors.outlineVariant }, shadows.ambient]}>
                         <Image
@@ -254,12 +229,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 24,
     },
-    glowEffect: {
+    glowLottie: {
         position: 'absolute',
-        width: 260,
-        height: 260,
-        borderRadius: 130,
-        top: 10,
+        width: 300,
+        height: 300,
+        top: -10,
     },
     artworkContainer: {
         width: 240,

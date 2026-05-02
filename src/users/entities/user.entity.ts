@@ -6,35 +6,42 @@ import {
     UpdateDateColumn,
     OneToMany,
 } from 'typeorm';
+import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { Goal } from '../../goals/entities/goal.entity';
 import { Program } from '../../programs/entities/program.entity';
 import { QuizAttempt } from '../../quizzes/entities/quiz-attempt.entity';
 import { Progress } from '../../progress/entities/progress.entity';
 import { RewardEvent } from '../../rewards/entities/reward-event.entity';
 
+@ObjectType()
 @Entity('users')
 export class User {
+    @Field(() => ID)
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
+    @Field()
     @Column({ unique: true })
     email: string;
 
     @Column()
     password: string;
 
+    @Field()
     @Column()
     name: string;
 
     @Column({ type: 'jsonb', nullable: true })
     settings: Record<string, any> | null;
 
-    @Column({ type: 'varchar', nullable: true })
+    @Column({ type: 'varchar', nullable: true, name: 'refresh_token' })
     refreshToken: string | null;
 
-    @Column({ default: false })
+    @Field()
+    @Column({ default: false, name: 'is_admin' })
     isAdmin: boolean;
 
+    @Field()
     @Column({ default: false, name: 'is_verified' })
     isVerified: boolean;
 
@@ -44,15 +51,31 @@ export class User {
     @Column({ type: 'timestamp', nullable: true, name: 'verification_expires' })
     verificationExpires: Date | null;
 
+    @Field()
+    @Column({ default: 0 })
+    streak: number;
+
+    @Field()
+    @Column({ default: 1 })
+    level: number;
+
+    @Field()
+    @Column({ default: 0 })
+    xp: number;
+
+    @Field()
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
+    @Field()
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
+    @Field(() => [Goal], { nullable: true })
     @OneToMany(() => Goal, (goal) => goal.user)
     goals: Goal[];
 
+    @Field(() => [Program], { nullable: true })
     @OneToMany(() => Program, (program) => program.user)
     programs: Program[];
 

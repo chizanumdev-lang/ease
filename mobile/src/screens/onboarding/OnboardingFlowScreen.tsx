@@ -19,8 +19,21 @@ import { AuthStackParamList } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useModalStore } from '../../store/modalStore';
+import { useForm, Controller } from 'react-hook-form';
+import AppIntroSlider from 'react-native-app-intro-slider';
+import LottieView from 'lottie-react-native';
+import { BarChart } from 'react-native-gifted-charts';
+import * as Notifications from 'expo-notifications';
 import StitchButton from '../../components/StitchButton';
 import StitchInput from '../../components/StitchInput';
+
+interface OnboardingFormData {
+    nickname: string;
+    growthGoal: string;
+    learningStyle: string;
+    minutesPerDay: number;
+    durationDays: number;
+}
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'OnboardingFlow'>;
 
@@ -32,20 +45,24 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
     const { showModal } = useModalStore();
     const [currentStep, setCurrentStep] = useState(1);
     const { updateSettings, isLoading } = useAuthStore();
+    const { control, handleSubmit, watch, setValue } = useForm<OnboardingFormData>({
+        defaultValues: {
+            nickname: '',
+            growthGoal: 'mindfulness',
+            learningStyle: 'mixed',
+            minutesPerDay: 30,
+            durationDays: 30,
+        }
+    });
 
-    // Step Data
-    const [nickname, setNickname] = useState('');
-    const [growthGoal, setGrowthGoal] = useState('mindfulness');
-    const [learningStyle, setLearningStyle] = useState('mixed');
-    const [minutesPerDay, setMinutesPerDay] = useState(30);
-    const [durationDays, setDurationDays] = useState(30);
-    const [timezone] = useState(Localization.getCalendars()[0]?.timeZone || 'UTC');
+    const formData = watch();
+    const timezone = Localization.getCalendars()[0]?.timeZone || 'UTC';
 
     const handleNext = () => {
         if (currentStep < TOTAL_STEPS) {
             setCurrentStep(currentStep + 1);
         } else {
-            handleComplete();
+            handleSubmit(handleComplete)();
         }
     };
 
@@ -55,19 +72,25 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
         }
     };
 
-    const handleComplete = async () => {
+    const handleComplete = async (data: OnboardingFormData) => {
         const settings = {
-            nickname: nickname || undefined,
+            ...data,
+            nickname: data.nickname || undefined,
             timezone,
-            growthGoal,
-            learningStyle,
-            minutesPerDay,
-            durationDays,
             onboardingCompleted: true,
         };
 
         try {
             await updateSettings(settings);
+            
+            // Send welcome notification
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: `Welcome to Ease, ${data.nickname}!`,
+                    body: "Your journey to a better you starts now. Check your roadmap.",
+                },
+                trigger: null,
+            });
         } catch (error) {
             showModal({
                 type: 'error',
@@ -147,19 +170,19 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                                     style={[
                                         styles.goalCard, 
                                         { backgroundColor: colors.surface, borderColor: colors.outlineVariant },
-                                        growthGoal === goal.id && { borderColor: colors.primary, backgroundColor: colors.surfaceContainerLow }
+                                        formData.growthGoal === goal.id && { borderColor: colors.primary, backgroundColor: colors.surfaceContainerLow }
                                     ]}
-                                    onPress={() => setGrowthGoal(goal.id)}
+                                    onPress={() => setValue('growthGoal', goal.id)}
                                 >
                                     <View style={[
                                         styles.goalIconContainer, 
                                         { backgroundColor: colors.surfaceContainerLow },
-                                        growthGoal === goal.id && { backgroundColor: colors.primary }
+                                        formData.growthGoal === goal.id && { backgroundColor: colors.primary }
                                     ]}>
                                         <Ionicons 
                                             name={goal.icon as any} 
                                             size={24} 
-                                            color={growthGoal === goal.id ? (isDark ? colors.background : "#fff") : colors.primary} 
+                                            color={formData.growthGoal === goal.id ? (isDark ? colors.background : "#fff") : colors.primary} 
                                         />
                                     </View>
                                     <Text style={[styles.goalTitle, { color: colors.text }]}>{goal.title}</Text>
@@ -178,12 +201,20 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                         </View>
                         <Text style={[styles.stepTitle, { color: colors.text }]}>What should we call you?</Text>
                         <Text style={[styles.stepSubtitle, { color: colors.textMuted }]}>Choose a nickname for your journey.</Text>
-                        <StitchInput
-                            label="Nickname"
-                            placeholder="Enter nickname"
-                            value={nickname}
-                            onChangeText={setNickname}
-                            autoFocus
+                        <Controller
+                            control={control}
+                            name="nickname"
+                            rules={{ required: true }}
+                            render={({ field: { onChange, onBlur, value } }) => (
+                                <StitchInput
+                                    label="Nickname"
+                                    placeholder="Enter nickname"
+                                    value={value}
+                                    onChangeText={onChange}
+                                    onBlur={onBlur}
+                                    autoFocus
+                                />
+                            )}
                         />
                     </View>
                 );
@@ -205,19 +236,19 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                                     style={[
                                         styles.optionCard, 
                                         { backgroundColor: colors.surface, borderColor: colors.outlineVariant },
-                                        learningStyle === item.id && { borderColor: colors.primary, backgroundColor: colors.surfaceContainerLow }
+                                        formData.learningStyle === item.id && { borderColor: colors.primary, backgroundColor: colors.surfaceContainerLow }
                                     ]}
-                                    onPress={() => setLearningStyle(item.id)}
+                                    onPress={() => setValue('learningStyle', item.id)}
                                 >
                                     <View style={[
                                         styles.optionIconContainer, 
                                         { backgroundColor: colors.surfaceContainerLow },
-                                        learningStyle === item.id && { backgroundColor: colors.primary }
+                                        formData.learningStyle === item.id && { backgroundColor: colors.primary }
                                     ]}>
                                         <Ionicons 
                                             name={item.icon as any} 
                                             size={24} 
-                                            color={learningStyle === item.id ? (isDark ? colors.background : "#fff") : colors.primary} 
+                                            color={formData.learningStyle === item.id ? (isDark ? colors.background : "#fff") : colors.primary} 
                                         />
                                     </View>
                                     <View style={{ flex: 1 }}>
@@ -225,9 +256,9 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                                         <Text style={[styles.optionDesc, { color: colors.textMuted }]}>{item.desc}</Text>
                                     </View>
                                     <Ionicons 
-                                        name={learningStyle === item.id ? "checkmark-circle" : "ellipse-outline"} 
+                                        name={formData.learningStyle === item.id ? "checkmark-circle" : "ellipse-outline"} 
                                         size={24} 
-                                        color={learningStyle === item.id ? colors.primary : colors.outlineVariant} 
+                                        color={formData.learningStyle === item.id ? colors.primary : colors.outlineVariant} 
                                     />
                                 </TouchableOpacity>
                             ))}
@@ -251,17 +282,17 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                                     style={[
                                         styles.optionCard, 
                                         { backgroundColor: colors.surface, borderColor: colors.outlineVariant },
-                                        minutesPerDay === time && { borderColor: colors.primary, backgroundColor: colors.surfaceContainerLow }
+                                        formData.minutesPerDay === time && { borderColor: colors.primary, backgroundColor: colors.surfaceContainerLow }
                                     ]}
-                                    onPress={() => setMinutesPerDay(time)}
+                                    onPress={() => setValue('minutesPerDay', time)}
                                 >
-                                    <Text style={[styles.optionTitle, { color: colors.text }, minutesPerDay === time && { color: colors.primary }]}>
+                                    <Text style={[styles.optionTitle, { color: colors.text }, formData.minutesPerDay === time && { color: colors.primary }]}>
                                         {time} minutes
                                     </Text>
                                     <Ionicons 
-                                        name={minutesPerDay === time ? "checkmark-circle" : "ellipse-outline"} 
+                                        name={formData.minutesPerDay === time ? "checkmark-circle" : "ellipse-outline"} 
                                         size={24} 
-                                        color={minutesPerDay === time ? colors.primary : colors.outlineVariant} 
+                                        color={formData.minutesPerDay === time ? colors.primary : colors.outlineVariant} 
                                     />
                                 </TouchableOpacity>
                             ))}
@@ -286,16 +317,16 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                                     style={[
                                         styles.optionCard, 
                                         { backgroundColor: colors.surface, borderColor: colors.outlineVariant },
-                                        durationDays === d.id && { borderColor: colors.primary, backgroundColor: colors.surfaceContainerLow }
+                                        formData.durationDays === d.id && { borderColor: colors.primary, backgroundColor: colors.surfaceContainerLow }
                                     ]}
-                                    onPress={() => setDurationDays(d.id)}
+                                    onPress={() => setValue('durationDays', d.id)}
                                 >
                                     <View style={{ flex: 1 }}>
                                         <Text style={[styles.optionTitle, { color: colors.text }]}>{d.label}</Text>
                                         <Text style={[styles.optionDesc, { color: colors.textMuted }]}>{d.desc}</Text>
                                     </View>
-                                    <View style={[styles.radioButton, { borderColor: colors.outlineVariant }, durationDays === d.id && { borderColor: colors.primary }]}>
-                                        {durationDays === d.id && <View style={[styles.radioButtonInner, { backgroundColor: colors.primary }]} />}
+                                    <View style={[styles.radioButton, { borderColor: colors.outlineVariant }, formData.durationDays === d.id && { borderColor: colors.primary }]}>
+                                        {formData.durationDays === d.id && <View style={[styles.radioButtonInner, { backgroundColor: colors.primary }]} />}
                                     </View>
                                 </TouchableOpacity>
                             ))}
@@ -305,14 +336,14 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                             <View style={styles.previewHeader}>
                                 <View>
                                     <Text style={[styles.previewLabel, { color: colors.primary }]}>CURRENT SELECTION</Text>
-                                    <Text style={[styles.previewValue, { color: colors.text }]}>{durationDays} Days</Text>
+                                    <Text style={[styles.previewValue, { color: colors.text }]}>{formData.durationDays} Days</Text>
                                 </View>
                                 <Text style={[styles.previewStatus, { color: colors.textMuted }]}>
-                                    {durationDays === 30 ? 'Foundation' : durationDays === 60 ? 'Consistency' : 'Transformation'}
+                                    {formData.durationDays === 30 ? 'Foundation' : formData.durationDays === 60 ? 'Consistency' : 'Transformation'}
                                 </Text>
                             </View>
                             <View style={[styles.progressBarLarge, { backgroundColor: colors.outlineVariant }]}>
-                                <View style={[styles.progressBarFillLarge, { width: `${(durationDays / 90) * 100}%`, backgroundColor: colors.primary }]} />
+                                <View style={[styles.progressBarFillLarge, { width: `${(formData.durationDays / 90) * 100}%`, backgroundColor: colors.primary }]} />
                             </View>
                         </View>
                     </View>
@@ -322,8 +353,13 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                 return (
                     <View style={styles.stepContainer}>
                         <View style={styles.textCenter}>
-                            <View style={[styles.celebrationIcon, { backgroundColor: colors.surfaceContainerLow }]}>
-                                <Ionicons name="sparkles" size={32} color={colors.primary} />
+                            <View style={styles.lottieContainer}>
+                                <LottieView
+                                    source={{ uri: 'https://assets9.lottiefiles.com/packages/lf20_toum81uz.json' }}
+                                    autoPlay
+                                    loop
+                                    style={styles.lottieCelebration}
+                                />
                             </View>
                             <Text style={[styles.stepTitleLarge, { color: colors.text }]}>Ready to evolve?</Text>
                             <Text style={[styles.stepSubtitleLarge, { color: colors.textMuted }]}>
@@ -335,16 +371,31 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                             <View style={styles.roadmapHeader}>
                                 <Text style={[styles.roadmapLabel, { color: colors.textMuted }]}>WEEKLY ROADMAP</Text>
                                 <View style={[styles.roadmapBadge, { backgroundColor: colors.surfaceContainerLow }]}>
-                                    <Text style={[styles.roadmapBadgeText, { color: colors.primary }]}>Week 1 of {Math.ceil(durationDays / 7)}</Text>
+                                    <Text style={[styles.roadmapBadgeText, { color: colors.primary }]}>Week 1 of {Math.ceil(formData.durationDays / 7)}</Text>
                                 </View>
                             </View>
-                            <View style={styles.chartContainer}>
-                                {[80, 40, 55, 45, 70, 30, 60].map((h, i) => (
-                                    <View key={i} style={styles.chartBarContainer}>
-                                        <View style={[styles.chartBar, { height: `${h}%`, backgroundColor: colors.primary, opacity: i === 0 ? 1 : 0.4 }]} />
-                                        <Text style={[styles.chartDay, { color: colors.textMuted }]}>{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</Text>
-                                    </View>
-                                ))}
+                            <View style={styles.chartWrapper}>
+                                <BarChart
+                                    data={[
+                                        { value: 80, label: 'M' },
+                                        { value: 40, label: 'T' },
+                                        { value: 55, label: 'W' },
+                                        { value: 45, label: 'T' },
+                                        { value: 70, label: 'F' },
+                                        { value: 30, label: 'S' },
+                                        { value: 60, label: 'S' },
+                                    ]}
+                                    height={120}
+                                    barWidth={22}
+                                    noOfSections={3}
+                                    barBorderRadius={4}
+                                    frontColor={colors.primary}
+                                    yAxisThickness={0}
+                                    xAxisThickness={0}
+                                    hideRules
+                                    hideYAxisText
+                                    xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 10, fontWeight: '900' }}
+                                />
                             </View>
                         </View>
 
@@ -715,4 +766,20 @@ const styles = StyleSheet.create({
         marginTop: 16,
         fontWeight: '700',
     },
+    lottieContainer: {
+        height: 120,
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
+    },
+    lottieCelebration: {
+        width: 200,
+        height: 200,
+    },
+    chartWrapper: {
+        paddingTop: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    }
 });

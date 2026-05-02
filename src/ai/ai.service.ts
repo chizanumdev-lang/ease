@@ -184,7 +184,26 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         } catch { /* non-critical */ }
     }
 
-    private async callWithFallback(prompt: string): Promise<string | null> {
+    async generateCustomJson<T>(prompt: string, fallback: T, metadata?: any): Promise<T> {
+        try {
+            const result = await this.callWithFallback(prompt, metadata);
+            if (!result) return fallback;
+
+            // Clean result of any markdown fences
+            const cleanJson = result
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/\s*```$/i, '')
+                .trim();
+
+            return JSON.parse(cleanJson) as T;
+        } catch (e) {
+            this.logger.error(`Failed to generate custom JSON: ${e.message}`);
+            return fallback;
+        }
+    }
+
+    private async callWithFallback(prompt: string, metadata?: any): Promise<string | null> {
         // ── Prompt caching: hash the prompt and check Redis (7-day TTL) ──
         const cacheKey = `ai:${createHash('md5').update(prompt).digest('hex')}`;
         try {
@@ -227,6 +246,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                     response: result.substring(0, 500),
                     status: 'success',
                     latency,
+                    metadata: metadata ? JSON.stringify(metadata) : undefined,
                     createdAt: new Date(),
                 }).catch(err => this.logger.error('Failed to save AI log', err));
 
@@ -247,6 +267,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                     status: 'failure',
                     errorMessage: error?.message || String(error),
                     latency,
+                    metadata: metadata ? JSON.stringify(metadata) : undefined,
                     createdAt: new Date(),
                 }).catch(err => this.logger.error('Failed to save AI log', err));
             } finally {
@@ -258,7 +279,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
 
     private async callGemini(prompt: string): Promise<string> {
         if (!this.genAI) throw new Error('Gemini not configured');
-        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
         const result = await model.generateContent(prompt);
         return result.response.text();
     }
@@ -376,7 +397,8 @@ QUALITY RULES
 - QUIZ GROUNDING: Questions MUST test comprehension of the day's specific theme and video content. Do not ask generic life-coaching questions.
 - AUDIO SCRIPT: The description should be a script summary for a voice-guided session designed for binaural beat background.
 - Each task must be scannable and mobile-friendly.
-- videoTask.searchQuery must be specific enough to return a real tutorial.
+- videoTask.searchQuery must be a specific, high-quality YouTube search query that directly relates to the Goal: "${goal}" and today's theme.
+- Avoid generic queries; ensure they are tailored to help the user achieve "${goal}".
 - reflectionTask.reviewPoints must be exactly 2 (one today's win, one tomorrow's prep).`;
 
         try {
@@ -416,7 +438,7 @@ QUALITY RULES
         }
     }
 
-    async generateSingleDay(goal: string, dayNumber: number, totalDays: number, options: any): Promise<any> {
+    async generateSingleDay(goal: string, dayNumber: number, totalDays: number, options: any, metadata?: any): Promise<any> {
         const { minutesPerDay = 30, learningStyle = 'mixed', constraints = [], category = 'default' } = options;
 
         const earlyPhase = Math.floor(totalDays * 0.3);
@@ -466,6 +488,7 @@ Return a single raw JSON object — no markdown, no code fences, no commentary:
 QUALITY RULES
 - QUIZ GROUNDING: Questions MUST test comprehension of the day's specific theme and content. No generic questions.
 - AUDIO SCRIPT: The description should be a script summary designed for binaural beat background.
+- SEARCH QUERY: videoTask.searchQuery MUST be a specific YouTube query for "${goal}" focused on "${phase}" and today's theme.
 - Scannable, mobile-friendly content.
 - Action-oriented titles.
 - Reflection points: one today's win, one tomorrow's prep.
@@ -473,7 +496,7 @@ QUALITY RULES
 Return ONLY the raw JSON object starting with { and ending with }.`;
 
         try {
-            let text = await this.callWithFallback(prompt);
+            let text = await this.callWithFallback(prompt, metadata);
             if (!text) throw new Error('All providers failed for single day');
             text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
             const day = JSON.parse(text);
@@ -481,7 +504,7 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             return day;
         } catch (error) {
             this.logger.error(`generateSingleDay failed for day ${dayNumber}: ${error?.message}`);
-            return this.getFallbackDay(dayNumber, category);
+            return this.getFallbackDay(dayNumber, category, goal);
         }
     }
 
@@ -492,7 +515,7 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             Return ONLY the URL string. Nothing else.`;
 
             const model = this.genAI.getGenerativeModel({
-                model: "gemini-2.5-flash",
+                model: "gemini-pro",
                 // @ts-ignore
                 tools: [{ googleSearch: {} }],
             });
@@ -541,8 +564,8 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             Return ONLY the query string. No quotes, no explanations.`;
 
             const model = this.genAI.getGenerativeModel({
-                // IMPORTANT: NEVER CHANGE THIS MODEL! MUST BE gemini-2.5-flash.
-                model: "gemini-2.5-flash",
+                // IMPORTANT: NEVER CHANGE THIS MODEL! MUST BE gemini-pro.
+                model: "gemini-pro",
             });
 
             const result = await model.generateContent(prompt);
@@ -711,7 +734,7 @@ Return ONLY the raw JSON object.
         }
     }
 
-    private getFallbackDay(dayNumber: number, goalCategory: string = 'default') {
+    private getFallbackDay(dayNumber: number, goalCategory: string = 'default', goalTitle: string = 'productivity') {
         return {
             dayNumber,
             theme: 'Building Foundations',
@@ -719,7 +742,7 @@ Return ONLY the raw JSON object.
             videoTask: {
                 title: 'Introduction to Today',
                 description: 'A quick overview of our focus for today.',
-                searchQuery: 'productivity foundations',
+                searchQuery: `${goalTitle} foundations`,
                 duration: 10
             },
             quiz: {

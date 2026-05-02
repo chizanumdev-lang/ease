@@ -105,15 +105,27 @@ export class AudioService {
     }
 
     public async uploadToCloudinary(filePath: string, publicId: string): Promise<string> {
+        const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
+        
+        if (!cloudName || cloudName.trim() === '') {
+            this.logger.warn(`Cloudinary not configured. Skipping upload for ${publicId}. Using placeholder.`);
+            return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
+        }
+
         this.logger.log(`Uploading audio to Cloudinary: ${publicId}`);
-        const result = await cloudinary.uploader.upload(filePath, {
-            resource_type: 'video',
-            public_id: `ease/audio/${publicId}`,
-            overwrite: true,
-            format: 'mp3',
-        });
-        this.logger.log(`Cloudinary upload success: ${result.secure_url}`);
-        return result.secure_url;
+        try {
+            const result = await cloudinary.uploader.upload(filePath, {
+                resource_type: 'video',
+                public_id: `ease/audio/${publicId}`,
+                overwrite: true,
+                format: 'mp3',
+            });
+            this.logger.log(`Cloudinary upload success: ${result.secure_url}`);
+            return result.secure_url;
+        } catch (error) {
+            this.logger.error(`Cloudinary upload failed for ${publicId}: ${error.message}. Using placeholder.`);
+            return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
+        }
     }
 
     private async mixAudio(voicePath: string, mood: string, outputPath: string): Promise<void> {

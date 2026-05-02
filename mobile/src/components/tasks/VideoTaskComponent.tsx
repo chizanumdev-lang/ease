@@ -3,98 +3,36 @@ import {
     View,
     Text,
     StyleSheet,
-    ScrollView,
     TouchableOpacity,
+    ScrollView,
     Dimensions,
     Animated,
     BackHandler,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { useFocusEffect } from '@react-navigation/native';
 import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
+import { BlurView } from 'expo-blur';
 import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
+
 import { useProgramsStore } from '../../store/programsStore';
 import { Task, TaskMetadata } from '../../types';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const VIDEO_PLAYER_HEIGHT = (SCREEN_WIDTH * 9) / 16;
+
 interface VideoTaskComponentProps {
     task: Task;
-    onComplete: (meta: TaskMetadata) => void;
-}
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const PLAYER_HEIGHT = SCREEN_WIDTH * (9 / 16);
-
-// ────────────────────────────────────────────────────────────
-// Takeaway generator (same logic as before)
-// ────────────────────────────────────────────────────────────
-const ICON_MAP: Record<string, string> = {
-    psychology: 'brain',
-    waves: 'wave',
-    'self-improvement': 'meditation',
-};
-
-function getTakeaways(task: Task, themeName: string) {
-    if (task.description) {
-        const lines = task.description
-            .split('\n')
-            .map((l: string) => l.trim())
-            .filter((l: string) => l.startsWith('-') || l.startsWith('•') || /^\d+\./.test(l));
-        if (lines.length >= 2) {
-            return lines.slice(0, 3).map((line: string, i: number) => ({
-                title: `Session Goal ${i + 1}`,
-                body: line.replace(/^([-•]|\d+\.)\s*/, ''),
-                icon: ['brain', 'wave', 'meditation'][i],
-            }));
-        }
-    }
-
-    const title = task.title.toLowerCase();
-    const theme = themeName.toLowerCase();
-
-    if (title.includes('science') || title.includes('brain') || theme.includes('science')) {
-        return [
-            { title: 'Neural Plasticity',  body: 'How focused repetition physically rewires your synaptic connections.',        icon: 'brain' },
-            { title: 'Dopamine Loops',     body: 'Regulating environmental triggers to maintain high-baseline motivation.',     icon: 'wave' },
-            { title: 'Cognitive Load',     body: 'Optimizing working memory by reducing unnecessary sensory friction.',         icon: 'meditation' },
-        ];
-    }
-    if (title.includes('habit') || title.includes('routine') || theme.includes('habit')) {
-        return [
-            { title: 'Atomic Shifts',   body: 'Making tiny 1% improvements that compound across the plan.',               icon: 'brain' },
-            { title: 'Trigger Mapping', body: 'Identifying the exact cues that initiate your target behaviours.',          icon: 'wave' },
-            { title: 'Identity Casting',body: 'Shifting from "doing the work" to "being the person who does it."',        icon: 'meditation' },
-        ];
-    }
-    if (title.includes('focus') || title.includes('mastery') || title.includes('power')) {
-        return [
-            { title: 'Flow States',    body: 'Entering the zone where challenge perfectly matches your skill level.',      icon: 'brain' },
-            { title: 'Deep Work',      body: 'Structuring your environment for intense, distraction-free effort.',        icon: 'wave' },
-            { title: 'Mental Models',  body: 'Building cognitive frameworks to solve complex problems efficiently.',       icon: 'meditation' },
-        ];
-    }
-    return [
-        { title: 'Core Insight',    body: "The fundamental principle behind today's session.",                    icon: 'brain' },
-        { title: 'Action Step',     body: 'How to transition from theory into practical daily implementation.',    icon: 'wave' },
-        { title: 'Long-term Gains', body: 'The compound effect of maintaining this focus consistently over time.', icon: 'meditation' },
-    ];
+    onComplete: (metadata: TaskMetadata) => void;
 }
 
 // ────────────────────────────────────────────────────────────
-// Helper: extract YouTube video ID
+// Helpers
 // ────────────────────────────────────────────────────────────
-function getVideoId(url: string): string | null {
-    if (!url) return null;
-    const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
-        /youtube\.com\/embed\/([^&\n?#]+)/,
-        /^([a-zA-Z0-9_-]{11})$/,
-    ];
-    for (const p of patterns) {
-        const m = url.match(p);
-        if (m?.[1]) return m[1];
-    }
-    return null;
+function getVideoId(url: string) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
 }
 
 function formatTime(secs: number) {
@@ -103,11 +41,32 @@ function formatTime(secs: number) {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+function getTakeaways(task: Task, theme: string) {
+    // Heuristic: try to parse from content or use defaults
+    const content = task.content || '';
+    const items = content.split('\n').filter(l => l.startsWith('-')).map(l => l.substring(1).trim());
+    
+    if (items.length >= 3) {
+        return [
+            { title: 'Core Concept', body: items[0], icon: 'brain' },
+            { title: 'Action Step', body: items[1], icon: 'flash' },
+            { title: 'Goal Alignment', body: items[2], icon: 'target' },
+        ];
+    }
+
+    return [
+        { title: 'Focus Area', body: `Deep dive into ${theme.toLowerCase()} principles.`, icon: 'eye-outline' },
+        { title: 'Key Insight', body: 'Understand the "Why" behind this specific technique.', icon: 'lightbulb-on-outline' },
+        { title: 'Next Step', body: 'Prepare for the practical application in the next session.', icon: 'chevron-right' },
+    ];
+}
+
 // ────────────────────────────────────────────────────────────
 // Main Component
 // ────────────────────────────────────────────────────────────
 export default function VideoTaskComponent({ task, onComplete }: VideoTaskComponentProps) {
     const { colors } = useTheme();
+    const navigation = useNavigation<any>();
     const { todayPlan, updateTask } = useProgramsStore();
 
     const [playing, setPlaying]           = useState(false);
@@ -116,9 +75,9 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
     const [duration, setDuration]         = useState(task.totalDuration ?? 0);
     const [maxWatched, setMaxWatched]     = useState(task.watchedSeconds ?? 0);
     const [isCompleted, setIsCompleted]   = useState(task.completed ?? false);
+    
     // Anti-skip toast
     const [showSkipWarning, setShowSkipWarning] = useState(false);
-
     const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
 
     const playerRef              = useRef<YoutubeIframeRef>(null);
@@ -212,8 +171,6 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                 completedOnce.current = true;
                 setIsCompleted(true);
                 await updateTask(task.id, { totalDuration: Math.floor(duration) });
-                // We don't call onComplete immediately here anymore, 
-                // we let the user click the "Next" button in the overlay
             }
         }
     }, [task.id, duration, updateTask]);
@@ -231,12 +188,17 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
         }
     }, [task, updateTask]);
 
+    const handleNextSession = useCallback(async () => {
+        // Signal completion to the parent (TaskScreenRouter), which handles navigation
+        onComplete({ videoTimestamp: Math.floor(duration) });
+    }, [onComplete, duration]);
+
+
     const remainingTime = Math.max(0, duration - currentTime);
     const takeaways     = getTakeaways(task, todayPlan?.theme ?? '');
     const progressPct   = duration > 0 ? (currentTime / duration) * 100 : 0;
     const maxPct        = duration > 0 ? (maxWatched  / duration) * 100 : 0;
 
-    // ── Phase badge text — DayPlan has `theme` not `phase` ──
     const phaseBadge = todayPlan?.theme
         ? todayPlan.theme.toUpperCase()
         : 'TODAY\'S LESSON';
@@ -252,8 +214,6 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
 
     return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
-
-            {/* ── Anti-skip warning toast ── */}
             {showSkipWarning && (
                 <View style={styles.skipToast} pointerEvents="none">
                     <MaterialIcons name="lock" size={16} color="#FFF" />
@@ -266,7 +226,6 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                 bounces={false}
                 showsVerticalScrollIndicator={false}
             >
-                {/* ── Hero Video Section ── */}
                 <View style={styles.heroSection}>
                     {loading && (
                         <View style={styles.loadingOverlay}>
@@ -277,7 +236,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
 
                     <YoutubePlayer
                         ref={playerRef}
-                        height={PLAYER_HEIGHT}
+                        height={VIDEO_PLAYER_HEIGHT}
                         play={playing}
                         videoId={videoId}
                         onChangeState={onStateChange}
@@ -290,9 +249,8 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                         }}
                     />
 
-                    {/* Completion Overlay to hide suggestions */}
                     {showCompletionOverlay && (
-                        <BlurView intensity={90} style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
+                        <BlurView intensity={100} tint="dark" style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
                             <View style={styles.completionContent}>
                                 <View style={[styles.successIconCircle, { backgroundColor: colors.primary }]}>
                                     <Ionicons name="checkmark" size={32} color="#FFF" />
@@ -301,7 +259,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                                 <Text style={styles.completionSubtitle}>You've mastered today's core insight.</Text>
                                 <TouchableOpacity 
                                     style={[styles.completionBtn, { backgroundColor: '#FFF' }]}
-                                    onPress={() => onComplete({ videoTimestamp: Math.floor(duration) })}
+                                    onPress={handleNextSession}
                                 >
                                     <Text style={[styles.completionBtnText, { color: colors.primary }]}>Continue Circuit</Text>
                                     <Ionicons name="arrow-forward" size={18} color={colors.primary} />
@@ -310,18 +268,15 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                         </BlurView>
                     )}
 
-                    {/* Progress bar sits below the player inside the hero block */}
                     {!showCompletionOverlay && (
                         <View style={styles.progressWrapper}>
                             <View style={styles.progressTrack}>
-                                {/* Max-watched zone */}
                                 <View
                                     style={[
                                         styles.progressMaxZone,
                                         { width: `${maxPct}%`, backgroundColor: 'rgba(255,255,255,0.2)' },
                                     ]}
                                 />
-                                {/* Current playhead */}
                                 <Animated.View
                                     style={[
                                         styles.progressFill,
@@ -344,10 +299,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                     )}
                 </View>
 
-                {/* ── Content area ── */}
                 <View style={[styles.contentArea, { backgroundColor: colors.background }]}>
-
-                    {/* Phase badge + Title */}
                     <View style={styles.titleBlock}>
                         <View style={[styles.phaseBadge, { backgroundColor: colors.primaryContainer }]}>
                             <Text style={[styles.phaseBadgeText, { color: colors.primary }]}>
@@ -357,7 +309,6 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                         <Text style={[styles.title, { color: colors.text }]}>{task.title}</Text>
                     </View>
 
-                    {/* Key Takeaways */}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
                             <MaterialCommunityIcons name="lightbulb-on-outline" size={22} color={colors.primary} />
@@ -395,15 +346,11 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                             ))}
                         </View>
                     </View>
-
-                    {/* Spacer for the floating footer */}
                     <View style={{ height: 120 }} />
                 </View>
             </ScrollView>
 
-            {/* ── Floating Footer ── */}
             <View style={styles.footer} pointerEvents="box-none">
-                {/* Countdown / Complete pill */}
                 <View style={[styles.countdownPill, { backgroundColor: isCompleted ? '#1B4332' : colors.primary }]}>
                     <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
                         <MaterialIcons
@@ -420,7 +367,6 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                     </View>
                 </View>
 
-                {/* Next Session button — locked until completed */}
                 <TouchableOpacity
                     style={[
                         styles.nextBtn,
@@ -430,11 +376,13 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                         },
                     ]}
                     disabled={!isCompleted}
-                    onPress={() => onComplete({ videoTimestamp: Math.floor(duration) })}
+                    onPress={handleNextSession}
                     accessibilityLabel="Next Session"
                 >
                     <Text style={[styles.nextBtnText, { color: isCompleted ? colors.primary : 'rgba(255,255,255,0.3)' }]}>
-                        Next Session
+                        {todayPlan?.tasks?.findIndex(t => t.id === task.id) === (todayPlan?.tasks?.length || 0) - 1 
+                            ? 'Finish Day' 
+                            : 'Next Session'}
                     </Text>
                     <Ionicons
                         name="arrow-forward"
@@ -444,13 +392,9 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                 </TouchableOpacity>
             </View>
         </View>
-
     );
 }
 
-// ────────────────────────────────────────────────────────────
-// Styles
-// ────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
     root: {
         flex: 1,
@@ -458,8 +402,6 @@ const styles = StyleSheet.create({
     scroll: {
         flexGrow: 1,
     },
-
-    // ── Anti-skip toast
     skipToast: {
         position: 'absolute',
         top: 80,
@@ -478,8 +420,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         fontSize: 13,
     },
-
-    // ── Hero
     heroSection: {
         width: '100%',
         backgroundColor: '#000',
@@ -489,7 +429,7 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        height: PLAYER_HEIGHT,
+        height: VIDEO_PLAYER_HEIGHT,
         backgroundColor: 'rgba(0,0,0,0.65)',
         zIndex: 20,
         justifyContent: 'center',
@@ -501,8 +441,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '600',
     },
-
-    // ── Progress bar
     progressWrapper: {
         position: 'absolute',
         bottom: 0,
@@ -547,8 +485,6 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '600',
     },
-
-    // ── Content area
     contentArea: {
         marginTop: -28,
         paddingHorizontal: 24,
@@ -577,8 +513,6 @@ const styles = StyleSheet.create({
         lineHeight: 44,
         letterSpacing: -0.8,
     },
-
-    // ── Takeaways
     section: {
         gap: 20,
     },
@@ -628,8 +562,6 @@ const styles = StyleSheet.create({
         lineHeight: 19,
         paddingLeft: 50,
     },
-
-    // ── Footer
     footer: {
         position: 'absolute',
         bottom: 0,
@@ -682,8 +614,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '700',
     },
-
-    // ── Error
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -695,13 +625,18 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
     },
-
-    // ── Completion Overlay ──
     completionOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: VIDEO_PLAYER_HEIGHT,
+        zIndex: 100,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 24,
     },
+
     completionContent: {
         alignItems: 'center',
         maxWidth: 280,

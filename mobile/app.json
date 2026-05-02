@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.viicsoft.ease",
-      "buildNumber": "3",
+      "buildNumber": "2",
       "infoPList": {
         "UIBackgroundModes": [
           "audio",

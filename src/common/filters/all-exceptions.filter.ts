@@ -25,8 +25,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     async catch(exception: any, host: ArgumentsHost): Promise<void> {
         const { httpAdapter } = this.httpAdapterHost;
         const ctx = host.switchToHttp();
-        const request = ctx.getRequest();
-
+        const isHttp = host.getType() === 'http';
+        const request = isHttp ? ctx.getRequest() : null;
+        const url = isHttp ? httpAdapter.getRequestUrl(request) : 'graphql-context';
         const httpStatus =
             exception instanceof HttpException
                 ? exception.getStatus()
@@ -35,13 +36,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
         const responseBody = {
             statusCode: httpStatus,
             timestamp: new Date().toISOString(),
-            path: httpAdapter.getRequestUrl(request),
+            path: url,
             message: exception?.message || 'Internal server error',
         };
 
         // Smart Redirect for Admin SPA Fallback
-        if (httpStatus === HttpStatus.NOT_FOUND) {
-            const url = httpAdapter.getRequestUrl(request);
+        if (isHttp && httpStatus === HttpStatus.NOT_FOUND) {
             // If navigating to an admin page directly, serve index.html
             // We avoid redirecting for API calls or specific file requests (containing a dot)
             if (url.startsWith('/admin') && !url.startsWith('/api') && !url.includes('.')) {
@@ -65,20 +65,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
                 message: responseBody.message,
                 stack: exception?.stack,
                 path: responseBody.path,
-                method: request.method,
-                userId: request.user?.id,
-                context: {
+                method: request?.method || 'N/A',
+                userId: request?.user?.id,
+                context: request ? {
                     statusCode: httpStatus,
                     body: request.body,
                     query: request.query,
                     params: request.params,
-                },
+                } : { statusCode: httpStatus },
                 createdAt: new Date(),
             });
         } catch (dbError) {
             this.logger.error('Failed to save error to log database', dbError);
         }
 
-        httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+        if (isHttp) {
+            httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+        } else if (host.getType<string>() === 'graphql') {
+            // Rethrow for GraphQL so Apollo can handle it
+            throw exception;
+        }
     }
 }
