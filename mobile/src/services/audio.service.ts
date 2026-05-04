@@ -1,4 +1,4 @@
-import { Audio, AVPlaybackStatus } from 'expo-av';
+import { Audio, AVPlaybackStatus, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
 import { documentDirectory, downloadAsync } from 'expo-file-system/legacy';
 import { AudioTrack } from '../types';
 import api from './api';
@@ -18,11 +18,13 @@ class AudioService {
             await Audio.setAudioModeAsync({
                 staysActiveInBackground: true,
                 playsInSilentModeIOS: true,
+                interruptionModeIOS: InterruptionModeIOS.DuckOthers,
                 shouldDuckAndroid: true,
+                interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
                 playThroughEarpieceAndroid: false,
             });
             this.isInitialized = true;
-            console.log('[AUDIO_SERVICE] Initialized with background mode');
+            console.log('[AUDIO_SERVICE] Initialized with background & interruption modes');
         } catch (error) {
             console.error('[AUDIO_SERVICE] Failed to initialize:', error);
             throw error;

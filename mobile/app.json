@@ -16,19 +16,22 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.viicsoft.ease",
       "buildNumber": "2",
-      "infoPList": {
+      "infoPlist": {
         "UIBackgroundModes": [
           "audio",
-          "audio"
-        ]
-      },
-      "infoPlist": {
+          "remote-notification"
+        ],
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.viicsoft.ease",
       "versionCode": 3,
+      "permissions": [
+        "WAKE_LOCK",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

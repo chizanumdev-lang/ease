@@ -198,7 +198,11 @@ export const useProgramsStore = create<ProgramsState>()(
                     
                     // Schedule notifications for the new plan
                     if (todayPlan) {
-                        notificationService.scheduleForDay(todayPlan);
+                        const { morningRitualTime, nightRitualTime } = (require('./audioStore').useAudioStore).getState();
+                        notificationService.scheduleForDay(todayPlan, {
+                            morning: morningRitualTime,
+                            night: nightRitualTime
+                        });
                     }
                 } catch (error: any) {
                     const status = error.response?.status;
