@@ -6,10 +6,12 @@ import {
     UpdateDateColumn,
     ManyToOne,
     JoinColumn,
+    Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('reward_events')
+@Index(['userId', 'createdAt'])
 export class RewardEvent {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -22,6 +24,9 @@ export class RewardEvent {
 
     @Column({ type: 'text', nullable: true })
     description: string;
+
+    @Column({ type: 'jsonb', nullable: true, default: {} })
+    metadata: any;
 
     @Column({ name: 'user_id' })
     userId: string;

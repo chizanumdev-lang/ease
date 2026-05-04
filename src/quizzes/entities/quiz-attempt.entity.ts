@@ -6,6 +6,7 @@ import {
     UpdateDateColumn,
     ManyToOne,
     JoinColumn,
+    Index,
 } from 'typeorm';
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { User } from '../../users/entities/user.entity';
@@ -13,6 +14,7 @@ import { Quiz } from './quiz.entity';
 
 @ObjectType()
 @Entity('quiz_attempts')
+@Index(['userId', 'createdAt'])
 export class QuizAttempt {
     @Field(() => ID)
     @PrimaryGeneratedColumn('uuid')

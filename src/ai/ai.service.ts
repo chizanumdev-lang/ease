@@ -16,10 +16,11 @@ interface AiProvider {
 }
 
 const DAILY_LIMITS: Record<string, number> = {
-    gemini: 450,  // keep buffer below 500 hard limit
-    groq:   1000, // conservative — free tier is 14,400/day
-    cohere: 30,   // ~1k/month ÷ 30 days
+    gemini: 450,
+    groq:   1000,
+    cohere: 30,
     openrouter: 1000,
+    mistral: 500,
 };
 
 @Injectable()
@@ -33,6 +34,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         groq: false,
         cohere: false,
         openrouter: false,
+        mistral: false,
     };
 
     constructor(
@@ -90,28 +92,34 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
 
         this.providers = [
             {
-                name: 'gemini',
-                priority: 1,
-                cooldownUntil: null,
-                generate: (prompt) => this.callGemini(prompt),
-            },
-            {
                 name: 'groq',
-                priority: 2,
+                priority: 1,
                 cooldownUntil: null,
                 generate: (prompt) => this.callGroq(prompt),
             },
             {
-                name: 'cohere',
-                priority: 3,
-                cooldownUntil: null,
-                generate: (prompt) => this.callCohere(prompt),
-            },
-            {
                 name: 'openrouter',
-                priority: 4,
+                priority: 2,
                 cooldownUntil: null,
                 generate: (prompt) => this.callOpenRouter(prompt),
+            },
+            {
+                name: 'mistral',
+                priority: 3,
+                cooldownUntil: null,
+                generate: (prompt) => this.callMistral(prompt),
+            },
+            {
+                name: 'gemini',
+                priority: 4,
+                cooldownUntil: null,
+                generate: (prompt) => this.callGemini(prompt),
+            },
+            {
+                name: 'cohere',
+                priority: 5,
+                cooldownUntil: null,
+                generate: (prompt) => this.callCohere(prompt),
             },
         ];
     }
@@ -279,7 +287,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
 
     private async callGemini(prompt: string): Promise<string> {
         if (!this.genAI) throw new Error('Gemini not configured');
-        const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
         const result = await model.generateContent(prompt);
         return result.response.text();
     }
@@ -329,12 +337,29 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                 'X-Title': 'Ease App',
             },
             body: JSON.stringify({
-                model: 'google/gemini-2.0-flash-lite:free', // Great free model
+                model: 'mistralai/mistral-7b-instruct:free', // Extremely stable free model
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
             }),
         });
         if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}: ${await res.text()}`);
+        const data = await res.json();
+        return data.choices[0].message.content;
+    }
+    private async callMistral(prompt: string): Promise<string> {
+        const apiKey = this.configService.get<string>('MISTRAL_API_KEY');
+        if (!apiKey) throw new Error('MISTRAL_API_KEY not configured');
+
+        const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: 'open-mistral-7b', // Better quality than tiny
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.7,
+            }),
+        });
+        if (!res.ok) throw new Error(`Mistral HTTP ${res.status}: ${await res.text()}`);
         const data = await res.json();
         return data.choices[0].message.content;
     }
@@ -514,14 +539,9 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             Use Google Search to find a real video.
             Return ONLY the URL string. Nothing else.`;
 
-            const model = this.genAI.getGenerativeModel({
-                model: "gemini-pro",
-                // @ts-ignore
-                tools: [{ googleSearch: {} }],
-            });
-
-            const result = await model.generateContent(prompt);
-            const text = result.response.text().trim();
+            const rawText = await this.callWithFallback(prompt);
+            if (!rawText) return null;
+            const text = rawText.trim();
 
             // Extract URL if surrounded by text
             const urlMatch = text.match(/https:\/\/www\.youtube\.com\/watch\?v=[\w-]+/);
@@ -563,13 +583,8 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             const prompt = `Generate a YouTube search query for finding a high-quality video about: "${topic}". 
             Return ONLY the query string. No quotes, no explanations.`;
 
-            const model = this.genAI.getGenerativeModel({
-                // IMPORTANT: NEVER CHANGE THIS MODEL! MUST BE gemini-pro.
-                model: "gemini-pro",
-            });
-
-            const result = await model.generateContent(prompt);
-            return result.response.text().trim();
+            const result = await this.callWithFallback(prompt);
+            return result ? result.trim() : topic;
         } catch (error) {
             this.logger.error('Failed to generate search query', error);
             return topic; // Fallback to raw topic
@@ -674,9 +689,9 @@ Return ONLY the raw JSON object.
           "description": "Short, compelling program summary (max 120 chars)",
           "coachInsight": "A one-sentence personalized coaching note about the journey ahead and its intensity progression.",
           "sampleDays": [
-            { "day": 1, "title": "Foundation focused title", "description": "Action-oriented summary" },
-            { "day": 2, "title": "Progression focused title", "description": "Action-oriented summary" },
-            { "day": 3, "title": "Integration focused title", "description": "Action-oriented summary" }
+            { "day": 1, "title": "Foundation focused title", "focus": "Action-oriented summary" },
+            { "day": 2, "title": "Progression focused title", "focus": "Action-oriented summary" },
+            { "day": 3, "title": "Integration focused title", "focus": "Action-oriented summary" }
           ],
           "weeklyIntensity": [number, number, number, number, number, number, number] 
         }
@@ -693,8 +708,22 @@ Return ONLY the raw JSON object.
             text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
             const preview = JSON.parse(text);
             
+            // Self-repair: Ensure title exists
+            if (!preview.title || preview.title === "") {
+                preview.title = `${goal.charAt(0).toUpperCase() + goal.slice(1)} Mastery`;
+            }
+
+            // Self-repair: Ensure EVERY day in the roadmap has a title and focus
+            if (Array.isArray(preview.sampleDays)) {
+                preview.sampleDays = preview.sampleDays.map((d: any, i: number) => ({
+                    ...d,
+                    title: d.title || `Phase ${i + 1}: ${d.focus?.substring(0, 20)}...` || `Day ${d.day || i + 1} Focus`,
+                    focus: d.focus || d.description || "Continued growth and integration"
+                }));
+            }
+
             // Ensure schema validity
-            if (!preview.title || !preview.weeklyIntensity) throw new Error('Incomplete preview data');
+            if (!preview.weeklyIntensity) throw new Error('Incomplete preview data');
             return preview;
         } catch (error) {
             this.logger.error(`Preview generation failed: ${error.message}`);
