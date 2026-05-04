@@ -47,7 +47,7 @@ export default function RootNavigator() {
         notificationService.syncPushToken();
 
         // Handle notification responses
-        const subscription = notificationService.addResponseListener(async response => {
+        notificationService.addResponseListener(async (response) => {
             const data = response.notification.request.content.data;
             const actionIdentifier = response.actionIdentifier;
             
@@ -80,6 +80,7 @@ export default function RootNavigator() {
                         });
                     }
                 }
+            } else if (data.type === 'audio' && data.trackId) {
                 // Navigate to AudioPlayer
                 if (navigationRef.isReady()) {
                     // @ts-ignore
