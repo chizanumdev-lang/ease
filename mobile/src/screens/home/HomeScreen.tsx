@@ -154,7 +154,7 @@ export default function HomeScreen({ navigation }: Props) {
                     Good morning, {user?.name?.split(' ')[0] || 'Alex'}
                 </Text>
                 <View>
-                    <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>Ready for your mindful session?</Text>
+                    <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>Ready for your session?</Text>
                 </View>
             </View>
 
@@ -164,7 +164,7 @@ export default function HomeScreen({ navigation }: Props) {
                     title={currentProgram.title || "Your Spirit Tree is flourishing"}
                     subtitle={analytics?.progression?.currentPhase?.subtitle || "Today's progress starts with one small step. You're closer to your goal than yesterday."}
                     progress={(analytics?.progression?.progressPercentage || 0) / 100}
-                    phase={analytics?.progression?.currentPhase?.title || "Growth Phase"}
+                    phase={analytics?.progression?.currentPhase?.title || "Growing"}
                 />
             )}
 
@@ -181,20 +181,20 @@ export default function HomeScreen({ navigation }: Props) {
                         label="Day Streak" 
                         value={analytics?.currentStreak?.toString() || "0"} 
                         unit="days"
-                        icon="flame-outline"
+                        icon="flame"
                         trend={analytics?.currentStreak && analytics.currentStreak > 0 ? { value: "+1 from yesterday", isPositive: true } : undefined}
                     />
                     <StatCard 
                         label="Completion" 
                         value={analytics?.todayCompletionRate?.toString() || "0"} 
                         unit="%"
-                        icon="checkmark-done-outline"
+                        icon="checkmark-circle"
                         color="#006D77"
                     />
                     <StatCard 
                         label="Spirit Level" 
                         value={analytics?.progression?.level?.toString() || "1"} 
-                        icon="sparkles-outline"
+                        icon="sparkles"
                         color="#56624b"
                         trend={{ value: "Steady", isPositive: true }}
                     />
@@ -203,10 +203,7 @@ export default function HomeScreen({ navigation }: Props) {
 
             {/* Section Header */}
             <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.display }]}>Today's Routine</Text>
-                <TouchableOpacity>
-                    <Text style={[styles.viewAll, { color: colors.primary, fontFamily: fonts.label }]}>VIEW ALL</Text>
-                </TouchableOpacity>
+                <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.display }]}>Your Day</Text>
             </View>
         </View>
     );

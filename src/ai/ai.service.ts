@@ -16,10 +16,11 @@ interface AiProvider {
 }
 
 const DAILY_LIMITS: Record<string, number> = {
-    gemini: 450,  // keep buffer below 500 hard limit
-    groq:   1000, // conservative — free tier is 14,400/day
-    cohere: 30,   // ~1k/month ÷ 30 days
+    gemini: 450,
+    groq:   1000,
+    cohere: 30,
     openrouter: 1000,
+    mistral: 500,
 };
 
 @Injectable()
@@ -33,6 +34,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         groq: false,
         cohere: false,
         openrouter: false,
+        mistral: false,
     };
 
     constructor(
@@ -90,28 +92,34 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
 
         this.providers = [
             {
-                name: 'gemini',
-                priority: 1,
-                cooldownUntil: null,
-                generate: (prompt) => this.callGemini(prompt),
-            },
-            {
                 name: 'groq',
-                priority: 2,
+                priority: 1,
                 cooldownUntil: null,
                 generate: (prompt) => this.callGroq(prompt),
             },
             {
-                name: 'cohere',
-                priority: 3,
-                cooldownUntil: null,
-                generate: (prompt) => this.callCohere(prompt),
-            },
-            {
                 name: 'openrouter',
-                priority: 4,
+                priority: 2,
                 cooldownUntil: null,
                 generate: (prompt) => this.callOpenRouter(prompt),
+            },
+            {
+                name: 'mistral',
+                priority: 3,
+                cooldownUntil: null,
+                generate: (prompt) => this.callMistral(prompt),
+            },
+            {
+                name: 'gemini',
+                priority: 4,
+                cooldownUntil: null,
+                generate: (prompt) => this.callGemini(prompt),
+            },
+            {
+                name: 'cohere',
+                priority: 5,
+                cooldownUntil: null,
+                generate: (prompt) => this.callCohere(prompt),
             },
         ];
     }
@@ -184,7 +192,26 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         } catch { /* non-critical */ }
     }
 
-    private async callWithFallback(prompt: string): Promise<string | null> {
+    async generateCustomJson<T>(prompt: string, fallback: T, metadata?: any): Promise<T> {
+        try {
+            const result = await this.callWithFallback(prompt, metadata);
+            if (!result) return fallback;
+
+            // Clean result of any markdown fences
+            const cleanJson = result
+                .replace(/^```json\s*/i, '')
+                .replace(/^```\s*/i, '')
+                .replace(/\s*```$/i, '')
+                .trim();
+
+            return JSON.parse(cleanJson) as T;
+        } catch (e) {
+            this.logger.error(`Failed to generate custom JSON: ${e.message}`);
+            return fallback;
+        }
+    }
+
+    private async callWithFallback(prompt: string, metadata?: any): Promise<string | null> {
         // ── Prompt caching: hash the prompt and check Redis (7-day TTL) ──
         const cacheKey = `ai:${createHash('md5').update(prompt).digest('hex')}`;
         try {
@@ -227,6 +254,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                     response: result.substring(0, 500),
                     status: 'success',
                     latency,
+                    metadata: metadata ? JSON.stringify(metadata) : undefined,
                     createdAt: new Date(),
                 }).catch(err => this.logger.error('Failed to save AI log', err));
 
@@ -247,6 +275,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                     status: 'failure',
                     errorMessage: error?.message || String(error),
                     latency,
+                    metadata: metadata ? JSON.stringify(metadata) : undefined,
                     createdAt: new Date(),
                 }).catch(err => this.logger.error('Failed to save AI log', err));
             } finally {
@@ -258,7 +287,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
 
     private async callGemini(prompt: string): Promise<string> {
         if (!this.genAI) throw new Error('Gemini not configured');
-        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
         const result = await model.generateContent(prompt);
         return result.response.text();
     }
@@ -308,12 +337,29 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                 'X-Title': 'Ease App',
             },
             body: JSON.stringify({
-                model: 'google/gemini-2.0-flash-lite:free', // Great free model
+                model: 'mistralai/mistral-7b-instruct:free', // Extremely stable free model
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
             }),
         });
         if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}: ${await res.text()}`);
+        const data = await res.json();
+        return data.choices[0].message.content;
+    }
+    private async callMistral(prompt: string): Promise<string> {
+        const apiKey = this.configService.get<string>('MISTRAL_API_KEY');
+        if (!apiKey) throw new Error('MISTRAL_API_KEY not configured');
+
+        const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: 'open-mistral-7b', // Better quality than tiny
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.7,
+            }),
+        });
+        if (!res.ok) throw new Error(`Mistral HTTP ${res.status}: ${await res.text()}`);
         const data = await res.json();
         return data.choices[0].message.content;
     }
@@ -338,46 +384,41 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         const journalDuration = Math.round(minutesPerDay * 0.15);
         const consistencyDuration = 2; // Fixed short commitment
 
-        const systemInstruction = `You are an expert curriculum designer and personal coach specializing in 
-structured habit and skill development programs.
-
-CONTEXT
-Goal: "${goal}"
-Duration: ${duration} days (generate ALL ${duration} days)
-Daily commitment: ${minutesPerDay} minutes
-Learning style: ${learningStyle}
-Constraints: ${constraints.join(', ') || 'none'}
-
-DAILY FLOW (STRICT ORDER - Indexing 0-5)
-0. Video (Concept)
-1. Quiz (Comprehension)
-2. Audio (Integration - Binaural/Subliminal)
-3. Journal (Intention)
-4. Reflection (Daily Win/Preview)
-5. Consistency (Tomorrow's Commitment)
-
-OUTPUT SCHEMA
-Return a raw JSON array — no markdown, no code fences, no commentary, no trailing commas. Every object must have ALL of these keys:
-
-{
-  "dayNumber": integer,
-  "theme": string (specific subtopic),
-  "focusAreas": string[], (exactly 3 key concepts for today)
-  
-  "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
-  "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
-  "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
-  "consistencyTask": { "title": "Tomorrow's Commitment", "description": "i will complete my routine tommorrow.", "duration": ${consistencyDuration} },
-  "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
-  "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] }
-}
-
-QUALITY RULES
-- QUIZ GROUNDING: Questions MUST test comprehension of the day's specific theme and video content. Do not ask generic life-coaching questions.
-- AUDIO SCRIPT: The description should be a script summary for a voice-guided session designed for binaural beat background.
-- Each task must be scannable and mobile-friendly.
-- videoTask.searchQuery must be specific enough to return a real tutorial.
-- reflectionTask.reviewPoints must be exactly 2 (one today's win, one tomorrow's prep).`;
+        const systemInstruction = `You are a friendly, direct, and encouraging coach. 
+        Create a ${duration}-day plan for the goal: "${goal}".
+        
+        WORDING STYLE:
+        - Use simple, plain English (5th-grade level).
+        - AVOID jargon like "curriculum," "foundation," "integration," "pedagogy," or "comprehension."
+        - Use short, punchy titles.
+        - Talk like a supportive friend who wants the user to succeed.
+        
+        DAILY FLOW (Index 0-5)
+        0. Video (Watch)
+        1. Quiz (Check-in)
+        2. Audio (Practice)
+        3. Journal (Write)
+        4. Reflection (Review)
+        5. Consistency (Commit)
+        
+        OUTPUT SCHEMA
+        Return a raw JSON array. Every object must have ALL of these keys:
+        {
+          "dayNumber": integer,
+          "theme": string (simple subtopic),
+          "focusAreas": string[], (exactly 3 simple things we'll focus on today)
+          
+          "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
+          "quiz": { "title": "Quick Check", "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
+          "audioTask": { "title": string, "description": "Friendly summary of what we'll practice", "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
+          "consistencyTask": { "title": "Tomorrow's Promise", "description": "I'll be back tomorrow to keep going.", "duration": ${consistencyDuration} },
+          "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
+          "reflectionTask": { "title": "Day Wrap-up", "description": "Quick look at today", "reviewPoints": ["One win from today", "One plan for tomorrow"] }
+        }
+        
+        QUALITY RULES:
+        - videoTask.searchQuery must be a specific, high-quality YouTube search query.
+        - Avoid generic coaching talk; be specific to "${goal}".`;
 
         try {
             // Call through the fallback chain (Gemini → Groq → Cohere)
@@ -416,7 +457,7 @@ QUALITY RULES
         }
     }
 
-    async generateSingleDay(goal: string, dayNumber: number, totalDays: number, options: any): Promise<any> {
+    async generateSingleDay(goal: string, dayNumber: number, totalDays: number, options: any, metadata?: any): Promise<any> {
         const { minutesPerDay = 30, learningStyle = 'mixed', constraints = [], category = 'default' } = options;
 
         const earlyPhase = Math.floor(totalDays * 0.3);
@@ -466,6 +507,7 @@ Return a single raw JSON object — no markdown, no code fences, no commentary:
 QUALITY RULES
 - QUIZ GROUNDING: Questions MUST test comprehension of the day's specific theme and content. No generic questions.
 - AUDIO SCRIPT: The description should be a script summary designed for binaural beat background.
+- SEARCH QUERY: videoTask.searchQuery MUST be a specific YouTube query for "${goal}" focused on "${phase}" and today's theme.
 - Scannable, mobile-friendly content.
 - Action-oriented titles.
 - Reflection points: one today's win, one tomorrow's prep.
@@ -473,7 +515,7 @@ QUALITY RULES
 Return ONLY the raw JSON object starting with { and ending with }.`;
 
         try {
-            let text = await this.callWithFallback(prompt);
+            let text = await this.callWithFallback(prompt, metadata);
             if (!text) throw new Error('All providers failed for single day');
             text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
             const day = JSON.parse(text);
@@ -481,7 +523,7 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             return day;
         } catch (error) {
             this.logger.error(`generateSingleDay failed for day ${dayNumber}: ${error?.message}`);
-            return this.getFallbackDay(dayNumber, category);
+            return this.getFallbackDay(dayNumber, category, goal);
         }
     }
 
@@ -491,14 +533,9 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             Use Google Search to find a real video.
             Return ONLY the URL string. Nothing else.`;
 
-            const model = this.genAI.getGenerativeModel({
-                model: "gemini-2.5-flash",
-                // @ts-ignore
-                tools: [{ googleSearch: {} }],
-            });
-
-            const result = await model.generateContent(prompt);
-            const text = result.response.text().trim();
+            const rawText = await this.callWithFallback(prompt);
+            if (!rawText) return null;
+            const text = rawText.trim();
 
             // Extract URL if surrounded by text
             const urlMatch = text.match(/https:\/\/www\.youtube\.com\/watch\?v=[\w-]+/);
@@ -540,13 +577,8 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             const prompt = `Generate a YouTube search query for finding a high-quality video about: "${topic}". 
             Return ONLY the query string. No quotes, no explanations.`;
 
-            const model = this.genAI.getGenerativeModel({
-                // IMPORTANT: NEVER CHANGE THIS MODEL! MUST BE gemini-2.5-flash.
-                model: "gemini-2.5-flash",
-            });
-
-            const result = await model.generateContent(prompt);
-            return result.response.text().trim();
+            const result = await this.callWithFallback(prompt);
+            return result ? result.trim() : topic;
         } catch (error) {
             this.logger.error('Failed to generate search query', error);
             return topic; // Fallback to raw topic
@@ -640,27 +672,30 @@ Return ONLY the raw JSON object.
 
         const { duration = 30, minutesPerDay = 30, category = 'default' } = options;
 
-        const systemInstruction = `You are an expert curriculum designer. Generate high-level metadata for a ${duration}-day learning program based on the goal: "${goal}".
+        const systemInstruction = `You are a friendly, direct, and encouraging coach. 
+        Generate high-level metadata for a ${duration}-day learning journey based on the goal: "${goal}".
+        
+        TONE & STYLE:
+        - Use simple, plain English (5th-grade level).
+        - AVOID jargon like "curriculum," "foundation," "integration," or "pedagogy."
+        - Use punchy, action-oriented words.
+        - Talk like a supportive friend, not a textbook.
         
         OUTPUT SCHEMA:
         Return ONLY a raw JSON object:
         {
-          "title": "Concise, inspiring program name",
+          "title": "Short, catchy name for the journey",
           "category": "One of: Skill, Habit, Career, Mental, Fitness",
-          "primaryGoal": "The single most important outcome",
-          "description": "Short, compelling program summary (max 120 chars)",
-          "coachInsight": "A one-sentence personalized coaching note about the journey ahead and its intensity progression.",
+          "primaryGoal": "The one big thing you will achieve",
+          "description": "A quick, exciting summary of why this is great (max 120 chars)",
+          "coachInsight": "A short, friendly note about what to expect first.",
           "sampleDays": [
-            { "day": 1, "title": "Foundation focused title", "description": "Action-oriented summary" },
-            { "day": 2, "title": "Progression focused title", "description": "Action-oriented summary" },
-            { "day": 3, "title": "Integration focused title", "description": "Action-oriented summary" }
+            { "day": 1, "title": "Simple title for Day 1", "focus": "What you'll actually do" },
+            { "day": 2, "title": "Simple title for Day 2", "focus": "What you'll actually do" },
+            { "day": 3, "title": "Simple title for Day 3", "focus": "What you'll actually do" }
           ],
           "weeklyIntensity": [number, number, number, number, number, number, number] 
         }
-
-        INTENSITY LOGIC:
-        The "weeklyIntensity" array represents relative effort (0-100) for 7 representative days. 
-        It should reflect a healthy progression: start lower for foundation, peak for challenge, and vary slightly for recovery.
         
         Return ONLY valid JSON.`;
 
@@ -670,8 +705,27 @@ Return ONLY the raw JSON object.
             text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
             const preview = JSON.parse(text);
             
+            // Self-repair: Ensure title exists
+            if (!preview.title || preview.title === "") {
+                preview.title = `${goal.charAt(0).toUpperCase() + goal.slice(1)} Mastery`;
+            }
+
+            // Self-repair: Ensure EVERY day in the roadmap has a title and focus
+            if (Array.isArray(preview.sampleDays)) {
+                preview.sampleDays = preview.sampleDays.map((d: any, i: number) => {
+                    const dayNum = d.day || i + 1;
+                    const focus = d.focus || d.description || "Building on your progress";
+                    return {
+                        ...d,
+                        day: dayNum,
+                        title: d.title || `Day ${dayNum}: ${focus.substring(0, 20)}...`,
+                        focus: focus
+                    };
+                });
+            }
+
             // Ensure schema validity
-            if (!preview.title || !preview.weeklyIntensity) throw new Error('Incomplete preview data');
+            if (!preview.weeklyIntensity) throw new Error('Incomplete preview data');
             return preview;
         } catch (error) {
             this.logger.error(`Preview generation failed: ${error.message}`);
@@ -687,9 +741,9 @@ Return ONLY the raw JSON object.
             description: 'A transformative ' + (options.duration || 30) + '-day program built for your growth.',
             coachInsight: 'This plan is balanced for sustainable progress and steady challenge.',
             sampleDays: [
-                { day: 1, title: 'Foundations of ' + goal, description: 'Setting the stage for your growth.' },
-                { day: 2, title: 'Strategic Practice', description: 'Applying core techniques.' },
-                { day: 3, title: 'Initial Integration', description: 'Connecting concepts together.' }
+                { day: 1, title: 'Foundations of ' + goal, focus: 'Setting the stage for your growth.' },
+                { day: 2, title: 'Strategic Practice', focus: 'Applying core techniques.' },
+                { day: 3, title: 'Initial Integration', focus: 'Connecting concepts together.' }
             ],
             weeklyIntensity: [20, 35, 60, 45, 80, 25, 30]
         };
@@ -711,7 +765,7 @@ Return ONLY the raw JSON object.
         }
     }
 
-    private getFallbackDay(dayNumber: number, goalCategory: string = 'default') {
+    private getFallbackDay(dayNumber: number, goalCategory: string = 'default', goalTitle: string = 'productivity') {
         return {
             dayNumber,
             theme: 'Building Foundations',
@@ -719,7 +773,7 @@ Return ONLY the raw JSON object.
             videoTask: {
                 title: 'Introduction to Today',
                 description: 'A quick overview of our focus for today.',
-                searchQuery: 'productivity foundations',
+                searchQuery: `${goalTitle} foundations`,
                 duration: 10
             },
             quiz: {

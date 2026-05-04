@@ -25,6 +25,8 @@ import LoadingState from '../../components/LoadingState';
 type Props = NativeStackScreenProps<MainStackParamList, 'VideoLesson'>;
 
 const { width } = Dimensions.get('window');
+const VIDEO_PLAYER_HEIGHT = (width * 9) / 16;
+
 
 export default function VideoLessonScreen({ route, navigation }: Props) {
     const { colors, spacing, borderRadius } = useTheme();
@@ -255,19 +257,44 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
  
     const remainingTime = Math.max(0, duration - currentTime);
 
+    const handleNextSession = useCallback(() => {
+        if (!todayPlan?.tasks) {
+            navigation.goBack();
+            return;
+        }
+
+        const currentIndex = todayPlan.tasks.findIndex(t => t.id === task.id);
+        const nextTask = todayPlan.tasks[currentIndex + 1];
+
+        if (nextTask) {
+            // Navigate to the appropriate screen based on task type
+            if (nextTask.type === 'video') {
+                navigation.replace('VideoLesson', { task: nextTask });
+            } else if (nextTask.type === 'quiz') {
+                navigation.replace('Quiz', { quizId: nextTask.quizId || '', taskId: nextTask.id });
+            } else {
+                navigation.replace('Task', { task: nextTask });
+            }
+        } else {
+
+
+            navigation.goBack();
+        }
+    }, [todayPlan, task.id, navigation]);
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <StatusBar barStyle="light-content" />
 
             {/* Top Progress Stepper (Circuit Steps) */}
             <View style={styles.stepperContainer}>
-                {[1, 2, 3, 4, 5, 6].map((step, idx) => {
+                {todayPlan?.tasks?.map((stepTask, idx) => {
                     const taskIndex = todayPlan?.tasks?.findIndex(t => t.id === task.id) ?? 0;
                     const isCurrent = taskIndex === idx;
-                    const isPast = taskIndex > idx;
+                    const isPast = taskIndex > idx || stepTask.completed;
                     return (
                         <View 
-                            key={step} 
+                            key={stepTask.id} 
                             style={[
                                 styles.stepItem, 
                                 { backgroundColor: 'rgba(255,255,255,0.1)' },
@@ -340,7 +367,7 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
 
                             {/* Completion Overlay to hide suggestions */}
                             {showCompletionOverlay && (
-                                <BlurView intensity={90} style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
+                                <BlurView intensity={100} tint="dark" style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
                                     <View style={styles.completionContent}>
                                         <View style={[styles.successIconCircle, { backgroundColor: colors.primary }]}>
                                             <Ionicons name="checkmark" size={32} color="#FFF" />
@@ -349,9 +376,13 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                                         <Text style={styles.completionSubtitle}>You've mastered today's core insight.</Text>
                                         <TouchableOpacity 
                                             style={[styles.completionBtn, { backgroundColor: '#FFF' }]}
-                                            onPress={() => navigation.goBack()}
+                                            onPress={handleNextSession}
                                         >
-                                            <Text style={[styles.completionBtnText, { color: colors.primary }]}>Continue Circuit</Text>
+                                            <Text style={[styles.completionBtnText, { color: colors.primary }]}>
+                                                {todayPlan?.tasks?.findIndex(t => t.id === task.id) === (todayPlan?.tasks?.length || 0) - 1 
+                                                    ? 'Finish Day' 
+                                                    : 'Continue Circuit'}
+                                            </Text>
                                             <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                                         </TouchableOpacity>
                                     </View>
@@ -468,10 +499,12 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                         }
                     ]} 
                     disabled={!isCompleted}
-                    onPress={() => navigation.goBack()}
+                    onPress={handleNextSession}
                 >
                     <Text style={[styles.nextButtonText, { color: isCompleted ? colors.primary : 'rgba(255,255,255,0.4)' }]}>
-                        Next Session
+                        {todayPlan?.tasks?.findIndex(t => t.id === task.id) === (todayPlan?.tasks?.length || 0) - 1 
+                            ? 'Finish Day' 
+                            : 'Next Session'}
                     </Text>
                     <Ionicons 
                         name="arrow-forward" 
@@ -552,6 +585,13 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 460,
         backgroundColor: '#000',
+        overflow: 'hidden',
+    },
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 10,
     },
     ambientAura: {
         flex: 1,
@@ -559,14 +599,19 @@ const styles = StyleSheet.create({
     },
     playerWrapper: {
         width: '100%',
-        height: width * (9 / 16),
+        height: (width * 9) / 16,
         justifyContent: 'center',
     },
     playerContainer: {
         width: '100%',
     },
-    // ── Completion Overlay ──
     completionOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: VIDEO_PLAYER_HEIGHT,
+        zIndex: 100,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 24,
@@ -783,4 +828,5 @@ const styles = StyleSheet.create({
     backBtnText: {
         fontWeight: '700',
     },
+
 });

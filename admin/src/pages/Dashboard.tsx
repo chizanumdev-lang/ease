@@ -7,8 +7,11 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertCircle,
-  ChevronRight
+  ChevronRight,
+  Zap
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 import { adminService } from '../services/admin.service';
 import type { PulseMetrics } from '../services/admin.service';
 import { 
@@ -21,6 +24,50 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import clsx from 'clsx';
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring" as const,
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-ease-surface/90 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl">
+        <p className="text-xs font-black text-ease-text-secondary uppercase tracking-widest mb-2">{label}</p>
+        <div className="space-y-1">
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+              <span className="text-sm font-bold text-ease-text-primary">
+                {entry.name.toUpperCase()}: {entry.value.toLocaleString()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function Dashboard() {
     const [pulse, setPulse] = useState<PulseMetrics | null>(null);
@@ -36,7 +83,6 @@ export default function Dashboard() {
                 ]);
                 setPulse(pulseData);
                 
-                // Merge trend data by index (assuming dates align from backend)
                 const mergedTrends = trendData.dau.map((d, i) => ({
                     date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                     dau: d.value,
@@ -54,10 +100,15 @@ export default function Dashboard() {
 
     if (loading) {
         return (
-          <div className="flex items-center justify-center h-[60vh]">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-4 border-ease-blue/20 border-t-ease-blue rounded-full animate-spin"></div>
-              <p className="text-ease-text-secondary font-bold animate-pulse">Syncing platform metrics...</p>
+          <div className="flex items-center justify-center h-[70vh]">
+            <div className="flex flex-col items-center gap-6">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-ease-blue/10 border-t-ease-blue rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <Zap size={20} className="text-ease-blue animate-pulse" />
+                </div>
+              </div>
+              <p className="text-ease-text-secondary font-black uppercase tracking-widest text-xs animate-pulse">Synchronizing Node Metrics...</p>
             </div>
           </div>
         );
@@ -81,161 +132,249 @@ export default function Dashboard() {
           color: 'green' 
         },
         { 
-          label: 'AI Gens', 
+          label: 'AI Hydrations', 
           value: (pulse?.aiGens || 0).toLocaleString(), 
-          change: '-2.4%', 
-          isPositive: false, 
+          change: 'Active', 
+          isPositive: true, 
           icon: Cpu, 
-          color: 'purple' 
+          color: 'purple',
+          isLive: true
         },
         { 
-          label: 'System Health', 
-          value: `${pulse?.aiHealth}%`, 
-          change: 'Optimal', 
+          label: 'Neural Uptime', 
+          value: `${pulse?.uptime || 99.9}%`, 
+          change: 'Stable', 
           isPositive: true, 
           icon: Activity, 
-          color: 'teal' 
+          color: 'teal',
+          isLive: true
+        },
+        { 
+          label: 'Processing Load', 
+          value: `${pulse?.latency || 0}ms`, 
+          change: 'Nominal', 
+          isPositive: true, 
+          icon: Zap, 
+          color: 'blue' 
         },
     ];
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-8 pb-10"
+        >
             {/* KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {cards.map((card) => (
-                    <div key={card.label} className="bg-ease-surface p-6 rounded-3xl border border-ease-border shadow-ease-layered hover:shadow-ease-card transition-all duration-300 group">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className={`p-3 rounded-2xl bg-ease-blue/10 text-ease-blue group-hover:scale-110 transition-transform`}>
+                    <motion.div 
+                      key={card.label} 
+                      variants={itemVariants}
+                      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                      className="relative overflow-hidden bg-ease-surface/40 backdrop-blur-md p-6 rounded-[2rem] border border-white/5 shadow-ease-layered hover:shadow-2xl transition-all duration-300 group"
+                    >
+                        {/* Decorative Background Glow */}
+                        <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-ease-${card.color}`} />
+                        
+                        <div className="flex justify-between items-start mb-6 relative z-10">
+                            <div className={clsx(
+                              "p-3.5 rounded-2xl transition-all duration-300 group-hover:scale-110",
+                              card.color === 'blue' && "bg-blue-500/10 text-blue-400 shadow-lg shadow-blue-500/5",
+                              card.color === 'green' && "bg-emerald-500/10 text-emerald-400 shadow-lg shadow-emerald-500/5",
+                              card.color === 'purple' && "bg-purple-500/10 text-purple-400 shadow-lg shadow-purple-500/5",
+                              card.color === 'teal' && "bg-teal-500/10 text-teal-400 shadow-lg shadow-teal-500/5",
+                            )}>
                                 <card.icon className="w-6 h-6" />
                             </div>
-                            <div className={`flex items-center gap-1 text-sm font-bold ${card.isPositive ? 'text-ease-success' : 'text-ease-error'}`}>
-                                {card.isPositive ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                                {card.change}
+                            <div className="flex flex-col items-end gap-1">
+                              <div className={clsx(
+                                "flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg",
+                                card.isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                              )}>
+                                  {card.isPositive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                                  {card.change}
+                              </div>
+                              {card.isLive && (
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                  </span>
+                                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-tighter">Live</span>
+                                </div>
+                              )}
                             </div>
                         </div>
-                        <h3 className="text-ease-text-secondary text-xs font-bold uppercase tracking-wider">{card.label}</h3>
-                        <p className="text-3xl font-black text-ease-text-primary mt-1 tracking-tight">{card.value}</p>
-                    </div>
+                        <h3 className="text-ease-text-secondary text-xs font-black uppercase tracking-[0.15em] mb-1">{card.label}</h3>
+                        <p className="text-4xl font-black text-ease-text-primary tracking-tighter">{card.value}</p>
+                    </motion.div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Trend Chart */}
-                <div className="lg:col-span-2 bg-ease-surface p-8 rounded-3xl border border-ease-border shadow-ease-layered">
-                    <div className="flex justify-between items-center mb-8">
+                <motion.div 
+                  variants={itemVariants}
+                  className="lg:col-span-2 bg-ease-surface/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/5 shadow-ease-layered"
+                >
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
                         <div>
-                            <h3 className="text-xl font-bold text-ease-text-primary">DAU / WAU Trend</h3>
-                            <p className="text-sm text-ease-text-secondary font-medium">Daily and Weekly active users over the last 30 days.</p>
+                            <h3 className="text-2xl font-black text-ease-text-primary tracking-tighter">Growth Velocity</h3>
+                            <p className="text-sm text-ease-text-secondary font-medium mt-1">Analyzing user retention and task completion cycles.</p>
                         </div>
-                        <select className="bg-ease-bg border border-ease-border rounded-xl px-4 py-2 text-sm font-bold focus:outline-none cursor-pointer hover:border-ease-blue transition-colors">
-                            <option>Last 30 Days</option>
-                            <option>Last 90 Days</option>
-                        </select>
+                        <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5">
+                            {['30D', '90D', '1Y'].map(t => (
+                              <button key={t} className={clsx(
+                                "px-4 py-1.5 rounded-lg text-xs font-black transition-all",
+                                t === '30D' ? "bg-ease-blue text-white shadow-lg shadow-blue-500/20" : "text-ease-text-secondary hover:text-white"
+                              )}>
+                                {t}
+                              </button>
+                            ))}
+                        </div>
                     </div>
                     
-                    <div className="h-[350px] w-full">
+                    <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={trends}>
+                            <AreaChart data={trends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorDau" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#4A90E2" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#4A90E2" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                                    </linearGradient>
+                                    <linearGradient id="colorCompletion" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.2}/>
+                                        <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                                 <XAxis 
                                   dataKey="date" 
                                   axisLine={false} 
                                   tickLine={false} 
-                                  tick={{fill: '#64748B', fontSize: 12, fontWeight: 500}} 
-                                  dy={10}
+                                  tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} 
+                                  dy={15}
                                 />
                                 <YAxis 
                                   axisLine={false} 
                                   tickLine={false} 
-                                  tick={{fill: '#64748B', fontSize: 12, fontWeight: 500}} 
+                                  tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} 
+                                  dx={-10}
                                 />
-                                <Tooltip 
-                                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                                  itemStyle={{fontWeight: 700, color: '#1E293B'}}
-                                />
+                                <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
                                 <Area 
+                                  name="Active Users"
                                   type="monotone" 
                                   dataKey="dau" 
-                                  stroke="#4A90E2" 
+                                  stroke="#3B82F6" 
                                   strokeWidth={4} 
                                   fillOpacity={1} 
                                   fill="url(#colorDau)" 
+                                  animationDuration={2000}
                                 />
                                 <Area 
+                                  name="Task Progress"
                                   type="monotone" 
                                   dataKey="completion" 
                                   stroke="#10B981" 
-                                  strokeWidth={2} 
-                                  fillOpacity={0.1} 
-                                  fill="#10B981" 
+                                  strokeWidth={3} 
+                                  strokeDasharray="5 5"
+                                  fillOpacity={1} 
+                                  fill="url(#colorCompletion)" 
+                                  animationDuration={2500}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-4 mt-8 pt-8 border-t border-ease-border">
-                      <div className="text-center">
-                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-widest">Avg Streak</p>
-                        <p className="text-2xl font-black text-ease-text-primary mt-1">{pulse?.avgStreak} days</p>
+                    <div className="grid grid-cols-3 gap-8 mt-12 pt-8 border-t border-white/5 relative">
+                      <div className="absolute inset-0 flex justify-around pointer-events-none">
+                         <div className="w-px h-full bg-white/5" />
+                         <div className="w-px h-full bg-white/5" />
                       </div>
-                      <div className="text-center border-x border-ease-border px-4">
-                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-widest">Completion</p>
-                        <p className="text-2xl font-black text-ease-text-primary mt-1">{pulse?.completionRate}%</p>
+                      <div className="text-center group">
+                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.2em]">Avg Streak</p>
+                        <p className="text-3xl font-black text-ease-text-primary mt-2 group-hover:text-ease-blue transition-colors">{pulse?.avgStreak || 0}d</p>
                       </div>
-                      <div className="text-center">
-                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-widest">NPS Score</p>
-                        <p className="text-2xl font-black text-ease-text-primary mt-1">+{pulse?.npsScore}</p>
+                      <div className="text-center group">
+                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.2em]">Retention</p>
+                        <p className="text-3xl font-black text-ease-text-primary mt-2 group-hover:text-emerald-400 transition-colors">{pulse?.completionRate || 0}%</p>
+                      </div>
+                      <div className="text-center group">
+                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.2em]">Processing</p>
+                        <p className="text-3xl font-black text-ease-text-primary mt-2 group-hover:text-purple-400 transition-colors">{pulse?.latency || 0}ms</p>
                       </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Alerts Section */}
-                <div className="bg-ease-surface p-8 rounded-3xl border border-ease-border shadow-ease-layered flex flex-col">
-                    <h3 className="text-xl font-bold text-ease-text-primary mb-6 flex items-center gap-2">
-                      <AlertCircle className="w-5 h-5 text-ease-error" />
-                      Critical Alerts
-                    </h3>
+                <motion.div 
+                  variants={itemVariants}
+                  className="bg-ease-surface/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/5 shadow-ease-layered flex flex-col"
+                >
+                    <div className="flex items-center justify-between mb-8">
+                      <h3 className="text-xl font-black text-ease-text-primary tracking-tighter flex items-center gap-3">
+                        <div className="p-2 bg-red-500/10 rounded-xl">
+                          <AlertCircle className="w-5 h-5 text-red-400" />
+                        </div>
+                        Signals
+                      </h3>
+                      <span className="px-2 py-1 bg-white/5 text-[9px] font-black rounded-lg text-ease-text-secondary uppercase">Real-time</span>
+                    </div>
                     
-                    <div className="space-y-4 flex-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
-                        {pulse?.alerts?.map((alert) => (
-                            <div key={alert.id} className="p-5 rounded-2xl bg-ease-bg border border-ease-border hover:border-ease-blue/30 transition-all duration-200 group cursor-pointer hover:translate-x-1">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className={clsx(
-                                      "px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest",
-                                      alert.type === 'error' ? 'bg-ease-error/10 text-ease-error' : 'bg-ease-warning/10 text-ease-warning'
-                                    )}>
-                                      {alert.type}
-                                    </span>
-                                    <ChevronRight className="w-4 h-4 text-ease-text-secondary group-hover:text-ease-blue transition-colors" />
-                                </div>
-                                <h4 className="text-sm font-bold text-ease-text-primary leading-tight group-hover:text-ease-blue transition-colors">{alert.message}</h4>
-                                <p className="text-xs text-ease-text-secondary mt-2 font-medium leading-relaxed">{alert.detail}</p>
-                            </div>
-                        ))}
+                    <div className="space-y-4 flex-1 overflow-y-auto max-h-[420px] pr-2 custom-scrollbar">
+                        <AnimatePresence mode="popLayout">
+                          {pulse?.alerts?.map((alert, index) => (
+                              <motion.div 
+                                key={alert.id} 
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="p-5 rounded-3xl bg-white/5 border border-white/5 hover:border-white/10 transition-all duration-300 group cursor-pointer"
+                              >
+                                  <div className="flex justify-between items-start mb-3">
+                                      <span className={clsx(
+                                        "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm",
+                                        alert.type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/10' : 'bg-amber-500/10 text-amber-400 border border-amber-500/10'
+                                      )}>
+                                        {alert.type}
+                                      </span>
+                                      <div className="p-1.5 bg-white/5 rounded-lg group-hover:bg-ease-blue/20 group-hover:text-ease-blue transition-all">
+                                        <ChevronRight className="w-3.5 h-3.5" />
+                                      </div>
+                                  </div>
+                                  <h4 className="text-sm font-bold text-ease-text-primary leading-tight mb-2">{alert.message}</h4>
+                                  <p className="text-xs text-ease-text-secondary font-medium leading-relaxed opacity-70">{alert.detail}</p>
+                              </motion.div>
+                          ))}
+                        </AnimatePresence>
                         
                         {(!pulse?.alerts || pulse.alerts.length === 0) && (
-                          <div className="flex flex-col items-center justify-center py-20 text-ease-text-secondary">
-                            <div className="w-16 h-16 rounded-full bg-ease-success/10 flex items-center justify-center mb-4">
-                              <CheckCircle2 className="w-8 h-8 text-ease-success" />
-                            </div>
-                            <p className="font-bold text-ease-text-primary">All systems nominal</p>
-                            <p className="text-xs mt-1">No critical alerts detected.</p>
+                          <div className="flex flex-col items-center justify-center py-20 text-ease-text-secondary text-center">
+                            <motion.div 
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              className="w-20 h-20 rounded-full bg-emerald-500/5 flex items-center justify-center mb-6 border border-emerald-500/10"
+                            >
+                              <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                            </motion.div>
+                            <p className="font-black text-ease-text-primary text-sm uppercase tracking-wider">All Systems Nominal</p>
+                            <p className="text-xs mt-2 opacity-60 px-10">No engine anomalies detected in the current cycle.</p>
                           </div>
                         )}
                     </div>
                     
-                    <button className="w-full mt-8 py-4 rounded-2xl bg-ease-bg text-ease-text-primary font-bold text-sm hover:bg-ease-blue hover:text-white transition-all duration-300 shadow-ease-layered border border-ease-border">
-                      View All Incident Logs
+                    <button 
+                      onClick={() => window.location.href = '/health'}
+                      className="w-full mt-8 py-5 rounded-[1.5rem] bg-white/5 text-ease-text-primary font-black text-xs uppercase tracking-widest hover:bg-white/10 active:scale-[0.98] transition-all border border-white/5 shadow-xl"
+                    >
+                      Access Infrastructure Logs
                     </button>
-                </div>
+                </motion.div>
             </div>
-        </div>
+        </motion.div>
     );
 }
 

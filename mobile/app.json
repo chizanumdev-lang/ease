@@ -15,20 +15,23 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.viicsoft.ease",
-      "buildNumber": "3",
-      "infoPList": {
+      "buildNumber": "2",
+      "infoPlist": {
         "UIBackgroundModes": [
           "audio",
-          "audio"
-        ]
-      },
-      "infoPlist": {
+          "remote-notification"
+        ],
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.viicsoft.ease",
       "versionCode": 3,
+      "permissions": [
+        "WAKE_LOCK",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

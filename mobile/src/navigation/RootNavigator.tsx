@@ -47,18 +47,38 @@ export default function RootNavigator() {
         notificationService.syncPushToken();
 
         // Handle notification responses
-        const subscription = notificationService.addResponseListener(response => {
+        notificationService.addResponseListener(async (response) => {
             const data = response.notification.request.content.data;
-            console.log('[NAV] Notification received:', data);
+            const actionIdentifier = response.actionIdentifier;
+            
+            console.log('[NAV] Notification received:', data, 'Action:', actionIdentifier);
 
             if (data.type === 'task' && data.taskId) {
                 // Navigate to Task screen
                 if (navigationRef.isReady()) {
-                    // @ts-ignore - navigation types are tricky with nested stacks
+                    // @ts-ignore
                     navigationRef.navigate('Main', {
                         screen: 'Task',
                         params: { taskId: data.taskId }
                     });
+                }
+            } else if (data.type === 'ritual' && data.ritualType) {
+                // Get ritual tracks from store
+                const ritualTracks = useAudioStore.getState().ritualTracks;
+                const track = data.ritualType === 'morning' ? ritualTracks.morning : ritualTracks.night;
+
+                if (track && navigationRef.isReady()) {
+                    // Load and play immediately if 'play' action was pressed
+                    if (actionIdentifier === 'play' || actionIdentifier === 'expo.modules.notifications.actions.DEFAULT') {
+                        await useAudioStore.getState().loadTrack(track);
+                        await useAudioStore.getState().play();
+                        
+                        // @ts-ignore
+                        navigationRef.navigate('Main', {
+                            screen: 'AudioPlayer',
+                            params: { track }
+                        });
+                    }
                 }
             } else if (data.type === 'audio' && data.trackId) {
                 // Navigate to AudioPlayer

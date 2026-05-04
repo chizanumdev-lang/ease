@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainStackParamList } from '../types';
 import { useAudioStore } from '../store/audioStore';
 import { useTheme } from '../hooks/useTheme';
@@ -13,6 +14,7 @@ export default function MiniAudioPlayer() {
     const navigation = useNavigation<NavigationProp>();
     const { currentTrack, isPlaying, pause, play, stop, reset } = useAudioStore();
     const { colors, spacing, borderRadius, isDark } = useTheme();
+    const insets = useSafeAreaInsets();
 
     // Don't show if no track is loaded
     if (!currentTrack) return null;
@@ -47,10 +49,10 @@ export default function MiniAudioPlayer() {
             style={[
                 styles.container, 
                 { 
-                    backgroundColor: isDark ? 'rgba(34, 83, 68, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+                    backgroundColor: isDark ? 'rgba(34, 83, 68, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                     borderColor: colors.outlineVariant,
                     borderRadius: borderRadius.lg,
-                    bottom: 100, // Float above the tab bar
+                    bottom: insets.bottom + 74, // Positioned precisely above the standard tab bar
                     left: spacing.lg,
                     right: spacing.lg,
                 }

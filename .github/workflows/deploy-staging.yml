@@ -1,0 +1,35 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Supabase CLI
+        run: |
+          npm install -g supabase
+
+      - name: Link Staging Project
+        run: |
+          supabase link --project-ref ${{ secrets.SUPABASE_STAGING_PROJECT_ID }} -p ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
+
+      - name: Push Migrations to Staging
+        run: |
+          supabase db push
+
+      - name: Deploy Backend (Optional Placeholder)
+        run: |
+          echo "Add your deployment command here (e.g., git push to Heroku, or vercel deploy)"

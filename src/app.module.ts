@@ -24,6 +24,10 @@ import { MailModule } from './mail/mail.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { APP_FILTER } from '@nestjs/core';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { EngineModule } from './modules/engine/engine.module';
+import { WorkerModule } from './modules/worker/worker.module';
 
 @Module({
   imports: [
@@ -42,6 +46,7 @@ import { APP_FILTER } from '@nestjs/core';
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
@@ -73,16 +78,31 @@ import { APP_FILTER } from '@nestjs/core';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        url: configService.get('DATABASE_URL'),
-        ssl: {
-          rejectUnauthorized: false,
-        },
-        connectTimeoutMS: 10000, // 10 seconds (Neon pooler resilience)
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // Set to false in production
-      }),
+      useFactory: (configService: ConfigService) => {
+        const url = configService.get<string>('DATABASE_URL');
+        const isLocal = configService.get('DATABASE_HOST') === '127.0.0.1' || 
+                        (url && url.includes('127.0.0.1'));
+
+        const dbConfig: any = {
+          type: 'postgres',
+          ssl: isLocal ? false : { rejectUnauthorized: false },
+          connectTimeoutMS: 10000,
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          synchronize: false,
+        };
+
+        if (url) {
+          dbConfig.url = url;
+        } else {
+          dbConfig.host = configService.get<string>('DATABASE_HOST');
+          dbConfig.port = configService.get<number>('DATABASE_PORT');
+          dbConfig.username = configService.get<string>('DATABASE_USER');
+          dbConfig.password = configService.get<string>('DATABASE_PASSWORD');
+          dbConfig.database = configService.get<string>('DATABASE_NAME');
+        }
+
+        return dbConfig;
+      },
       inject: [ConfigService],
     }),
     AuthModule,
@@ -100,6 +120,19 @@ import { APP_FILTER } from '@nestjs/core';
     AudioModule,
     AdminModule,
     MailModule,
+    EngineModule,
+    WorkerModule,
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      sortSchema: true,
+      playground: true,
+      resolvers: { JSON: require('graphql-type-json') },
+      subscriptions: {
+        'graphql-ws': true,
+        'subscriptions-transport-ws': true,
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [

@@ -33,6 +33,12 @@ export class BrevoService {
             htmlContent,
         };
 
+        if (!this.apiKey) {
+            this.logger.warn('BREVO_API_KEY not set. Verification code logged to console for development.');
+            this.logger.log(`[DEVELOPMENT] Verification code for ${to}: ${code}`);
+            return;
+        }
+
         try {
             await axios.post(url, data, {
                 headers: {
@@ -43,6 +49,12 @@ export class BrevoService {
             this.logger.log(`Verification email sent to ${to}`);
         } catch (error) {
             this.logger.error(`Failed to send verification email to ${to}: ${error.response?.data?.message || error.message}`);
+            // Don't throw in development if we can just see the code in the logs
+            if (process.env.NODE_ENV !== 'production') {
+                this.logger.warn(`Email sending failed, but continuing since we are in ${process.env.NODE_ENV} mode.`);
+                this.logger.log(`[DEVELOPMENT-FALLBACK] Verification code for ${to}: ${code}`);
+                return;
+            }
             throw error;
         }
     }

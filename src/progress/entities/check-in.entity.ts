@@ -19,8 +19,17 @@ export class CheckIn {
     @Column({ type: 'date' })
     date: Date;
 
+    @Column({ nullable: true })
+    mood: string;
+
+    @Column({ name: 'energy_level', nullable: true })
+    energyLevel: number;
+
     @Column({ type: 'text', nullable: true })
     notes: string;
+
+    @Column({ type: 'jsonb', nullable: true, default: {} })
+    metadata: any;
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;

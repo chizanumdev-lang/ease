@@ -27,8 +27,8 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
     if (isLoading || !currentProgram || currentProgram.status === 'generating') {
         return (
             <LoadingState 
-                title="Finalizing your journey" 
-                subtitle="Weaving together your curriculum and setting up your growth intervals."
+                title="Getting things ready" 
+                subtitle="We're building your custom plan and setting the right pace for you."
                 variant="full"
             />
         );
@@ -41,9 +41,9 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
     const renderIntensityChart = () => (
         <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Growth Velocity</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>The Pace</Text>
                 <View style={[styles.intensityIndicator, { backgroundColor: colors.primaryContainer }]}>
-                    <Text style={[styles.intensityIndicatorText, { color: colors.primary }]}>{currentProgram.duration} Day Arc</Text>
+                    <Text style={[styles.intensityIndicatorText, { color: colors.primary }]}>{currentProgram.duration} Day Journey</Text>
                 </View>
             </View>
             
@@ -77,7 +77,7 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Ionicons name="chevron-back" size={24} color={colors.primary} />
                 </TouchableOpacity>
-                <Text style={[styles.navTitle, { color: colors.text }]}>Program Roadmap</Text>
+                <Text style={[styles.navTitle, { color: colors.text }]}>Your Plan</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -106,22 +106,29 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
                             <Text style={styles.dayBadgeText}>DAY 1</Text>
                         </View>
                         <Text style={[styles.mainDayTitle, { color: colors.text }]}>
-                            {currentProgram.dayPlans?.[0]?.theme || "Foundation Core"}
+                            {sampleDays[0]?.title || currentProgram.dayPlans?.[0]?.theme || "Foundation Core"}
                         </Text>
                         <View style={styles.focusList}>
-                            {currentProgram.dayPlans?.[0]?.focusAreas?.map((area, i) => (
-                                <View key={i} style={[styles.focusTag, { backgroundColor: colors.surfaceContainerLow }]}>
+                            {sampleDays[0]?.focus ? (
+                                <View style={[styles.focusTag, { backgroundColor: colors.surfaceContainerLow }]}>
                                     <View style={[styles.tagDot, { backgroundColor: colors.primary }]} />
-                                    <Text style={[styles.focusTagText, { color: colors.text }]}>{area}</Text>
+                                    <Text style={[styles.focusTagText, { color: colors.text }]}>{sampleDays[0].focus}</Text>
                                 </View>
-                            ))}
+                            ) : (
+                                currentProgram.dayPlans?.[0]?.focusAreas?.map((area, i) => (
+                                    <View key={i} style={[styles.focusTag, { backgroundColor: colors.surfaceContainerLow }]}>
+                                        <View style={[styles.tagDot, { backgroundColor: colors.primary }]} />
+                                        <Text style={[styles.focusTagText, { color: colors.text }]}>{area}</Text>
+                                    </View>
+                                ))
+                            )}
                         </View>
                     </View>
                 </View>
 
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Coming Up</Text>
-                    {sampleDays.map((sample: any, index: number) => (
+                    {sampleDays.slice(1).map((sample: any, index: number) => (
                         <View key={index} style={styles.timelineItem}>
                             <View style={styles.timelineLeft}>
                                 <View style={[styles.timelineDot, { backgroundColor: colors.outlineVariant }]} />
@@ -140,7 +147,7 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
                             <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
                         </View>
                         <Text style={[styles.lockedText, { color: colors.textMuted }]}>
-                            Days 4–{currentProgram.duration} are uniquely generated as you progress
+                            Days 4–{currentProgram.duration} are created just for you as you move forward
                         </Text>
                     </View>
                 </View>

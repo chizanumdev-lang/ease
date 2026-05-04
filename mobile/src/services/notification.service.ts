@@ -69,18 +69,19 @@ class NotificationService {
         }
     }
 
-    async scheduleForDay(dayPlan: DayPlan) {
+    async scheduleForDay(dayPlan: DayPlan, ritualSettings?: { morning: string; night: string }) {
         // Cancel existing to avoid duplicates/overflow
         await this.cancelAll();
 
-        const notifications: Array<{ title: string; body: string; date: Date; type: string; data: any }> = [];
+        const notifications: Array<{ title: string; body: string; date: Date; type: string; data: any; category?: string }> = [];
+        const now = new Date();
 
         // 1. Schedule Task Reminders
         if (dayPlan.tasks) {
             dayPlan.tasks.forEach(task => {
                 if (task.scheduledAt && !task.completed) {
                     const scheduledDate = new Date(task.scheduledAt);
-                    if (scheduledDate > new Date()) {
+                    if (scheduledDate > now) {
                         notifications.push({
                             title: 'Task Reminder',
                             body: `Time for: ${task.title}`,
@@ -93,53 +94,65 @@ class NotificationService {
             });
         }
 
-        // 2. Schedule Night Audio (e.g., 9 PM)
-        const nightAudioTime = new Date();
-        nightAudioTime.setHours(21, 0, 0, 0); // 9:00 PM
-        if (nightAudioTime < new Date()) {
-            nightAudioTime.setDate(nightAudioTime.getDate() + 1);
-        }
+        // 2. Schedule Rituals based on user settings
+        const morningTime = ritualSettings?.morning || '07:00';
+        const nightTime = ritualSettings?.night || '22:00';
 
-        // Find an audio track (preferably night/sleep related)
-        const audioTrack = dayPlan.audioTracks?.[0]; // Simplified selection
-        if (audioTrack) {
+        const scheduleRitual = (timeStr: string, type: 'morning' | 'night', title: string, body: string) => {
+            const [h, m] = timeStr.split(':').map(Number);
+            const date = new Date();
+            date.setHours(h, m, 0, 0);
+            
+            if (date < now) {
+                date.setDate(date.getDate() + 1);
+            }
+
             notifications.push({
-                title: 'Evening Reflection',
-                body: 'Time to wind down with your audio session.',
-                date: nightAudioTime,
-                type: 'audio',
-                data: { trackId: audioTrack.id, type: 'audio' }
+                title,
+                body,
+                date,
+                type: 'ritual',
+                category: 'ritual',
+                data: { ritualType: type, type: 'ritual' }
             });
-        }
+        };
 
-        // 3. Schedule Morning Kickoff (8:00 AM)
-        const morningKickoffTime = new Date();
-        morningKickoffTime.setHours(8, 0, 0, 0);
-        if (morningKickoffTime < new Date()) {
-            morningKickoffTime.setDate(morningKickoffTime.getDate() + 1);
+        scheduleRitual(morningTime, 'morning', 'Morning Ritual 🌅', 'Start your day with purpose and affirmations.');
+        scheduleRitual(nightTime, 'night', 'Night Ritual 🌙', 'Wind down and integrate today\'s growth.');
+
+        // 3. Define Notification Categories (Actions)
+        if (Platform.OS !== 'web') {
+            await Notifications.setNotificationCategoryAsync('ritual', [
+                {
+                    identifier: 'play',
+                    buttonTitle: 'Play Now ▶️',
+                    options: { opensAppToForeground: true }
+                },
+                {
+                    identifier: 'dismiss',
+                    buttonTitle: 'Later',
+                    options: { opensAppToForeground: false }
+                }
+            ]);
         }
-        notifications.push({
-            title: 'Good Morning!',
-            body: 'Your plan for today is ready. Let\'s make it count!',
-            date: morningKickoffTime,
-            type: 'system',
-            data: { type: 'kickoff' }
-        });
 
         // Sort by time
         notifications.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-        // Enforce Max 4 per day rule
-        const limitedNotifications = notifications.slice(0, 4);
+        // Enforce Max 5 per day rule (higher for rituals)
+        const limitedNotifications = notifications.slice(0, 5);
 
         for (const notif of limitedNotifications) {
-            const secondsUntil = Math.max(1, Math.floor((notif.date.getTime() - Date.now()) / 1000));
+            const secondsUntil = Math.max(1, Math.floor((notif.date.getTime() - now.getTime()) / 1000));
             
             await Notifications.scheduleNotificationAsync({
                 content: {
                     title: notif.title,
                     body: notif.body,
                     data: notif.data,
+                    categoryIdentifier: notif.category,
+                    sound: true,
+                    priority: Notifications.AndroidPriority.MAX,
                 },
                 trigger: {
                     seconds: secondsUntil,
@@ -148,6 +161,7 @@ class NotificationService {
                 } as any,
             });
         }
+        console.log(`[NotificationService] Scheduled ${limitedNotifications.length} notifications`);
     }
 
     async cancelAll() {
