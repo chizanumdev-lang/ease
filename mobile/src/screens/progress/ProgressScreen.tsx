@@ -94,39 +94,22 @@ export default function ProgressScreen({ navigation }: any) {
                         <Text style={[styles.treeSubtitle, { color: colors.textMuted }]}>{progression?.currentPhase.subtitle}</Text>
                         
                         <View style={styles.levelRow}>
-                            <View style={[styles.levelBadge, { backgroundColor: colors.primaryContainer }]}>
+                            <View style={[styles.levelBadge, { backgroundColor: '#fff' }]}>
                                 <Text style={[styles.levelText, { color: colors.primary }]}>LEVEL {progression?.level}</Text>
                             </View>
-                            <Text style={[styles.rankText, { color: colors.textMuted }]}>{progression?.currentPhase.levelRange}</Text>
                         </View>
-                    </View>
-                </View>
-
-                {/* Progress Card (Glassmorphism inspired) */}
-                <View style={[styles.progressCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
-                    <View style={styles.progressHeader}>
-                        <View>
-                            <Text style={[styles.progressLabel, { color: colors.primary }]}>NEXT MILESTONE</Text>
-                            <Text style={[styles.evolutionTarget, { color: colors.text }]}>
-                                {progression?.journey.find(p => !p.unlocked)?.title || 'Max Sovereignty'}
+                        
+                        <View style={styles.levelProgressContainer}>
+                            <View style={[styles.levelProgressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                                <View style={[styles.progressFill, { width: `${progression?.progressPercentage || 0}%`, backgroundColor: colors.primary }]} />
+                            </View>
+                            <Text style={[styles.levelXpText, { color: colors.text, fontFamily: fonts.body }]}>
+                                {progression?.currentLevelXp} <Text style={[styles.xpMax, { color: colors.textMuted }]}>/ {progression?.nextLevelXp} XP</Text>
                             </Text>
                         </View>
-                        <Text style={[styles.xpText, { color: colors.text }]}>
-                            {progression?.currentLevelXp} <Text style={[styles.xpMax, { color: colors.textMuted }]}>/ {progression?.nextLevelXp} XP</Text>
-                        </Text>
-                    </View>
-                    
-                    <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
-                        <View style={[styles.progressFill, { width: `${progression?.progressPercentage || 0}%`, backgroundColor: colors.primary }]} />
-                    </View>
-
-                    <View style={styles.xpMeta}>
-                        <Ionicons name="sparkles" size={14} color={colors.primary} />
-                        <Text style={[styles.xpRemaining, { color: colors.textMuted }]}>
-                            {Math.max(0, (progression?.nextLevelXp || 0) - (progression?.currentLevelXp || 0))} XP until your next evolution.
-                        </Text>
                     </View>
                 </View>
+
 
                 {/* Quick Stats Grid */}
                 <View style={styles.statsGrid}>
@@ -144,6 +127,19 @@ export default function ProgressScreen({ navigation }: any) {
                             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Completion</Text>
                         </View>
                     </View>
+                </View>
+
+                {/* De-emphasized Milestone Info */}
+                <View style={[styles.milestoneMiniCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderColor: colors.outlineVariant }]}>
+                    <View style={styles.milestoneHeader}>
+                        <Ionicons name="flag-outline" size={14} color={colors.textMuted} />
+                        <Text style={[styles.milestoneLabel, { color: colors.textMuted }]}>
+                            NEXT MILESTONE: <Text style={{ color: colors.text }}>{progression?.journey.find(p => !p.unlocked)?.title || 'Max Sovereignty'}</Text>
+                        </Text>
+                    </View>
+                    <Text style={[styles.milestoneLevelText, { color: colors.primary }]}>
+                        At Level {progression?.journey.find(p => !p.unlocked)?.unlockedAtLevel || (progression?.level || 0) + 1}
+                    </Text>
                 </View>
 
                 {/* Evolution Roadmap */}
@@ -407,5 +403,44 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-    }
+    },
+    levelProgressContainer: {
+        alignItems: 'center',
+        marginTop: 12,
+        gap: 6,
+    },
+    levelProgressTrack: {
+        width: 140,
+        height: 6,
+        borderRadius: 3,
+        overflow: 'hidden',
+    },
+    levelXpText: {
+        fontSize: 12,
+        fontWeight: '700',
+    },
+    milestoneMiniCard: {
+        padding: 12,
+        borderRadius: 24,
+        borderWidth: 1,
+        marginHorizontal: 24,
+        marginTop: 8,
+        marginBottom: 24,
+        alignItems: 'center',
+        gap: 4,
+    },
+    milestoneHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    milestoneLabel: {
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    milestoneLevelText: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
 });

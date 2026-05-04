@@ -71,6 +71,11 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
     const videoId = task.type === 'video' ? getYoutubeId(task.videoUrl || '') : null;
     const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
 
+    const getCleanTitle = (title: string) => {
+        // Remove "Day X:", "Day X -", "Day 1:", etc.
+        return title.replace(/^Day \d+[:\-]\s*/i, '').trim();
+    };
+
     const getStatusColor = () => {
         if (isCompleted) return colors.primary;
         if (isInProgress) return colors.primary;
@@ -178,10 +183,7 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
                                             { color: colors.text, fontFamily: fonts.display },
                                             isCompleted && { opacity: 0.6 }
                                         ]}
-                                    >{task.title}</Text>
-                                    <Text style={[styles.youtubeMetadata, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                                        Ease Lesson • {task.duration || 10} min
-                                    </Text>
+                                    >{getCleanTitle(task.title)}</Text>
                                 </View>
                                 {isCompleted && (
                                     <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
@@ -341,10 +343,10 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     youtubeTitle: {
-        fontSize: 15,
+        fontSize: 13,
         fontWeight: '700',
-        lineHeight: 20,
-        marginBottom: 2,
+        lineHeight: 16,
+        marginTop: 0,
     },
     youtubeMetadata: {
         fontSize: 12,
