@@ -152,8 +152,8 @@ export default function GoalWizardScreen({ navigation }: Props) {
             setIsLoadingPreview(true);
             showModal({
                 type: 'loading',
-                title: 'Preparing Your Review',
-                description: 'Our AI is analyzing your goals to provide personalized insights and intensity projections...'
+                title: 'Building Your Journey',
+                description: 'We\'re figuring out the best path and pace just for you...'
             });
             try {
                 // Ensure we are authenticated before proceeding
@@ -212,8 +212,8 @@ export default function GoalWizardScreen({ navigation }: Props) {
         
         showModal({
             type: 'loading',
-            title: 'Manifesting Your Path',
-            description: 'AI is weaving your personalized roadmap and gathering resources...'
+            title: 'Starting Your Journey',
+            description: 'We\'re putting your plan together and getting everything ready...'
         });
 
         try {
@@ -244,8 +244,8 @@ export default function GoalWizardScreen({ navigation }: Props) {
             console.error('Wizard Error:', error);
             showModal({
                 type: 'error',
-                title: 'Manifestation Failed',
-                description: 'We couldn\'t weave your path right now. Please try again.'
+                title: 'Something went wrong',
+                description: 'We couldn\'t put your plan together just now. Please try again.'
             });
             // Stay on REVIEW step if error occurred
         } finally {
@@ -275,8 +275,8 @@ export default function GoalWizardScreen({ navigation }: Props) {
                     loop
                     style={{ width: 300, height: 300 }}
                 />
-                <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginTop: 20 }}>Manifesting your journey</Text>
-                <Text style={{ color: colors.textMuted, fontFamily: fonts.body, marginTop: 10 }}>Analyzing goal • Structuring curriculum • Scheduling tasks</Text>
+                <Text style={{ color: colors.text, fontFamily: fonts.display, fontSize: 24, marginTop: 20 }}>Creating your journey</Text>
+                <Text style={{ color: colors.textMuted, fontFamily: fonts.body, marginTop: 10 }}>Understanding your goal • Building your journey • Setting your schedule</Text>
             </View>
         );
     }
@@ -539,7 +539,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
                         {step === 'REVIEW' && (
                             <View style={styles.stepContainer}>
-                                {renderHeader(4, "Final Alignment", "Review your journey foundations before we manifest the path.")}
+                                {renderHeader(4, "Check Your Plan", "Take a quick look at your journey before we get started.")}
                                 
                                 <View style={styles.reviewContent}>
                                         {/* Summary Card */}
@@ -565,7 +565,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                         
                                         {previewData?.weeklyIntensity && (
                                             <View style={[styles.intensityCard, { backgroundColor: colors.surfaceContainerLow, borderRadius: 24, padding: 20, marginBottom: 20 }]}>
-                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label, marginBottom: 12 }]}>INTENSITY PROJECTION</Text>
+                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label, marginBottom: 12 }]}>YOUR PACE</Text>
                                                 <BarChart
                                                     data={previewData.weeklyIntensity.map((val: number, i: number) => ({
                                                         value: val,
@@ -606,7 +606,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                                 <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{formData.dailyMinutes} Min</Text>
                                             </View>
                                             <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
-                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>PEAK INTENSITY</Text>
+                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>HIGHEST EFFORT</Text>
                                                 <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>
                                                     {previewData ? Math.max(...previewData.weeklyIntensity) + '%' : 'Balanced'}
                                                 </Text>

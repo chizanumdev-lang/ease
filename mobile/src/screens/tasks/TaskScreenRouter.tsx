@@ -80,6 +80,16 @@ export default function TaskScreenRouter({ route, navigation }: Props) {
     };
 
 
+    const TASK_LABELS: Record<string, string> = {
+        video: 'WATCH',
+        quiz: 'CHECK-IN',
+        audio: 'PRACTICE',
+        journal: 'WRITE',
+        reflection: 'REVIEW',
+        consistency: 'COMMIT',
+        'micro-app': 'ACTION'
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Custom Header */}
@@ -94,7 +104,7 @@ export default function TaskScreenRouter({ route, navigation }: Props) {
                             {task.title}
                         </Text>
                         <Text style={[styles.headerSubtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                            {task.type.toUpperCase()} • {task.duration || 15} MIN
+                            {TASK_LABELS[task.type] || task.type.toUpperCase()} • {task.duration || 15} MIN
                         </Text>
                     </View>
 

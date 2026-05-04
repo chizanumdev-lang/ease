@@ -42,22 +42,19 @@ function formatTime(secs: number) {
 }
 
 function getTakeaways(task: Task, theme: string) {
-    // Heuristic: try to parse from content or use defaults
     const content = task.content || '';
-    const items = content.split('\n').filter(l => l.startsWith('-')).map(l => l.substring(1).trim());
+    const items = content.split('\n').filter(l => l.trim().startsWith('-')).map(l => l.trim().substring(1).trim());
     
-    if (items.length >= 3) {
+    if (items.length >= 1) {
         return [
-            { title: 'Core Concept', body: items[0], icon: 'brain' },
-            { title: 'Action Step', body: items[1], icon: 'flash' },
-            { title: 'Goal Alignment', body: items[2], icon: 'target' },
+            { title: 'Key Takeaway', body: items[0], icon: 'brain' },
+            { title: 'Key Insights', body: items.length > 1 ? items.slice(1).join('. ') : 'Focus on the "Why" and the practical application of this technique.', icon: 'lightbulb-on-outline' },
         ];
     }
 
     return [
-        { title: 'Focus Area', body: `Deep dive into ${theme.toLowerCase()} principles.`, icon: 'eye-outline' },
-        { title: 'Key Insight', body: 'Understand the "Why" behind this specific technique.', icon: 'lightbulb-on-outline' },
-        { title: 'Next Step', body: 'Prepare for the practical application in the next session.', icon: 'chevron-right' },
+        { title: 'Key Takeaway', body: `Master the core of ${theme.toLowerCase()}.`, icon: 'eye-outline' },
+        { title: 'Key Insights', body: 'Learn the underlying mechanics and how to integrate them into your routine.', icon: 'lightbulb-on-outline' },
     ];
 }
 
@@ -324,7 +321,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                                         styles.takeawayCard,
                                         {
                                             borderLeftColor: idx % 2 === 0 ? colors.primary : colors.secondary,
-                                            width: idx === 2 ? SCREEN_WIDTH - 48 : (SCREEN_WIDTH - 60) / 2,
+                                            width: '100%',
                                         },
                                     ]}
                                 >
@@ -527,8 +524,7 @@ const styles = StyleSheet.create({
         letterSpacing: -0.3,
     },
     cardsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
+        flexDirection: 'column',
         gap: 12,
     },
     takeawayCard: {

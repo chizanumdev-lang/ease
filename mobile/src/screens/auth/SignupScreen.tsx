@@ -94,9 +94,9 @@ export default function SignupScreen({ navigation }: Props) {
                 >
                     <View style={styles.header}>
                         <Logo size={60} style={styles.logo} />
-                        <Text style={[styles.title, { fontFamily: fonts.display, color: colors.onSurface }]}>Welcome to EASE</Text>
+                        <Text style={[styles.title, { fontFamily: fonts.display, color: colors.onSurface }]}>Join Ease</Text>
                         <Text style={[styles.subtitle, { fontFamily: fonts.body, color: colors.onSurfaceVariant }]}>
-                            Your mindful journey begins with a single step.
+                            Start your journey today.
                         </Text>
                     </View>
 
@@ -133,7 +133,7 @@ export default function SignupScreen({ navigation }: Props) {
                                         <View style={[styles.strengthTrack, { backgroundColor: strength >= 1 ? colors.primary : colors.surfaceContainerHighest }]} />
                                     </View>
                                     <Text style={[styles.strengthText, { color: colors.primary, fontFamily: fonts.label }]}>
-                                        {strength <= 0.25 ? 'Weak' : strength <= 0.5 ? 'Fair' : strength <= 0.75 ? 'Strong' : 'Exceptional'}
+                                        {strength <= 0.25 ? 'Weak' : strength <= 0.5 ? 'Fair' : strength <= 0.75 ? 'Strong' : 'Perfect'}
                                     </Text>
                                 </View>
                             )}
@@ -152,7 +152,7 @@ export default function SignupScreen({ navigation }: Props) {
                         </View>
 
                         <StitchButton
-                            title="Create Account"
+                            title="Join Now"
                             onPress={handleSignup}
                             isLoading={isLoading}
                             variant="primary"

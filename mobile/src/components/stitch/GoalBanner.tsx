@@ -37,58 +37,43 @@ export default function GoalBanner({
                 end={{ x: 1, y: 1 }}
                 style={styles.gradientBg}
             >
-                <View style={styles.content}>
-                    <View style={styles.headerRow}>
-                        <View style={styles.badge}>
-                            <Text style={[styles.badgeText, { color: '#fff' }]}>
-                                {phase.toUpperCase()}
-                            </Text>
-                        </View>
-                        
-                        <View style={styles.progressContainer}>
-                            <Svg width={size} height={size} style={styles.svg}>
-                                <Circle
-                                    cx={size / 2}
-                                    cy={size / 2}
-                                    r={radius}
-                                    stroke="rgba(255, 255, 255, 0.2)"
-                                    strokeWidth={strokeWidth}
-                                    fill="transparent"
-                                />
-                                <Circle
-                                    cx={size / 2}
-                                    cy={size / 2}
-                                    r={radius}
-                                    stroke="#fff"
-                                    strokeWidth={strokeWidth}
-                                    strokeDasharray={`${circumference} ${circumference}`}
-                                    strokeDashoffset={offset}
-                                    strokeLinecap="round"
-                                    fill="transparent"
-                                    transform={`rotate(-90 ${size / 2} ${size / 2})`}
-                                />
-                            </Svg>
-                            <View style={styles.progressTextContainer}>
-                                <Text style={styles.percentageText}>{Math.round(progress * 100)}%</Text>
-                            </View>
-                        </View>
-                    </View>
-
-                    <Text style={[styles.title, { color: '#fff', fontFamily: fonts.display }]}>
-                        {title}
-                    </Text>
-
-                    {/* Glassmorphism card for subtitle */}
-                    <StitchCard 
-                        variant="glass" 
-                        padding="md" 
-                        borderRadius={20}
-                        style={styles.subtitleCard}
-                    >
-                        <Text style={[styles.subtitle, { color: isDark ? '#fff' : colors.onSurface, fontFamily: fonts.body }]}>
+                <View style={styles.mainRow}>
+                    <View style={styles.textContainer}>
+                        <Text style={[styles.title, { color: '#fff', fontFamily: fonts.display }]}>
+                            {title}
+                        </Text>
+                        <Text style={[styles.subtitle, { color: 'rgba(255, 255, 255, 0.8)', fontFamily: fonts.body }]}>
                             {subtitle}
                         </Text>
-                    </StitchCard>
+                    </View>
+
+                    <View style={styles.progressContainer}>
+                        <Svg width={size} height={size} style={styles.svg}>
+                            <Circle
+                                cx={size / 2}
+                                cy={size / 2}
+                                r={radius}
+                                stroke="rgba(255, 255, 255, 0.15)"
+                                strokeWidth={strokeWidth}
+                                fill="transparent"
+                            />
+                            <Circle
+                                cx={size / 2}
+                                cy={size / 2}
+                                r={radius}
+                                stroke="#fff"
+                                strokeWidth={strokeWidth}
+                                strokeDasharray={`${circumference} ${circumference}`}
+                                strokeDashoffset={offset}
+                                strokeLinecap="round"
+                                fill="transparent"
+                                transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                            />
+                        </Svg>
+                        <View style={styles.progressTextContainer}>
+                            <Text style={styles.percentageText}>{Math.round(progress * 100)}%</Text>
+                        </View>
+                    </View>
                 </View>
             </LinearGradient>
         </View>
@@ -104,27 +89,17 @@ const styles = StyleSheet.create({
     },
     gradientBg: {
         padding: 24,
-        minHeight: 220,
+        minHeight: 160,
+        justifyContent: 'center',
     },
-    content: {
-        flex: 1,
-        justifyContent: 'space-between',
-    },
-    headerRow: {
+    mainRow: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
     },
-    badge: {
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-    },
-    badgeText: {
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 1,
+    textContainer: {
+        flex: 1,
+        marginRight: 16,
     },
     progressContainer: {
         width: 64,
@@ -145,18 +120,14 @@ const styles = StyleSheet.create({
         fontWeight: '800',
     },
     title: {
-        fontSize: 28,
+        fontSize: 22,
         fontWeight: '800',
-        lineHeight: 34,
-        marginVertical: 16,
-        maxWidth: '80%',
-    },
-    subtitleCard: {
-        marginTop: 8,
+        lineHeight: 28,
+        marginBottom: 6,
     },
     subtitle: {
-        fontSize: 14,
-        lineHeight: 20,
+        fontSize: 13,
+        lineHeight: 18,
         fontWeight: '500',
     },
 });

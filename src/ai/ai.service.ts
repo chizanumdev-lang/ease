@@ -384,47 +384,41 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         const journalDuration = Math.round(minutesPerDay * 0.15);
         const consistencyDuration = 2; // Fixed short commitment
 
-        const systemInstruction = `You are an expert curriculum designer and personal coach specializing in 
-structured habit and skill development programs.
-
-CONTEXT
-Goal: "${goal}"
-Duration: ${duration} days (generate ALL ${duration} days)
-Daily commitment: ${minutesPerDay} minutes
-Learning style: ${learningStyle}
-Constraints: ${constraints.join(', ') || 'none'}
-
-DAILY FLOW (STRICT ORDER - Indexing 0-5)
-0. Video (Concept)
-1. Quiz (Comprehension)
-2. Audio (Integration - Binaural/Subliminal)
-3. Journal (Intention)
-4. Reflection (Daily Win/Preview)
-5. Consistency (Tomorrow's Commitment)
-
-OUTPUT SCHEMA
-Return a raw JSON array — no markdown, no code fences, no commentary, no trailing commas. Every object must have ALL of these keys:
-
-{
-  "dayNumber": integer,
-  "theme": string (specific subtopic),
-  "focusAreas": string[], (exactly 3 key concepts for today)
-  
-  "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
-  "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
-  "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
-  "consistencyTask": { "title": "Tomorrow's Commitment", "description": "i will complete my routine tommorrow.", "duration": ${consistencyDuration} },
-  "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
-  "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] }
-}
-
-QUALITY RULES
-- QUIZ GROUNDING: Questions MUST test comprehension of the day's specific theme and video content. Do not ask generic life-coaching questions.
-- AUDIO SCRIPT: The description should be a script summary for a voice-guided session designed for binaural beat background.
-- Each task must be scannable and mobile-friendly.
-- videoTask.searchQuery must be a specific, high-quality YouTube search query that directly relates to the Goal: "${goal}" and today's theme.
-- Avoid generic queries; ensure they are tailored to help the user achieve "${goal}".
-- reflectionTask.reviewPoints must be exactly 2 (one today's win, one tomorrow's prep).`;
+        const systemInstruction = `You are a friendly, direct, and encouraging coach. 
+        Create a ${duration}-day plan for the goal: "${goal}".
+        
+        WORDING STYLE:
+        - Use simple, plain English (5th-grade level).
+        - AVOID jargon like "curriculum," "foundation," "integration," "pedagogy," or "comprehension."
+        - Use short, punchy titles.
+        - Talk like a supportive friend who wants the user to succeed.
+        
+        DAILY FLOW (Index 0-5)
+        0. Video (Watch)
+        1. Quiz (Check-in)
+        2. Audio (Practice)
+        3. Journal (Write)
+        4. Reflection (Review)
+        5. Consistency (Commit)
+        
+        OUTPUT SCHEMA
+        Return a raw JSON array. Every object must have ALL of these keys:
+        {
+          "dayNumber": integer,
+          "theme": string (simple subtopic),
+          "focusAreas": string[], (exactly 3 simple things we'll focus on today)
+          
+          "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
+          "quiz": { "title": "Quick Check", "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
+          "audioTask": { "title": string, "description": "Friendly summary of what we'll practice", "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
+          "consistencyTask": { "title": "Tomorrow's Promise", "description": "I'll be back tomorrow to keep going.", "duration": ${consistencyDuration} },
+          "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
+          "reflectionTask": { "title": "Day Wrap-up", "description": "Quick look at today", "reviewPoints": ["One win from today", "One plan for tomorrow"] }
+        }
+        
+        QUALITY RULES:
+        - videoTask.searchQuery must be a specific, high-quality YouTube search query.
+        - Avoid generic coaching talk; be specific to "${goal}".`;
 
         try {
             // Call through the fallback chain (Gemini → Groq → Cohere)
@@ -678,27 +672,30 @@ Return ONLY the raw JSON object.
 
         const { duration = 30, minutesPerDay = 30, category = 'default' } = options;
 
-        const systemInstruction = `You are an expert curriculum designer. Generate high-level metadata for a ${duration}-day learning program based on the goal: "${goal}".
+        const systemInstruction = `You are a friendly, direct, and encouraging coach. 
+        Generate high-level metadata for a ${duration}-day learning journey based on the goal: "${goal}".
+        
+        TONE & STYLE:
+        - Use simple, plain English (5th-grade level).
+        - AVOID jargon like "curriculum," "foundation," "integration," or "pedagogy."
+        - Use punchy, action-oriented words.
+        - Talk like a supportive friend, not a textbook.
         
         OUTPUT SCHEMA:
         Return ONLY a raw JSON object:
         {
-          "title": "Concise, inspiring program name",
+          "title": "Short, catchy name for the journey",
           "category": "One of: Skill, Habit, Career, Mental, Fitness",
-          "primaryGoal": "The single most important outcome",
-          "description": "Short, compelling program summary (max 120 chars)",
-          "coachInsight": "A one-sentence personalized coaching note about the journey ahead and its intensity progression.",
+          "primaryGoal": "The one big thing you will achieve",
+          "description": "A quick, exciting summary of why this is great (max 120 chars)",
+          "coachInsight": "A short, friendly note about what to expect first.",
           "sampleDays": [
-            { "day": 1, "title": "Foundation focused title", "focus": "Action-oriented summary" },
-            { "day": 2, "title": "Progression focused title", "focus": "Action-oriented summary" },
-            { "day": 3, "title": "Integration focused title", "focus": "Action-oriented summary" }
+            { "day": 1, "title": "Simple title for Day 1", "focus": "What you'll actually do" },
+            { "day": 2, "title": "Simple title for Day 2", "focus": "What you'll actually do" },
+            { "day": 3, "title": "Simple title for Day 3", "focus": "What you'll actually do" }
           ],
           "weeklyIntensity": [number, number, number, number, number, number, number] 
         }
-
-        INTENSITY LOGIC:
-        The "weeklyIntensity" array represents relative effort (0-100) for 7 representative days. 
-        It should reflect a healthy progression: start lower for foundation, peak for challenge, and vary slightly for recovery.
         
         Return ONLY valid JSON.`;
 
@@ -715,11 +712,16 @@ Return ONLY the raw JSON object.
 
             // Self-repair: Ensure EVERY day in the roadmap has a title and focus
             if (Array.isArray(preview.sampleDays)) {
-                preview.sampleDays = preview.sampleDays.map((d: any, i: number) => ({
-                    ...d,
-                    title: d.title || `Phase ${i + 1}: ${d.focus?.substring(0, 20)}...` || `Day ${d.day || i + 1} Focus`,
-                    focus: d.focus || d.description || "Continued growth and integration"
-                }));
+                preview.sampleDays = preview.sampleDays.map((d: any, i: number) => {
+                    const dayNum = d.day || i + 1;
+                    const focus = d.focus || d.description || "Building on your progress";
+                    return {
+                        ...d,
+                        day: dayNum,
+                        title: d.title || `Day ${dayNum}: ${focus.substring(0, 20)}...`,
+                        focus: focus
+                    };
+                });
             }
 
             // Ensure schema validity
@@ -739,9 +741,9 @@ Return ONLY the raw JSON object.
             description: 'A transformative ' + (options.duration || 30) + '-day program built for your growth.',
             coachInsight: 'This plan is balanced for sustainable progress and steady challenge.',
             sampleDays: [
-                { day: 1, title: 'Foundations of ' + goal, description: 'Setting the stage for your growth.' },
-                { day: 2, title: 'Strategic Practice', description: 'Applying core techniques.' },
-                { day: 3, title: 'Initial Integration', description: 'Connecting concepts together.' }
+                { day: 1, title: 'Foundations of ' + goal, focus: 'Setting the stage for your growth.' },
+                { day: 2, title: 'Strategic Practice', focus: 'Applying core techniques.' },
+                { day: 3, title: 'Initial Integration', focus: 'Connecting concepts together.' }
             ],
             weeklyIntensity: [20, 35, 60, 45, 80, 25, 30]
         };
