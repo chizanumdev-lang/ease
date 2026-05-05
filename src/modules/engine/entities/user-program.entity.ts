@@ -15,7 +15,7 @@ registerEnumType(ProgramStatus, {
 });
 
 @ObjectType()
-@Entity('user_programs')
+@Entity('user_programs_engine')
 export class UserProgram {
   @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
