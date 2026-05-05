@@ -94,10 +94,11 @@ export default function VideoLibrary() {
     return (
         <div className="space-y-10">
             {/* Stats Header */}
+            {/* Stats Header */}
             <motion.div 
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="grid grid-cols-1 md:grid-cols-4 gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
             >
                 <ContentStat 
                   cardTitle="ASSET VOLUME" 
@@ -134,29 +135,29 @@ export default function VideoLibrary() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="bg-ease-surface/40 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/5 shadow-ease-layered flex flex-col md:flex-row justify-between items-center gap-4"
+              className="bg-ease-surface/40 backdrop-blur-md p-4 lg:p-6 rounded-[2rem] lg:rounded-[2.5rem] border border-white/5 shadow-ease-layered flex flex-col md:flex-row justify-between items-center gap-4"
             >
                 <div className="relative flex-1 w-full max-w-xl group">
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-ease-text-secondary group-focus-within:text-ease-blue transition-colors" />
                     <input 
                         type="text" 
-                        placeholder="Search assets by title, category, or metadata..." 
+                        placeholder="Search assets..." 
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-ease-bg border border-ease-border rounded-2xl pl-14 pr-8 py-5 focus:outline-none focus:border-ease-blue transition-all font-bold placeholder:text-ease-text-secondary/40 shadow-inner"
+                        className="w-full bg-ease-bg border border-ease-border rounded-xl lg:rounded-2xl pl-14 pr-8 py-4 lg:py-5 focus:outline-none focus:border-ease-blue transition-all font-bold placeholder:text-ease-text-secondary/40 shadow-inner text-sm"
                     />
                 </div>
                 <div className="flex gap-3 w-full md:w-auto">
-                    <button className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-ease-text-primary hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 shadow-xl">
+                    <button className="flex-1 md:flex-none flex items-center justify-center gap-3 px-6 lg:px-8 py-4 lg:py-5 bg-white/5 border border-white/10 rounded-xl lg:rounded-2xl text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-ease-text-primary hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 shadow-xl">
                         <Filter className="w-4 h-4" />
                         Parameters
                     </button>
                     <button 
                       onClick={() => setIsModalOpen(true)}
-                      className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-5 bg-ease-blue text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-500/30 hover:bg-ease-blue-dark hover:scale-[1.02] active:scale-95 transition-all"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-3 px-6 lg:px-8 py-4 lg:py-5 bg-ease-blue text-white rounded-xl lg:rounded-2xl text-[9px] lg:text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-500/30 hover:bg-ease-blue-dark hover:scale-[1.02] active:scale-95 transition-all"
                     >
                         <Plus className="w-5 h-5" />
-                        Initialize Content
+                        Initialize
                     </button>
                 </div>
             </motion.div>
@@ -166,113 +167,109 @@ export default function VideoLibrary() {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10"
             >
                 {loading ? (
                     Array(6).fill(0).map((_, i) => (
-                      <div key={i} className="bg-ease-surface/40 aspect-[16/10] rounded-[2.5rem] animate-pulse border border-white/5 shadow-inner"></div>
+                      <div key={i} className="bg-ease-surface/40 aspect-[16/10] rounded-[2rem] lg:rounded-[2.5rem] animate-pulse border border-white/5 shadow-inner"></div>
                     ))
                 ) : (
                     videos.map((video) => (
                         <motion.div 
                           key={video.id} 
                           variants={itemVariants}
-                          className="bg-ease-surface/40 backdrop-blur-md rounded-[3rem] border border-white/5 shadow-ease-layered overflow-hidden group hover:border-ease-blue/40 transition-all duration-500 relative"
+                          className="bg-ease-surface/40 backdrop-blur-md rounded-[2.5rem] lg:rounded-[3rem] border border-white/5 shadow-ease-layered overflow-hidden group hover:border-ease-blue/40 transition-all duration-500 relative"
                         >
                             <div className="relative aspect-[16/10] bg-ease-bg overflow-hidden">
                                 {video.thumbnailUrl ? (
                                     <img src={video.thumbnailUrl} alt="" className="w-full h-full object-cover group-hover:scale-110 group-hover:rotate-1 transition-transform duration-1000" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-ease-text-secondary/10">
-                                        <VideoIcon className="w-24 h-24" />
+                                        <VideoIcon className="w-16 lg:w-24 h-16 lg:h-24" />
                                     </div>
-                                ) || (
-                                  <div className="w-full h-full bg-gradient-to-br from-ease-blue/20 to-purple-500/20 flex items-center justify-center">
-                                     <Globe className="w-16 h-16 text-white/10" />
-                                  </div>
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-700" />
                                 
                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
-                                  <div className="w-16 h-16 rounded-[2rem] bg-white text-ease-blue flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.4)] group-hover:rotate-6 transition-transform">
-                                    <Play className="w-6 h-6 fill-current" />
+                                  <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-[1.5rem] lg:rounded-[2rem] bg-white text-ease-blue flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.4)] group-hover:rotate-6 transition-transform">
+                                    <Play className="w-5 h-5 lg:w-6 lg:h-6 fill-current" />
                                   </div>
                                 </div>
 
-                                <div className="absolute top-6 left-6 flex gap-2">
-                                  <span className="px-4 py-2 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl text-[9px] font-black uppercase text-white tracking-[0.2em] shadow-2xl">
+                                <div className="absolute top-4 lg:top-6 left-4 lg:left-6 flex gap-2">
+                                  <span className="px-3 lg:px-4 py-1.5 lg:py-2 bg-white/10 backdrop-blur-xl border border-white/10 rounded-lg lg:rounded-xl text-[8px] lg:text-[9px] font-black uppercase text-white tracking-[0.2em] shadow-2xl">
                                     {video.category || 'Core'}
                                   </span>
                                   {video.views > 4000 && (
-                                    <span className="px-4 py-2 bg-ease-blue/20 backdrop-blur-xl border border-ease-blue/30 rounded-xl text-[9px] font-black uppercase text-ease-blue tracking-[0.2em] shadow-2xl animate-pulse">
+                                    <span className="px-3 lg:px-4 py-1.5 lg:py-2 bg-ease-blue/20 backdrop-blur-xl border border-ease-blue/30 rounded-lg lg:rounded-xl text-[8px] lg:text-[9px] font-black uppercase text-ease-blue tracking-[0.2em] shadow-2xl animate-pulse">
                                       Trending
                                     </span>
                                   )}
                                 </div>
 
-                                <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
-                                   <div className="space-y-1">
-                                      <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Duration</p>
-                                      <div className="flex items-center gap-2 text-white">
+                                <div className="absolute bottom-4 lg:bottom-6 left-4 lg:left-6 right-4 lg:right-6 flex justify-between items-end">
+                                   <div className="space-y-0.5 lg:space-y-1">
+                                      <p className="text-[8px] lg:text-[10px] font-black text-white/50 uppercase tracking-widest">Duration</p>
+                                      <div className="flex items-center gap-1.5 lg:gap-2 text-white">
                                          <Clock className="w-3 h-3" />
-                                         <span className="text-sm font-black">12:45</span>
+                                         <span className="text-xs lg:text-sm font-black">12:45</span>
                                       </div>
                                    </div>
-                                   <button className="p-3 bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl text-white hover:bg-white hover:text-ease-blue transition-all active:scale-90">
-                                      <Share2 className="w-4 h-4" />
+                                   <button className="p-2.5 lg:p-3 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl lg:rounded-2xl text-white hover:bg-white hover:text-ease-blue transition-all active:scale-90">
+                                      <Share2 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                    </button>
                                 </div>
                             </div>
 
-                            <div className="p-10">
-                                <div className="flex justify-between items-start mb-8">
-                                    <div className="space-y-2 flex-1">
-                                        <h4 className="font-black text-ease-text-primary text-2xl tracking-tighter group-hover:text-ease-blue transition-colors leading-tight">
+                            <div className="p-6 lg:p-10">
+                                <div className="flex justify-between items-start mb-6 lg:mb-8">
+                                    <div className="space-y-1.5 lg:space-y-2 flex-1">
+                                        <h4 className="font-black text-ease-text-primary text-xl lg:text-2xl tracking-tighter group-hover:text-ease-blue transition-colors leading-tight">
                                           {video.title}
                                         </h4>
-                                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.2em] opacity-40">
+                                        <p className="text-[9px] lg:text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.2em] opacity-40">
                                           ID: {video.id.split('-')[0]} // {new Date(video.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </p>
                                     </div>
-                                    <button className="p-3 rounded-2xl hover:bg-white/5 text-ease-text-secondary border border-transparent hover:border-white/10 transition-all">
-                                        <MoreVertical className="w-6 h-6" />
+                                    <button className="p-2.5 lg:p-3 rounded-xl lg:rounded-2xl hover:bg-white/5 text-ease-text-secondary border border-transparent hover:border-white/10 transition-all">
+                                        <MoreVertical className="w-5 h-5 lg:w-6 lg:h-6" />
                                     </button>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/5">
-                                    <div className="space-y-2">
-                                        <p className="text-[9px] font-black text-ease-text-secondary uppercase tracking-[0.25em] opacity-50 flex items-center gap-2">
-                                          <Eye className="w-3 h-3" /> Signal Strength
+                                <div className="grid grid-cols-2 gap-4 lg:gap-8 pt-6 lg:pt-8 border-t border-white/5">
+                                    <div className="space-y-1.5 lg:space-y-2">
+                                        <p className="text-[8px] lg:text-[9px] font-black text-ease-text-secondary uppercase tracking-[0.2em] lg:tracking-[0.25em] opacity-50 flex items-center gap-2">
+                                          <Eye className="w-3 h-3" /> Signal
                                         </p>
-                                        <p className="text-xl font-black text-ease-text-primary tracking-tighter">
+                                        <p className="text-lg lg:text-xl font-black text-ease-text-primary tracking-tighter">
                                           {video.views?.toLocaleString()}
                                         </p>
                                     </div>
-                                    <div className="space-y-2">
-                                        <p className="text-[9px] font-black text-ease-text-secondary uppercase tracking-[0.25em] opacity-50 flex items-center gap-2">
-                                          <TrendingUp className="w-3 h-3" /> Growth Delta
+                                    <div className="space-y-1.5 lg:space-y-2">
+                                        <p className="text-[8px] lg:text-[9px] font-black text-ease-text-secondary uppercase tracking-[0.2em] lg:tracking-[0.25em] opacity-50 flex items-center gap-2">
+                                          <TrendingUp className="w-3 h-3" /> Delta
                                         </p>
                                         <div className="flex items-center gap-2">
-                                          <p className="text-xl font-black text-ease-text-primary tracking-tighter">{video.completionRate}%</p>
-                                          <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-lg text-[9px] font-black">
+                                          <p className="text-lg lg:text-xl font-black text-ease-text-primary tracking-tighter">{video.completionRate}%</p>
+                                          <div className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-md lg:rounded-lg text-[8px] font-black">
                                             +{video.growth}%
                                           </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="mt-8 pt-8 border-t border-white/5 flex items-center gap-4">
-                                   <div className="flex -space-x-3">
-                                      {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="w-10 h-10 rounded-xl border-4 border-ease-surface bg-ease-blue/20 flex items-center justify-center text-[10px] font-black text-ease-blue">
+                                <div className="mt-6 lg:mt-8 pt-6 lg:pt-8 border-t border-white/5 flex items-center gap-3 lg:gap-4">
+                                   <div className="flex -space-x-2 lg:-space-x-3">
+                                      {[1, 2, 3].map(i => (
+                                        <div key={i} className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg lg:rounded-xl border-2 lg:border-4 border-ease-surface bg-ease-blue/20 flex items-center justify-center text-[9px] lg:text-[10px] font-black text-ease-blue">
                                            {i}
                                         </div>
                                       ))}
-                                      <div className="w-10 h-10 rounded-xl border-4 border-ease-surface bg-white/5 flex items-center justify-center text-[10px] font-black text-ease-text-secondary backdrop-blur-sm">
+                                      <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-lg lg:rounded-xl border-2 lg:border-4 border-ease-surface bg-white/5 flex items-center justify-center text-[9px] lg:text-[10px] font-black text-ease-text-secondary backdrop-blur-sm">
                                          +12
                                       </div>
                                    </div>
-                                   <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-widest opacity-40">Active Nodes Studying</p>
+                                   <p className="text-[8px] lg:text-[9px] font-black text-ease-text-secondary uppercase tracking-widest opacity-40">Active Nodes</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -296,56 +293,56 @@ export default function VideoLibrary() {
                     animate={{ x: 0 }}
                     exit={{ x: '100%' }}
                     transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                    className="fixed right-0 top-0 bottom-0 w-full max-w-xl bg-ease-surface/80 backdrop-blur-3xl border-l border-white/10 z-[70] shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar"
+                    className="fixed right-0 top-0 bottom-0 w-full lg:max-w-xl bg-ease-surface/80 backdrop-blur-3xl border-l border-white/10 z-[70] shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar"
                   >
-                    <form onSubmit={handleSubmit} className="p-12 space-y-12">
+                    <form onSubmit={handleSubmit} className="p-8 lg:p-12 space-y-8 lg:space-y-12">
                       <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-ease-blue/10 rounded-2xl border border-ease-blue/20">
-                            <Plus className="w-6 h-6 text-ease-blue" />
+                        <div className="flex items-center gap-3 lg:gap-4">
+                          <div className="p-2.5 lg:p-3 bg-ease-blue/10 rounded-xl lg:rounded-2xl border border-ease-blue/20">
+                            <Plus className="w-5 h-5 lg:w-6 lg:h-6 text-ease-blue" />
                           </div>
-                          <h2 className="text-2xl font-black text-ease-text-primary uppercase tracking-[0.2em]">Initialize Content</h2>
+                          <h2 className="text-xl lg:text-2xl font-black text-ease-text-primary uppercase tracking-[0.1em] lg:tracking-[0.2em]">Initialize Content</h2>
                         </div>
                         <button 
                           type="button"
                           onClick={() => setIsModalOpen(false)}
-                          className="p-4 rounded-2xl bg-white/5 border border-white/5 text-ease-text-secondary hover:text-white hover:bg-red-500/20 transition-all active:scale-90"
+                          className="p-3 lg:p-4 rounded-xl lg:rounded-2xl bg-white/5 border border-white/5 text-ease-text-secondary hover:text-white hover:bg-red-500/20 transition-all active:scale-90"
                         >
-                          <X className="w-6 h-6" />
+                          <X className="w-5 h-5 lg:w-6 lg:h-6" />
                         </button>
                       </div>
 
-                      <div className="space-y-8">
-                        <div className="space-y-3">
-                          <label className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] ml-2">Module Title</label>
+                      <div className="space-y-6 lg:space-y-8">
+                        <div className="space-y-2 lg:space-y-3">
+                          <label className="text-[9px] lg:text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] ml-2">Module Title</label>
                           <input 
                             required
                             type="text" 
                             placeholder="e.g. Master Your Morning Routine"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 focus:outline-none focus:border-ease-blue transition-all font-bold placeholder:text-ease-text-secondary/30"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl lg:rounded-2xl px-5 lg:px-6 py-4 lg:py-5 focus:outline-none focus:border-ease-blue transition-all font-bold placeholder:text-ease-text-secondary/30 text-sm"
                           />
                         </div>
 
-                        <div className="space-y-3">
-                          <label className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] ml-2">Video Resource URL</label>
+                        <div className="space-y-2 lg:space-y-3">
+                          <label className="text-[9px] lg:text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] ml-2">Video Resource URL</label>
                           <input 
                             required
                             type="url" 
                             placeholder="https://youtube.com/watch?v=..."
                             value={formData.url}
                             onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 focus:outline-none focus:border-ease-blue transition-all font-bold placeholder:text-ease-text-secondary/30"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl lg:rounded-2xl px-5 lg:px-6 py-4 lg:py-5 focus:outline-none focus:border-ease-blue transition-all font-bold placeholder:text-ease-text-secondary/30 text-sm"
                           />
                         </div>
 
-                        <div className="space-y-3">
-                          <label className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] ml-2">Neural Category</label>
+                        <div className="space-y-2 lg:space-y-3">
+                          <label className="text-[9px] lg:text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] ml-2">Neural Category</label>
                           <select 
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 focus:outline-none focus:border-ease-blue transition-all font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl lg:rounded-2xl px-5 lg:px-6 py-4 lg:py-5 focus:outline-none focus:border-ease-blue transition-all font-black text-[9px] lg:text-[10px] uppercase tracking-[0.2em] cursor-pointer appearance-none"
                           >
                             <option value="Focus">Focus</option>
                             <option value="Discipline">Discipline</option>
@@ -356,12 +353,12 @@ export default function VideoLibrary() {
                         </div>
                       </div>
 
-                      <div className="pt-10">
+                      <div className="pt-6 lg:pt-10">
                         <button 
                           type="submit"
                           disabled={isSubmitting}
                           className={clsx(
-                            "w-full py-6 bg-ease-blue text-white rounded-3xl text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4",
+                            "w-full py-5 lg:py-6 bg-ease-blue text-white rounded-2xl lg:rounded-3xl text-[10px] lg:text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/40 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-4",
                             isSubmitting && "opacity-50 cursor-not-allowed"
                           )}
                         >
@@ -391,20 +388,20 @@ function ContentStat({ cardTitle, value, icon: Icon, color, subtitle }: any) {
     };
 
     return (
-        <div className="bg-ease-surface/40 backdrop-blur-md rounded-[2.5rem] border border-white/5 shadow-ease-layered p-8 relative overflow-hidden group hover:scale-[1.02] hover:border-white/10 transition-all duration-500">
+        <div className="bg-ease-surface/40 backdrop-blur-md rounded-[2rem] lg:rounded-[2.5rem] border border-white/5 shadow-ease-layered p-6 lg:p-8 relative overflow-hidden group hover:scale-[1.02] hover:border-white/10 transition-all duration-500">
             <div className={clsx("absolute -right-4 -bottom-4 p-8 opacity-[0.03] group-hover:opacity-[0.08] group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000", colorStyles[color].split(' ')[2])}>
-                <Icon className="w-32 h-32" />
+                <Icon className="w-24 lg:w-32 h-24 lg:h-32" />
             </div>
             
-            <div className="relative z-10 space-y-6">
-               <div className={clsx("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-gradient-to-br border shadow-2xl", colorStyles[color])}>
-                  <Icon className="w-6 h-6" />
+            <div className="relative z-10 space-y-4 lg:space-y-6">
+               <div className={clsx("w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl flex items-center justify-center shrink-0 bg-gradient-to-br border shadow-2xl", colorStyles[color])}>
+                  <Icon className="w-5 h-5 lg:w-6 lg:h-6" />
                </div>
                <div>
-                  <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] mb-1 opacity-50">{cardTitle}</p>
-                  <div className="flex items-end gap-3">
-                     <p className="text-4xl font-black text-ease-text-primary tracking-tighter">{value}</p>
-                     <p className="text-[9px] font-black text-ease-text-secondary uppercase tracking-widest mb-1.5 opacity-30">{subtitle}</p>
+                  <p className="text-[9px] lg:text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] lg:tracking-[0.25em] mb-1 opacity-50">{cardTitle}</p>
+                  <div className="flex items-end gap-2 lg:gap-3">
+                     <p className="text-2xl lg:text-4xl font-black text-ease-text-primary tracking-tighter">{value}</p>
+                     <p className="text-[8px] lg:text-[9px] font-black text-ease-text-secondary uppercase tracking-widest mb-1 lg:mb-1.5 opacity-30 whitespace-nowrap">{subtitle}</p>
                   </div>
                </div>
             </div>

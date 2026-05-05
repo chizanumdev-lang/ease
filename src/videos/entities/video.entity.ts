@@ -14,7 +14,7 @@ export class Video {
     @Column()
     category: string;
 
-    @Column({ nullable: true })
+    @Column({ name: 'thumbnail_url', nullable: true })
     thumbnailUrl: string;
 
     @Column({ default: false })

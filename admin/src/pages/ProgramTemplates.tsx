@@ -3,11 +3,7 @@ import {
   Plus, 
   Search, 
   Zap, 
-  Layers, 
-  Terminal,
-  Activity,
   Award,
-  MoreVertical,
   Cpu,
   Clock,
   X,
@@ -72,29 +68,29 @@ export default function ProgramTemplates() {
     const types = ['all', 'mental', 'focus', 'exercise', 'nutrition'];
 
     return (
-        <div className="h-[calc(100vh-120px)] flex flex-col gap-6 overflow-hidden relative">
+        <div className="min-h-[calc(100vh-120px)] flex flex-col gap-6 relative">
             {/* Header Area */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-1">
-                    <h1 className="text-2xl font-black text-ease-text-primary tracking-tighter uppercase tracking-[0.1em] flex items-center gap-3">
-                        <BrainCircuit className="w-6 h-6 text-ease-blue" />
+                    <h1 className="text-xl lg:text-2xl font-black text-ease-text-primary tracking-tighter uppercase tracking-[0.1em] flex items-center gap-3">
+                        <BrainCircuit className="w-5 lg:w-6 h-5 lg:h-6 text-ease-blue" />
                         NEURAL TASK BANK
                     </h1>
-                    <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] opacity-40">MANAGE THE ATOMIC INGREDIENTS OF THE AI BRAIN</p>
+                    <p className="text-[8px] lg:text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] opacity-40 leading-relaxed">MANAGE THE ATOMIC INGREDIENTS OF THE AI BRAIN</p>
                 </div>
                 
-                <div className="flex items-center gap-4">
-                    <div className="relative w-64">
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                    <div className="relative w-full sm:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ease-text-secondary" />
                         <input 
                           type="text" 
                           placeholder="SEARCH SHARDS..."
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
-                          className="w-full bg-ease-bg-secondary border border-ease-border rounded-2xl py-3 pl-10 pr-4 text-[10px] font-black uppercase tracking-widest text-ease-text-primary focus:outline-none focus:border-ease-blue/50 transition-all placeholder:text-ease-text-secondary/30"
+                          className="w-full bg-ease-bg-secondary border border-ease-border rounded-xl lg:rounded-2xl py-3 pl-10 pr-4 text-[10px] font-black uppercase tracking-widest text-ease-text-primary focus:outline-none focus:border-ease-blue/50 transition-all placeholder:text-ease-text-secondary/30"
                         />
                     </div>
-                    <button className="px-6 py-3 bg-white text-black font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-ease-blue transition-all active:scale-95 flex items-center gap-2">
+                    <button className="w-full sm:w-auto px-6 py-3 bg-white text-black font-black text-[10px] uppercase tracking-widest rounded-xl lg:rounded-2xl hover:bg-ease-blue transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl">
                         <Plus className="w-4 h-4" />
                         CREATE NEW SHARD
                     </button>
@@ -102,8 +98,8 @@ export default function ProgramTemplates() {
             </div>
 
             {/* Filters Bar */}
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-ease-bg-secondary border border-ease-border rounded-xl">
+            <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-2 px-2">
+                <div className="p-2.5 bg-ease-bg-secondary border border-ease-border rounded-xl shrink-0">
                     <Filter className="w-4 h-4 text-ease-text-secondary" />
                 </div>
                 {types.map((type) => (
@@ -111,7 +107,7 @@ export default function ProgramTemplates() {
                       key={type}
                       onClick={() => setFilter(type)}
                       className={clsx(
-                        "px-4 py-2 rounded-xl border text-[9px] font-black uppercase tracking-[0.2em] transition-all",
+                        "px-4 py-2.5 rounded-xl border text-[9px] font-black uppercase tracking-[0.2em] transition-all shrink-0 shadow-sm",
                         filter === type 
                           ? "bg-ease-blue/20 border-ease-blue text-ease-blue" 
                           : "bg-ease-bg-secondary border-ease-border text-ease-text-secondary hover:border-ease-blue/50"
@@ -197,7 +193,7 @@ export default function ProgramTemplates() {
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
                           onClick={() => setSelectedTemplate(null)}
-                          className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 rounded-[2.5rem]"
+                          className="fixed inset-0 bg-black/60 backdrop-blur-md z-40"
                         />
                         {/* Drawer Content */}
                         <motion.div 
@@ -205,23 +201,23 @@ export default function ProgramTemplates() {
                           animate={{ x: 0 }}
                           exit={{ x: '100%' }}
                           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                          className="absolute top-0 right-0 bottom-0 w-[500px] bg-ease-bg-secondary border-l border-ease-border z-50 p-10 flex flex-col gap-8 shadow-[-20px_0_40px_rgba(0,0,0,0.4)]"
+                          className="fixed top-0 right-0 bottom-0 w-full md:w-[500px] bg-ease-surface/90 backdrop-blur-3xl border-l border-white/10 z-50 p-6 lg:p-10 flex flex-col gap-8 shadow-[-20px_0_40px_rgba(0,0,0,0.4)]"
                         >
                             <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-3 bg-ease-blue/10 rounded-2xl border border-ease-blue/20">
-                                        <Settings2 className="w-6 h-6 text-ease-blue" />
+                                <div className="flex items-center gap-3 lg:gap-4">
+                                    <div className="p-2.5 lg:p-3 bg-ease-blue/10 rounded-xl lg:rounded-2xl border border-ease-blue/20">
+                                        <Settings2 className="w-5 lg:w-6 h-5 lg:h-6 text-ease-blue" />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-black text-ease-text-primary tracking-widest uppercase">SHARD EDITOR</h2>
-                                        <p className="text-[9px] font-black text-ease-text-secondary uppercase tracking-[0.2em] opacity-40">TUNING NEURAL PARAMETERS</p>
+                                        <h2 className="text-base lg:text-lg font-black text-ease-text-primary tracking-widest uppercase">SHARD EDITOR</h2>
+                                        <p className="text-[8px] lg:text-[9px] font-black text-ease-text-secondary uppercase tracking-[0.2em] opacity-40 leading-none lg:leading-normal">TUNING NEURAL PARAMETERS</p>
                                     </div>
                                 </div>
                                 <button 
                                   onClick={() => setSelectedTemplate(null)}
-                                  className="p-3 hover:bg-black rounded-2xl border border-transparent hover:border-ease-border transition-all text-ease-text-secondary"
+                                  className="p-2.5 lg:p-3 hover:bg-black rounded-xl lg:rounded-2xl border border-transparent hover:border-white/10 transition-all text-ease-text-secondary shadow-xl bg-white/5"
                                 >
-                                    <X className="w-6 h-6" />
+                                    <X className="w-5 lg:w-6 h-5 lg:h-6" />
                                 </button>
                             </div>
 
@@ -232,12 +228,12 @@ export default function ProgramTemplates() {
                                     <input 
                                       type="text" 
                                       defaultValue={selectedTemplate.title}
-                                      className="w-full bg-black/40 border border-ease-border rounded-2xl p-4 text-xs font-bold text-ease-text-primary focus:outline-none focus:border-ease-blue transition-all"
+                                      className="w-full bg-black/40 border border-white/5 rounded-xl lg:rounded-2xl p-4 text-xs font-bold text-ease-text-primary focus:outline-none focus:border-ease-blue transition-all"
                                       placeholder="TEMPLATE NAME"
                                     />
                                     <textarea 
                                       defaultValue={selectedTemplate.description}
-                                      className="w-full bg-black/40 border border-ease-border rounded-2xl p-4 text-xs font-medium text-ease-text-secondary h-24 focus:outline-none focus:border-ease-blue transition-all resize-none"
+                                      className="w-full bg-black/40 border border-white/5 rounded-xl lg:rounded-2xl p-4 text-xs font-medium text-ease-text-secondary h-24 focus:outline-none focus:border-ease-blue transition-all resize-none"
                                       placeholder="USER-FACING DESCRIPTION"
                                     />
                                 </div>
@@ -251,7 +247,7 @@ export default function ProgramTemplates() {
                                             <input 
                                               type="number" 
                                               defaultValue={selectedTemplate.defaultDuration}
-                                              className="w-full bg-black/40 border border-ease-border rounded-2xl py-4 pl-12 pr-4 text-xs font-black text-ease-text-primary focus:outline-none focus:border-ease-blue transition-all"
+                                              className="w-full bg-black/40 border border-white/5 rounded-xl lg:rounded-2xl py-3 lg:py-4 pl-12 pr-4 text-xs font-black text-ease-text-primary focus:outline-none focus:border-ease-blue transition-all"
                                             />
                                         </div>
                                     </div>
@@ -262,7 +258,7 @@ export default function ProgramTemplates() {
                                             <input 
                                               type="number" 
                                               defaultValue={selectedTemplate.defaultXp}
-                                              className="w-full bg-black/40 border border-ease-border rounded-2xl py-4 pl-12 pr-4 text-xs font-black text-ease-text-primary focus:outline-none focus:border-ease-blue transition-all"
+                                              className="w-full bg-black/40 border border-white/5 rounded-xl lg:rounded-2xl py-3 lg:py-4 pl-12 pr-4 text-xs font-black text-ease-text-primary focus:outline-none focus:border-ease-blue transition-all"
                                             />
                                         </div>
                                     </div>
@@ -281,7 +277,7 @@ export default function ProgramTemplates() {
                                         <div className="absolute -inset-0.5 bg-gradient-to-r from-ease-blue/20 to-purple-500/20 rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
                                         <textarea 
                                           defaultValue={selectedTemplate.promptInstructions}
-                                          className="relative w-full bg-black/60 border border-ease-border rounded-2xl p-6 text-xs font-medium text-ease-text-primary h-48 focus:outline-none focus:border-ease-blue transition-all resize-none leading-relaxed"
+                                          className="relative w-full bg-black/60 border border-white/10 rounded-xl lg:rounded-2xl p-5 lg:p-6 text-xs font-medium text-ease-text-primary h-48 focus:outline-none focus:border-ease-blue transition-all resize-none leading-relaxed"
                                           placeholder="Define the logic for how the AI brain should use this shard..."
                                         />
                                     </div>
@@ -292,12 +288,12 @@ export default function ProgramTemplates() {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-4 pt-6 border-t border-ease-border">
-                                <button className="flex-1 py-4 bg-white text-black font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-ease-blue transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <div className="flex gap-4 pt-6 border-t border-white/5">
+                                <button className="flex-1 py-4 bg-white text-black font-black uppercase tracking-[0.2em] rounded-xl lg:rounded-2xl hover:bg-ease-blue hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2 shadow-2xl">
                                     <Save className="w-4 h-4" />
                                     SYNC SHARD
                                 </button>
-                                <button className="p-4 bg-black border border-ease-border rounded-2xl text-red-500 hover:bg-red-500/10 hover:border-red-500/50 transition-all active:scale-95">
+                                <button className="p-4 bg-black border border-white/10 rounded-xl lg:rounded-2xl text-red-500 hover:bg-red-500/10 hover:border-red-500/50 transition-all active:scale-95">
                                     <Trash2 className="w-5 h-5" />
                                 </button>
                             </div>
