@@ -13,9 +13,19 @@
         "EXPO_PUBLIC_ENV": "staging"
       }
     },
-    "production": {}
+    "production": {
+      "ios": {
+        "distribution": "store"
+      }
+    }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "ichizanum@gmail.com",
+        "ascAppId": "6760230320",
+        "appleTeamId": "Q8MFM67YQL"
+      }
+    }
   }
 }

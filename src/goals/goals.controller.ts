@@ -1,33 +1,38 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Logger } from '@nestjs/common';
 import { GoalsService } from './goals.service';
+import { CreateGoalDto } from './dto/create-goal.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
-import { CreateGoalDto } from './dto/create-goal.dto';
 
 @Controller('goals')
 @UseGuards(JwtAuthGuard)
 export class GoalsController {
-    constructor(private goalsService: GoalsService) { }
+    private readonly logger = new Logger(GoalsController.name);
 
-    @Post()
-    async create(@GetUser() user: User, @Body() createGoalDto: CreateGoalDto) {
-        return this.goalsService.create(user.id, createGoalDto);
-    }
+    constructor(private readonly goalsService: GoalsService) { }
 
     @Get()
-    async findAll(@GetUser() user: User) {
+    async getGoals(@GetUser() user: User) {
         return this.goalsService.findAllByUser(user.id);
     }
 
     @Get(':id')
-    async findOne(@GetUser() user: User, @Param('id') id: string) {
+    async getGoalById(@Param('id') id: string, @GetUser() user: User) {
         return this.goalsService.findById(id, user.id);
     }
 
+    @Post()
+    async createGoal(
+        @Body() createGoalDto: CreateGoalDto,
+        @GetUser() user: User,
+    ) {
+        return this.goalsService.create(user.id, createGoalDto);
+    }
+
     @Delete(':id')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    async remove(@GetUser() user: User, @Param('id') id: string) {
-        return this.goalsService.delete(user.id, id);
+    async deleteGoal(@Param('id') id: string, @GetUser() user: User) {
+        await this.goalsService.delete(user.id, id);
+        return { success: true };
     }
 }

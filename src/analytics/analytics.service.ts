@@ -29,60 +29,65 @@ export class AnalyticsService {
     ) { }
 
     async getWeeklyAnalytics(userId: string): Promise<WeeklyAnalyticsDto> {
-        const now = new Date();
-        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        try {
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        // Calculate current streak
-        const currentStreak = await this.calculateStreak(userId);
+            // Calculate current streak
+            const currentStreak = await this.calculateStreak(userId);
 
-        // Calculate overall completion rate
-        const completionRate = await this.calculateCompletionRate(userId);
+            // Calculate overall completion rate
+            const completionRate = await this.calculateCompletionRate(userId);
 
-        // Calculate today's completion rate
-        const todayCompletionRate = await this.calculateTodayCompletionRate(userId);
+            // Calculate today's completion rate
+            const todayCompletionRate = await this.calculateTodayCompletionRate(userId);
 
-        // Calculate weekly completion rate
-        const weeklyCompletionRate = await this.calculateWeeklyCompletionRate(
-            userId,
-            sevenDaysAgo,
-            now,
-        );
+            // Calculate weekly completion rate
+            const weeklyCompletionRate = await this.calculateWeeklyCompletionRate(
+                userId,
+                sevenDaysAgo,
+                now,
+            );
 
-        // Calculate quiz average
-        const quizAverage = await this.calculateQuizAverage(userId);
+            // Calculate quiz average
+            const quizAverage = await this.calculateQuizAverage(userId);
 
-        // Calculate points
-        const pointsEarned = await this.calculatePoints(userId);
+            // Calculate points
+            const pointsEarned = await this.calculatePoints(userId);
 
-        // Get badges
-        const badges = await this.getBadges(userId, {
-            currentStreak,
-            completionRate,
-            quizAverage,
-            pointsEarned,
-        });
+            // Get badges
+            const badges = await this.getBadges(userId, {
+                currentStreak,
+                completionRate,
+                quizAverage,
+                pointsEarned,
+            });
 
-        // Get daily completions for chart
-        const dailyCompletions = await this.getDailyCompletions(
-            userId,
-            sevenDaysAgo,
-            now,
-        );
+            // Get daily completions for chart
+            const dailyCompletions = await this.getDailyCompletions(
+                userId,
+                sevenDaysAgo,
+                now,
+            );
 
-        // Get Progression Data
-        const progression = this.progressionService.getProgression(pointsEarned);
+            // Get Progression Data
+            const progression = this.progressionService.getProgression(pointsEarned);
 
-        return {
-            currentStreak,
-            completionRate,
-            todayCompletionRate,
-            weeklyCompletionRate,
-            quizAverage,
-            pointsEarned,
-            badges,
-            dailyCompletions,
-            progression,
-        };
+            return {
+                currentStreak,
+                completionRate,
+                todayCompletionRate,
+                weeklyCompletionRate,
+                quizAverage,
+                pointsEarned,
+                badges,
+                dailyCompletions,
+                progression,
+            };
+        } catch (error) {
+            console.error('[AnalyticsService] Error in getWeeklyAnalytics:', error);
+            throw error;
+        }
     }
 
     private async calculateStreak(userId: string): Promise<number> {
@@ -135,10 +140,12 @@ export class AnalyticsService {
     }
 
     private async calculateCompletionRate(userId: string): Promise<number> {
-        const dayPlans = await this.dayPlanRepository.find({
-            where: { program: { userId } },
-            relations: ['tasks'],
-        });
+        const dayPlans = await this.dayPlanRepository
+            .createQueryBuilder('dayPlan')
+            .innerJoin('dayPlan.program', 'program')
+            .leftJoinAndSelect('dayPlan.tasks', 'tasks')
+            .where('program.userId = :userId', { userId })
+            .getMany();
 
         if (dayPlans.length === 0) return 0;
 
@@ -146,8 +153,8 @@ export class AnalyticsService {
         let completedTasks = 0;
 
         for (const plan of dayPlans) {
-            totalTasks += plan.tasks.length;
-            completedTasks += plan.tasks.filter((t) => t.completed).length;
+            totalTasks += plan.tasks?.length || 0;
+            completedTasks += plan.tasks?.filter((t) => t.completed).length || 0;
         }
 
         return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -186,13 +193,16 @@ export class AnalyticsService {
         startDate: Date,
         endDate: Date,
     ): Promise<number> {
-        const dayPlans = await this.dayPlanRepository.find({
-            where: {
-                program: { userId },
-                createdAt: Between(startDate, endDate),
-            },
-            relations: ['tasks'],
-        });
+        const dayPlans = await this.dayPlanRepository
+            .createQueryBuilder('dayPlan')
+            .innerJoin('dayPlan.program', 'program')
+            .leftJoinAndSelect('dayPlan.tasks', 'tasks')
+            .where('program.userId = :userId', { userId })
+            .andWhere('dayPlan.createdAt BETWEEN :start AND :end', {
+                start: startDate,
+                end: endDate,
+            })
+            .getMany();
 
         if (dayPlans.length === 0) return 0;
 
@@ -200,8 +210,8 @@ export class AnalyticsService {
         let completedTasks = 0;
 
         for (const plan of dayPlans) {
-            totalTasks += plan.tasks.length;
-            completedTasks += plan.tasks.filter((t) => t.completed).length;
+            totalTasks += plan.tasks?.length || 0;
+            completedTasks += plan.tasks?.filter((t) => t.completed).length || 0;
         }
 
         return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -219,17 +229,25 @@ export class AnalyticsService {
     }
 
     private async calculatePoints(userId: string): Promise<number> {
-        const tasks = await this.taskRepository.find({
-            where: { dayPlan: { program: { userId } }, completed: true },
-        });
+        const taskPointsResult = await this.taskRepository
+            .createQueryBuilder('task')
+            .innerJoin('task.dayPlan', 'dayPlan')
+            .innerJoin('dayPlan.program', 'program')
+            .where('program.userId = :userId', { userId })
+            .andWhere('task.completed = :completed', { completed: true })
+            .select('SUM(task.xp_reward)', 'sum')
+            .getRawOne();
 
-        const taskPoints = tasks.reduce((sum, task) => sum + (task.xpReward || 0), 0);
+        const taskPoints = parseInt(taskPointsResult?.sum || '0', 10);
 
         const rewards = await this.rewardEventRepository.find({
-            where: { userId }
+            where: { userId },
         });
 
-        const rewardPoints = rewards.reduce((sum, reward) => sum + (reward.points || 0), 0);
+        const rewardPoints = rewards.reduce(
+            (sum, reward) => sum + (reward.points || 0),
+            0,
+        );
 
         return taskPoints + rewardPoints;
     }
@@ -302,14 +320,17 @@ export class AnalyticsService {
         startDate: Date,
         endDate: Date,
     ): Promise<DailyCompletion[]> {
-        const dayPlans = await this.dayPlanRepository.find({
-            where: {
-                program: { userId },
-                createdAt: Between(startDate, endDate),
-            },
-            relations: ['tasks'],
-            order: { dayNumber: 'ASC' },
-        });
+        const dayPlans = await this.dayPlanRepository
+            .createQueryBuilder('dayPlan')
+            .innerJoin('dayPlan.program', 'program')
+            .leftJoinAndSelect('dayPlan.tasks', 'tasks')
+            .where('program.userId = :userId', { userId })
+            .andWhere('dayPlan.createdAt BETWEEN :start AND :end', {
+                start: startDate,
+                end: endDate,
+            })
+            .orderBy('dayPlan.dayNumber', 'ASC')
+            .getMany();
 
         const completions: DailyCompletion[] = [];
 

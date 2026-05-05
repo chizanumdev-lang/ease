@@ -6,6 +6,7 @@ import * as os from 'os';
 import ffmpeg = require('fluent-ffmpeg');
 import { v2 as cloudinary } from 'cloudinary';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
+import axios from 'axios';
 
 @Injectable()
 export class AudioService {
@@ -105,15 +106,40 @@ export class AudioService {
     }
 
     public async uploadToCloudinary(filePath: string, publicId: string): Promise<string> {
+        const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
+        
+        if (!cloudName || cloudName.trim() === '') {
+            this.logger.warn(`Cloudinary not configured. Skipping upload for ${publicId}. Using placeholder.`);
+            return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
+        }
+
         this.logger.log(`Uploading audio to Cloudinary: ${publicId}`);
-        const result = await cloudinary.uploader.upload(filePath, {
-            resource_type: 'video',
-            public_id: `ease/audio/${publicId}`,
-            overwrite: true,
-            format: 'mp3',
-        });
-        this.logger.log(`Cloudinary upload success: ${result.secure_url}`);
-        return result.secure_url;
+        
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (attempts < maxAttempts) {
+            try {
+                const result = await cloudinary.uploader.upload(filePath, {
+                    resource_type: 'video',
+                    public_id: `ease/audio/${publicId}`,
+                    overwrite: true,
+                    format: 'mp3',
+                });
+                this.logger.log(`Cloudinary upload success: ${result.secure_url}`);
+                return result.secure_url;
+            } catch (error) {
+                attempts++;
+                this.logger.warn(`Cloudinary upload attempt ${attempts} failed: ${error.message}`);
+                if (attempts >= maxAttempts) {
+                    this.logger.error(`Cloudinary upload failed after ${maxAttempts} attempts for ${publicId}. Using placeholder.`);
+                    return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
+                }
+                // Wait 1s before retry
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+        return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
     }
 
     private async mixAudio(voicePath: string, mood: string, outputPath: string): Promise<void> {
@@ -130,11 +156,31 @@ export class AudioService {
 
         const localBackgroundPath = path.join(process.cwd(), 'assets/audio/backgrounds', `${mood}.mp3`);
         const backgroundUrl = this.BACKGROUND_URLS[mood];
-        const bgSource = fs.existsSync(localBackgroundPath) ? localBackgroundPath : backgroundUrl;
+        
+        let bgSource = localBackgroundPath;
+        let isTempBg = false;
+
+        if (!fs.existsSync(localBackgroundPath) && backgroundUrl) {
+            this.logger.log(`Local background not found for ${mood}, downloading from ${backgroundUrl}`);
+            try {
+                const tempBgPath = path.join(this.tempDir, `bg_${mood}_${Date.now()}.mp3`);
+                const response = await axios({
+                    url: backgroundUrl,
+                    method: 'GET',
+                    responseType: 'arraybuffer',
+                    timeout: 10000,
+                });
+                fs.writeFileSync(tempBgPath, Buffer.from(response.data));
+                bgSource = tempBgPath;
+                isTempBg = true;
+            } catch (err) {
+                this.logger.warn(`Failed to download background for ${mood}, will try direct URL`, err);
+                bgSource = backgroundUrl;
+            }
+        }
 
         this.logger.debug(`Mixing audio — voice path: ${voicePath}, background source: ${bgSource}`);
-        this.logger.debug(`Effective OS Temp Dir: ${os.tmpdir()}`);
-
+        
         return new Promise((resolve, reject) => {
             let command = ffmpeg().input(voicePath);
             if (bgSource) {
@@ -157,10 +203,12 @@ export class AudioService {
                 .on('start', (cmd) => this.logger.debug(`FFmpeg: ${cmd}`))
                 .on('error', (err, _stdout, stderr) => {
                     this.logger.error(`FFmpeg error: ${err.message} — ${stderr}`);
+                    if (isTempBg) fs.unlinkSync(bgSource);
                     reject(err);
                 })
                 .on('end', () => {
                     this.logger.log(`Audio mixed: ${outputPath}`);
+                    if (isTempBg) fs.unlinkSync(bgSource);
                     resolve();
                 })
                 .save(outputPath);

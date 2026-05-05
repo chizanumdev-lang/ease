@@ -241,9 +241,10 @@ export class ProgramsService {
                 day.dayNumber,
                 params.duration || 7,
                 params,
+                { dayPlanId: day.id },
             );
 
-            await this.saveDayContent(day, content, params, { forceSyncAudio: day.dayNumber === 1 });
+            await this.saveDayContent(day, content, params);
 
             await this.dayPlanRepository.update(day.id, {
                 theme: `Day ${day.dayNumber}: ${content.theme}`,
@@ -268,7 +269,7 @@ export class ProgramsService {
         }
     }
 
-    private async saveDayContent(day: DayPlan, content: any, params: any, options: { forceSyncAudio?: boolean } = {}): Promise<void> {
+    private async saveDayContent(day: DayPlan, content: any, params: any): Promise<void> {
         const wakeStart = params.wakeStart || '07:00';
         const sleepStart = params.sleepStart || '23:00';
         const dayOffset = day.dayNumber - 1;
@@ -352,16 +353,11 @@ export class ProgramsService {
                 audioTrack.duration = dur.audio;
                 audioTrack.type = mood;
 
-                if (options.forceSyncAudio) {
-                    try {
-                        const scriptData = await this.aiService.generateAudioScript(content.audioTask.theme || content.theme, 5);
-                        audioTrack.metadata = { sessionType: scriptData.sessionType, frequency: scriptData.binauralFrequency, affirmations: scriptData.affirmations };
-                    } catch (error) {
-                        this.logger.error(`Failed to generate sync audio: ${error.message}`);
-                    }
-                } else {
-                    this.audioQueue.add('generate-audio', { audioTrackId: audioTrack.id, theme: content.audioTask.theme || content.theme, audioFilename });
-                }
+                this.audioQueue.add('generate-audio', { audioTrackId: audioTrack.id, theme: content.audioTask.theme || content.theme, audioFilename }, {
+                    attempts: 10,
+                    backoff: { type: 'exponential', delay: 5000 },
+                    removeOnComplete: true,
+                });
 
                 await this.audioTrackRepository.save(audioTrack);
                 await this.upsertTask({
@@ -514,14 +510,17 @@ export class ProgramsService {
         };
 
         if (day1 && day1.status !== 'ready') {
-            try {
-                await this.hydrateDay(day1.id, generationParams.goalText, generationParams);
-                program.status = 'day1_ready';
-                await this.programRepository.save(program);
-            } catch (e) {
-                this.logger.error(`Failed to synchronously hydrate Day 1: ${e.message}`);
-                // Continue anyway, maybe the queue will catch it or user can retry
-            }
+            await this.programQueue.add('hydrate-day', {
+                dayPlanId: day1.id,
+                goalText: generationParams.goalText,
+                params: generationParams,
+            }, { 
+                priority: 1, // TOP priority for onboarding
+                attempts: 10,
+                backoff: { type: 'exponential', delay: 5000 }
+            });
+            program.status = 'generating';
+            await this.programRepository.save(program);
         }
 
         // ─── PHASE 3: Dispatch Day 2 to background queue (JIT) ─────────────

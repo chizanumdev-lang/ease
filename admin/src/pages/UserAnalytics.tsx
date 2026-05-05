@@ -16,10 +16,36 @@ import {
   Clock,
   Flag,
   CheckCircle2,
+  Zap,
+  Globe
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { adminService } from '../services/admin.service';
 import type { UserMetric } from '../services/admin.service';
 import clsx from 'clsx';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const rowVariants = {
+  hidden: { opacity: 0, x: -10 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
 
 export default function UserAnalytics() {
     const [users, setUsers] = useState<UserMetric[]>([]);
@@ -72,17 +98,15 @@ export default function UserAnalytics() {
         fetchUsers();
       } catch (error) {
         console.error('Failed to toggle admin status:', error);
-        alert('Failed to update admin status.');
       } finally {
         setIsUpdatingRole(false);
       }
     };
 
     const handleDeleteUser = async (id: string) => {
-        if (!window.confirm('Are you absolutely sure you want to delete this user? This action cannot be undone.')) {
+        if (!window.confirm('Are you absolutely sure you want to delete this user?')) {
             return;
         }
-
         setIsDeleting(true);
         try {
             await adminService.deleteUser(id);
@@ -90,7 +114,6 @@ export default function UserAnalytics() {
             fetchUsers();
         } catch (error) {
             console.error('Failed to delete user:', error);
-            alert('Failed to delete user. Please try again.');
         } finally {
             setIsDeleting(false);
         }
@@ -101,57 +124,68 @@ export default function UserAnalytics() {
     };
 
     return (
-        <div className="relative min-h-[calc(100vh-120px)] space-y-6 animate-in fade-in duration-700">
+        <div className="relative min-h-[calc(100vh-120px)] space-y-6">
             {/* Header & Search */}
-            <div className="bg-ease-surface p-6 rounded-3xl border border-ease-border shadow-ease-layered flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="relative flex-1 w-full max-md:max-w-none max-w-md">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ease-text-secondary" />
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="bg-ease-surface/40 backdrop-blur-md p-6 rounded-[2rem] border border-white/5 shadow-ease-layered flex flex-col md:flex-row justify-between items-center gap-4"
+            >
+                <div className="relative flex-1 w-full max-md:max-w-none max-w-md group">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-ease-text-secondary group-focus-within:text-ease-blue transition-colors" />
                     <input 
                         type="text" 
                         placeholder="Search by name or email..." 
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full bg-ease-bg border border-ease-border rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:border-ease-blue transition-all font-medium"
+                        className="w-full bg-ease-bg border border-ease-border rounded-2xl pl-12 pr-6 py-4 focus:outline-none focus:border-ease-blue transition-all font-bold placeholder:text-ease-text-secondary/50 shadow-inner"
                     />
                 </div>
                 <div className="flex gap-3 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-48">
-                      <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ease-text-secondary pointer-events-none" />
+                    <div className="relative flex-1 md:w-56 group">
+                      <Filter className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-ease-text-secondary pointer-events-none group-focus-within:text-ease-blue transition-colors" />
                       <select 
                         value={status}
                         onChange={(e) => setStatus(e.target.value as any)}
-                        className="w-full bg-ease-bg border border-ease-border rounded-2xl pl-12 pr-4 py-3 appearance-none focus:outline-none focus:border-ease-blue transition-all font-bold text-sm text-ease-text-primary"
+                        className="w-full bg-ease-bg border border-ease-border rounded-2xl pl-12 pr-10 py-4 appearance-none focus:outline-none focus:border-ease-blue transition-all font-black text-[10px] uppercase tracking-widest text-ease-text-primary shadow-inner cursor-pointer"
                       >
-                        <option value="all">All Status</option>
+                        <option value="all">All</option>
                         <option value="verified">Verified</option>
                         <option value="unverified">Unverified</option>
                       </select>
                     </div>
-                    <button className="flex-1 md:flex-none px-6 py-3 bg-ease-blue text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-200 hover:bg-ease-blue-dark transition-all">
-                        Export
-                    </button>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Users Table */}
-            <div className="bg-ease-surface rounded-3xl border border-ease-border shadow-ease-layered overflow-hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="bg-ease-surface/40 backdrop-blur-md rounded-[2.5rem] border border-white/5 shadow-ease-layered overflow-hidden"
+            >
                 <div className="overflow-x-auto overflow-y-hidden">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-ease-bg/50 border-b border-ease-border">
-                                <th className="px-8 py-6 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em]">User Profile</th>
-                                <th className="px-6 py-6 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] text-center">Status</th>
-                                <th className="px-6 py-6 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] text-center">Progression</th>
-                                <th className="px-6 py-6 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] text-center">Streak</th>
-                                <th className="px-6 py-6 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em]">Churn Risk</th>
-                                <th className="px-8 py-6 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] text-right">Actions</th>
+                            <tr className="bg-white/5 border-b border-white/5">
+                                <th className="px-10 py-8 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em]">User</th>
+                                <th className="px-6 py-8 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] text-center">Status</th>
+                                <th className="px-6 py-8 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] text-center">Progress</th>
+                                <th className="px-6 py-8 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] text-center">Streak</th>
+                                <th className="px-6 py-8 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] text-center">Activity</th>
+                                <th className="px-10 py-8 text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em] text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-ease-border">
+                        <tbody 
+                          className="divide-y divide-white/5"
+                        >
                             {loading ? (
                               <tr>
-                                <td colSpan={6} className="px-8 py-20 text-center text-ease-text-secondary font-bold animate-pulse">
-                                  Accessing user records...
+                                <td colSpan={6} className="px-8 py-32 text-center">
+                                  <div className="flex flex-col items-center gap-4">
+                                    <div className="w-12 h-12 border-4 border-ease-blue/10 border-t-ease-blue rounded-full animate-spin"></div>
+                                    <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-widest animate-pulse">Decrypting User Shards...</p>
+                                  </div>
                                 </td>
                               </tr>
                             ) : users.length > 0 ? (
@@ -159,41 +193,42 @@ export default function UserAnalytics() {
                                   <tr 
                                     key={user.id} 
                                     onClick={() => handleSelectUser(user)}
-                                    className="hover:bg-ease-bg/40 transition-all duration-200 group cursor-pointer"
+                                    className="hover:bg-white/5 transition-all duration-300 group cursor-pointer"
                                   >
-                                      <td className="px-8 py-5">
-                                          <div className="flex items-center gap-4">
-                                              <div className="w-12 h-12 rounded-2xl bg-ease-blue/10 border border-ease-blue/5 flex items-center justify-center text-ease-blue font-black text-sm shadow-sm group-hover:scale-105 transition-transform relative">
+                                      <td className="px-10 py-6">
+                                          <div className="flex items-center gap-5">
+                                              <div className="w-14 h-14 rounded-2xl bg-ease-blue/10 border border-white/5 flex items-center justify-center text-ease-blue font-black text-sm shadow-inner group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 relative">
                                                   {getInitials(user.name)}
                                                   {user.isAdmin && (
-                                                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-ease-blue rounded-full border-2 border-white flex items-center justify-center">
-                                                       <Shield className="w-2 h-2 text-white fill-current" />
+                                                     <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-ease-blue rounded-full border-2 border-ease-surface flex items-center justify-center shadow-lg">
+                                                       <Shield className="w-2.5 h-2.5 text-white fill-current" />
                                                      </div>
                                                    )}
                                               </div>
                                               <div>
-                                                  <div className="flex items-center gap-2">
-                                                    <p className="font-bold text-ease-text-primary text-base">{user.name}</p>
+                                                  <div className="flex items-center gap-2.5">
+                                                    <p className="font-black text-ease-text-primary text-base tracking-tight">{user.name}</p>
                                                     {user.isAdmin && (
-                                                      <span className="px-1.5 py-0.5 bg-ease-blue/10 text-ease-blue text-[8px] font-black uppercase rounded-md tracking-tighter">Admin</span>
+                                                      <span className="px-2 py-0.5 bg-ease-blue text-white text-[8px] font-black uppercase rounded-lg tracking-[0.1em] shadow-sm">Admin</span>
                                                     )}
                                                   </div>
-                                                  <p className="text-xs text-ease-text-secondary font-medium tracking-tight">{user.email}</p>
+                                                  <p className="text-xs text-ease-text-secondary font-bold tracking-tight opacity-60 mt-0.5">{user.email}</p>
                                               </div>
                                           </div>
                                       </td>
-                                      <td className="px-6 py-5 text-center">
-                                          <span className={clsx(
-                                            "px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider",
-                                            user.isVerified ? 'bg-ease-success/10 text-ease-success' : 'bg-orange-500/10 text-orange-500'
+                                      <td className="px-6 py-6 text-center">
+                                          <div className={clsx(
+                                            "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm",
+                                            user.isVerified ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/10' : 'bg-orange-500/10 text-orange-400 border-orange-500/10'
                                           )}>
+                                            <span className={clsx("w-1.5 h-1.5 rounded-full animate-pulse", user.isVerified ? 'bg-emerald-400' : 'bg-orange-400')} />
                                             {user.isVerified ? 'Verified' : 'Unverified'}
-                                          </span>
+                                          </div>
                                       </td>
-                                      <td className="px-6 py-5 text-center">
+                                      <td className="px-6 py-6 text-center">
                                           <div className="inline-flex flex-col items-center">
-                                            <p className="text-sm font-bold text-ease-text-primary tracking-tight">Level {user.level || 1}</p>
-                                            <div className="w-24 h-2 bg-ease-bg rounded-full mt-2 overflow-hidden border border-ease-border/50 p-[1px]">
+                                            <p className="text-sm font-black text-ease-text-primary tracking-tight">V.{user.level || 1}.0</p>
+                                            <div className="w-28 h-2 bg-white/5 rounded-full mt-2.5 overflow-hidden border border-white/5 p-[1.5px] shadow-inner">
                                               <div 
                                                 className="h-full bg-gradient-to-r from-ease-blue to-blue-400 rounded-full transition-all duration-1000 ease-out" 
                                                 style={{width: `${((user.xp || 0) % 1000) / 10}%`}}
@@ -201,32 +236,32 @@ export default function UserAnalytics() {
                                             </div>
                                           </div>
                                       </td>
-                                      <td className="px-6 py-5 text-center">
-                                          <p className="text-sm font-black text-ease-text-primary">{user.streak || 0} days</p>
-                                          <p className="text-[10px] text-ease-text-secondary font-bold uppercase tracking-tighter opacity-70">Current Heat</p>
+                                      <td className="px-6 py-6 text-center">
+                                          <p className="text-base font-black text-ease-text-primary tracking-tighter">{user.streak || 0} Cycles</p>
+                                          <p className="text-[9px] text-ease-text-secondary font-black uppercase tracking-widest mt-1 opacity-50">Current Streak</p>
                                       </td>
-                                      <td className="px-6 py-5">
+                                      <td className="px-6 py-6">
                                         <div className="flex items-center gap-2">
                                           {(user.streak || 0) < 3 ? (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-ease-error/5 text-ease-error rounded-xl border border-ease-error/10">
-                                              <TrendingDown className="w-3.5 h-3.5" />
-                                              <span className="text-[10px] font-black uppercase tracking-tight">High Risk</span>
+                                            <div className="flex items-center gap-2 px-3 py-2 bg-red-500/5 text-red-400 rounded-xl border border-red-500/10 backdrop-blur-sm shadow-sm">
+                                              <TrendingDown className="w-4 h-4" />
+                                              <span className="text-[10px] font-black uppercase tracking-widest">Low Activity</span>
                                             </div>
                                           ) : (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-ease-success/5 text-ease-success rounded-xl border border-ease-success/10">
-                                              <TrendingUp className="w-3.5 h-3.5" />
-                                              <span className="text-[10px] font-black uppercase tracking-tight">Stable</span>
+                                            <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/5 text-emerald-400 rounded-xl border border-emerald-500/10 backdrop-blur-sm shadow-sm">
+                                              <TrendingUp className="w-4 h-4" />
+                                              <span className="text-[10px] font-black uppercase tracking-widest">Active</span>
                                             </div>
                                           )}
                                         </div>
                                       </td>
-                                      <td className="px-8 py-5 text-right">
+                                      <td className="px-10 py-6 text-right">
                                           <button 
                                             onClick={(e) => {
                                               e.stopPropagation();
                                               handleSelectUser(user);
                                             }}
-                                            className="p-2.5 rounded-xl hover:bg-ease-bg text-ease-text-secondary hover:text-ease-blue transition-all border border-transparent hover:border-ease-border"
+                                            className="p-3 rounded-2xl hover:bg-white/5 text-ease-text-secondary hover:text-ease-blue transition-all border border-transparent hover:border-white/10 shadow-sm"
                                           >
                                               <MoreHorizontal className="w-5 h-5" />
                                           </button>
@@ -235,8 +270,8 @@ export default function UserAnalytics() {
                               ))
                             ) : (
                               <tr>
-                                <td colSpan={6} className="px-8 py-20 text-center text-ease-text-secondary font-medium">
-                                  No users found matching your criteria.
+                                <td colSpan={6} className="px-8 py-32 text-center text-ease-text-secondary font-black uppercase tracking-[0.2em] opacity-40">
+                                  No Identity Fragments Located
                                 </td>
                               </tr>
                             )}
@@ -245,320 +280,363 @@ export default function UserAnalytics() {
                 </div>
 
                 {/* Pagination */}
-                <div className="px-8 py-6 bg-ease-bg/30 border-t border-ease-border flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <p className="text-sm text-ease-text-secondary font-medium">
-                        Showing <span className="font-bold text-ease-text-primary">{(page-1)*10 + 1}</span> to <span className="font-bold text-ease-text-primary">{Math.min(page*10, total)}</span> of <span className="font-bold text-ease-text-primary">{total}</span> records
+                <div className="px-10 py-8 bg-white/5 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
+                    <p className="text-[11px] text-ease-text-secondary font-black uppercase tracking-widest">
+                        Index Shard <span className="text-ease-text-primary text-sm px-1.5 bg-white/5 rounded-lg border border-white/5">{(page-1)*10 + 1}—{Math.min(page*10, total)}</span> of <span className="text-ease-text-primary text-sm px-1.5 bg-white/5 rounded-lg border border-white/5">{total}</span> Nodes
                     </p>
-                    <div className="flex gap-3">
+                    <div className="flex gap-4">
                         <button 
                           onClick={() => setPage(p => Math.max(1, p - 1))}
                           disabled={page === 1}
-                          className="flex items-center justify-center w-12 h-12 rounded-2xl bg-ease-surface border border-ease-border text-ease-text-secondary disabled:opacity-30 hover:border-ease-blue hover:text-ease-blue transition-all shadow-sm active:scale-95"
+                          className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/5 border border-white/5 text-ease-text-secondary disabled:opacity-20 hover:border-ease-blue hover:text-ease-blue transition-all shadow-xl active:scale-90"
                         >
-                            <ChevronLeft className="w-5 h-5" />
+                            <ChevronLeft className="w-6 h-6" />
                         </button>
-                        <div className="flex items-center justify-center px-4 h-12 rounded-2xl bg-ease-surface border border-ease-border text-sm font-black text-ease-text-primary shadow-sm">
+                        <div className="flex items-center justify-center px-6 h-14 rounded-2xl bg-ease-blue text-white text-sm font-black shadow-2xl shadow-blue-500/30">
                           {page}
                         </div>
                         <button 
                           onClick={() => setPage(p => p + 1)}
                           disabled={page * 10 >= total}
-                          className="flex items-center justify-center w-12 h-12 rounded-2xl bg-ease-surface border border-ease-border text-ease-text-secondary disabled:opacity-30 hover:border-ease-blue hover:text-ease-blue transition-all shadow-sm active:scale-95"
+                          className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/5 border border-white/5 text-ease-text-secondary disabled:opacity-20 hover:border-ease-blue hover:text-ease-blue transition-all shadow-xl active:scale-90"
                         >
-                          <ChevronRight className="w-5 h-5" />
+                          <ChevronRight className="w-6 h-6" />
                         </button>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* User Detail Side Panel */}
-            {selectedUser && (
-              <>
-                <div 
-                  className="fixed inset-0 bg-black/40 backdrop-blur-md z-40 animate-in fade-in duration-300"
-                  onClick={() => setSelectedUser(null)}
-                />
-                <div className="fixed right-0 top-0 bottom-0 w-full max-w-xl bg-ease-surface border-l border-ease-border z-50 shadow-[0_0_80px_rgba(0,0,0,0.25)] animate-in slide-in-from-right duration-500 overflow-y-auto">
-                  <div className="p-10 space-y-10">
-                    {/* Panel Header */}
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-8 bg-ease-blue rounded-full" />
-                        <h2 className="text-2xl font-black text-ease-text-primary uppercase tracking-wider">Intelligence</h2>
-                      </div>
-                      <button 
-                        onClick={() => setSelectedUser(null)}
-                        className="p-3 rounded-2xl bg-ease-bg border border-ease-border text-ease-text-secondary hover:text-ease-text-primary transition-all active:scale-95 shadow-sm"
-                      >
-                        <X className="w-6 h-6" />
-                      </button>
-                    </div>
-
-                    {/* Profile Header */}
-                    <div className="bg-ease-bg/50 rounded-[2.5rem] border border-ease-border p-8 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Shield className="w-32 h-32" />
-                      </div>
-                      <div className="flex flex-col items-center text-center space-y-5 relative z-10">
-                        <div className="w-28 h-28 rounded-[2.2rem] bg-gradient-to-br from-ease-blue to-blue-600 border-4 border-white shadow-2xl flex items-center justify-center text-white text-4xl font-black relative">
-                          {getInitials(selectedUser.name)}
-                          {selectedUser.isAdmin && (
-                             <div className="absolute -top-2 -right-2 p-2 bg-white rounded-2xl shadow-xl border border-ease-blue/10">
-                               <Shield className="w-6 h-6 text-ease-blue fill-current" />
-                             </div>
-                          )}
-                        </div>
-                        <div>
-                          <h3 className="text-3xl font-black text-ease-text-primary tracking-tight">{selectedUser.name}</h3>
-                          <p className="text-ease-text-secondary font-semibold mt-1">{selectedUser.email}</p>
-                        </div>
-                        <div className="flex gap-3">
-                          {selectedUser.isAdmin && (
-                            <div className="px-5 py-2 bg-ease-blue text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-ease-blue shadow-lg shadow-blue-200">
-                              SYSTEM ADMIN
-                            </div>
-                          )}
-                          <div className="px-5 py-2 bg-ease-blue/10 text-ease-blue rounded-2xl text-[10px] font-black uppercase tracking-widest border border-ease-blue/10">
-                            PRO MEMBER
+            <AnimatePresence>
+              {selectedUser && (
+                <>
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/60 backdrop-blur-xl z-40"
+                    onClick={() => setSelectedUser(null)}
+                  />
+                  <motion.div 
+                    initial={{ x: '100%' }}
+                    animate={{ x: 0 }}
+                    exit={{ x: '100%' }}
+                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                    className="fixed right-0 top-0 bottom-0 w-full max-w-xl bg-ease-surface/80 backdrop-blur-3xl border-l border-white/10 z-50 shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar"
+                  >
+                    <div className="p-12 space-y-12">
+                      {/* Panel Header */}
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 bg-ease-blue/10 rounded-2xl border border-ease-blue/20">
+                            <Zap className="w-6 h-6 text-ease-blue" />
                           </div>
-                          <div className={clsx(
-                            "px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border",
-                            selectedUser.isVerified ? "bg-ease-success/10 text-ease-success border-ease-success/10" : "bg-orange-500/10 text-orange-500 border-orange-500/10"
-                          )}>
-                            {selectedUser.isVerified ? 'VERIFIED' : 'UNVERIFIED'}
-                          </div>
+                          <h2 className="text-2xl font-black text-ease-text-primary uppercase tracking-[0.2em]">User Details</h2>
                         </div>
+                        <button 
+                          onClick={() => setSelectedUser(null)}
+                          className="p-4 rounded-2xl bg-white/5 border border-white/5 text-ease-text-secondary hover:text-white hover:bg-red-500/20 hover:border-red-500/20 transition-all active:scale-90 shadow-xl"
+                        >
+                          <X className="w-6 h-6" />
+                        </button>
                       </div>
-                    </div>
 
-                    {/* Prediction & Pulse Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-ease-surface p-6 rounded-[2rem] border border-ease-border shadow-sm space-y-4">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em]">Churn Prediction</p>
-                          {(selectedUser.streak || 0) < 3 ? (
-                            <TrendingDown className="w-4 h-4 text-ease-error" />
-                          ) : (
-                            <TrendingUp className="w-4 h-4 text-ease-success" />
-                          )}
+                      {/* Profile Header */}
+                      <div className="bg-gradient-to-br from-white/[0.03] to-transparent rounded-[3rem] border border-white/5 p-10 relative overflow-hidden group shadow-2xl">
+                        <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-1000 rotate-12">
+                          <Shield className="w-64 h-64" />
                         </div>
-                        <div className="flex items-end gap-3">
-                          <p className="text-4xl font-black text-ease-text-primary">
-                            {(selectedUser.streak || 0) < 3 ? '84%' : '12%'}
-                          </p>
-                          <p className={clsx(
-                            "text-[10px] font-black uppercase mb-1.5 px-2 py-0.5 rounded-lg",
-                            (selectedUser.streak || 0) < 3 ? 'bg-ease-error/10 text-ease-error' : 'bg-ease-success/10 text-ease-success'
-                          )}>
-                            {(selectedUser.streak || 0) < 3 ? 'Critical' : 'Low'}
-                          </p>
-                        </div>
-                        <div className="w-full h-1.5 bg-ease-bg rounded-full overflow-hidden">
-                          <div 
-                            className={clsx(
-                              "h-full rounded-full transition-all duration-1000",
-                              (selectedUser.streak || 0) < 3 ? 'bg-ease-error' : 'bg-ease-success'
+                        <div className="flex flex-col items-center text-center space-y-6 relative z-10">
+                          <div className="w-32 h-32 rounded-[2.5rem] bg-gradient-to-br from-ease-blue to-blue-600 border-[6px] border-white/10 shadow-2xl flex items-center justify-center text-white text-4xl font-black relative group-hover:scale-105 transition-transform duration-700">
+                            {getInitials(selectedUser.name)}
+                            {selectedUser.isAdmin && (
+                               <div className="absolute -top-2 -right-2 p-2.5 bg-ease-blue rounded-2xl shadow-2xl border border-white/20">
+                                 <Shield className="w-6 h-6 text-white fill-current" />
+                               </div>
                             )}
-                            style={{width: (selectedUser.streak || 0) < 3 ? '84%' : '12%'}}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="bg-ease-surface p-6 rounded-[2rem] border border-ease-border shadow-sm space-y-4">
-                        <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em]">Engagement Pulse</p>
-                        <div className="flex items-center gap-1.5 h-12">
-                          {[40, 70, 45, 90, 65, 80, 50, 85, 95, 75].map((h, i) => (
-                            <div 
-                              key={i}
-                              className="flex-1 bg-ease-blue/20 rounded-full relative group"
-                            >
-                              <div 
-                                className="absolute bottom-0 left-0 right-0 bg-ease-blue rounded-full transition-all duration-700 delay-[100ms*i]"
-                                style={{height: `${h}%`}}
-                              />
+                          </div>
+                          <div>
+                            <h3 className="text-4xl font-black text-ease-text-primary tracking-tighter">{selectedUser.name}</h3>
+                            <p className="text-ease-text-secondary font-black uppercase tracking-widest text-xs opacity-50 mt-2">{selectedUser.email}</p>
+                          </div>
+                          <div className="flex gap-3">
+                            {selectedUser.isAdmin && (
+                              <div className="px-6 py-2.5 bg-ease-blue text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-500/20">
+                                ADMINISTRATOR
+                              </div>
+                            )}
+                            <div className="px-6 py-2.5 bg-white/5 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border border-white/5">
+                              LEVEL {selectedUser.level || 1}
                             </div>
-                          ))}
+                            <div className={clsx(
+                              "px-6 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm",
+                              selectedUser.isVerified ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/10" : "bg-orange-500/10 text-orange-400 border-orange-500/10"
+                            )}>
+                              {selectedUser.isVerified ? 'VERIFIED' : 'PENDING'}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center text-[10px] font-black text-ease-text-secondary/50 uppercase tracking-tighter">
-                          <span>30D AGO</span>
-                          <span>TODAY</span>
+                      </div>
+
+                      {/* Prediction & Pulse Section */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5 shadow-xl space-y-6">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em]">Churn Risk</p>
+                            {(selectedUser.streak || 0) < 3 ? (
+                              <TrendingDown className="w-5 h-5 text-red-400" />
+                            ) : (
+                              <TrendingUp className="w-5 h-5 text-emerald-400" />
+                            )}
+                          </div>
+                          <div className="flex items-end gap-3">
+                            <p className="text-5xl font-black text-ease-text-primary tracking-tighter">
+                              {(selectedUser.streak || 0) < 3 ? '84%' : '12%'}
+                            </p>
+                            <p className={clsx(
+                              "text-[10px] font-black uppercase mb-2 px-2.5 py-1 rounded-lg shadow-sm border",
+                              (selectedUser.streak || 0) < 3 ? 'bg-red-500/10 text-red-400 border-red-500/10' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/10'
+                            )}>
+                              {(selectedUser.streak || 0) < 3 ? 'Critical' : 'Stable'}
+                            </p>
+                          </div>
+                          <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden p-[1.5px] border border-white/5 shadow-inner">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: (selectedUser.streak || 0) < 3 ? '84%' : '12%' }}
+                              transition={{ duration: 1.5, ease: "easeOut" }}
+                              className={clsx(
+                                "h-full rounded-full shadow-lg",
+                                (selectedUser.streak || 0) < 3 ? 'bg-gradient-to-r from-red-500 to-rose-400' : 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                              )}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    </div>
 
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-ease-bg p-5 rounded-3xl border border-ease-border flex flex-col items-center gap-1">
-                        <Activity className="w-4 h-4 text-ease-blue mb-1" />
-                        <p className="text-[9px] font-black text-ease-text-secondary uppercase">Rate</p>
-                        <p className="text-lg font-black text-ease-text-primary">
-                          {selectedUser.stats?.completionRate ? `${Math.round(selectedUser.stats.completionRate)}%` : '0%'}
-                        </p>
-                      </div>
-                      <div className="bg-ease-bg p-5 rounded-3xl border border-ease-border flex flex-col items-center gap-1">
-                        <Award className="w-4 h-4 text-purple-500 mb-1" />
-                        <p className="text-[9px] font-black text-ease-text-secondary uppercase">Heat</p>
-                        <p className="text-lg font-black text-ease-text-primary">{selectedUser.streak || 0}d</p>
-                      </div>
-                      <div className="bg-ease-bg p-5 rounded-3xl border border-ease-border flex flex-col items-center gap-1">
-                        <Clock className="w-4 h-4 text-orange-500 mb-1" />
-                        <p className="text-[9px] font-black text-ease-text-secondary uppercase">Tasks</p>
-                        <p className="text-lg font-black text-ease-text-primary">{selectedUser.stats?.completedTasks || 0}</p>
-                      </div>
-                    </div>
-
-                    {/* Active Program Section */}
-                    {loadingDetails ? (
-                      <div className="py-10 text-center space-y-4">
-                        <div className="w-10 h-10 border-4 border-ease-blue border-t-transparent rounded-full animate-spin mx-auto" />
-                        <p className="text-xs font-black text-ease-text-secondary uppercase tracking-widest">Accessing Cluster Data...</p>
-                      </div>
-                    ) : (
-                      <>
-                        {selectedUser.programs && selectedUser.programs.length > 0 && (
-                          <div className="space-y-4">
-                            <h4 className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                              Active Goal
-                            </h4>
-                            {selectedUser.programs.map((program) => (
-                              <div key={program.id} className="bg-ease-blue/5 p-6 rounded-[2.5rem] border border-ease-blue/10 space-y-4">
-                                <div className="flex items-start gap-4">
-                                  <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-ease-blue border border-ease-blue/5">
-                                    <Flag className="w-6 h-6" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <h5 className="text-lg font-black text-ease-text-primary tracking-tight">"{program.title}"</h5>
-                                    <p className="text-xs text-ease-text-secondary font-semibold mt-1">Goal: {program.purpose}</p>
-                                  </div>
-                                </div>
-                                <div className="space-y-2">
-                                  <div className="flex justify-between text-[10px] font-black text-ease-text-secondary uppercase tracking-tighter">
-                                    <span>Program Progression</span>
-                                    <span>{Math.round((program.dayPlans?.filter((dp: any) => dp.isCompleted).length || 0) / (program.dayPlans?.length || 1) * 100)}%</span>
-                                  </div>
-                                  <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-ease-blue/5 p-[1px]">
-                                    <div 
-                                      className="h-full bg-ease-blue rounded-full transition-all duration-1000"
-                                      style={{width: `${(program.dayPlans?.filter((dp: any) => dp.isCompleted).length || 0) / (program.dayPlans?.length || 1) * 100}%`}}
-                                    />
-                                  </div>
-                                </div>
+                        <div className="bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5 shadow-xl space-y-6">
+                          <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.25em]">Activity History</p>
+                          <div className="flex items-center gap-2 h-16 pt-2">
+                            {[40, 70, 45, 90, 65, 80, 50, 85, 95, 75].map((h, i) => (
+                              <div 
+                                key={i}
+                                className="flex-1 bg-ease-blue/10 rounded-full relative group overflow-hidden"
+                              >
+                                <motion.div 
+                                  initial={{ height: 0 }}
+                                  animate={{ height: `${h}%` }}
+                                  transition={{ duration: 1, delay: i * 0.05 }}
+                                  className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-ease-blue to-blue-400 rounded-full shadow-lg"
+                                />
                               </div>
                             ))}
                           </div>
-                        )}
+                          <div className="flex justify-between items-center text-[9px] font-black text-ease-text-secondary/40 uppercase tracking-[0.2em]">
+                            <span>PRE-CYCLE</span>
+                            <span>CURRENT</span>
+                          </div>
+                        </div>
+                      </div>
 
-                        {/* Recent Activity Timeline */}
-                        <div className="space-y-6">
-                          <h4 className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] px-1">
-                            Neural Activity Pulse
-                          </h4>
-                          <div className="relative pl-6 space-y-8">
-                            <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-ease-border" />
-                            
-                            {selectedUser.programs?.flatMap(p => p.dayPlans || [])
-                              .filter((dp: any) => dp.isCompleted)
-                              .sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-                              .slice(0, 5)
-                              .map((dp: any, idx: number) => (
-                                <div key={dp.id} className="relative flex items-start gap-4 animate-in slide-in-from-left duration-500" style={{animationDelay: `${idx * 100}ms`}}>
-                                  <div className="absolute -left-[23px] w-4 h-4 rounded-full bg-ease-bg border-4 border-ease-success ring-4 ring-ease-surface" />
-                                  <div className="flex-1 bg-ease-bg/30 p-4 rounded-2xl border border-ease-border hover:border-ease-blue/20 transition-all group">
-                                    <div className="flex justify-between items-start">
-                                      <p className="text-sm font-bold text-ease-text-primary group-hover:text-ease-blue transition-colors">{dp.title || `Day ${dp.dayNumber} Completed`}</p>
-                                      <CheckCircle2 className="w-4 h-4 text-ease-success opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {/* Stats Grid */}
+                      <div className="grid grid-cols-3 gap-6">
+                        <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 flex flex-col items-center gap-2 group hover:bg-ease-blue/5 transition-colors">
+                          <Activity className="w-5 h-5 text-ease-blue mb-1" />
+                          <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-widest">Rate</p>
+                          <p className="text-2xl font-black text-ease-text-primary tracking-tighter group-hover:text-ease-blue">
+                            {selectedUser.stats?.completionRate ? `${Math.round(selectedUser.stats.completionRate)}%` : '0%'}
+                          </p>
+                        </div>
+                        <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 flex flex-col items-center gap-2 group hover:bg-purple-500/5 transition-colors">
+                          <Award className="w-5 h-5 text-purple-400 mb-1" />
+                          <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-widest">Streak</p>
+                          <p className="text-2xl font-black text-ease-text-primary tracking-tighter group-hover:text-purple-400">{selectedUser.streak || 0}d</p>
+                        </div>
+                        <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 flex flex-col items-center gap-2 group hover:bg-orange-500/5 transition-colors">
+                          <Clock className="w-5 h-5 text-orange-400 mb-1" />
+                          <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-widest">Tasks</p>
+                          <p className="text-2xl font-black text-ease-text-primary tracking-tighter group-hover:text-orange-400">{selectedUser.stats?.completedTasks || 0}</p>
+                        </div>
+                      </div>
+
+                      {/* Active Program Section */}
+                      {loadingDetails ? (
+                        <div className="py-20 text-center space-y-6">
+                          <div className="relative inline-block">
+                            <div className="w-16 h-16 border-4 border-ease-blue/10 border-t-ease-blue rounded-full animate-spin mx-auto" />
+                            <Zap className="absolute inset-0 m-auto text-ease-blue animate-pulse w-6 h-6" />
+                          </div>
+                          <p className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.3em] animate-pulse">Navigating Data Cluster...</p>
+                        </div>
+                      ) : (
+                        <>
+                          {selectedUser.programs && selectedUser.programs.length > 0 && (
+                            <div className="space-y-6">
+                              <h4 className="text-[11px] font-black text-ease-text-secondary uppercase tracking-[0.3em] px-2 flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-ease-blue animate-pulse" />
+                                Current Program
+                              </h4>
+                              {selectedUser.programs.map((program) => (
+                                <div key={program.id} className="bg-gradient-to-br from-ease-blue/10 to-transparent p-8 rounded-[3rem] border border-ease-blue/20 space-y-6 shadow-2xl relative overflow-hidden group">
+                                  <div className="absolute -right-4 -bottom-4 p-4 opacity-[0.05] group-hover:rotate-12 transition-transform duration-1000">
+                                    <Globe className="w-32 h-32 text-ease-blue" />
+                                  </div>
+                                  <div className="flex items-start gap-6 relative z-10">
+                                    <div className="w-16 h-16 rounded-[1.5rem] bg-white shadow-2xl flex items-center justify-center text-ease-blue border border-ease-blue/10 group-hover:rotate-6 transition-transform duration-500">
+                                      <Flag className="w-8 h-8" />
                                     </div>
-                                    <p className="text-[10px] text-ease-text-secondary font-black uppercase mt-1">
-                                      {new Date(dp.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                    </p>
+                                    <div className="flex-1">
+                                      <h5 className="text-xl font-black text-ease-text-primary tracking-tighter leading-tight">{program.title}</h5>
+                                      <p className="text-xs text-ease-text-secondary font-bold mt-2 opacity-60">Manifest: {program.purpose}</p>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-3 relative z-10">
+                                    <div className="flex justify-between text-[10px] font-black text-ease-text-secondary uppercase tracking-widest">
+                                      <span>Sync Progression</span>
+                                      <span className="text-ease-blue">{Math.round((program.dayPlans?.filter((dp: any) => dp.isCompleted).length || 0) / (program.dayPlans?.length || 1) * 100)}%</span>
+                                    </div>
+                                    <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden p-[2px] border border-white/10 shadow-inner">
+                                      <motion.div 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${(program.dayPlans?.filter((dp: any) => dp.isCompleted).length || 0) / (program.dayPlans?.length || 1) * 100}%` }}
+                                        transition={{ duration: 2, ease: "circOut" }}
+                                        className="h-full bg-gradient-to-r from-ease-blue to-blue-400 rounded-full shadow-lg"
+                                      />
+                                    </div>
                                   </div>
                                 </div>
-                              ))
-                            }
+                              ))}
+                            </div>
+                          )}
 
-                            {(!selectedUser.programs || selectedUser.programs.every(p => !p.dayPlans?.some((dp: any) => dp.isCompleted))) && (
-                              <div className="text-center py-6 text-ease-text-secondary text-xs font-semibold italic">
-                                No recent activity patterns detected.
+                          {/* Recent Activity Timeline */}
+                          <div className="space-y-8">
+                            <h4 className="text-[11px] font-black text-ease-text-secondary uppercase tracking-[0.3em] px-2 flex items-center gap-3">
+                              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              Activity Log
+                            </h4>
+                            <div className="relative pl-10 space-y-10">
+                              <div className="absolute left-[11px] top-2 bottom-2 w-[2px] bg-white/5" />
+                              
+                              <AnimatePresence>
+                                {selectedUser.programs?.flatMap(p => p.dayPlans || [])
+                                  .filter((dp: any) => dp.isCompleted)
+                                  .sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+                                  .slice(0, 5)
+                                  .map((dp: any, idx: number) => (
+                                    <motion.div 
+                                      key={dp.id} 
+                                      initial={{ x: -20, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      transition={{ delay: idx * 0.1 }}
+                                      className="relative flex items-start gap-6 group"
+                                    >
+                                      <div className="absolute -left-[35px] w-5 h-5 rounded-full bg-ease-surface border-[4px] border-emerald-500 ring-[8px] ring-black/10 shadow-xl group-hover:scale-125 transition-transform duration-300" />
+                                      <div className="flex-1 bg-white/[0.03] p-6 rounded-[2rem] border border-white/5 hover:border-white/10 hover:bg-white/[0.05] transition-all group/card shadow-lg">
+                                        <div className="flex justify-between items-start">
+                                          <p className="text-base font-black text-ease-text-primary tracking-tight group-hover/card:text-ease-blue transition-colors">{dp.title || `Day ${dp.dayNumber} Completion`}</p>
+                                          <div className="p-1.5 bg-emerald-500/10 rounded-lg">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                          </div>
+                                        </div>
+                                        <p className="text-[9px] text-ease-text-secondary font-black uppercase mt-3 tracking-[0.15em] opacity-40">
+                                          {new Date(dp.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                      </div>
+                                    </motion.div>
+                                  ))
+                                }
+                              </AnimatePresence>
+
+                              {(!selectedUser.programs || selectedUser.programs.every(p => !p.dayPlans?.some((dp: any) => dp.isCompleted))) && (
+                                <div className="text-center py-12 bg-white/5 rounded-[2.5rem] border border-white/5 border-dashed">
+                                  <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.2em] opacity-40 italic">
+                                    Zero Activity Fragments Recorded
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* System Metadata */}
+                      <div className="space-y-6">
+                        <h4 className="text-[11px] font-black text-ease-text-secondary uppercase tracking-[0.3em] px-2">Access Privileges</h4>
+                        <div className="bg-white/5 rounded-[2.5rem] border border-white/5 divide-y divide-white/5 overflow-hidden shadow-2xl">
+                          <div className="flex items-center justify-between p-8 hover:bg-white/[0.08] transition-colors group">
+                            <div className="flex items-center gap-5">
+                              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-ease-text-secondary group-hover:text-ease-blue group-hover:scale-110 transition-all">
+                                <Calendar className="w-6 h-6" />
                               </div>
-                            )}
+                              <div>
+                                <span className="text-sm font-black text-ease-text-primary tracking-tight">Tenure Record</span>
+                                <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-widest mt-1 opacity-40">System Admission</p>
+                              </div>
+                            </div>
+                            <span className="text-xs font-black text-ease-text-primary px-4 py-2 bg-white/5 rounded-xl border border-white/5 shadow-inner">
+                              {new Date(selectedUser.lastActive || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between p-8 hover:bg-white/[0.08] transition-colors group">
+                            <div className="flex items-center gap-5">
+                              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-ease-text-secondary group-hover:text-ease-blue group-hover:scale-110 transition-all">
+                                <Shield className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-black text-ease-text-primary tracking-tight">Root Clearance</span>
+                                <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-widest mt-1 opacity-40">Administrative Rights</p>
+                              </div>
+                            </div>
+                            <button 
+                              onClick={() => handleToggleAdmin(selectedUser.id)}
+                              disabled={isUpdatingRole}
+                              className={clsx(
+                                "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all active:scale-90 shadow-2xl shadow-black/20 border",
+                                selectedUser.isAdmin 
+                                  ? "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500 hover:text-white" 
+                                  : "bg-ease-blue/10 text-ease-blue border-ease-blue/20 hover:bg-ease-blue hover:text-white"
+                              )}
+                            >
+                              {isUpdatingRole ? 'Syncing...' : selectedUser.isAdmin ? 'REVOKE ACCESS' : 'GRANT ACCESS'}
+                            </button>
                           </div>
                         </div>
-                      </>
-                    )}
+                      </div>
 
-                    {/* System Metadata */}
-                    <div className="space-y-4">
-                      <h4 className="text-[10px] font-black text-ease-text-secondary uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                        System Attributes
-                      </h4>
-                      <div className="bg-ease-bg/30 rounded-[2rem] border border-ease-border divide-y divide-ease-border overflow-hidden">
-                        <div className="flex items-center justify-between p-5 hover:bg-ease-bg/50 transition-colors">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-2xl bg-ease-surface border border-ease-border flex items-center justify-center text-ease-text-secondary">
-                              <Calendar className="w-5 h-5" />
-                            </div>
-                            <span className="text-sm font-bold text-ease-text-primary">Account Tenure</span>
+                      {/* Action Zone */}
+                      <div className="pt-6 space-y-6">
+                        <h4 className="text-[11px] font-black text-red-400 uppercase tracking-[0.3em] px-2">Danger Directive</h4>
+                        <div className="p-10 rounded-[3rem] border border-red-500/20 bg-red-500/[0.03] space-y-8 relative overflow-hidden shadow-2xl">
+                          <div className="absolute -top-10 -right-10 p-8 opacity-[0.05] rotate-12">
+                            <Trash2 className="w-64 h-64 text-red-500" />
                           </div>
-                          <span className="text-xs font-black text-ease-text-secondary uppercase">
-                            {new Date(selectedUser.lastActive || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between p-5 hover:bg-ease-bg/50 transition-colors">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-2xl bg-ease-surface border border-ease-border flex items-center justify-center text-ease-text-secondary">
-                              <Shield className="w-5 h-5" />
-                            </div>
-                            <span className="text-sm font-bold text-ease-text-primary">Admin Access</span>
+                          <div className="relative z-10 space-y-6">
+                            <p className="text-sm text-ease-text-secondary font-bold leading-relaxed opacity-60">
+                              Executing a purge sequence will permanently delete this node and all associated neural patterns from the infrastructure. This action is irreversible.
+                            </p>
+                            <button 
+                              onClick={() => handleDeleteUser(selectedUser.id)}
+                              disabled={isDeleting}
+                              className={clsx(
+                                "w-full flex items-center justify-center gap-4 py-6 bg-red-500 text-white rounded-3xl text-[11px] font-black uppercase tracking-[0.25em] shadow-2xl shadow-red-500/40 hover:bg-red-600 hover:scale-[1.02] active:scale-95 transition-all",
+                                isDeleting && "opacity-50 cursor-not-allowed"
+                              )}
+                            >
+                              {isDeleting ? (
+                                <Activity className="w-6 h-6 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-6 h-6" />
+                              )}
+                              PURGE NODE DATA
+                            </button>
                           </div>
-                          <button 
-                            onClick={() => handleToggleAdmin(selectedUser.id)}
-                            disabled={isUpdatingRole}
-                            className={clsx(
-                              "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tight transition-all active:scale-95",
-                              selectedUser.isAdmin 
-                                ? "bg-ease-error/10 text-ease-error hover:bg-ease-error hover:text-white border border-ease-error/20" 
-                                : "bg-ease-blue/10 text-ease-blue hover:bg-ease-blue hover:text-white border border-ease-blue/20"
-                            )}
-                          >
-                            {isUpdatingRole ? 'Syncing...' : selectedUser.isAdmin ? 'REVOKE ACCESS' : 'GRANT ACCESS'}
-                          </button>
                         </div>
                       </div>
                     </div>
-
-                    {/* Action Zone */}
-                    <div className="pt-4 space-y-4">
-                      <h4 className="text-[10px] font-black text-ease-error uppercase tracking-[0.2em] px-1">Termination Sequence</h4>
-                      <div className="p-8 rounded-[2.5rem] border border-ease-error/20 bg-ease-error/[0.03] space-y-6 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
-                          <Trash2 className="w-32 h-32 text-ease-error" />
-                        </div>
-                        <div className="relative z-10 space-y-4">
-                          <p className="text-sm text-ease-text-secondary font-semibold leading-relaxed">
-                            Account termination is irreversible. This will purge all associated programs, goals, and behavioral data from the system clusters.
-                          </p>
-                          <button 
-                            onClick={() => handleDeleteUser(selectedUser.id)}
-                            disabled={isDeleting}
-                            className={clsx(
-                              "w-full flex items-center justify-center gap-3 py-5 bg-ease-error text-white rounded-2xl text-sm font-black shadow-xl shadow-red-200/50 hover:bg-red-600 hover:scale-[1.02] transition-all active:scale-95",
-                              isDeleting && "opacity-50 cursor-not-allowed"
-                            )}
-                          >
-                            {isDeleting ? (
-                              <Activity className="w-5 h-5 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-5 h-5" />
-                            )}
-                            TERMINATE SESSION & PURGE DATA
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
         </div>
     );
 }

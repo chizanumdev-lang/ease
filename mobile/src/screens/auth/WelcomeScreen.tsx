@@ -61,7 +61,7 @@ export default function WelcomeScreen({ navigation }: Props) {
                     <View style={styles.brandingContainer}>
                         <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>EASE</Text>
                         <Text style={[styles.tagline, { color: colors.onSurfaceVariant }]}>
-                            Your daily growth, automated
+                            Get better every day.
                         </Text>
                     </View>
                 </View>
@@ -70,14 +70,14 @@ export default function WelcomeScreen({ navigation }: Props) {
                 <View style={styles.actionSection}>
                     <View style={styles.buttonGroup}>
                         <StitchButton 
-                            title="Create Account"
+                            title="Get Started"
                             variant="primary"
                             onPress={() => navigation.navigate('Signup')}
                             style={styles.mainButton}
                         />
                         
                         <StitchButton 
-                            title="Sign In"
+                            title="Log In"
                             variant="outline"
                             onPress={() => navigation.navigate('Login')}
                             style={styles.outlineButton}

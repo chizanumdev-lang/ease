@@ -38,6 +38,8 @@ lerna-debug.log*
 .env
 .env.local
 .env.*.local
+.env.local.bak
+.env.staging
 
 # Generated audio (temp + served)
 /temp
@@ -48,3 +50,4 @@ mobile/node_modules/
 mobile/.expo/
 mobile/.expo-shared/
 /stitch designs
+/graphify-out

@@ -15,13 +15,17 @@ import { tasksService } from '../../services/tasks.service';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { useModalStore } from '../../store/modalStore';
+import { useProgramsStore } from '../../store/programsStore';
+
 
 type Props = NativeStackScreenProps<MainStackParamList, 'Quiz'>;
 
 export default function QuizScreen({ route, navigation }: Props) {
     const { colors, spacing, borderRadius, isDark } = useTheme();
     const { showModal } = useModalStore();
+    const { todayPlan, completeTask } = useProgramsStore();
     const { quizId, taskId } = route.params;
+
     const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [loading, setLoading] = useState(true);
     const [answers, setAnswers] = useState<(number | null)[]>([]);
@@ -97,8 +101,9 @@ export default function QuizScreen({ route, navigation }: Props) {
                 answers as number[]
             );
 
-            // Mark task as completed
-            const updatePromise = tasksService.update(taskId, { completed: true });
+            // Mark task as completed via store
+            const updatePromise = completeTask(taskId);
+
 
             await Promise.all([
                 submitPromise,
@@ -120,8 +125,21 @@ export default function QuizScreen({ route, navigation }: Props) {
     };
 
     const handleFinish = () => {
-        navigation.navigate('Tabs', { screen: 'Home' } as any);
+        if (!todayPlan?.tasks) {
+            navigation.navigate('Tabs', { screen: 'Home' } as any);
+            return;
+        }
+
+        const currentIndex = todayPlan.tasks.findIndex(t => t.id === taskId);
+        const nextTask = todayPlan.tasks[currentIndex + 1];
+
+        if (nextTask) {
+            navigation.replace('Task', { task: nextTask });
+        } else {
+            navigation.navigate('Tabs', { screen: 'Home' } as any);
+        }
     };
+
 
     if (loading) {
         return (

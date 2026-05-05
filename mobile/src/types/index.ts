@@ -221,6 +221,7 @@ export interface PhaseInfo {
     subtitle: string;
     imageUrl: string;
     levelRange: string;
+    unlockedAtLevel: number;
 }
 
 export interface JourneyPhase extends PhaseInfo {

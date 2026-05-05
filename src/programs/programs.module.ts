@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
-import { ProgramsController } from './programs.controller';
 import { ProgramsService } from './programs.service';
 import { ProgressionService } from './progression.service';
 import { ProgramProcessor } from './program.processor';
+import { ProgramsResolver } from './programs.resolver';
 import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
 import { Task } from '../tasks/entities/task.entity';
@@ -18,6 +18,8 @@ import { UsersModule } from '../users/users.module';
 import { AiModule } from '../ai/ai.module';
 import { VideoModule } from '../video/video.module';
 import { AudioModule } from '../audio/audio.module';
+
+import { ProgramsController } from './programs.controller';
 
 @Module({
     imports: [
@@ -42,7 +44,7 @@ import { AudioModule } from '../audio/audio.module';
         AudioModule,
     ],
     controllers: [ProgramsController],
-    providers: [ProgramsService, ProgressionService, ProgramProcessor],
+    providers: [ProgramsService, ProgressionService, ProgramProcessor, ProgramsResolver],
     exports: [ProgramsService, ProgressionService],
 })
 export class ProgramsModule { }

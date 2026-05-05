@@ -1,0 +1,300 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AudioAsset {
+  createdAt: DateTime!
+  duration: Float
+  id: ID!
+  metadata: String
+  mimeType: String
+  storagePath: String!
+  taskId: String!
+}
+
+type AudioTrack {
+  createdAt: DateTime!
+  dayPlanId: String!
+  duration: Int
+  id: ID!
+  metadata: JSON
+  title: String!
+  type: String
+  updatedAt: DateTime!
+  url: String!
+}
+
+enum CapabilityType {
+  AUDIO
+  LOGIC
+  TEXT
+  UTILITY
+  VISION
+}
+
+input CreateGoalDto {
+  category: String
+  description: String
+  targetDate: String
+  title: String!
+}
+
+type DailyTask {
+  completed: Boolean!
+  completedAt: DateTime
+  content: String
+  createdAt: DateTime!
+  dayPlanId: String!
+  description: String
+  duration: Int
+  id: ID!
+  order: Int!
+  quizId: String
+  scheduledAt: DateTime
+  title: String!
+  totalDuration: Int
+  type: String
+  updatedAt: DateTime!
+  videoUrl: String
+  watchedSeconds: Int!
+  xpReward: Int!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type DayPlan {
+  audioTracks: [AudioTrack!]
+  createdAt: DateTime!
+  dayNumber: Int!
+  focusAreas: [String!]
+  id: ID!
+  programId: String!
+  quizzes: [Quiz!]
+  status: String!
+  tasks: [DailyTask!]
+  theme: String
+  updatedAt: DateTime!
+}
+
+input EdgeInput {
+  source: String!
+  target: String!
+}
+
+enum ExecutionStatus {
+  COMPLETED
+  FAILED
+  QUEUED
+  RUNNING
+}
+
+input GenerateProgramDto {
+  category: String
+  constraints: [String!] = []
+  duration: Int = 30
+  goalDescription: String
+  goalId: String
+  learningStyle: String = "mixed"
+  metadata: JSON
+  minutesPerDay: Int = 30
+}
+
+type Goal {
+  category: String
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  programs: [Program!]
+  targetDate: DateTime
+  title: String!
+  updatedAt: DateTime!
+  userId: String!
+}
+
+type GoalCategory {
+  createdAt: DateTime!
+  description: String
+  icon: String
+  id: ID!
+  name: String!
+  slug: String!
+  templates: [GoalTemplate!]!
+  updatedAt: DateTime!
+}
+
+type GoalTemplate {
+  category: GoalCategory!
+  categoryId: String!
+  createdAt: DateTime!
+  description: String
+  edges: [WorkflowEdge!]!
+  id: ID!
+  isActive: Boolean!
+  metaPrompt: String!
+  nodes: [WorkflowNode!]!
+  title: String!
+  updatedAt: DateTime!
+  version: Int!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type Mutation {
+  createGoal(createGoalDto: CreateGoalDto!): Goal!
+  createProgram(templateId: String!, userGoal: String!, userId: String!): UserProgram!
+  deleteGoal(id: ID!): Boolean!
+  deleteProgram(id: String!): Boolean!
+  evaluatePerformance(id: String!): Program!
+  generateProgram(generateProgramDto: GenerateProgramDto!): Program!
+  saveBlueprint(edges: [EdgeInput!]!, nodes: [NodeInput!]!, templateId: String!): GoalTemplate!
+  submitQuizAttempt(id: String!, submitQuizDto: SubmitQuizDto!): QuizAttempt!
+}
+
+input NodeDataInput {
+  config: JSON
+  label: String!
+  taskDefinitionId: String
+}
+
+input NodeInput {
+  data: NodeDataInput!
+  id: String!
+  position: NodePositionInput!
+}
+
+input NodePositionInput {
+  x: Float!
+  y: Float!
+}
+
+type Program {
+  createdAt: DateTime!
+  dayPlans: [DayPlan!]
+  description: String
+  duration: Int!
+  goalId: String!
+  id: ID!
+  metadata: JSON
+  status: String!
+  title: String!
+  updatedAt: DateTime!
+  userId: String!
+}
+
+enum ProgramStatus {
+  ACTIVE
+  COMPLETED
+  FAILED
+  PENDING
+}
+
+type Query {
+  getActiveProgram: Program!
+  getCategories: [GoalCategory!]!
+  getGoalById(id: ID!): Goal!
+  getGoals: [Goal!]!
+  getProgram(id: String!): UserProgram!
+  getProgramById(id: String!): Program!
+  getProgramPreview(generateProgramDto: GenerateProgramDto!): Program!
+  getQuiz(id: String!): Quiz!
+  getTaskDefinitions: [TaskDefinition!]!
+  getTodaysPlan(id: String!): DayPlan!
+  hello: String!
+}
+
+type Quiz {
+  attempts: [QuizAttempt!]
+  createdAt: DateTime!
+  dayPlanId: String!
+  id: ID!
+  questions: JSON!
+  title: String!
+  updatedAt: DateTime!
+}
+
+type QuizAttempt {
+  answers: [Int!]!
+  createdAt: DateTime!
+  id: ID!
+  passed: Boolean!
+  quiz: Quiz!
+  quizId: String!
+  score: Int!
+  updatedAt: DateTime!
+  userId: String!
+}
+
+input SubmitQuizDto {
+  answers: [Int!]!
+}
+
+type Subscription {
+  programCreated: UserProgram!
+  programStatusChanged(id: String!): Program!
+}
+
+type Task {
+  audioAssets: [AudioAsset!]!
+  completedAt: DateTime
+  createdAt: DateTime!
+  errorLog: String
+  id: ID!
+  inputData: String
+  node: WorkflowNode!
+  nodeId: String!
+  outputData: String
+  programId: String!
+  startedAt: DateTime
+  status: ExecutionStatus!
+}
+
+type TaskDefinition {
+  capability: CapabilityType!
+  createdAt: DateTime!
+  defaultConfig: String
+  description: String
+  id: ID!
+  name: String!
+}
+
+type UserProgram {
+  createdAt: DateTime!
+  id: ID!
+  metadata: String
+  progress: Float!
+  status: ProgramStatus!
+  tasks: [Task!]!
+  template: GoalTemplate!
+  templateId: String!
+  updatedAt: DateTime!
+  userGoal: String!
+  userId: String!
+}
+
+type WorkflowEdge {
+  createdAt: DateTime!
+  fromNode: WorkflowNode!
+  fromNodeId: String!
+  id: ID!
+  templateId: String!
+  toNode: WorkflowNode!
+  toNodeId: String!
+}
+
+type WorkflowNode {
+  config: String
+  createdAt: DateTime!
+  id: ID!
+  label: String!
+  positionX: Float!
+  positionY: Float!
+  taskDefinition: TaskDefinition!
+  taskDefinitionId: String!
+  templateId: String!
+}

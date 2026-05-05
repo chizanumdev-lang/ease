@@ -25,7 +25,7 @@ export default function TabNavigator() {
                     headerShown: false,
                     tabBarActiveTintColor: colors.primary,
                     tabBarInactiveTintColor: colors.textMuted,
-                    tabBarStyle: [styles.tabBar, { backgroundColor: isDark ? 'rgba(43, 93, 78, 0.7)' : 'rgba(255, 255, 255, 0.7)' }],
+                    tabBarStyle: styles.tabBar,
                     tabBarBackground: () => (
                         <BlurView
                             tint={isDark ? "dark" : "light"}
@@ -67,19 +67,8 @@ export default function TabNavigator() {
 
 const styles = StyleSheet.create({
     tabBar: {
-        position: 'absolute',
-        bottom: 24,
-        left: 20,
-        right: 20,
         height: 64,
-        borderRadius: 32,
         borderTopWidth: 0,
-        paddingBottom: 0, // Reset default padding
-        elevation: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        overflow: 'hidden', // Required for borderRadius + BlurView
+        elevation: 0,
     },
 });

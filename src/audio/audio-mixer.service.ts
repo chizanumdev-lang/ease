@@ -5,6 +5,7 @@ import { WaveFile } from 'wavefile';
 import { Readable } from 'stream';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import axios from 'axios';
 
 interface BinauralConfig {
   frequency: number;      // Target brainwave (e.g., 14.5 Hz)
@@ -137,19 +138,31 @@ export class AudioMixerService {
     const tempWavPath = path.join(os.tmpdir(), `ease-tts-${tempId}.wav`);
 
     try {
-      // Pass empty metadataOptions to prevent "Cannot read properties of undefined (reading 'voiceLocale')"
-      await edgeTts.setMetadata('en-US-GuyNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, {});
-      
-      const { audioStream } = edgeTts.toStream(fullScript);
-      const fsCore = require('fs');
-      const writeStream = fsCore.createWriteStream(tempMp3Path);
-      
-      await new Promise<void>((resolve, reject) => {
-        audioStream.pipe(writeStream);
-        writeStream.on('finish', resolve);
-        writeStream.on('error', reject);
-        audioStream.on('error', reject);
-      });
+    let attempts = 0;
+    const maxAttempts = 3;
+    while (attempts < maxAttempts) {
+      try {
+        // Pass empty metadataOptions to prevent "Cannot read properties of undefined (reading 'voiceLocale')"
+        await edgeTts.setMetadata('en-US-GuyNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, {});
+        
+        const { audioStream } = edgeTts.toStream(fullScript);
+        const fsCore = require('fs');
+        const writeStream = fsCore.createWriteStream(tempMp3Path);
+        
+        await new Promise<void>((resolve, reject) => {
+          audioStream.pipe(writeStream);
+          writeStream.on('finish', resolve);
+          writeStream.on('error', reject);
+          audioStream.on('error', reject);
+        });
+        break; // Success!
+      } catch (err) {
+        attempts++;
+        this.logger.warn(`Edge TTS attempt ${attempts} failed: ${err.message}`);
+        if (attempts >= maxAttempts) throw err;
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s
+      }
+    }
       
       const ffmpeg = require('fluent-ffmpeg');
       const ffmpegPath = require('ffmpeg-static');
@@ -253,6 +266,25 @@ export class AudioMixerService {
   }
 
   /**
+   * Helper to download a file to local temp storage
+   */
+  private async downloadToTemp(url: string, outputDir: string): Promise<string> {
+    const filename = `temp_bg_${Date.now()}_${path.basename(url)}`;
+    const outputPath = path.join(outputDir, filename);
+    
+    this.logger.log(`Downloading background audio from URL: ${url}`);
+    const response = await axios({
+      url,
+      method: 'GET',
+      responseType: 'arraybuffer',
+      timeout: 10000, // 10s timeout
+    });
+
+    await fs.writeFile(outputPath, Buffer.from(response.data));
+    return outputPath;
+  }
+
+  /**
    * Master pipeline: Generate complete binaural + subliminal track
    */
   async createBinauralSubliminalTrack(
@@ -285,6 +317,8 @@ export class AudioMixerService {
     });
 
     const staticUrl = STATIC_BINAURAL_MAP[closestFreq];
+    const tempStaticPath = staticUrl ? await this.downloadToTemp(staticUrl, outputDir) : null;
+
     const ffmpeg = require('fluent-ffmpeg');
     const ffmpegPath = require('ffmpeg-static');
     ffmpeg.setFfmpegPath(ffmpegPath);
@@ -292,9 +326,9 @@ export class AudioMixerService {
     return new Promise<string>((resolve, reject) => {
       let command = ffmpeg();
 
-      if (staticUrl) {
+      if (tempStaticPath) {
         this.logger.log(`Using static binaural beat for ${closestFreq}Hz (requested ${targetFreq}Hz)`);
-        command.input(staticUrl).input(tempVoicePath);
+        command.input(tempStaticPath).input(tempVoicePath);
       } else {
         // Fallback (though reduce ensures we get one)
         reject(new Error(`No static beat available for ${targetFreq}Hz`));
@@ -317,7 +351,10 @@ export class AudioMixerService {
         })
         .on('end', async () => {
           this.logger.log(`Mixed audio saved to ${outputPath}`);
-          await fs.unlink(tempVoicePath).catch(() => {});
+          await Promise.all([
+            fs.unlink(tempVoicePath).catch(() => {}),
+            tempStaticPath ? fs.unlink(tempStaticPath).catch(() => {}) : Promise.resolve()
+          ]);
           resolve(outputPath);
         })
         .save(outputPath);
