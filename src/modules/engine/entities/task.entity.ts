@@ -16,7 +16,7 @@ registerEnumType(ExecutionStatus, {
 });
 
 @ObjectType()
-@Entity('tasks')
+@Entity('engine_tasks')
 export class Task {
   @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
