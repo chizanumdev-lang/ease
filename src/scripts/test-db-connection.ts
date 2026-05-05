@@ -18,8 +18,8 @@ async function test() {
   try {
     await client.connect();
     console.log('Successfully connected!');
-    const res = await client.query('SELECT NOW()');
-    console.log('Query result:', res.rows[0]);
+    const res = await client.query('SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = \'audio_tracks\')');
+    console.log('audio_tracks table exists:', res.rows[0].exists);
     await client.end();
   } catch (err) {
     console.error('Connection error:', err);
