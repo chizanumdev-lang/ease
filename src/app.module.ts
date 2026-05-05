@@ -124,7 +124,7 @@ import { WorkerModule } from './modules/worker/worker.module';
     WorkerModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      autoSchemaFile: process.env.VERCEL ? true : join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
       playground: true,
       resolvers: { JSON: require('graphql-type-json') },
