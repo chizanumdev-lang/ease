@@ -152,7 +152,7 @@ class NotificationService {
                     data: notif.data,
                     categoryIdentifier: notif.category,
                     sound: true,
-                    priority: Notifications.AndroidPriority.MAX,
+                    priority: Notifications.AndroidNotificationPriority.MAX,
                 },
                 trigger: {
                     seconds: secondsUntil,

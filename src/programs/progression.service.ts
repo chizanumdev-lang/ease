@@ -9,6 +9,7 @@ export interface PhaseInfo {
   minLevel: number;
   maxLevel: number;
   levelRange: string;
+  unlockedAtLevel: number;
 }
 
 export interface ProgressionData {
@@ -25,6 +26,7 @@ export interface ProgressionData {
     active: boolean;
     imageUrl: string;
     levelRange: string;
+    unlockedAtLevel: number;
   }>;
 }
 
@@ -39,6 +41,7 @@ export class ProgressionService {
       minLevel: 1,
       maxLevel: 5,
       levelRange: 'Level 1 - 5',
+      unlockedAtLevel: 1,
     },
     {
       id: 'phase2_sprout',
@@ -48,6 +51,7 @@ export class ProgressionService {
       minLevel: 6,
       maxLevel: 15,
       levelRange: 'Level 6 - 15',
+      unlockedAtLevel: 6,
     },
     {
       id: 'phase3_sapling',
@@ -57,6 +61,7 @@ export class ProgressionService {
       minLevel: 16,
       maxLevel: 30,
       levelRange: 'Level 16 - 30',
+      unlockedAtLevel: 16,
     },
     {
       id: 'phase4_tree',
@@ -66,6 +71,7 @@ export class ProgressionService {
       minLevel: 31,
       maxLevel: 50,
       levelRange: 'Level 31 - 50',
+      unlockedAtLevel: 31,
     },
     {
       id: 'phase5_wisdom',
@@ -75,6 +81,7 @@ export class ProgressionService {
       minLevel: 51,
       maxLevel: 80,
       levelRange: 'Level 51 - 80',
+      unlockedAtLevel: 51,
     },
     {
       id: 'phase6_ancient',
@@ -84,6 +91,7 @@ export class ProgressionService {
       minLevel: 81,
       maxLevel: 999,
       levelRange: 'Level 81+',
+      unlockedAtLevel: 81,
     },
   ];
 
@@ -126,6 +134,7 @@ export class ProgressionService {
       active: currentPhase.id === phase.id,
       imageUrl: phase.imageUrl,
       levelRange: phase.maxLevel === 999 ? 'Level 81+' : `Level ${phase.minLevel} - ${phase.maxLevel}`,
+      unlockedAtLevel: phase.minLevel,
     }));
 
     return {
