@@ -86,8 +86,8 @@ import { WorkerModule } from './modules/worker/worker.module';
         const dbConfig: any = {
           type: 'postgres',
           ssl: isLocal ? false : { rejectUnauthorized: false },
-          connectTimeoutMS: 10000,
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          connectTimeoutMS: 5000, // Reduced for faster failover in serverless
+          autoLoadEntities: true, // More efficient for NestJS
           synchronize: false,
         };
 
