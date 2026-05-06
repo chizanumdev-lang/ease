@@ -204,6 +204,7 @@ export default function HomeScreen({ navigation }: Props) {
                         value={analytics?.currentStreak?.toString() || "0"} 
                         unit="days"
                         icon="flame"
+                        color={colors.therapeutic.terracotta}
                         trend={analytics?.currentStreak && analytics.currentStreak > 0 ? { value: "+1 from yesterday", isPositive: true } : undefined}
                     />
                     <StatCard 
@@ -211,13 +212,13 @@ export default function HomeScreen({ navigation }: Props) {
                         value={analytics?.todayCompletionRate?.toString() || "0"} 
                         unit="%"
                         icon="checkmark-circle"
-                        color="#006D77"
+                        color={colors.therapeutic.sage}
                     />
                     <StatCard 
                         label="Spirit Level" 
                         value={analytics?.progression?.level?.toString() || "1"} 
                         icon="sparkles"
-                        color="#56624b"
+                        color={colors.therapeutic.sky}
                         trend={{ value: "Steady", isPositive: true }}
                     />
                 </ScrollView>

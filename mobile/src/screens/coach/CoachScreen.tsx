@@ -89,7 +89,7 @@ export default function CoachScreen({ navigation }: any) {
         return (
             <View style={[styles.messageRow, isUser ? styles.userRow : styles.aiRow]}>
                 {!isUser && (
-                    <View style={[styles.botAvatar, { backgroundColor: colors.primary }]}>
+                    <View style={[styles.botAvatar, { backgroundColor: colors.therapeutic.sage }]}>
                         <Ionicons name="sparkles" size={18} color={isDark ? colors.background : "#fff"} />
                     </View>
                 )}
@@ -98,7 +98,7 @@ export default function CoachScreen({ navigation }: any) {
                     <Text style={[styles.senderName, { color: colors.textMuted, fontFamily: fonts.label }]}>{isUser ? 'You' : 'Ease Bo'}</Text>
                     <View style={[
                         styles.messageBubble, 
-                        isUser ? [styles.userBubble, { backgroundColor: colors.primary }] : [styles.aiBubble, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]
+                        isUser ? [styles.userBubble, { backgroundColor: colors.primary }] : [styles.aiBubble, { backgroundColor: isDark ? colors.surfaceContainerLow : colors.therapeutic.cream, borderColor: colors.outlineVariant }]
                     ]}>
                         <Text style={[
                             styles.messageText, 
