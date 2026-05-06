@@ -9,8 +9,10 @@ import {
     Image, 
     TouchableOpacity, 
     StatusBar,
+    Animated,
 } from 'react-native';
 import LottieView from 'lottie-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +22,50 @@ import LoadingState from '../../components/LoadingState';
 
 
 const { width } = Dimensions.get('window');
+
+const PulseCircle = ({ delay = 0, gradientColors }: { delay?: number, gradientColors: any }) => {
+    const scale = useRef(new Animated.Value(0.6)).current;
+    const opacity = useRef(new Animated.Value(0.4)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.delay(delay),
+                Animated.parallel([
+                    Animated.timing(scale, {
+                        toValue: 3.2,
+                        duration: 6000,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(opacity, {
+                        toValue: 0,
+                        duration: 6000,
+                        useNativeDriver: true,
+                    }),
+                ])
+            ])
+        ).start();
+    }, []);
+
+    return (
+        <Animated.View
+            style={[
+                styles.treePulse,
+                {
+                    transform: [{ scale }],
+                    opacity,
+                },
+            ]}
+        >
+            <LinearGradient
+                colors={gradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.pulseGradient}
+            />
+        </Animated.View>
+    );
+};
 
 export default function ProgressScreen({ navigation }: any) {
     const { colors, spacing, borderRadius, isDark, shadows, fonts } = useTheme();
@@ -53,14 +99,19 @@ export default function ProgressScreen({ navigation }: any) {
     const { progression } = analytics || {};
 
     return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
-            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+        <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? 
+                    [colors.background, colors.background] : 
+                    [colors.therapeutic.peach + '10', colors.therapeutic.lavender + '05', colors.background]}
+                style={StyleSheet.absoluteFill}
+            />
+            <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             
             <View style={styles.topNav}>
-                <TouchableOpacity style={styles.headerButton} onPress={() => navigation?.goBack()}>
-                    <Ionicons name="chevron-back" size={24} color={colors.primary} />
-                </TouchableOpacity>
-                <Text style={[styles.navTitle, { color: colors.text }]}>Spirit Evolution</Text>
+                <View style={styles.headerButton} />
+                <Text style={[styles.navTitle, { color: colors.text }]}>EVOLVE</Text>
                 <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -82,6 +133,13 @@ export default function ProgressScreen({ navigation }: any) {
                         loop
                         style={styles.glowLottie}
                     />
+                    
+                    <View style={styles.treePulseContainer}>
+                        <PulseCircle delay={0} gradientColors={[colors.therapeutic.sage, colors.therapeutic.sky]} />
+                        <PulseCircle delay={2000} gradientColors={[colors.therapeutic.peach, colors.therapeutic.apricot]} />
+                        <PulseCircle delay={4000} gradientColors={[colors.therapeutic.lavender, colors.therapeutic.cream]} />
+                    </View>
+
                     <View style={[styles.artworkContainer, { borderColor: isDark ? colors.outline : colors.outlineVariant }, shadows.ambient]}>
                         <Image
                             source={{ uri: progression?.currentPhase.imageUrl }}
@@ -106,6 +164,14 @@ export default function ProgressScreen({ navigation }: any) {
                             </View>
                             <Text style={[styles.levelXpText, { color: colors.text, fontFamily: fonts.body }]}>
                                 {progression?.currentLevelXp} <Text style={[styles.xpMax, { color: colors.textMuted }]}>/ {progression?.nextLevelXp} XP</Text>
+                            </Text>
+                        </View>
+
+                        <View style={[styles.levelInsightCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                            <Ionicons name="sparkles" size={14} color={colors.primary} style={{ marginBottom: 4 }} />
+                            <Text style={[styles.levelInsightTitle, { color: colors.primary }]}>LEVEL {progression?.level} INSIGHT</Text>
+                            <Text style={[styles.levelInsightText, { color: colors.text }]}>
+                                {progression?.levelEntailment}
                             </Text>
                         </View>
                     </View>
@@ -148,47 +214,62 @@ export default function ProgressScreen({ navigation }: any) {
                 <View style={styles.journeySection}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Evolution Roadmap</Text>
 
-                    {progression?.journey.map((phase, index) => (
+                {progression?.journey.map((phase, index) => {
+                    const journeyColors = [
+                        colors.therapeutic.sage,
+                        colors.therapeutic.sky,
+                        colors.therapeutic.lavender,
+                        colors.therapeutic.peach,
+                        colors.therapeutic.apricot,
+                    ];
+                    const stageColor = journeyColors[index % journeyColors.length];
+
+                    return (
                         <View key={phase.id} style={styles.stageItem}>
                             <View style={styles.stageTimeline}>
                                 <View style={[
                                     styles.stageIconBox, 
                                     { 
-                                        backgroundColor: phase.active ? colors.primary : phase.unlocked ? colors.primaryContainer : colors.surfaceContainerHigh,
-                                        borderColor: phase.active ? colors.primary : colors.outlineVariant,
+                                        backgroundColor: phase.active ? stageColor : phase.unlocked ? stageColor + '30' : colors.surfaceContainerHigh,
+                                        borderColor: phase.active ? stageColor : colors.outlineVariant,
                                         borderWidth: phase.active ? 0 : 1
                                     }
                                 ]}>
                                     <Ionicons 
                                         name={phase.unlocked ? "checkmark" : "lock-closed"} 
                                         size={18} 
-                                        color={phase.active ? (isDark ? colors.background : '#fff') : phase.unlocked ? colors.primary : colors.textMuted} 
+                                        color={phase.active ? '#fff' : phase.unlocked ? stageColor : colors.textMuted} 
                                     />
                                 </View>
                                 {index < (progression?.journey.length - 1) && (
-                                    <View style={[styles.stageLine, { backgroundColor: phase.unlocked ? colors.primary : colors.outlineVariant, opacity: phase.unlocked ? 0.3 : 1 }]} />
+                                    <View style={[styles.stageLine, { backgroundColor: phase.unlocked ? stageColor : colors.outlineVariant, opacity: phase.unlocked ? 0.4 : 1 }]} />
                                 )}
                             </View>
                             <View style={styles.stageContent}>
                                 <View style={styles.activeLabelRow}>
                                     <Text style={[
                                         styles.stageTitle, 
-                                        { color: phase.active ? colors.primary : phase.unlocked ? colors.text : colors.textMuted }
+                                        { color: phase.active ? stageColor : phase.unlocked ? colors.text : colors.textMuted }
                                     ]}>
                                         {phase.title}
                                     </Text>
-                                    {phase.active && <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />}
+                                    {phase.active && <View style={[styles.activeDot, { backgroundColor: stageColor }]} />}
                                 </View>
                                 <Text style={[styles.stageDesc, { color: colors.textMuted }]}>
                                     {phase.levelRange} {phase.unlocked ? '— Achieved' : '— Locked'}
                                 </Text>
+                                <Text style={[styles.stageSubtitle, { color: colors.textMuted, opacity: 0.7 }]}>
+                                    {phase.subtitle}
+                                </Text>
                             </View>
                         </View>
-                    ))}
+                    );
+                })}
                 </View>
 
             </ScrollView>
-        </SafeAreaView>
+            </SafeAreaView>
+        </View>
     );
 }
 
@@ -220,12 +301,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingTop: 20,
-        paddingBottom: 120, // Increased padding to stay above navbar
+        paddingTop: 16,
+        paddingBottom: 90, 
     },
     treeSection: {
         alignItems: 'center',
-        paddingVertical: 24,
+        paddingVertical: 16,
     },
     glowLottie: {
         position: 'absolute',
@@ -240,6 +321,27 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         overflow: 'hidden',
         padding: 4,
+        zIndex: 2,
+        backgroundColor: '#fff',
+    },
+    treePulseContainer: {
+        position: 'absolute',
+        width: 240,
+        height: 240,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1,
+        top: 16, // Matches paddingVertical of treeSection
+    },
+    treePulse: {
+        position: 'absolute',
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+    },
+    pulseGradient: {
+        flex: 1,
+        borderRadius: 120,
     },
     artwork: {
         width: '100%',
@@ -247,7 +349,7 @@ const styles = StyleSheet.create({
         borderRadius: 116,
     },
     treeMeta: {
-        marginTop: 32,
+        marginTop: 20,
         alignItems: 'center',
     },
     treeName: {
@@ -355,7 +457,7 @@ const styles = StyleSheet.create({
     },
     journeySection: {
         paddingHorizontal: 24,
-        marginTop: 48,
+        marginTop: 32,
     },
     sectionTitle: {
         fontSize: 22,
@@ -396,6 +498,12 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         marginTop: 4,
     },
+    stageSubtitle: {
+        fontSize: 12,
+        fontWeight: '400',
+        marginTop: 4,
+        lineHeight: 18,
+    },
     activeLabelRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -405,6 +513,26 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
+    },
+    levelInsightCard: {
+        marginTop: 24,
+        padding: 16,
+        borderRadius: 20,
+        borderWidth: 1,
+        width: width - 80,
+        alignItems: 'center',
+    },
+    levelInsightTitle: {
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 1,
+        marginBottom: 6,
+    },
+    levelInsightText: {
+        fontSize: 14,
+        lineHeight: 20,
+        textAlign: 'center',
+        fontWeight: '500',
     },
     levelProgressContainer: {
         alignItems: 'center',
@@ -463,9 +591,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginTop: 4,
         opacity: 0.6,
-    },
-    pulseContainer: {
-        marginVertical: 20,
     },
     pulseMeta: {
         flexDirection: 'row',

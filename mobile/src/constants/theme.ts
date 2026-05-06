@@ -87,6 +87,17 @@ export const Theme = {
             900: '#0f172a',
         },
 
+        // Therapeutic Palette (New: Mental Health & Grounding)
+        therapeutic: {
+            sage: '#A8C69F',       // Calming Nature
+            sky: '#A2C5E0',        // Serenity
+            terracotta: '#C65D3B', // Grounding
+            peach: '#FF9671',      // Friendly Action
+            cream: '#FDF2ED',      // Warm Comfort
+            lavender: '#E6E6FA',   // Contemplation
+            apricot: '#FFB38A',    // Soft Encouragement
+        },
+
         // Quick access / Flattended aliases for components
         white: '#ffffff',
         transparent: 'transparent',

@@ -15,7 +15,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-
+import { LinearGradient } from 'expo-linear-gradient';
 import { MainStackParamList, Task, TaskStatus, WeeklyAnalytics } from '../../types';
 import { useProgramsStore } from '../../store/programsStore';
 import { useAuthStore } from '../../store/authStore';
@@ -44,7 +44,7 @@ export default function HomeScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
     const { showModal } = useModalStore();
     const { user, updateSettings } = useAuthStore();
-    const { todayPlan, currentProgram, updateTask } = useProgramsStore();
+    const { todayPlan, currentProgram, isLoading, updateTask } = useProgramsStore();
     
     const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
     const [isTutorialVisible, setIsTutorialVisible] = useState(false);
@@ -84,10 +84,7 @@ export default function HomeScreen({ navigation }: Props) {
             if (currentProgram) {
                 await useProgramsStore.getState().fetchTodayPlan(currentProgram.id);
             } else {
-                const program = await useProgramsStore.getState().fetchActiveProgram();
-                if (program) {
-                    await useProgramsStore.getState().fetchTodayPlan(program.id);
-                }
+                await useProgramsStore.getState().fetchActiveProgram();
             }
         };
 
@@ -112,6 +109,31 @@ export default function HomeScreen({ navigation }: Props) {
     const handleBeginStory = () => {
         navigation.navigate('GoalWizard');
     };
+
+    if (isLoading && !currentProgram && !todayPlan) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+                <View style={styles.header}>
+                    <View style={styles.topNav}>
+                        <View style={styles.navButton} />
+                        <Logo size={32} />
+                        <View style={[styles.profileButton, { backgroundColor: colors.surfaceContainerLow }]} />
+                    </View>
+                    <View style={[styles.skeletonText, { width: '60%', height: 32, marginBottom: 12, backgroundColor: colors.surfaceContainerHigh, borderRadius: 8 }]} />
+                    <View style={[styles.skeletonText, { width: '40%', height: 20, marginBottom: 24, backgroundColor: colors.surfaceContainerLow, borderRadius: 4 }]} />
+                    <View style={[styles.skeletonBanner, { height: 160, backgroundColor: colors.surfaceContainerLow, borderRadius: 24, marginBottom: 24 }]} />
+                    <View style={styles.statsSection}>
+                        <View style={{ flexDirection: 'row', paddingHorizontal: 20 }}>
+                            {[1, 2, 3].map(i => (
+                                <View key={i} style={{ width: 120, height: 140, backgroundColor: colors.surfaceContainerLow, borderRadius: 20, marginRight: 12 }} />
+                            ))}
+                        </View>
+                    </View>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     if (!currentProgram && !todayPlan) {
         return (
@@ -182,6 +204,7 @@ export default function HomeScreen({ navigation }: Props) {
                         value={analytics?.currentStreak?.toString() || "0"} 
                         unit="days"
                         icon="flame"
+                        color={colors.therapeutic.terracotta}
                         trend={analytics?.currentStreak && analytics.currentStreak > 0 ? { value: "+1 from yesterday", isPositive: true } : undefined}
                     />
                     <StatCard 
@@ -189,13 +212,13 @@ export default function HomeScreen({ navigation }: Props) {
                         value={analytics?.todayCompletionRate?.toString() || "0"} 
                         unit="%"
                         icon="checkmark-circle"
-                        color="#006D77"
+                        color={colors.therapeutic.sage}
                     />
                     <StatCard 
                         label="Spirit Level" 
                         value={analytics?.progression?.level?.toString() || "1"} 
                         icon="sparkles"
-                        color="#56624b"
+                        color={colors.therapeutic.sky}
                         trend={{ value: "Steady", isPositive: true }}
                     />
                 </ScrollView>
@@ -213,41 +236,48 @@ export default function HomeScreen({ navigation }: Props) {
         : [] as Task[];
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-            
-            <FlatList
-                data={sortedTasks}
-                keyExtractor={item => item.id}
-                renderItem={({ item, index }) => (
-                    <TaskCard 
-                        task={item} 
-                        onPress={handleTaskPress}
-                        isLast={index === sortedTasks.length - 1}
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? 
+                    [colors.background, colors.background] : 
+                    [colors.therapeutic.sage + '15', colors.therapeutic.sky + '10', colors.background]}
+                style={StyleSheet.absoluteFill}
+            />
+            <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+                <>
+                    <FlatList
+                        data={sortedTasks}
+                        keyExtractor={item => item.id}
+                        renderItem={({ item, index }) => (
+                            <TaskCard 
+                                task={item} 
+                                onPress={handleTaskPress}
+                                isLast={index === sortedTasks.length - 1}
+                            />
+                        )}
+                        ListHeaderComponent={renderHeader}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
                     />
-                )}
-                ListHeaderComponent={renderHeader}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-            />
+                    <StitchModal 
+                        visible={isSuccessModalVisible}
+                        onClose={() => setIsSuccessModalVisible(false)}
+                        title="Milestone Reached!"
+                        description="You've completed 10 consecutive days of mindful movement. Your focus is improving."
+                        primaryAction={{
+                            label: "Keep it up",
+                            onPress: () => setIsSuccessModalVisible(false)
+                        }}
+                    />
 
-            <StitchModal 
-                visible={isSuccessModalVisible}
-                onClose={() => setIsSuccessModalVisible(false)}
-                title="Milestone Reached!"
-                description="You've completed 10 consecutive days of mindful movement. Your focus is improving."
-                primaryAction={{
-                    label: "Keep it up",
-                    onPress: () => setIsSuccessModalVisible(false)
-                }}
-            />
-
-            <TutorialTour 
-                visible={isTutorialVisible} 
-                onComplete={handleTutorialComplete} 
-            />
-        </SafeAreaView>
-
+                    <TutorialTour 
+                        visible={isTutorialVisible} 
+                        onComplete={handleTutorialComplete} 
+                    />
+                </>
+            </SafeAreaView>
+        </View>
     );
 }
 
@@ -256,11 +286,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     listContent: {
-        paddingBottom: 120,
+        paddingBottom: 90,
     },
     header: {
         paddingHorizontal: 20,
-        paddingTop: 10,
+        paddingTop: 4,
     },
     topNavWrapper: {
         paddingHorizontal: 20,
@@ -270,7 +300,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 16,
     },
     navButton: {
         width: 44,
@@ -289,7 +319,7 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     greetingSection: {
-        marginBottom: 24,
+        marginBottom: 16,
     },
     greeting: {
         fontSize: 28,
@@ -302,7 +332,7 @@ const styles = StyleSheet.create({
     },
     statsSection: {
         marginHorizontal: -20, // Negative margin to allow full-width scroll
-        marginBottom: 32,
+        marginBottom: 24,
     },
     statsScroll: {
         paddingHorizontal: 20,
@@ -322,4 +352,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         letterSpacing: 1,
     },
+    skeletonText: {
+        opacity: 0.6,
+    },
+    skeletonBanner: {
+        opacity: 0.6,
+    }
 });

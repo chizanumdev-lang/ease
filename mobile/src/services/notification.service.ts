@@ -73,28 +73,29 @@ class NotificationService {
         // Cancel existing to avoid duplicates/overflow
         await this.cancelAll();
 
-        const notifications: Array<{ title: string; body: string; date: Date; type: string; data: any; category?: string }> = [];
+        const rawNotifications: Array<{ title: string; body: string; date: Date; type: string; data: any; category?: string; priority: number }> = [];
         const now = new Date();
 
-        // 1. Schedule Task Reminders
+        // 1. Task Reminders (Priority 1)
         if (dayPlan.tasks) {
             dayPlan.tasks.forEach(task => {
                 if (task.scheduledAt && !task.completed) {
                     const scheduledDate = new Date(task.scheduledAt);
                     if (scheduledDate > now) {
-                        notifications.push({
-                            title: 'Task Reminder',
-                            body: `Time for: ${task.title}`,
+                        rawNotifications.push({
+                            title: 'New Quest Available ⚔️',
+                            body: `Your spirit tree awaits: ${task.title}.`,
                             date: scheduledDate,
                             type: 'task',
-                            data: { taskId: task.id, type: 'task' }
+                            data: { taskId: task.id, type: 'task' },
+                            priority: 1
                         });
                     }
                 }
             });
         }
 
-        // 2. Schedule Rituals based on user settings
+        // 2. Rituals (Priority 2 - Higher)
         const morningTime = ritualSettings?.morning || '07:00';
         const nightTime = ritualSettings?.night || '22:00';
 
@@ -107,25 +108,48 @@ class NotificationService {
                 date.setDate(date.getDate() + 1);
             }
 
-            notifications.push({
+            rawNotifications.push({
                 title,
                 body,
                 date,
                 type: 'ritual',
                 category: 'ritual',
-                data: { ritualType: type, type: 'ritual' }
+                data: { ritualType: type, type: 'ritual' },
+                priority: 2
             });
         };
 
-        scheduleRitual(morningTime, 'morning', 'Morning Ritual 🌅', 'Start your day with purpose and affirmations.');
-        scheduleRitual(nightTime, 'night', 'Night Ritual 🌙', 'Wind down and integrate today\'s growth.');
+        scheduleRitual(morningTime, 'morning', 'Spirit Awakening 🌅', 'Tend to your roots with your morning ritual.');
+        scheduleRitual(nightTime, 'night', 'Night Wisdom 🌙', 'The stars are aligned. Secure today\'s growth.');
 
-        // 3. Define Notification Categories (Actions)
+        // 3. Collision Detection & "Single Notification" focus
+        // Sort by time
+        rawNotifications.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        const filteredNotifications: typeof rawNotifications = [];
+        const MIN_GAP_MS = 60 * 60 * 1000; // 60 minute buffer to prevent "more than 1 at a time"
+
+        for (const notif of rawNotifications) {
+            const conflictIdx = filteredNotifications.findIndex(existing => 
+                Math.abs(existing.date.getTime() - notif.date.getTime()) < MIN_GAP_MS
+            );
+
+            if (conflictIdx === -1) {
+                filteredNotifications.push(notif);
+            } else {
+                // If there's a conflict (within 60 mins), keep the Ritual over the Task
+                if (notif.priority > filteredNotifications[conflictIdx].priority) {
+                    filteredNotifications[conflictIdx] = notif;
+                }
+            }
+        }
+
+        // 4. Define Notification Categories (Actions)
         if (Platform.OS !== 'web') {
             await Notifications.setNotificationCategoryAsync('ritual', [
                 {
                     identifier: 'play',
-                    buttonTitle: 'Play Now ▶️',
+                    buttonTitle: 'Enter Ritual ▶️',
                     options: { opensAppToForeground: true }
                 },
                 {
@@ -136,13 +160,10 @@ class NotificationService {
             ]);
         }
 
-        // Sort by time
-        notifications.sort((a, b) => a.date.getTime() - b.date.getTime());
+        // Final Sort and Limit to top 3 to respect "hommy/serene" vibe
+        const finalNotifications = filteredNotifications.slice(0, 3);
 
-        // Enforce Max 5 per day rule (higher for rituals)
-        const limitedNotifications = notifications.slice(0, 5);
-
-        for (const notif of limitedNotifications) {
+        for (const notif of finalNotifications) {
             const secondsUntil = Math.max(1, Math.floor((notif.date.getTime() - now.getTime()) / 1000));
             
             await Notifications.scheduleNotificationAsync({
@@ -161,7 +182,7 @@ class NotificationService {
                 } as any,
             });
         }
-        console.log(`[NotificationService] Scheduled ${limitedNotifications.length} notifications`);
+        console.log(`[NotificationService] Scheduled ${finalNotifications.length} collision-free notifications`);
     }
 
     async cancelAll() {
