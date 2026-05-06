@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useAnalyticsStore } from '../../store/analyticsStore';
 import LoadingState from '../../components/LoadingState';
+import { VitalityPulse } from '../../components/VitalityPulse';
 
 const { width } = Dimensions.get('window');
 
@@ -110,6 +111,25 @@ export default function ProgressScreen({ navigation }: any) {
                     </View>
                 </View>
 
+
+                {/* Vitality Pulse */}
+                <View style={[styles.pulseCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                    <Text style={[styles.pulseTitle, { color: colors.primary }]}>VITALITY PULSE</Text>
+                    <Text style={[styles.pulseSubtitle, { color: colors.textMuted }]}>AI-DRIVEN COGNITIVE LOAD ANALYSIS</Text>
+                    <View style={styles.pulseContainer}>
+                        <VitalityPulse />
+                    </View>
+                    <View style={styles.pulseMeta}>
+                        <View style={styles.pulseStat}>
+                            <Text style={[styles.pulseStatLabel, { color: colors.textMuted }]}>COGNITIVE LOAD</Text>
+                            <Text style={[styles.pulseStatValue, { color: colors.text }]}>OPTIMAL</Text>
+                        </View>
+                        <View style={styles.pulseStat}>
+                            <Text style={[styles.pulseStatLabel, { color: colors.textMuted }]}>NEURAL RECOVERY</Text>
+                            <Text style={[styles.pulseStatValue, { color: colors.text }]}>94%</Text>
+                        </View>
+                    </View>
+                </View>
 
                 {/* Quick Stats Grid */}
                 <View style={styles.statsGrid}>
@@ -442,5 +462,49 @@ const styles = StyleSheet.create({
     milestoneLevelText: {
         fontSize: 14,
         fontWeight: '700',
+    },
+    pulseCard: {
+        marginHorizontal: 20,
+        marginTop: 16,
+        padding: 24,
+        borderRadius: 32,
+        borderWidth: 1,
+        alignItems: 'center',
+    },
+    pulseTitle: {
+        fontSize: 12,
+        fontWeight: '900',
+        letterSpacing: 2,
+    },
+    pulseSubtitle: {
+        fontSize: 10,
+        fontWeight: '600',
+        marginTop: 4,
+        opacity: 0.6,
+    },
+    pulseContainer: {
+        marginVertical: 20,
+    },
+    pulseMeta: {
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'space-around',
+        marginTop: 10,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+        paddingTop: 20,
+    },
+    pulseStat: {
+        alignItems: 'center',
+    },
+    pulseStatLabel: {
+        fontSize: 8,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    pulseStatValue: {
+        fontSize: 14,
+        fontWeight: '900',
+        marginTop: 4,
     },
 });

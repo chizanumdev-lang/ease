@@ -106,7 +106,8 @@ export class AdminService {
             .createQueryBuilder('user')
             .select('AVG(user.streak)', 'avg')
             .getRawOne();
-        const avgStreak = Math.round(parseFloat(avgStreakResult?.avg || '0'));
+        const avgStreakVal = parseFloat(avgStreakResult?.avg || '0');
+        const avgStreak = isNaN(avgStreakVal) ? 0 : Math.round(avgStreakVal);
 
         return {
             dau,
@@ -130,9 +131,9 @@ export class AdminService {
         // DAU Trend
         const dauTrend = await this.userRepository
             .createQueryBuilder('user')
-            .select("DATE_TRUNC('day', user.updated_at)", 'date')
+            .select("DATE_TRUNC('day', user.updatedAt)", 'date')
             .addSelect('COUNT(DISTINCT user.id)', 'count')
-            .where('user.updated_at >= :startDate', { startDate })
+            .where('user.updatedAt >= :startDate', { startDate })
             .groupBy('date')
             .orderBy('date', 'ASC')
             .getRawMany();
@@ -140,9 +141,9 @@ export class AdminService {
         // Completion Rate Trend
         const completionTrend = await this.taskRepository
             .createQueryBuilder('task')
-            .select("DATE_TRUNC('day', task.completed_at)", 'date')
+            .select("DATE_TRUNC('day', task.completedAt)", 'date')
             .addSelect('COUNT(*)', 'count')
-            .where('task.completed_at >= :startDate', { startDate })
+            .where('task.completedAt >= :startDate', { startDate })
             .groupBy('date')
             .orderBy('date', 'ASC')
             .getRawMany();
