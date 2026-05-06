@@ -18,88 +18,6 @@ import { useTheme } from '../../hooks/useTheme';
 import { useAnalyticsStore } from '../../store/analyticsStore';
 import LoadingState from '../../components/LoadingState';
 
-// Local VitalityPulse component to resolve import issues
-import Animated, { 
-  useAnimatedStyle, 
-  useSharedValue, 
-  withRepeat, 
-  withTiming, 
-  withDelay,
-  Easing
-} from 'react-native-reanimated';
-
-function PulseCircle({ delay, color }: { delay: number; color: string }) {
-  const scale = useSharedValue(1);
-  const opacity = useSharedValue(0.6);
-
-  useEffect(() => {
-    scale.value = withDelay(
-      delay,
-      withRepeat(
-        withTiming(2.5, { duration: 3000, easing: Easing.out(Easing.ease) }),
-        -1,
-        false
-      )
-    );
-    opacity.value = withDelay(
-      delay,
-      withRepeat(
-        withTiming(0, { duration: 3000, easing: Easing.out(Easing.ease) }),
-        -1,
-        false
-      )
-    );
-  }, [delay, scale, opacity]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
-
-  return (
-    <Animated.View 
-      style={[
-        {
-          position: 'absolute',
-          width: 80,
-          height: 80,
-          borderRadius: 40,
-          borderWidth: 2,
-          borderColor: color,
-        }, 
-        animatedStyle
-      ]} 
-    />
-  );
-}
-
-function VitalityPulse() {
-  const { colors } = useTheme();
-  
-  return (
-    <View style={{
-      width: 200,
-      height: 200,
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
-      <PulseCircle delay={0} color={colors.primary} />
-      <PulseCircle delay={1000} color={colors.primary} />
-      <PulseCircle delay={2000} color={colors.primary} />
-      <View style={{
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: colors.primary,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
-      }} />
-    </View>
-  );
-}
 
 const { width } = Dimensions.get('window');
 
@@ -194,24 +112,6 @@ export default function ProgressScreen({ navigation }: any) {
                 </View>
 
 
-                {/* Vitality Pulse */}
-                <View style={[styles.pulseCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
-                    <Text style={[styles.pulseTitle, { color: colors.primary }]}>VITALITY PULSE</Text>
-                    <Text style={[styles.pulseSubtitle, { color: colors.textMuted }]}>AI-DRIVEN COGNITIVE LOAD ANALYSIS</Text>
-                    <View style={styles.pulseContainer}>
-                        <VitalityPulse />
-                    </View>
-                    <View style={styles.pulseMeta}>
-                        <View style={styles.pulseStat}>
-                            <Text style={[styles.pulseStatLabel, { color: colors.textMuted }]}>COGNITIVE LOAD</Text>
-                            <Text style={[styles.pulseStatValue, { color: colors.text }]}>OPTIMAL</Text>
-                        </View>
-                        <View style={styles.pulseStat}>
-                            <Text style={[styles.pulseStatLabel, { color: colors.textMuted }]}>NEURAL RECOVERY</Text>
-                            <Text style={[styles.pulseStatValue, { color: colors.text }]}>94%</Text>
-                        </View>
-                    </View>
-                </View>
 
                 {/* Quick Stats Grid */}
                 <View style={styles.statsGrid}>

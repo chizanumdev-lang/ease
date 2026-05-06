@@ -21,6 +21,7 @@ import { VideoModule } from './video/video.module';
 import { AudioModule } from './audio/audio.module';
 import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.module';
+import { RewardsModule } from './rewards/rewards.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { APP_FILTER } from '@nestjs/core';
@@ -120,6 +121,7 @@ import { WorkerModule } from './modules/worker/worker.module';
     AudioModule,
     AdminModule,
     MailModule,
+    RewardsModule,
     EngineModule,
     WorkerModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
