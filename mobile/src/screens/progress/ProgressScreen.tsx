@@ -9,8 +9,10 @@ import {
     Image, 
     TouchableOpacity, 
     StatusBar,
+    Animated,
 } from 'react-native';
 import LottieView from 'lottie-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +22,50 @@ import LoadingState from '../../components/LoadingState';
 
 
 const { width } = Dimensions.get('window');
+
+const PulseCircle = ({ delay = 0, gradientColors }: { delay?: number, gradientColors: any }) => {
+    const scale = useRef(new Animated.Value(0.6)).current;
+    const opacity = useRef(new Animated.Value(0.4)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.delay(delay),
+                Animated.parallel([
+                    Animated.timing(scale, {
+                        toValue: 3.2,
+                        duration: 6000,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(opacity, {
+                        toValue: 0,
+                        duration: 6000,
+                        useNativeDriver: true,
+                    }),
+                ])
+            ])
+        ).start();
+    }, []);
+
+    return (
+        <Animated.View
+            style={[
+                styles.treePulse,
+                {
+                    transform: [{ scale }],
+                    opacity,
+                },
+            ]}
+        >
+            <LinearGradient
+                colors={gradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.pulseGradient}
+            />
+        </Animated.View>
+    );
+};
 
 export default function ProgressScreen({ navigation }: any) {
     const { colors, spacing, borderRadius, isDark, shadows, fonts } = useTheme();
@@ -82,6 +128,13 @@ export default function ProgressScreen({ navigation }: any) {
                         loop
                         style={styles.glowLottie}
                     />
+                    
+                    <View style={styles.treePulseContainer}>
+                        <PulseCircle delay={0} gradientColors={[colors.therapeutic.sage, colors.therapeutic.sky]} />
+                        <PulseCircle delay={2000} gradientColors={[colors.therapeutic.peach, colors.therapeutic.apricot]} />
+                        <PulseCircle delay={4000} gradientColors={[colors.therapeutic.lavender, colors.therapeutic.cream]} />
+                    </View>
+
                     <View style={[styles.artworkContainer, { borderColor: isDark ? colors.outline : colors.outlineVariant }, shadows.ambient]}>
                         <Image
                             source={{ uri: progression?.currentPhase.imageUrl }}
@@ -251,6 +304,27 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         overflow: 'hidden',
         padding: 4,
+        zIndex: 2,
+        backgroundColor: '#fff',
+    },
+    treePulseContainer: {
+        position: 'absolute',
+        width: 240,
+        height: 240,
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1,
+        top: 16, // Matches paddingVertical of treeSection
+    },
+    treePulse: {
+        position: 'absolute',
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+    },
+    pulseGradient: {
+        flex: 1,
+        borderRadius: 120,
     },
     artwork: {
         width: '100%',
@@ -500,9 +574,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginTop: 4,
         opacity: 0.6,
-    },
-    pulseContainer: {
-        marginVertical: 20,
     },
     pulseMeta: {
         flexDirection: 'row',
