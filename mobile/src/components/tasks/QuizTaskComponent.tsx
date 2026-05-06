@@ -129,7 +129,7 @@ function generateFallbackQuestions(task: Task, theme: string): QuizQuestion[] {
 }
 
 export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
-    const { colors } = useTheme();
+    const { colors, fonts, shadows, isDark } = useTheme();
     const { todayPlan } = useProgramsStore();
 
     // ── Resolve questions: backend quiz first, contextual fallback second ──
@@ -169,7 +169,6 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
     // RESULTS SCREEN
     // ─────────────────────────────────────────────────────────
     if (showResults) {
-        // SVG ring: radius=110, circumference=2π*110≈691
         const RADIUS = 110;
         const CIRC = 2 * Math.PI * RADIUS;
         const offset = CIRC * (1 - score / 100);
@@ -185,10 +184,10 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                 <View style={[styles.blob, styles.blobTR, { backgroundColor: colors.secondaryContainer }]} />
                 <View style={[styles.blob, styles.blobBL, { backgroundColor: colors.primaryContainer }]} />
 
-                <ScrollView contentContainerStyle={styles.resultsScroll}>
+                <ScrollView contentContainerStyle={styles.resultsScroll} showsVerticalScrollIndicator={false}>
                     {/* Header */}
                     <View style={styles.resultsHeader}>
-                        <Text style={[styles.resultsTitle, { color: colors.primary }]}>Wellness Quiz</Text>
+                        <Text style={[styles.resultsTitle, { color: colors.primary, fontFamily: fonts.display, textTransform: 'uppercase', letterSpacing: 2 }]}>Quiz Results</Text>
                     </View>
 
                     {/* SVG Ring */}
@@ -197,22 +196,20 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                             <Defs>
                                 <SvgLinearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                                     <Stop offset="0%" stopColor={colors.primary} />
-                                    <Stop offset="100%" stopColor={colors.secondary ?? '#56624b'} />
+                                    <Stop offset="100%" stopColor={colors.secondary} />
                                 </SvgLinearGradient>
                             </Defs>
-                            {/* Track */}
                             <Circle
                                 cx={144} cy={144} r={RADIUS}
                                 fill="transparent"
-                                stroke={colors.surfaceContainerHigh ?? '#e8e8e3'}
-                                strokeWidth={14}
+                                stroke={colors.surfaceContainerHigh}
+                                strokeWidth={12}
                             />
-                            {/* Progress */}
                             <Circle
                                 cx={144} cy={144} r={RADIUS}
                                 fill="transparent"
                                 stroke="url(#ringGrad)"
-                                strokeWidth={14}
+                                strokeWidth={12}
                                 strokeLinecap="round"
                                 strokeDasharray={CIRC}
                                 strokeDashoffset={offset}
@@ -221,17 +218,17 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                             />
                         </Svg>
                         <View style={styles.ringCenter}>
-                            <Text style={[styles.ringPct, { color: colors.text }]}>{score}%</Text>
-                            <Text style={[styles.ringLabel, { color: colors.textMuted }]}>SCORE</Text>
+                            <Text style={[styles.ringPct, { color: colors.text, fontFamily: fonts.display }]}>{score}%</Text>
+                            <Text style={[styles.ringLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>SCORE</Text>
                         </View>
                     </View>
 
                     {/* Status message */}
                     <View style={styles.statusBlock}>
-                        <Text style={[styles.statusHeadline, { color: colors.text }]}>
-                            {passed ? 'Mastery Achieved! Your focus is sharpening.' : 'Keep Practicing — You\'re Making Progress.'}
+                        <Text style={[styles.statusHeadline, { color: colors.text, fontFamily: fonts.display }]}>
+                            {passed ? 'Mastery Achieved' : 'Keep Practicing'}
                         </Text>
-                        <Text style={[styles.statusBody, { color: colors.textMuted }]}>
+                        <Text style={[styles.statusBody, { color: colors.textMuted, fontFamily: fonts.body }]}>
                             {passed
                                 ? "You've integrated the core concepts from today's lesson. You're ready to proceed."
                                 : 'Review the session, then try again. Each attempt makes the knowledge stick deeper.'}
@@ -239,34 +236,30 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                     </View>
 
                     {/* Insight card */}
-                    <View style={[styles.insightCard, { backgroundColor: colors.surfaceContainerLow ?? '#f4f4ef' }]}>
+                    <View style={[styles.insightCard, { backgroundColor: colors.surfaceContainerLow }]}>
                         <View style={[styles.insightIcon, { backgroundColor: colors.primary + '1A' }]}>
                             <Ionicons name="sparkles" size={22} color={colors.primary} />
                         </View>
                         <View style={styles.insightText}>
-                            <Text style={[styles.insightTitle, { color: colors.text }]}>{insightTitle}</Text>
-                            <Text style={[styles.insightBody, { color: colors.textMuted }]}>{insightBody}</Text>
+                            <Text style={[styles.insightTitle, { color: colors.text, fontFamily: fonts.display, fontSize: 16 }]}>{insightTitle}</Text>
+                            <Text style={[styles.insightBody, { color: colors.textMuted, fontFamily: fonts.body }]}>{insightBody}</Text>
                         </View>
                     </View>
 
-                    <View style={{ height: 100 }} />
+                    <View style={{ height: 140 }} />
                 </ScrollView>
 
                 {/* Fixed footer */}
                 <View style={[styles.fixedFooter, { backgroundColor: colors.background }]}>
-                    <LinearGradient
-                        colors={[colors.background + '00', colors.background]}
-                        style={StyleSheet.absoluteFill}
-                    />
                     <TouchableOpacity
-                        style={[styles.continueBtn, { backgroundColor: colors.primary }]}
+                        style={[styles.continueBtn, { backgroundColor: colors.primary, ...shadows.ambient }]}
                         onPress={() => passed
                             ? onComplete({ quizScore: score, quizAttempts: 1 })
                             : (() => { setShowResults(false); setCurrentQuestionIndex(0); setAnswers([]); })()
                         }
                         activeOpacity={0.88}
                     >
-                        <Text style={styles.continueBtnText}>{passed ? 'Continue' : 'Try Again'}</Text>
+                        <Text style={[styles.continueBtnText, { fontFamily: fonts.display }]}>{passed ? 'Continue' : 'Try Again'}</Text>
                         <Ionicons name="arrow-forward" size={20} color="#fff" />
                     </TouchableOpacity>
                 </View>
@@ -281,13 +274,13 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
 
     return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
-            <ScrollView contentContainerStyle={styles.questionScroll}>
+            <ScrollView contentContainerStyle={styles.questionScroll} showsVerticalScrollIndicator={false}>
 
                 {/* Header */}
                 <View style={styles.questionHeader}>
-                    <Text style={[styles.quizLabel, { color: colors.primary }]}>Wellness Quiz</Text>
-                    <Text style={[styles.questionCounter, { color: colors.textMuted }]}>
-                        {currentQuestionIndex + 1} of {questions.length}
+                    <Text style={[styles.quizLabel, { color: colors.primary, fontFamily: fonts.display, textTransform: 'uppercase', letterSpacing: 1.5 }]}>Wellness Quiz</Text>
+                    <Text style={[styles.questionCounter, { color: colors.textMuted, fontFamily: fonts.label }]}>
+                        {currentQuestionIndex + 1} / {questions.length}
                     </Text>
                 </View>
 
@@ -301,11 +294,7 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                                 {
                                     backgroundColor: i <= currentQuestionIndex
                                         ? colors.primary
-                                        : (colors.outlineVariant ?? '#bec8ca') + '50',
-                                    shadowColor: i <= currentQuestionIndex ? colors.primary : 'transparent',
-                                    shadowOpacity: i <= currentQuestionIndex ? 0.4 : 0,
-                                    shadowRadius: i <= currentQuestionIndex ? 6 : 0,
-                                    elevation: i <= currentQuestionIndex ? 3 : 0,
+                                        : colors.surfaceContainerHigh,
                                 },
                             ]}
                         />
@@ -313,9 +302,8 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                 </View>
 
                 {/* Question card */}
-                <View style={[styles.questionCard, { backgroundColor: colors.surfaceContainerHigh + '60' }]}>
-                    <View style={styles.questionGlow} />
-                    <Text style={[styles.questionText, { color: colors.text }]}>
+                <View style={[styles.questionCard, { backgroundColor: colors.surfaceContainerLow }]}>
+                    <Text style={[styles.questionText, { color: colors.text, fontFamily: fonts.display }]}>
                         {question.question}
                     </Text>
                 </View>
@@ -331,10 +319,8 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                                     styles.optionButton,
                                     {
                                         backgroundColor: isSelected
-                                            ? colors.primary + '0D'
-                                            : (colors.surfaceContainerLow ?? '#f4f4ef'),
-                                        borderLeftWidth: 6,
-                                        borderLeftColor: isSelected ? colors.primary : 'transparent',
+                                            ? colors.primaryContainer
+                                            : colors.surfaceContainerLow,
                                     },
                                 ]}
                                 onPress={() => handleSelectOption(index)}
@@ -343,12 +329,12 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                                 <View style={[
                                     styles.letterBadge,
                                     {
-                                        backgroundColor: isSelected ? colors.primary : (colors.surfaceContainerHighest ?? '#e3e3de'),
+                                        backgroundColor: isSelected ? (isDark ? colors.background : colors.white) : colors.surfaceContainerHigh,
                                     },
                                 ]}>
                                     <Text style={[
                                         styles.letterText,
-                                        { color: isSelected ? '#fff' : colors.textMuted },
+                                        { color: isSelected ? colors.primary : colors.textMuted, fontFamily: fonts.display },
                                     ]}>
                                         {OPTION_LABELS[index]}
                                     </Text>
@@ -356,8 +342,9 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                                 <Text style={[
                                     styles.optionText,
                                     {
-                                        color: isSelected ? colors.primary : colors.text,
-                                        fontWeight: isSelected ? '700' : '500',
+                                        color: isSelected ? (isDark ? colors.text : colors.background) : colors.text,
+                                        fontFamily: fonts.body,
+                                        fontWeight: isSelected ? '700' : '400',
                                     },
                                 ]}>
                                     {option}
@@ -367,41 +354,27 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                     })}
                 </View>
 
-                {/* Expert insight */}
-                {question.explanation && (
-                    <View style={[styles.expertCard, { backgroundColor: colors.secondaryContainer + '50' }]}>
-                        <View style={[styles.expertIcon, { backgroundColor: colors.primaryContainer + '40' }]}>
-                            <Ionicons name="bulb-outline" size={18} color={colors.primary} />
-                        </View>
-                        <View style={styles.expertText}>
-                            <Text style={[styles.expertLabel, { color: colors.textMuted }]}>EXPERT INSIGHT</Text>
-                            <Text style={[styles.expertBody, { color: colors.text }]}>{question.explanation}</Text>
-                        </View>
-                    </View>
-                )}
-
-                <View style={{ height: 120 }} />
+                <View style={{ height: 140 }} />
             </ScrollView>
 
             {/* Fixed footer */}
-            <View style={styles.fixedFooter}>
-                <LinearGradient
-                    colors={[colors.background + '00', colors.background]}
-                    style={StyleSheet.absoluteFill}
-                />
+            <View style={[styles.fixedFooter, { backgroundColor: colors.background }]}>
                 <TouchableOpacity
                     style={[
                         styles.continueBtn,
-                        { backgroundColor: selected !== undefined ? colors.primary : (colors.outlineVariant ?? '#bec8ca') },
+                        { 
+                            backgroundColor: selected !== undefined ? colors.primary : colors.surfaceContainerHighest,
+                            ...(selected !== undefined ? shadows.ambient : {})
+                        },
                     ]}
                     disabled={selected === undefined}
                     onPress={handleNext}
                     activeOpacity={0.88}
                 >
-                    <Text style={styles.continueBtnText}>
+                    <Text style={[styles.continueBtnText, { fontFamily: fonts.display, color: selected !== undefined ? colors.white : colors.textMuted }]}>
                         {currentQuestionIndex === questions.length - 1 ? 'See Results' : 'Continue'}
                     </Text>
-                    <Ionicons name="arrow-forward" size={20} color="#fff" />
+                    <Ionicons name="arrow-forward" size={20} color={selected !== undefined ? colors.white : colors.textMuted} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -420,7 +393,7 @@ const styles = StyleSheet.create({
     blob: {
         position: 'absolute',
         borderRadius: 999,
-        opacity: 0.18,
+        opacity: 0.1,
     },
     blobTR: {
         width: 256,
@@ -448,13 +421,10 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     quizLabel: {
-        fontSize: 18,
-        fontWeight: '800',
-        letterSpacing: -0.3,
+        fontSize: 14,
     },
     questionCounter: {
         fontSize: 14,
-        fontWeight: '600',
     },
 
     // Segmented pills
@@ -465,32 +435,19 @@ const styles = StyleSheet.create({
     },
     pill: {
         flex: 1,
-        height: 6,
-        borderRadius: 3,
+        height: 4,
+        borderRadius: 2,
     },
 
     // Question card
     questionCard: {
-        borderRadius: 20,
+        borderRadius: 24,
         padding: 28,
-        marginBottom: 24,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
-    },
-    questionGlow: {
-        position: 'absolute',
-        top: -48,
-        right: -48,
-        width: 128,
-        height: 128,
-        borderRadius: 64,
-        backgroundColor: 'rgba(34,83,68,0.05)',
+        marginBottom: 32,
     },
     questionText: {
         fontSize: 22,
-        fontWeight: '800',
-        lineHeight: 30,
+        lineHeight: 32,
     },
 
     // Options
@@ -501,14 +458,14 @@ const styles = StyleSheet.create({
     optionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 16,
+        paddingVertical: 14,
         paddingHorizontal: 16,
-        borderRadius: 16,
+        borderRadius: 20,
     },
     letterBadge: {
-        width: 40,
-        height: 40,
-        borderRadius: 10,
+        width: 36,
+        height: 36,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 14,
@@ -516,45 +473,11 @@ const styles = StyleSheet.create({
     },
     letterText: {
         fontSize: 16,
-        fontWeight: '800',
     },
     optionText: {
         flex: 1,
         fontSize: 16,
-        lineHeight: 22,
-    },
-
-    // Expert insight
-    expertCard: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 20,
-        borderRadius: 16,
-        gap: 14,
-        marginTop: 4,
-    },
-    expertIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-    },
-    expertText: {
-        flex: 1,
-    },
-    expertLabel: {
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 1.5,
-        textTransform: 'uppercase',
-        marginBottom: 4,
-    },
-    expertBody: {
-        fontSize: 14,
-        lineHeight: 20,
-        fontStyle: 'italic',
+        lineHeight: 24,
     },
 
     // ── Results screen
@@ -569,9 +492,7 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     resultsTitle: {
-        fontSize: 18,
-        fontWeight: '800',
-        letterSpacing: -0.3,
+        fontSize: 14,
     },
     ringContainer: {
         width: 288,
@@ -585,45 +506,43 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     ringPct: {
-        fontSize: 56,
-        fontWeight: '900',
+        fontSize: 64,
         letterSpacing: -2,
     },
     ringLabel: {
-        fontSize: 11,
-        fontWeight: '700',
+        fontSize: 12,
         letterSpacing: 2,
         textTransform: 'uppercase',
+        marginTop: -4,
     },
     statusBlock: {
         alignItems: 'center',
-        marginBottom: 28,
+        marginBottom: 32,
         paddingHorizontal: 8,
     },
     statusHeadline: {
-        fontSize: 26,
-        fontWeight: '800',
+        fontSize: 32,
         textAlign: 'center',
-        lineHeight: 34,
+        lineHeight: 40,
         marginBottom: 12,
     },
     statusBody: {
-        fontSize: 15,
+        fontSize: 16,
         textAlign: 'center',
-        lineHeight: 23,
+        lineHeight: 24,
     },
     insightCard: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        padding: 20,
-        borderRadius: 16,
-        gap: 14,
+        padding: 24,
+        borderRadius: 24,
+        gap: 16,
         width: '100%',
     },
     insightIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
@@ -632,13 +551,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     insightTitle: {
-        fontSize: 16,
-        fontWeight: '800',
         marginBottom: 4,
     },
     insightBody: {
         fontSize: 14,
-        lineHeight: 21,
+        lineHeight: 22,
     },
 
     // ── Shared footer
@@ -652,22 +569,17 @@ const styles = StyleSheet.create({
         paddingTop: 20,
     },
     continueBtn: {
-        height: 60,
-        borderRadius: 30,
+        height: 64,
+        borderRadius: 32,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        shadowColor: '#225344',
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.25,
-        shadowRadius: 24,
-        elevation: 8,
     },
     continueBtnText: {
-        fontSize: 17,
-        fontWeight: '800',
+        fontSize: 18,
         color: '#fff',
     },
 });
+
 

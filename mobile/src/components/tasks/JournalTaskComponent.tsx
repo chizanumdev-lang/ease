@@ -12,7 +12,7 @@ interface JournalTaskProps {
 }
 
 export default function JournalTaskComponent({ task, onComplete }: JournalTaskProps) {
-    const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    const { colors, fonts, shadows, isDark } = useTheme();
     const [entry, setEntry] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
@@ -24,37 +24,47 @@ export default function JournalTaskComponent({ task, onComplete }: JournalTaskPr
 
     const handleSave = () => {
         setIsSaving(true);
-        // Simulate encryption delay
         setTimeout(() => {
             onComplete({ journalEntry: entry });
             setIsSaving(false);
-        }, 1000);
+        }, 1200);
     };
 
     return (
         <KeyboardAvoidingView 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-            style={styles.container}
+            style={[styles.root, { backgroundColor: colors.background }]}
             keyboardVerticalOffset={100}
         >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView 
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={styles.promptHeader}>
-                    <View style={[styles.iconBox, { backgroundColor: colors.secondaryContainer }]}>
-                        <Ionicons name="journal" size={32} color={colors.primary} />
+                    <View style={[styles.iconBox, { backgroundColor: colors.primaryContainer }]}>
+                        <Ionicons name="journal" size={28} color={colors.primary} />
                     </View>
                     <View style={styles.promptMeta}>
                         <Text style={[styles.promptTitle, { color: colors.text, fontFamily: fonts.display }]}>Daily Reflection</Text>
-                        <Text style={[styles.promptSubtitle, { color: colors.textMuted }]}>SECURE • END-TO-END ENCRYPTED</Text>
+                        <Text style={[styles.promptSubtitle, { color: colors.primary, fontFamily: fonts.label }]}>SECURE • END-TO-END ENCRYPTED</Text>
                     </View>
                 </View>
 
-                {prompts.map((p, i) => (
-                    <View key={i} style={styles.promptItem}>
-                        <Text style={[styles.promptText, { color: colors.text, fontFamily: fonts.body }]}>{p}</Text>
-                    </View>
-                ))}
+                <View style={styles.promptsContainer}>
+                    {prompts.map((p, i) => (
+                        <View key={i} style={[styles.promptItem, { backgroundColor: colors.surfaceContainerLow }]}>
+                            <Text style={[styles.promptText, { color: colors.text, fontFamily: fonts.body }]}>{p}</Text>
+                        </View>
+                    ))}
+                </View>
 
-                <StitchCard variant="elevated" style={[styles.inputCard, { borderColor: colors.outlineVariant }]}>
+                <View style={[
+                    styles.inputContainer, 
+                    { 
+                        backgroundColor: colors.surfaceContainerLow,
+                        ...(isDark ? {} : shadows.ambient)
+                    }
+                ]}>
                     <TextInput
                         style={[styles.input, { color: colors.text, fontFamily: fonts.body }]}
                         placeholder="Start typing your thoughts here..."
@@ -66,25 +76,41 @@ export default function JournalTaskComponent({ task, onComplete }: JournalTaskPr
                     />
                     
                     <View style={styles.encryptionIndicator}>
-                        <Ionicons name="lock-closed" size={14} color={colors.primary} />
-                        <Text style={[styles.encryptionText, { color: colors.primary }]}>
-                            Encrypted with AES-256
+                        <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
+                        <Text style={[styles.encryptionText, { color: colors.primary, fontFamily: fonts.label }]}>
+                            AES-256 Protected
                         </Text>
                     </View>
-                </StitchCard>
+                </View>
 
                 <View style={styles.footer}>
-                    <StitchButton 
-                        title={isSaving ? "Encrypting & Saving..." : "Save Entry"}
-                        variant="primary"
+                    <TouchableOpacity
+                        style={[
+                            styles.saveBtn,
+                            { 
+                                backgroundColor: (entry.length >= 10 && !isSaving) ? colors.primary : colors.surfaceContainerHighest,
+                                ...((entry.length >= 10 && !isSaving) ? shadows.ambient : {})
+                            }
+                        ]}
                         onPress={handleSave}
                         disabled={entry.length < 10 || isSaving}
-                        isLoading={isSaving}
-                        rightIcon="shield-checkmark"
-                    />
+                        activeOpacity={0.88}
+                    >
+                        <Text style={[
+                            styles.saveBtnText, 
+                            { 
+                                fontFamily: fonts.display,
+                                color: (entry.length >= 10 && !isSaving) ? colors.white : colors.textMuted
+                            }
+                        ]}>
+                            {isSaving ? "Encrypting..." : "Save Reflection"}
+                        </Text>
+                        {!isSaving && <Ionicons name="lock-closed" size={18} color={(entry.length >= 10) ? colors.white : colors.textMuted} />}
+                    </TouchableOpacity>
+
                     <View style={styles.minCharContainer}>
-                        <Text style={[styles.minCharText, { color: colors.textMuted }]}>
-                            {entry.length < 10 ? `Minimum 10 characters (${10 - entry.length} more)` : "Perfect length"}
+                        <Text style={[styles.minCharText, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                            {entry.length < 10 ? `Need ${10 - entry.length} more characters` : "Entry secured"}
                         </Text>
                     </View>
                 </View>
@@ -94,23 +120,24 @@ export default function JournalTaskComponent({ task, onComplete }: JournalTaskPr
 }
 
 const styles = StyleSheet.create({
-    container: {
+    root: {
         flex: 1,
     },
     scrollContent: {
-        padding: 24,
+        paddingHorizontal: 24,
+        paddingTop: 32,
         paddingBottom: 40,
     },
     promptHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 16,
-        marginBottom: 24,
+        marginBottom: 32,
     },
     iconBox: {
         width: 56,
         height: 56,
-        borderRadius: 16,
+        borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -118,30 +145,31 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     promptTitle: {
-        fontSize: 22,
-        fontWeight: '800',
+        fontSize: 24,
+        lineHeight: 30,
+        marginBottom: 4,
     },
     promptSubtitle: {
         fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 1.5,
+        letterSpacing: 1.2,
+    },
+    promptsContainer: {
+        gap: 12,
+        marginBottom: 24,
     },
     promptItem: {
-        marginBottom: 12,
-        paddingLeft: 12,
-        borderLeftWidth: 3,
-        borderLeftColor: 'rgba(0,0,0,0.1)',
+        padding: 16,
+        borderRadius: 16,
     },
     promptText: {
         fontSize: 15,
         lineHeight: 22,
-        opacity: 0.8,
+        opacity: 0.9,
     },
-    inputCard: {
-        marginTop: 12,
-        minHeight: 250,
+    inputContainer: {
+        borderRadius: 24,
+        minHeight: 280,
         padding: 20,
-        borderWidth: 1,
     },
     input: {
         flex: 1,
@@ -152,27 +180,35 @@ const styles = StyleSheet.create({
     encryptionIndicator: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        gap: 8,
         marginTop: 16,
         paddingTop: 16,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(0,0,0,0.05)',
+        opacity: 0.8,
     },
     encryptionText: {
-        fontSize: 12,
-        fontWeight: '700',
+        fontSize: 11,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     footer: {
         marginTop: 32,
     },
+    saveBtn: {
+        height: 64,
+        borderRadius: 32,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+    },
+    saveBtnText: {
+        fontSize: 18,
+    },
     minCharContainer: {
-        marginTop: 12,
+        marginTop: 14,
         alignItems: 'center',
     },
     minCharText: {
         fontSize: 12,
-        fontWeight: '600',
     }
 });
