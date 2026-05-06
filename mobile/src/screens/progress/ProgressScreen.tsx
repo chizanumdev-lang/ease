@@ -18,6 +18,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useAnalyticsStore } from '../../store/analyticsStore';
 import LoadingState from '../../components/LoadingState';
 
+
 const { width } = Dimensions.get('window');
 
 export default function ProgressScreen({ navigation }: any) {
@@ -109,6 +110,7 @@ export default function ProgressScreen({ navigation }: any) {
                         </View>
                     </View>
                 </View>
+
 
 
                 {/* Quick Stats Grid */}
@@ -442,5 +444,49 @@ const styles = StyleSheet.create({
     milestoneLevelText: {
         fontSize: 14,
         fontWeight: '700',
+    },
+    pulseCard: {
+        marginHorizontal: 20,
+        marginTop: 16,
+        padding: 24,
+        borderRadius: 32,
+        borderWidth: 1,
+        alignItems: 'center',
+    },
+    pulseTitle: {
+        fontSize: 12,
+        fontWeight: '900',
+        letterSpacing: 2,
+    },
+    pulseSubtitle: {
+        fontSize: 10,
+        fontWeight: '600',
+        marginTop: 4,
+        opacity: 0.6,
+    },
+    pulseContainer: {
+        marginVertical: 20,
+    },
+    pulseMeta: {
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'space-around',
+        marginTop: 10,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+        paddingTop: 20,
+    },
+    pulseStat: {
+        alignItems: 'center',
+    },
+    pulseStatLabel: {
+        fontSize: 8,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    pulseStatValue: {
+        fontSize: 14,
+        fontWeight: '900',
+        marginTop: 4,
     },
 });

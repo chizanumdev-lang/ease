@@ -117,7 +117,7 @@ export default function Dashboard() {
     const cards = [
         { 
           label: 'Active Users', 
-          value: pulse?.dau.toLocaleString(), 
+          value: pulse?.dau?.toLocaleString() || '0', 
           change: '+12.5%', 
           isPositive: true, 
           icon: Users, 

@@ -16,7 +16,7 @@ export class CheckIn {
     userId: string;
 
     @Index()
-    @Column({ type: 'date' })
+    @Column({ name: 'date', type: 'date' })
     date: Date;
 
     @Column({ nullable: true })

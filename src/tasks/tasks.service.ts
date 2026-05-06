@@ -7,6 +7,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { ProgressService } from '../progress/progress.service';
+import { RewardsService } from '../rewards/rewards.service';
 
 @Injectable()
 export class TasksService {
@@ -18,6 +19,7 @@ export class TasksService {
         @InjectQueue('program-generation')
         private programQueue: Queue,
         private progressService: ProgressService,
+        private rewardsService: RewardsService,
     ) { }
 
     async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
@@ -53,7 +55,11 @@ export class TasksService {
 
         // STREAK TRIGGER: If task completed, ensure a daily checkin exists
         if (!wasCompleted && savedTask.completed && savedTask.dayPlan?.program?.userId) {
-            await this.progressService.createCheckin(savedTask.dayPlan.program.userId);
+            const userId = savedTask.dayPlan.program.userId;
+            await this.progressService.createCheckin(userId);
+            
+            // REWARD XP: Task completion rewards
+            await this.rewardsService.rewardTaskCompletion(userId, savedTask.type);
         }
 
         // HYDRATION TRIGGER: If reflection task just completed, queue next day immediately
