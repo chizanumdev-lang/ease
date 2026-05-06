@@ -175,8 +175,8 @@ const styles = StyleSheet.create({
     },
     footer: {
         paddingHorizontal: 24,
-        paddingBottom: 40,
-        paddingTop: 20,
+        paddingBottom: 24,
+        paddingTop: 16,
     },
     actionBtn: {
         height: 64,

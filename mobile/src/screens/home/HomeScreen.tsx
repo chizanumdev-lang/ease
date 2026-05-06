@@ -278,11 +278,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     listContent: {
-        paddingBottom: 120,
+        paddingBottom: 90,
     },
     header: {
         paddingHorizontal: 20,
-        paddingTop: 10,
+        paddingTop: 4,
     },
     topNavWrapper: {
         paddingHorizontal: 20,
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 16,
     },
     navButton: {
         width: 44,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     greetingSection: {
-        marginBottom: 24,
+        marginBottom: 16,
     },
     greeting: {
         fontSize: 28,
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     },
     statsSection: {
         marginHorizontal: -20, // Negative margin to allow full-width scroll
-        marginBottom: 32,
+        marginBottom: 24,
     },
     statsScroll: {
         paddingHorizontal: 20,

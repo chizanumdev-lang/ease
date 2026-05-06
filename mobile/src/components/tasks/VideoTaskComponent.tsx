@@ -322,7 +322,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                             ))}
                         </View>
                     </View>
-                    <View style={{ height: 160 }} />
+                    <View style={{ height: 120 }} />
                 </View>
             </ScrollView>
 
@@ -517,8 +517,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 24,
-        paddingBottom: 40,
-        paddingTop: 20,
+        paddingBottom: 24,
+        paddingTop: 16,
     },
     countdownPill: {
         flexDirection: 'row',

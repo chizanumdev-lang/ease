@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
         borderRadius: 32,
         padding: 24,
         marginTop: 'auto',
-        marginBottom: 120,
+        marginBottom: 90,
     },
     slider: {
         width: '100%',
@@ -317,8 +317,8 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         paddingHorizontal: 24,
-        paddingBottom: 40,
-        paddingTop: 20,
+        paddingBottom: 24,
+        paddingTop: 16,
     },
     completeBtn: {
         height: 64,

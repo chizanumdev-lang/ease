@@ -231,12 +231,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingTop: 20,
-        paddingBottom: 120, // Increased padding to stay above navbar
+        paddingTop: 16,
+        paddingBottom: 90, 
     },
     treeSection: {
         alignItems: 'center',
-        paddingVertical: 24,
+        paddingVertical: 16,
     },
     glowLottie: {
         position: 'absolute',
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
         borderRadius: 116,
     },
     treeMeta: {
-        marginTop: 32,
+        marginTop: 20,
         alignItems: 'center',
     },
     treeName: {
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     },
     journeySection: {
         paddingHorizontal: 24,
-        marginTop: 48,
+        marginTop: 32,
     },
     sectionTitle: {
         fontSize: 22,

@@ -110,7 +110,7 @@ export default function ReflectionTaskComponent({ task, onComplete }: Reflection
                     </View>
                 </View>
 
-                <View style={{ height: 120 }} />
+                <View style={{ height: 90 }} />
             </ScrollView>
 
             <View style={[styles.footer, { backgroundColor: colors.background }]}>
@@ -226,8 +226,8 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         paddingHorizontal: 24,
-        paddingBottom: 40,
-        paddingTop: 20,
+        paddingBottom: 24,
+        paddingTop: 16,
     },
     finishBtn: {
         height: 64,

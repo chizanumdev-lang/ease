@@ -156,16 +156,6 @@ export default function CoachScreen({ navigation }: any) {
                         <Text style={[styles.statusText, { color: colors.textMuted, fontFamily: fonts.label }]}>Always here for you</Text>
                     </View>
                 </View>
-                <TouchableOpacity 
-                    style={styles.headerButton} 
-                    onPress={() => {
-                        console.log('Testing Sentry...');
-                        Sentry.captureException(new Error('Sentry Mobile Test Error'));
-                        alert('Test error sent to Sentry!');
-                    }}
-                >
-                    <Ionicons name="bug-outline" size={24} color={colors.primary} />
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -195,7 +185,7 @@ export default function CoachScreen({ navigation }: any) {
                 style={[styles.inputArea, { 
                     borderTopColor: colors.outlineVariant, 
                     backgroundColor: colors.background, 
-                    marginBottom: 90
+                    marginBottom: 16
                 }]}
             >
                 <View style={[styles.inputWrapper, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
@@ -262,7 +252,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 16,
-        paddingBottom: 120,
+        paddingBottom: 90,
     },
     messageRow: {
         flexDirection: 'row',

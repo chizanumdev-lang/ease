@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: 24,
         paddingTop: 32,
-        paddingBottom: 40,
+        paddingBottom: 24,
     },
     promptHeader: {
         flexDirection: 'row',

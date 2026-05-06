@@ -354,7 +354,7 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                     })}
                 </View>
 
-                <View style={{ height: 140 }} />
+                <View style={{ height: 100 }} />
             </ScrollView>
 
             {/* Fixed footer */}
@@ -565,8 +565,8 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         paddingHorizontal: 24,
-        paddingBottom: 40,
-        paddingTop: 20,
+        paddingBottom: 24,
+        paddingTop: 16,
     },
     continueBtn: {
         height: 64,
