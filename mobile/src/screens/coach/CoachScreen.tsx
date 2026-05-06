@@ -146,9 +146,7 @@ export default function CoachScreen({ navigation }: any) {
 
             {/* Header */}
             <View style={[styles.header, { borderBottomColor: colors.outlineVariant, paddingTop: Math.max(insets.top, 20) }]}>
-                <TouchableOpacity style={styles.headerButton} onPress={() => navigation?.goBack()}>
-                    <Ionicons name="chevron-back" size={24} color={colors.primary} />
-                </TouchableOpacity>
+                <View style={styles.headerButton} />
                 <View style={styles.headerTitleContainer}>
                     <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.display }]}>Ease AI</Text>
                     <View style={styles.statusRow}>

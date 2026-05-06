@@ -103,10 +103,8 @@ export default function ProgressScreen({ navigation }: any) {
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             
             <View style={styles.topNav}>
-                <TouchableOpacity style={styles.headerButton} onPress={() => navigation?.goBack()}>
-                    <Ionicons name="chevron-back" size={24} color={colors.primary} />
-                </TouchableOpacity>
-                <Text style={[styles.navTitle, { color: colors.text }]}>Spirit Evolution</Text>
+                <View style={styles.headerButton} />
+                <Text style={[styles.navTitle, { color: colors.text }]}>EVOLVE</Text>
                 <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 </TouchableOpacity>
