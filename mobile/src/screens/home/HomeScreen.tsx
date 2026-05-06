@@ -245,36 +245,37 @@ export default function HomeScreen({ navigation }: Props) {
             />
             <SafeAreaView style={{ flex: 1 }} edges={['top']}>
                 <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-            
-            <FlatList
-                data={sortedTasks}
-                keyExtractor={item => item.id}
-                renderItem={({ item, index }) => (
-                    <TaskCard 
-                        task={item} 
-                        onPress={handleTaskPress}
-                        isLast={index === sortedTasks.length - 1}
+                <>
+                    <FlatList
+                        data={sortedTasks}
+                        keyExtractor={item => item.id}
+                        renderItem={({ item, index }) => (
+                            <TaskCard 
+                                task={item} 
+                                onPress={handleTaskPress}
+                                isLast={index === sortedTasks.length - 1}
+                            />
+                        )}
+                        ListHeaderComponent={renderHeader}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
                     />
-                )}
-                ListHeaderComponent={renderHeader}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-            />
-            <StitchModal 
-                visible={isSuccessModalVisible}
-                onClose={() => setIsSuccessModalVisible(false)}
-                title="Milestone Reached!"
-                description="You've completed 10 consecutive days of mindful movement. Your focus is improving."
-                primaryAction={{
-                    label: "Keep it up",
-                    onPress: () => setIsSuccessModalVisible(false)
-                }}
-            />
+                    <StitchModal 
+                        visible={isSuccessModalVisible}
+                        onClose={() => setIsSuccessModalVisible(false)}
+                        title="Milestone Reached!"
+                        description="You've completed 10 consecutive days of mindful movement. Your focus is improving."
+                        primaryAction={{
+                            label: "Keep it up",
+                            onPress: () => setIsSuccessModalVisible(false)
+                        }}
+                    />
 
-            <TutorialTour 
-                visible={isTutorialVisible} 
-                onComplete={handleTutorialComplete} 
-            />
+                    <TutorialTour 
+                        visible={isTutorialVisible} 
+                        onComplete={handleTutorialComplete} 
+                    />
+                </>
             </SafeAreaView>
         </View>
     );

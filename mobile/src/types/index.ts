@@ -122,6 +122,8 @@ export interface AudioTrack {
     id: string;
     title: string;
     url: string;
+    artwork?: string;
+    artist?: string;
     duration?: number;
     type?: string;
     dayPlanId?: string;

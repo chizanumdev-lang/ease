@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AudioTrack } from '../types';
 import { audioService } from '../services/audio.service';
+import TrackPlayer, { Event, State } from 'react-native-track-player';
 
 interface RitualTracks {
     morning: AudioTrack | null;
@@ -60,6 +61,37 @@ export const useAudioStore = create<AudioState>()(
         (set, get) => {
             // Internal state to track initialization
             let isInitialized = false;
+
+            const setupListeners = () => {
+                if (isInitialized) return;
+
+                TrackPlayer.addEventListener(Event.PlaybackState, (event) => {
+                    const isPlaying = event.state === State.Playing || event.state === 'playing';
+                    set({ isPlaying });
+                });
+
+                TrackPlayer.addEventListener(Event.PlaybackProgressUpdated, (event) => {
+                    set({ 
+                        position: event.position, 
+                        duration: event.duration 
+                    });
+
+                    // Check Timer
+                    const { stopTimer, timerStartTime } = get();
+                    if (stopTimer && timerStartTime) {
+                        const elapsedMinutes = (Date.now() - timerStartTime) / (1000 * 60);
+                        if (elapsedMinutes >= stopTimer) {
+                            get().stop();
+                        }
+                    }
+                });
+
+                TrackPlayer.addEventListener(Event.PlaybackQueueEnded, () => {
+                    get().stop();
+                });
+
+                isInitialized = true;
+            };
 
             return {
             // Initial state
@@ -134,6 +166,7 @@ export const useAudioStore = create<AudioState>()(
             // Load and prepare track
             loadTrack: async (track: AudioTrack) => {
                 set({ isLoading: true });
+                setupListeners();
                 try {
                     await audioService.loadAudio(track);
                     set({
@@ -150,34 +183,7 @@ export const useAudioStore = create<AudioState>()(
 
             // Play audio
             play: async () => {
-                // Ensure service callback is registered on first use
-                if (!isInitialized) {
-                    audioService.setStatusCallback((status) => {
-                        if (!status.isLoaded) return;
-                        
-                        set({
-                            position: status.positionMillis / 1000,
-                            duration: (status.durationMillis || 0) / 1000,
-                            isPlaying: status.isPlaying
-                        });
-
-                        // Check if finished
-                        if (status.didJustFinish) {
-                            get().stop();
-                        }
-
-                        // Check Timer
-                        const { stopTimer, timerStartTime } = get();
-                        if (stopTimer && timerStartTime) {
-                            const elapsedMinutes = (Date.now() - timerStartTime) / (1000 * 60);
-                            if (elapsedMinutes >= stopTimer) {
-                                get().stop();
-                            }
-                        }
-                    });
-                    isInitialized = true;
-                }
-
+                setupListeners();
                 try {
                     const volume = get().volume;
                     await audioService.play(2000, volume);
