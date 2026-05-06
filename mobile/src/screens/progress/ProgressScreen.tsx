@@ -99,8 +99,15 @@ export default function ProgressScreen({ navigation }: any) {
     const { progression } = analytics || {};
 
     return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
-            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+        <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? 
+                    [colors.background, colors.background] : 
+                    [colors.therapeutic.peach + '10', colors.therapeutic.lavender + '05', colors.background]}
+                style={StyleSheet.absoluteFill}
+            />
+            <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             
             <View style={styles.topNav}>
                 <View style={styles.headerButton} />
@@ -207,36 +214,46 @@ export default function ProgressScreen({ navigation }: any) {
                 <View style={styles.journeySection}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Evolution Roadmap</Text>
 
-                    {progression?.journey.map((phase, index) => (
+                {progression?.journey.map((phase, index) => {
+                    const journeyColors = [
+                        colors.therapeutic.sage,
+                        colors.therapeutic.sky,
+                        colors.therapeutic.lavender,
+                        colors.therapeutic.peach,
+                        colors.therapeutic.apricot,
+                    ];
+                    const stageColor = journeyColors[index % journeyColors.length];
+
+                    return (
                         <View key={phase.id} style={styles.stageItem}>
                             <View style={styles.stageTimeline}>
                                 <View style={[
                                     styles.stageIconBox, 
                                     { 
-                                        backgroundColor: phase.active ? colors.primary : phase.unlocked ? colors.primaryContainer : colors.surfaceContainerHigh,
-                                        borderColor: phase.active ? colors.primary : colors.outlineVariant,
+                                        backgroundColor: phase.active ? stageColor : phase.unlocked ? stageColor + '30' : colors.surfaceContainerHigh,
+                                        borderColor: phase.active ? stageColor : colors.outlineVariant,
                                         borderWidth: phase.active ? 0 : 1
                                     }
                                 ]}>
                                     <Ionicons 
                                         name={phase.unlocked ? "checkmark" : "lock-closed"} 
                                         size={18} 
-                                        color={phase.active ? (isDark ? colors.background : '#fff') : phase.unlocked ? colors.primary : colors.textMuted} 
+                                        color={phase.active ? '#fff' : phase.unlocked ? stageColor : colors.textMuted} 
                                     />
                                 </View>
                                 {index < (progression?.journey.length - 1) && (
-                                    <View style={[styles.stageLine, { backgroundColor: phase.unlocked ? colors.primary : colors.outlineVariant, opacity: phase.unlocked ? 0.3 : 1 }]} />
+                                    <View style={[styles.stageLine, { backgroundColor: phase.unlocked ? stageColor : colors.outlineVariant, opacity: phase.unlocked ? 0.4 : 1 }]} />
                                 )}
                             </View>
                             <View style={styles.stageContent}>
                                 <View style={styles.activeLabelRow}>
                                     <Text style={[
                                         styles.stageTitle, 
-                                        { color: phase.active ? colors.primary : phase.unlocked ? colors.text : colors.textMuted }
+                                        { color: phase.active ? stageColor : phase.unlocked ? colors.text : colors.textMuted }
                                     ]}>
                                         {phase.title}
                                     </Text>
-                                    {phase.active && <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />}
+                                    {phase.active && <View style={[styles.activeDot, { backgroundColor: stageColor }]} />}
                                 </View>
                                 <Text style={[styles.stageDesc, { color: colors.textMuted }]}>
                                     {phase.levelRange} {phase.unlocked ? '— Achieved' : '— Locked'}
@@ -246,11 +263,13 @@ export default function ProgressScreen({ navigation }: any) {
                                 </Text>
                             </View>
                         </View>
-                    ))}
+                    );
+                })}
                 </View>
 
             </ScrollView>
-        </SafeAreaView>
+            </SafeAreaView>
+        </View>
     );
 }
 

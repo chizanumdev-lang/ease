@@ -15,7 +15,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-
+import { LinearGradient } from 'expo-linear-gradient';
 import { MainStackParamList, Task, TaskStatus, WeeklyAnalytics } from '../../types';
 import { useProgramsStore } from '../../store/programsStore';
 import { useAuthStore } from '../../store/authStore';
@@ -236,8 +236,15 @@ export default function HomeScreen({ navigation }: Props) {
         : [] as Task[];
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? 
+                    [colors.background, colors.background] : 
+                    [colors.therapeutic.sage + '15', colors.therapeutic.sky + '10', colors.background]}
+                style={StyleSheet.absoluteFill}
+            />
+            <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             
             <FlatList
                 data={sortedTasks}
@@ -253,7 +260,6 @@ export default function HomeScreen({ navigation }: Props) {
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
             />
-
             <StitchModal 
                 visible={isSuccessModalVisible}
                 onClose={() => setIsSuccessModalVisible(false)}
@@ -269,8 +275,8 @@ export default function HomeScreen({ navigation }: Props) {
                 visible={isTutorialVisible} 
                 onComplete={handleTutorialComplete} 
             />
-        </SafeAreaView>
-
+            </SafeAreaView>
+        </View>
     );
 }
 

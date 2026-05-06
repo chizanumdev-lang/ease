@@ -15,6 +15,7 @@ import {
 import { CoachService, CoachResponse } from '../../services/coach.service';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Sentry from '@sentry/react-native';
 
@@ -142,6 +143,12 @@ export default function CoachScreen({ navigation }: any) {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? 
+                    [colors.background, colors.background] : 
+                    [colors.therapeutic.sage + '10', colors.therapeutic.sky + '05', colors.background]}
+                style={StyleSheet.absoluteFill}
+            />
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             {/* Header */}

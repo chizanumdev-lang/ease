@@ -195,13 +195,28 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
                             <View style={[
                                 styles.iconContainer,
                                 { 
-                                    backgroundColor: isCompleted ? colors.primaryContainer : (isInProgress ? colors.secondaryContainer : colors.surfaceContainerLow)
+                                    backgroundColor: isCompleted 
+                                        ? colors.primaryContainer 
+                                        : (task.type === 'video' ? colors.therapeutic.sky + '20' :
+                                           task.type === 'quiz' ? colors.therapeutic.peach + '20' :
+                                           task.type === 'audio' ? colors.therapeutic.lavender + '20' :
+                                           task.type === 'journal' ? colors.therapeutic.sage + '20' :
+                                           task.type === 'reflection' ? colors.therapeutic.terracotta + '20' :
+                                           task.type === 'micro-app' ? colors.therapeutic.apricot + '20' :
+                                           colors.surfaceContainerLow)
                                 }
                             ]}>
                                 <Ionicons 
                                     name={getTypeIcon()} 
                                     size={22} 
-                                    color={isCompleted ? colors.primary : (isInProgress ? colors.primary : colors.textMuted)} 
+                                    color={isCompleted ? colors.primary : 
+                                           (task.type === 'video' ? colors.therapeutic.sky :
+                                            task.type === 'quiz' ? colors.therapeutic.peach :
+                                            task.type === 'audio' ? colors.therapeutic.lavender :
+                                            task.type === 'journal' ? colors.therapeutic.sage :
+                                            task.type === 'reflection' ? colors.therapeutic.terracotta :
+                                            task.type === 'micro-app' ? colors.therapeutic.apricot :
+                                            colors.textMuted)} 
                                 />
                             </View>
                             
