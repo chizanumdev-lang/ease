@@ -298,11 +298,6 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
 
                 <View style={[styles.contentArea, { backgroundColor: colors.background }]}>
                     <View style={styles.titleBlock}>
-                        <View style={[styles.phaseBadge, { backgroundColor: colors.primaryContainer }]}>
-                            <Text style={[styles.phaseBadgeText, { color: colors.primary }]}>
-                                {phaseBadge}
-                            </Text>
-                        </View>
                         <Text style={[styles.title, { color: colors.text }]}>{task.title}</Text>
                     </View>
 

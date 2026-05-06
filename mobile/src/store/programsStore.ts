@@ -76,7 +76,7 @@ export const useProgramsStore = create<ProgramsState>()(
         (set, get) => ({
             currentProgram: null,
             todayPlan: null,
-            isLoading: false,
+            isLoading: true,
             error: null,
             syncQueue: [],
 
@@ -120,15 +120,15 @@ export const useProgramsStore = create<ProgramsState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const program = await programsService.getActiveProgram();
-                    set({
-                        currentProgram: program,
-                        isLoading: false,
-                    });
-
+                    
                     if (program) {
+                        set({ currentProgram: program });
                         await get().fetchTodayPlan(program.id);
+                    } else {
+                        set({ currentProgram: null, todayPlan: null });
                     }
-
+                    
+                    set({ isLoading: false });
                     return program;
                 } catch (error: any) {
                     if (error.response?.status === 404) {

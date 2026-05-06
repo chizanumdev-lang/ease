@@ -10,6 +10,7 @@ export interface User {
 export interface UserSettings {
     onboardingCompleted?: boolean;
     notifications?: NotificationSettings;
+    showFloatingBubble?: boolean;
     [key: string]: any;
 }
 
@@ -236,6 +237,7 @@ export interface ProgressionData {
     nextLevelXp: number;
     progressPercentage: number;
     currentPhase: PhaseInfo;
+    levelEntailment: string;
     journey: JourneyPhase[];
 }
 

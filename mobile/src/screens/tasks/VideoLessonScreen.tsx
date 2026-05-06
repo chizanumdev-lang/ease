@@ -420,13 +420,6 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
 
                 {/* Contextual Content */}
                 <View style={styles.mainContent}>
-                    <Animated.View style={[styles.badgeContainer, { opacity: fadeAnim }]}>
-                        <View style={[styles.badge, { backgroundColor: colors.primaryContainer }]}>
-                            <Text style={[styles.badgeText, { color: colors.primary }]}>
-                                PHASE 1: THE FOUNDATION
-                            </Text>
-                        </View>
-                    </Animated.View>
 
                     <Text style={[styles.title, { color: colors.text }]}>
                         {task.title}

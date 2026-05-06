@@ -44,7 +44,7 @@ export default function HomeScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
     const { showModal } = useModalStore();
     const { user, updateSettings } = useAuthStore();
-    const { todayPlan, currentProgram, updateTask } = useProgramsStore();
+    const { todayPlan, currentProgram, isLoading, updateTask } = useProgramsStore();
     
     const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
     const [isTutorialVisible, setIsTutorialVisible] = useState(false);
@@ -84,10 +84,7 @@ export default function HomeScreen({ navigation }: Props) {
             if (currentProgram) {
                 await useProgramsStore.getState().fetchTodayPlan(currentProgram.id);
             } else {
-                const program = await useProgramsStore.getState().fetchActiveProgram();
-                if (program) {
-                    await useProgramsStore.getState().fetchTodayPlan(program.id);
-                }
+                await useProgramsStore.getState().fetchActiveProgram();
             }
         };
 
@@ -112,6 +109,31 @@ export default function HomeScreen({ navigation }: Props) {
     const handleBeginStory = () => {
         navigation.navigate('GoalWizard');
     };
+
+    if (isLoading && !currentProgram && !todayPlan) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+                <View style={styles.header}>
+                    <View style={styles.topNav}>
+                        <View style={styles.navButton} />
+                        <Logo size={32} />
+                        <View style={[styles.profileButton, { backgroundColor: colors.surfaceContainerLow }]} />
+                    </View>
+                    <View style={[styles.skeletonText, { width: '60%', height: 32, marginBottom: 12, backgroundColor: colors.surfaceContainerHigh, borderRadius: 8 }]} />
+                    <View style={[styles.skeletonText, { width: '40%', height: 20, marginBottom: 24, backgroundColor: colors.surfaceContainerLow, borderRadius: 4 }]} />
+                    <View style={[styles.skeletonBanner, { height: 160, backgroundColor: colors.surfaceContainerLow, borderRadius: 24, marginBottom: 24 }]} />
+                    <View style={styles.statsSection}>
+                        <View style={{ flexDirection: 'row', paddingHorizontal: 20 }}>
+                            {[1, 2, 3].map(i => (
+                                <View key={i} style={{ width: 120, height: 140, backgroundColor: colors.surfaceContainerLow, borderRadius: 20, marginRight: 12 }} />
+                            ))}
+                        </View>
+                    </View>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     if (!currentProgram && !todayPlan) {
         return (
@@ -322,4 +344,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         letterSpacing: 1,
     },
+    skeletonText: {
+        opacity: 0.6,
+    },
+    skeletonBanner: {
+        opacity: 0.6,
+    }
 });

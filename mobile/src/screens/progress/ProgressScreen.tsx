@@ -108,6 +108,14 @@ export default function ProgressScreen({ navigation }: any) {
                                 {progression?.currentLevelXp} <Text style={[styles.xpMax, { color: colors.textMuted }]}>/ {progression?.nextLevelXp} XP</Text>
                             </Text>
                         </View>
+
+                        <View style={[styles.levelInsightCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                            <Ionicons name="sparkles" size={14} color={colors.primary} style={{ marginBottom: 4 }} />
+                            <Text style={[styles.levelInsightTitle, { color: colors.primary }]}>LEVEL {progression?.level} INSIGHT</Text>
+                            <Text style={[styles.levelInsightText, { color: colors.text }]}>
+                                {progression?.levelEntailment}
+                            </Text>
+                        </View>
                     </View>
                 </View>
 
@@ -181,6 +189,9 @@ export default function ProgressScreen({ navigation }: any) {
                                 </View>
                                 <Text style={[styles.stageDesc, { color: colors.textMuted }]}>
                                     {phase.levelRange} {phase.unlocked ? '— Achieved' : '— Locked'}
+                                </Text>
+                                <Text style={[styles.stageSubtitle, { color: colors.textMuted, opacity: 0.7 }]}>
+                                    {phase.subtitle}
                                 </Text>
                             </View>
                         </View>
@@ -396,6 +407,12 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         marginTop: 4,
     },
+    stageSubtitle: {
+        fontSize: 12,
+        fontWeight: '400',
+        marginTop: 4,
+        lineHeight: 18,
+    },
     activeLabelRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -405,6 +422,26 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
+    },
+    levelInsightCard: {
+        marginTop: 24,
+        padding: 16,
+        borderRadius: 20,
+        borderWidth: 1,
+        width: width - 80,
+        alignItems: 'center',
+    },
+    levelInsightTitle: {
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 1,
+        marginBottom: 6,
+    },
+    levelInsightText: {
+        fontSize: 14,
+        lineHeight: 20,
+        textAlign: 'center',
+        fontWeight: '500',
     },
     levelProgressContainer: {
         alignItems: 'center',
