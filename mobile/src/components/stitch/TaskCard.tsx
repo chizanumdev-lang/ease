@@ -92,10 +92,10 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
                         style={[
                             styles.line, 
                             { 
-                                backgroundColor: isCompleted ? colors.primary : colors.surfaceContainerHighest,
-                                borderStyle: isLocked ? 'dashed' : 'solid',
-                                borderWidth: isLocked ? 1 : 0,
-                                width: isLocked ? 0 : 2,
+                                backgroundColor: isLocked ? colors.surfaceContainerHighest : colors.primary,
+                                borderStyle: isLocked ? 'solid' : 'dashed',
+                                borderWidth: isLocked ? 0 : 1,
+                                width: isLocked ? 2 : 0,
                             }
                         ]} 
                     />
