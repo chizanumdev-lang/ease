@@ -5,7 +5,6 @@ import { TasksService } from './tasks.service';
 import { Task } from './entities/task.entity';
 import { TaskTemplate } from './entities/task-template.entity';
 
-import { BullModule } from '@nestjs/bullmq';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { ProgressModule } from '../progress/progress.module';
 import { RewardsModule } from '../rewards/rewards.module';
@@ -13,7 +12,6 @@ import { RewardsModule } from '../rewards/rewards.module';
 @Module({
     imports: [
         TypeOrmModule.forFeature([Task, DayPlan, TaskTemplate]),
-        BullModule.registerQueue({ name: 'program-generation' }),
         ProgressModule,
         RewardsModule,
     ],

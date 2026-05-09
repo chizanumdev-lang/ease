@@ -1,7 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { Repository, MoreThan } from 'typeorm'; // Import MoreThan
 import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
@@ -57,6 +55,7 @@ function pickAudioUrl(mood: string, dayNumber: number): string {
 
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ProgressionService } from './progression.service';
+import { triggerHydrateDay, triggerGenerateAudio } from '../trigger/tasks';
 
 @Injectable()
 export class ProgramsService {
@@ -88,12 +87,6 @@ export class ProgramsService {
         @InjectRepository(Progress)
         private progressRepository: Repository<Progress>,
 
-        @InjectQueue('audio-generation')
-        private audioQueue: Queue,
-
-        @InjectQueue('program-generation')
-        private programQueue: Queue,
-
         private usersService: UsersService,
         private aiService: AiService,
         private youtubeService: YoutubeService,
@@ -102,6 +95,7 @@ export class ProgramsService {
         private ritualsService: RitualsService,
         private progressionService: ProgressionService,
     ) { }
+
 
     /** Hourly check for users to trigger rituals and plan hydration based on their local time. */
     @Cron(CronExpression.EVERY_HOUR)
@@ -169,11 +163,17 @@ export class ProgramsService {
 
                             if (tomorrow && tomorrow.status === 'pending') {
                                 this.logger.log(`Scheduled hydration for user ${user.id}: Queuing Day ${tomorrowNum}`);
-                                await this.programQueue.add('hydrate-day', {
+                                const handle = await triggerHydrateDay({
                                     dayPlanId: tomorrow.id,
                                     goalText: program.goal?.description || 'Goal',
                                     params: { ...program.metadata, duration: program.duration }
-                                }, { priority: 100, attempts: 10, backoff: { type: 'exponential', delay: 5000 } });
+                                });
+                                if (!handle) {
+                                    this.logger.warn(`Trigger.dev unavailable, hydrating Day ${tomorrowNum} synchronously`);
+                                    await this.hydrateDay(tomorrow.id, program.goal?.description || 'Goal', { ...program.metadata, duration: program.duration }).catch(e => 
+                                        this.logger.error(`Sync hydration failed for Day ${tomorrowNum}: ${e.message}`)
+                                    );
+                                }
                             }
                         }
                     }
@@ -353,11 +353,11 @@ export class ProgramsService {
                 audioTrack.duration = dur.audio;
                 audioTrack.type = mood;
 
-                this.audioQueue.add('generate-audio', { audioTrackId: audioTrack.id, theme: content.audioTask.theme || content.theme, audioFilename }, {
-                    attempts: 10,
-                    backoff: { type: 'exponential', delay: 5000 },
-                    removeOnComplete: true,
-                });
+                try {
+                    await triggerGenerateAudio({ audioTrackId: audioTrack.id, theme: content.audioTask.theme || content.theme, audioFilename });
+                } catch (queueErr) {
+                    this.logger.warn(`Audio trigger unavailable, track ${audioTrack.id} will use static URL: ${queueErr.message}`);
+                }
 
                 await this.audioTrackRepository.save(audioTrack);
                 await this.upsertTask({
@@ -510,17 +510,20 @@ export class ProgramsService {
         };
 
         if (day1 && day1.status !== 'ready') {
-            await this.programQueue.add('hydrate-day', {
+            const handle = await triggerHydrateDay({
                 dayPlanId: day1.id,
                 goalText: generationParams.goalText,
                 params: generationParams,
-            }, { 
-                priority: 1, // TOP priority for onboarding
-                attempts: 10,
-                backoff: { type: 'exponential', delay: 5000 }
             });
-            program.status = 'generating';
-            await this.programRepository.save(program);
+            if (handle) {
+                program.status = 'generating';
+                await this.programRepository.save(program);
+            } else {
+                this.logger.warn('Trigger.dev unavailable for Day 1 hydration, processing synchronously');
+                await this.hydrateDay(day1.id, generationParams.goalText, generationParams);
+                program.status = 'ready';
+                await this.programRepository.save(program);
+            }
         }
 
         // ─── PHASE 3: Dispatch Day 2 to background queue (JIT) ─────────────
@@ -529,15 +532,14 @@ export class ProgramsService {
         });
 
         if (day2 && day2.status === 'pending') {
-            await this.programQueue.add('hydrate-day', {
+            const handle = await triggerHydrateDay({
                 dayPlanId: day2.id,
                 goalText: generationParams.goalText,
                 params: generationParams,
-            }, { 
-                priority: 2, // Standard high for initial onboarding
-                attempts: 10,
-                backoff: { type: 'exponential', delay: 5000 }
             });
+            if (!handle) {
+                this.logger.warn('Trigger.dev unavailable for Day 2, will hydrate on-demand');
+            }
         }
 
         program.status = 'ready'; // Mark program ready as skeleton + Day 1 are good

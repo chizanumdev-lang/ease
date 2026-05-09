@@ -21,6 +21,7 @@ import { ProgramsService } from './programs.service';
 @Injectable()
 export class ProgramProcessor extends WorkerHost {
     private readonly logger = new Logger(ProgramProcessor.name);
+    private readonly isVercel = !!process.env.VERCEL;
 
     constructor(
         @InjectRepository(Program)
@@ -43,6 +44,10 @@ export class ProgramProcessor extends WorkerHost {
     }
 
     async process(job: Job<any, any, string>): Promise<any> {
+        if (this.isVercel) {
+            this.logger.warn(`Skipping program job ${job.id} on Vercel serverless — needs dedicated worker`);
+            return { success: false, reason: 'serverless_skip' };
+        }
         const { dayPlanId, goalText, params } = job.data;
         
         if (job.name === 'hydrate-day') {

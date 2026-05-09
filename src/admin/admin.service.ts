@@ -9,10 +9,9 @@ import { ApiCostLog } from './entities/api-cost-log.entity';
 import { ErrorLog } from './entities/error-log.entity';
 import { ProgramRating } from './entities/program-rating.entity';
 import { Referral } from './entities/referral.entity';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { TaskTemplate } from '../tasks/entities/task-template.entity';
+import { triggerHydrateDay } from '../trigger/tasks';
 
 @Injectable()
 export class AdminService {
@@ -37,8 +36,6 @@ export class AdminService {
         private dayPlanRepository: Repository<DayPlan>,
         @InjectRepository(TaskTemplate)
         private taskTemplateRepository: Repository<TaskTemplate>,
-        @InjectQueue('program-generation')
-        private programQueue: Queue,
     ) { }
 
     async getDashboardPulse() {
@@ -291,22 +288,9 @@ export class AdminService {
     }
 
     async getQueueStats() {
-        const [waiting, active, completed, failed, delayed] = await Promise.all([
-            this.programQueue.getWaitingCount(),
-            this.programQueue.getActiveCount(),
-            this.programQueue.getCompletedCount(),
-            this.programQueue.getFailedCount(),
-            this.programQueue.getDelayedCount(),
-        ]);
-
-        return {
-            waiting,
-            active,
-            completed,
-            failed,
-            delayed,
-            total: waiting + active + completed + failed + delayed,
-        };
+        // Queue stats are no longer available since BullMQ/Redis was removed.
+        // Background tasks are now handled by Trigger.dev.
+        return { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0, total: 0, note: 'Background tasks managed by Trigger.dev' };
     }
 
     async retryDayHydration(dayPlanId: string) {
@@ -321,19 +305,19 @@ export class AdminService {
         day.status = 'pending';
         await this.dayPlanRepository.save(day);
 
-        // Add to queue
+        // Trigger via Trigger.dev
         const program = day.program;
-        await this.programQueue.add('hydrate-day', {
+        const handle = await triggerHydrateDay({
             dayPlanId: day.id,
             goalText: program.goal?.description || program.title || 'Goal',
             params: { ...program.metadata, duration: program.duration }
-        }, {
-            priority: 1, // High priority for manual retries
-            attempts: 5,
-            backoff: { type: 'exponential', delay: 5000 }
         });
 
-        return { success: true, message: `Day ${day.dayNumber} re-queued for hydration.` };
+        if (handle) {
+            return { success: true, message: `Day ${day.dayNumber} sent to Trigger.dev for hydration.` };
+        } else {
+            return { success: false, message: `Trigger.dev unavailable — Day ${day.dayNumber} status reset to pending but could not be queued.` };
+        }
     }
 
     async getAiLogs(page = 1, limit = 20) {

@@ -46,6 +46,7 @@
     "@sentry/nestjs": "^10.49.0",
     "@sentry/profiling-node": "^10.49.0",
     "@supabase/supabase-js": "^2.105.1",
+    "@trigger.dev/sdk": "^4.4.5",
     "@types/fluent-ffmpeg": "^2.1.28",
     "axios": "^1.13.5",
     "bcrypt": "^6.0.0",
