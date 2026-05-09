@@ -3,11 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Task } from './entities/task.entity';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { ProgressService } from '../progress/progress.service';
 import { RewardsService } from '../rewards/rewards.service';
+import { triggerHydrateDay } from '../trigger/tasks';
 
 @Injectable()
 export class TasksService {
@@ -16,8 +15,6 @@ export class TasksService {
         private taskRepository: Repository<Task>,
         @InjectRepository(DayPlan)
         private dayPlanRepository: Repository<DayPlan>,
-        @InjectQueue('program-generation')
-        private programQueue: Queue,
         private progressService: ProgressService,
         private rewardsService: RewardsService,
     ) { }
@@ -73,15 +70,12 @@ export class TasksService {
                 });
 
                 if (nextDay && nextDay.status === 'pending') {
-                    await this.programQueue.add('hydrate-day', {
+                    await triggerHydrateDay({
                         dayPlanId: nextDay.id,
                         goalText: program.goal?.description || program.title || 'Goal',
                         params: { ...program.metadata, duration: program.duration }
-                    }, {
-                        priority: 1, // HIGH priority
-                        attempts: 10,
-                        backoff: { type: 'exponential', delay: 5000 }
                     });
+                    // Falls back to null if Trigger.dev unavailable — next day will hydrate on-demand or by cron
                 }
             }
         }

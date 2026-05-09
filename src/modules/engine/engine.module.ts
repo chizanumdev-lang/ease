@@ -13,14 +13,9 @@ import { UserProgram } from './entities/user-program.entity';
 import { Task } from './entities/task.entity';
 import { AudioAsset } from './entities/audio-asset.entity';
 
-import { BullModule } from '@nestjs/bullmq';
-
 @Module({
   imports: [
     AiModule,
-    BullModule.registerQueue({
-      name: 'engine_queue',
-    }),
     TypeOrmModule.forFeature([
       GoalCategory,
       GoalTemplate,

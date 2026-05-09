@@ -7,8 +7,6 @@ import { GoalTemplate } from '../entities/goal-template.entity';
 import { Task, ExecutionStatus } from '../entities/task.entity';
 import { WorkflowNode } from '../entities/workflow-node.entity';
 import { TaskDefinition, CapabilityType } from '../entities/task-definition.entity';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 
 @Injectable()
 export class PlannerService {
@@ -22,8 +20,6 @@ export class PlannerService {
     @InjectRepository(Task)
     private taskRepo: Repository<Task>,
     private aiService: AiService,
-    @InjectQueue('engine_queue')
-    private engineQueue: Queue,
   ) {}
 
   /**
@@ -83,11 +79,11 @@ export class PlannerService {
 
     const savedTasks = await this.taskRepo.save(tasks);
 
-    // 4. Queue the first task(s)
-    // For now, we queue ALL tasks to the distributed workers. 
-    // The workers will handle them based on priority or dependencies later.
+    // 4. Tasks are saved with QUEUED status.
+    // Background processing will be handled by Trigger.dev or on-demand.
+    // TODO: Integrate Trigger.dev tasks for engine processing when needed.
     for (const task of savedTasks) {
-      await this.engineQueue.add('process_task', { taskId: task.id });
+      this.logger.log(`Task ${task.id} saved with QUEUED status for future processing.`);
     }
 
     // 5. Update program status to ACTIVE
