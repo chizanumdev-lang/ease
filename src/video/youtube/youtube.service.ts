@@ -178,8 +178,8 @@ export class YoutubeService {
             
             // Keyword Matching
             const themeWords = themeLower.split(' ').filter(w => w.length > 2);
-            const matchCount = themeWords.filter(word => titleLower.includes(word)).length;
-            score += (matchCount / Math.max(themeWords.length, 1)) * 60; // Up to 60 points for topic match
+            const matchCount = themeWords.filter(word => titleLower.includes(word) || desc.toLowerCase().includes(word)).length;
+            score += (matchCount / Math.max(themeWords.length, 1)) * 40; // Up to 40 points for topic match (in title OR description)
 
             // Type Matching
             if (type === 'morning') {
@@ -194,12 +194,18 @@ export class YoutubeService {
                 if (duration >= 600) score += 10; // Ideal 10+ mins
             }
 
+            // Popularity bonus (high view count = likely quality)
+            const views = parseInt(video.statistics?.viewCount || '0', 10);
+            if (views > 1_000_000) score += 15;
+            else if (views > 100_000) score += 10;
+            else if (views > 10_000) score += 5;
+
             return { video, score };
         });
 
         // Additional Ritual-Specific Ranking
         const ranked = scored
-            .filter(s => s.score >= 40) // Minimum relevance threshold
+            .filter(s => s.score >= 15) // Lowered: type-keyword match alone (e.g. "affirmation") is enough
             .sort((a, b) => b.score - a.score);
 
         if (ranked.length === 0) {

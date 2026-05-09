@@ -30,6 +30,39 @@ export class RitualsService {
         private usersService: UsersService,
     ) {}
 
+    /**
+     * Distributed lock using the DB. Returns true if this caller "won" the
+     * generation slot; false if another serverless instance already claimed it.
+     */
+    async claimGeneration(userId: string, date: string): Promise<boolean> {
+        const existing = await this.ritualTrackRepository.findOne({
+            where: { userId, date }
+        });
+        if (existing) return false; // Another instance already started
+
+        try {
+            // Insert placeholder records to claim the slot.
+            // If two instances race, the unique constraint (userId+date+ritualType) 
+            // will cause one to fail — that's intentional.
+            await this.ritualTrackRepository.save([
+                this.ritualTrackRepository.create({
+                    userId, ritualType: 'morning', date,
+                    title: 'Generating...', url: '', duration: 300, metadata: { status: 'generating' }
+                }),
+                this.ritualTrackRepository.create({
+                    userId, ritualType: 'night', date,
+                    title: 'Generating...', url: '', duration: 600, metadata: { status: 'generating' }
+                }),
+            ]);
+            this.logger.log(`Claimed generation slot for user ${userId} on ${date}`);
+            return true;
+        } catch (err) {
+            // Unique constraint violation = another instance won the race
+            this.logger.debug(`Generation slot already claimed for ${userId}/${date}: ${err.message}`);
+            return false;
+        }
+    }
+
     async generateDailyRituals(userId: string, date: string): Promise<{ morning: RitualTrack | null; night: RitualTrack | null }> {
         this.logger.log(`Syncing daily rituals for user ${userId} on date ${date}`);
         
@@ -67,11 +100,11 @@ export class RitualsService {
         const title = type === 'morning' ? `Morning Affirmations: ${theme}` : `Nightly Subliminals: ${theme}`;
         const audioFilename = `ritual_${type}_${userId}_${date.replace(/-/g, '_')}`;
 
-        // Check if already exists
+        // Check if already completed (has a real URL)
         const existing = await this.ritualTrackRepository.findOne({
             where: { userId, ritualType: type, date }
         });
-        if (existing) return existing;
+        if (existing && existing.url && existing.url.length > 0) return existing;
 
         try {
             // 1. Get user settings to check preference
@@ -129,7 +162,14 @@ export class RitualsService {
                 if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
             }
 
-            // 3. Save to DB
+            // 3. Save to DB — update the placeholder if it exists, otherwise create
+            if (existing) {
+                existing.title = title;
+                existing.url = publicUrl;
+                existing.metadata = metadata;
+                return await this.ritualTrackRepository.save(existing);
+            }
+
             const ritual = this.ritualTrackRepository.create({
                 userId,
                 ritualType: type,

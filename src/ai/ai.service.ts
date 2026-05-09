@@ -329,7 +329,7 @@ export class AiService implements OnModuleInit {
                 'X-Title': 'Ease App',
             },
             body: JSON.stringify({
-                model: 'mistralai/mistral-7b-instruct:free', // Extremely stable free model
+                model: 'meta-llama/llama-3.1-8b-instruct:free', // Free tier model on OpenRouter
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
             }),
@@ -346,7 +346,7 @@ export class AiService implements OnModuleInit {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
             body: JSON.stringify({
-                model: 'open-mistral-7b', // Better quality than tiny
+                model: 'open-mistral-nemo', // Current Mistral small model
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
             }),
