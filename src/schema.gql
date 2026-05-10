@@ -48,6 +48,7 @@ type DailyTask {
   description: String
   duration: Int
   id: ID!
+  metadata: String
   order: Int!
   quizId: String
   scheduledAt: DateTime

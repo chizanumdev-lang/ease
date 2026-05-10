@@ -28,6 +28,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { EngineModule } from './modules/engine/engine.module';
 import { WorkerModule } from './modules/worker/worker.module';
+import { StartupService } from './common/startup.service';
 
 @Module({
   imports: [
@@ -110,6 +111,7 @@ import { WorkerModule } from './modules/worker/worker.module';
   controllers: [AppController],
   providers: [
     AppService,
+    StartupService,
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,

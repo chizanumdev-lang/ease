@@ -74,6 +74,10 @@ export class Task {
     @Column({ default: 0 })
     order: number;
 
+    @Field(() => String, { nullable: true })
+    @Column({ type: 'jsonb', nullable: true })
+    metadata?: any;
+
     @Field()
     @Index()
     @Column({ name: 'day_plan_id' })

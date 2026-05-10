@@ -16,6 +16,7 @@ import { UsersModule } from '../users/users.module';
 import { AiModule } from '../ai/ai.module';
 import { VideoModule } from '../video/video.module';
 import { AudioModule } from '../audio/audio.module';
+import { EngineModule } from '../modules/engine/engine.module';
 
 import { ProgramsController } from './programs.controller';
 
@@ -36,6 +37,7 @@ import { ProgramsController } from './programs.controller';
         AiModule,
         VideoModule,
         AudioModule,
+        EngineModule,
     ],
     controllers: [ProgramsController],
     providers: [ProgramsService, ProgressionService, ProgramsResolver],
