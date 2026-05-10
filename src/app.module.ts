@@ -61,7 +61,7 @@ import { StartupService } from './common/startup.service';
           ssl: isLocal ? false : { rejectUnauthorized: false },
           connectTimeoutMS: 5000, // Reduced for faster failover in serverless
           autoLoadEntities: true, // More efficient for NestJS
-          synchronize: false,
+          synchronize: isLocal, // Automatically sync tables in local dev
         };
 
         if (url) {
