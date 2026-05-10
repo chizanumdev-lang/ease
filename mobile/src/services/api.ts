@@ -15,7 +15,21 @@ const api = axios.create({
  * This lets the API layer trigger a proper logout without importing the store
  * directly (which would create a circular dependency).
  */
+// Global logout callback
 let onUnauthorized: (() => void) | null = null;
+
+// Queue for multiple 401s
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+const subscribeTokenRefresh = (cb: (token: string) => void) => {
+    refreshSubscribers.push(cb);
+};
+
+const onRefreshed = (token: string) => {
+    refreshSubscribers.map((cb) => cb(token));
+    refreshSubscribers = [];
+};
 
 export const setUnauthorizedHandler = (handler: () => void) => {
     onUnauthorized = handler;
@@ -31,8 +45,6 @@ api.interceptors.request.use(
             const token = await secureStorage.getAccessToken();
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
-            } else {
-                console.warn(`[API] No token found for route: ${config.url} — user may need to re-login`);
             }
         }
         return config;
@@ -50,52 +62,51 @@ api.interceptors.response.use(
         const originalRequest = error.config;
         const status = error.response?.status;
 
-        // 404 is an expected "empty state", not a real error
-        if (status === 404) {
-            console.warn(`[API] 404 Not Found: ${originalRequest?.url}`);
-            return Promise.reject(error);
-        }
-
-        // For all other errors, log at error level
-        console.error(`[API] Response Error: ${status} from ${originalRequest?.url}`);
+        if (status === 404) return Promise.reject(error);
 
         // Handle 401 — token expired or invalid
         if (status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
+            if (isRefreshing) {
+                return new Promise((resolve) => {
+                    subscribeTokenRefresh((token) => {
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        resolve(api(originalRequest));
+                    });
+                });
+            }
+
+            isRefreshing = true;
+
             try {
                 const refreshToken = await secureStorage.getRefreshToken();
                 if (refreshToken) {
-                    console.log('[API] Attempting to refresh token...');
+                    console.log(`[API] Refreshing token for ${originalRequest.url}...`);
                     
-                    // Call refresh endpoint directly to avoid circular dependency with authService
                     const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
                         headers: { Authorization: `Bearer ${refreshToken}` }
                     });
 
                     const { accessToken, refreshToken: newRefreshToken } = response.data;
                     
-                    // Store new tokens
                     await secureStorage.setAccessToken(accessToken);
                     await secureStorage.setRefreshToken(newRefreshToken);
 
-                    console.log('[API] Token refreshed successfully. Retrying original request.');
+                    console.log(`[API] Refresh success. Retrying ${originalRequest.url}`);
+                    
+                    isRefreshing = false;
+                    onRefreshed(accessToken);
 
-                    // Update the original request's auth header and retry
                     originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                     return api(originalRequest);
                 }
             } catch (refreshError) {
-                console.error('[API] Token refresh failed:', refreshError);
-                
-                // Only logout if refresh actually fails
-                console.warn('[API] Refresh failed — clearing tokens and logging out.');
+                isRefreshing = false;
+                console.error('[API] Refresh failed — logging out.');
                 await secureStorage.clearTokens();
                 await mmkvStorage.clearAll();
-
-                if (onUnauthorized) {
-                    onUnauthorized();
-                }
+                if (onUnauthorized) onUnauthorized();
                 return Promise.reject(refreshError);
             }
         }

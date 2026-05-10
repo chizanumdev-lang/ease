@@ -123,7 +123,7 @@ export default function RootNavigator() {
                 )}
             </Stack.Navigator>
             <GlobalModal />
-            {isAuthenticated && hasCompletedOnboarding && <AudioParticle />}
+            {isAuthenticated && hasCompletedOnboarding && (user?.settings?.showFloatingBubble !== false) && <AudioParticle />}
         </NavigationContainer>
     );
 }

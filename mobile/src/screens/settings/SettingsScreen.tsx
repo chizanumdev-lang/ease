@@ -343,6 +343,24 @@ export default function SettingsScreen({ navigation }: Props) {
                     </View>
                 </View>
 
+                {/* App Preferences Section */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>App Preferences</Text>
+                    <View style={[styles.settingsGroup, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                        <View style={styles.settingRow}>
+                            <View style={styles.settingInfo}>
+                                <Text style={[styles.settingLabel, { color: colors.text }]}>Floating Companion</Text>
+                                <Text style={[styles.settingDesc, { color: colors.textMuted }]}>Show the floating bubble when audio is active.</Text>
+                            </View>
+                            <Switch
+                                value={user?.settings?.showFloatingBubble ?? true}
+                                onValueChange={(val) => handleUpdatePreference('showFloatingBubble', val)}
+                                trackColor={{ false: isDark ? colors.outline : colors.surfaceContainerHighest, true: colors.primary }}
+                            />
+                        </View>
+                    </View>
+                </View>
+
 
                 {/* Plan Management */}
                 {currentProgram && (
@@ -583,6 +601,10 @@ const styles = StyleSheet.create({
     settingLabel: {
         fontSize: 15,
         fontWeight: '600',
+    },
+    settingDesc: {
+        fontSize: 12,
+        marginTop: 2,
     },
     divider: {
         height: 1,

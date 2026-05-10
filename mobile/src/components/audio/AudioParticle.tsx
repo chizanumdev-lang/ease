@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAudioStore } from '../../store/audioStore';
+import { useTheme } from '../../hooks/useTheme';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PARTICLE_SIZE = 64;
@@ -31,6 +32,7 @@ const INITIAL_Y = SCREEN_HEIGHT * 0.4;
  */
 const AudioParticle = () => {
     const { proximityStatus, isPlaying, ebbFactor, checkProximity, fetchRituals } = useAudioStore();
+    const { colors, fonts, shadows, isDark } = useTheme();
 
     // ── Position — NOT native driver (layout computation required)
     const posX = useRef(new Animated.Value(INITIAL_X)).current;
@@ -69,7 +71,6 @@ const AudioParticle = () => {
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
             onPanResponderGrant: () => {
-                // Capture current translate values before dragging
                 posX.stopAnimation(x => { panOffset.current.x = x; });
                 posY.stopAnimation(y => { panOffset.current.y = y; });
             },
@@ -81,12 +82,10 @@ const AudioParticle = () => {
                 const releaseX = panOffset.current.x + gs.dx;
                 const releaseY = panOffset.current.y + gs.dy;
 
-                // Snap to nearest horizontal edge
                 const snapX = releaseX + PARTICLE_SIZE / 2 < SCREEN_WIDTH / 2
                     ? MARGIN
                     : SCREEN_WIDTH - PARTICLE_SIZE - MARGIN;
 
-                // Clamp vertically within safe zone
                 const snapY = Math.min(
                     Math.max(releaseY, EXCLUSION_ZONE),
                     SCREEN_HEIGHT - EXCLUSION_ZONE - PARTICLE_SIZE
@@ -102,20 +101,14 @@ const AudioParticle = () => {
         })
     ).current;
 
-    // State-driven visuals
+    // State-driven visuals - Using theme tones where possible
     const gradientColors: [string, string] = isPlaying
-        ? ['rgba(139,92,246,0.95)', 'rgba(167,139,250,0.8)']
+        ? [colors.primary, colors.primaryContainer] 
         : proximityStatus === 'READY'
         ? ['rgba(16,185,129,0.92)', 'rgba(52,211,153,0.78)']
         : proximityStatus === 'APPROACHING'
         ? ['rgba(245,158,11,0.92)', 'rgba(251,191,36,0.78)']
-        : ['rgba(79,70,229,0.88)',  'rgba(99,102,241,0.72)'];
-
-    const shadowColor = isPlaying
-        ? '#8B5CF6'
-        : proximityStatus === 'READY'      ? '#10B981'
-        : proximityStatus === 'APPROACHING' ? '#F59E0B'
-        : '#6366F1';
+        : [colors.secondary, colors.secondaryContainer];
 
     const iconName: any = isPlaying
         ? 'pause'
@@ -124,13 +117,12 @@ const AudioParticle = () => {
         : 'headset';
 
     return (
-        // ── Outer: position only — useNativeDriver: false
         <Animated.View
             {...panResponder.panHandlers}
             style={[
                 styles.outerContainer,
                 {
-                    shadowColor,
+                    ...shadows.ambient,
                     transform: [
                         { translateX: posX },
                         { translateY: posY },
@@ -138,7 +130,6 @@ const AudioParticle = () => {
                 },
             ]}
         >
-            {/* ── Inner: scale + opacity — useNativeDriver: true */}
             <Animated.View
                 style={{
                     transform: [{ scale: pulseAnim }],
@@ -147,19 +138,19 @@ const AudioParticle = () => {
                     overflow: 'hidden',
                 }}
             >
-                <BlurView intensity={20} tint="light" style={styles.blurContainer}>
+                <BlurView intensity={30} tint={isDark ? "dark" : "light"} style={styles.blurContainer}>
                     <LinearGradient
                         colors={gradientColors}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.gradient}
                     >
-                        <Ionicons name={iconName} size={24} color="#FFFFFF" />
+                        <Ionicons name={iconName} size={24} color={isDark ? colors.background : colors.white} />
 
-                        {isPlaying && <View style={styles.playingDot} />}
+                        {isPlaying && <View style={[styles.playingDot, { backgroundColor: isDark ? colors.background : colors.white }]} />}
 
                         {proximityStatus === 'READY' && !isPlaying && (
-                            <Text style={styles.readyLabel}>NOW</Text>
+                            <Text style={[styles.readyLabel, { fontFamily: fonts.display, color: isDark ? colors.background : colors.white }]}>NOW</Text>
                         )}
                     </LinearGradient>
                 </BlurView>
@@ -179,18 +170,12 @@ const styles = StyleSheet.create({
         height: PARTICLE_SIZE,
         borderRadius: PARTICLE_SIZE / 2,
         zIndex: 9999,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.45,
-        shadowRadius: 14,
-        elevation: 12,
     },
     blurContainer: {
         width: PARTICLE_SIZE,
         height: PARTICLE_SIZE,
         borderRadius: PARTICLE_SIZE / 2,
         overflow: 'hidden',
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.45)',
     },
     gradient: {
         flex: 1,
@@ -203,15 +188,13 @@ const styles = StyleSheet.create({
         width: 6,
         height: 6,
         borderRadius: 3,
-        backgroundColor: '#FFFFFF',
         opacity: 0.9,
     },
     readyLabel: {
         position: 'absolute',
         bottom: 8,
         fontSize: 7,
-        fontWeight: '800',
-        color: '#FFFFFF',
         letterSpacing: 0.8,
     },
 });
+

@@ -70,8 +70,15 @@ export class AnalyticsService {
                 now,
             );
 
+            // Get Active Goal to determine progression variant
+            const activeGoal = await this.programRepository.findOne({
+                where: { userId },
+                order: { createdAt: 'DESC' },
+                relations: ['goal']
+            }).then(p => p?.goal);
+
             // Get Progression Data
-            const progression = this.progressionService.getProgression(pointsEarned);
+            const progression = this.progressionService.getProgression(pointsEarned, activeGoal?.category);
 
             return {
                 currentStreak,

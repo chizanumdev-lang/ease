@@ -1,12 +1,47 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
-import Redis from 'ioredis';
 import { AudioScriptData } from './interfaces/audio-script.interface';
 import { AiGenerationLog } from '../admin/entities/ai-generation-log.entity';
+
+/**
+ * Simple in-memory LRU cache with TTL. Replaces Redis for AI response caching.
+ * Each serverless cold start gets a fresh cache — that's fine, the main goal is
+ * deduplicating identical prompts within the same invocation lifecycle.
+ */
+class MemoryCache {
+    private cache = new Map<string, { value: string; expires: number }>();
+    private maxSize: number;
+
+    constructor(maxSize = 200) {
+        this.maxSize = maxSize;
+    }
+
+    get(key: string): string | null {
+        const entry = this.cache.get(key);
+        if (!entry) return null;
+        if (Date.now() > entry.expires) {
+            this.cache.delete(key);
+            return null;
+        }
+        return entry.value;
+    }
+
+    set(key: string, value: string, ttlSeconds: number): void {
+        // Evict oldest entries if at capacity
+        if (this.cache.size >= this.maxSize) {
+            const firstKey = this.cache.keys().next().value;
+            if (firstKey) this.cache.delete(firstKey);
+        }
+        this.cache.set(key, {
+            value,
+            expires: Date.now() + ttlSeconds * 1000,
+        });
+    }
+}
 
 interface AiProvider {
     name: string;
@@ -24,11 +59,12 @@ const DAILY_LIMITS: Record<string, number> = {
 };
 
 @Injectable()
-export class AiService implements OnModuleInit, OnModuleDestroy {
+export class AiService implements OnModuleInit {
     private genAI: GoogleGenerativeAI;
-    private redis: Redis;
+    private cache: MemoryCache;
     private readonly logger = new Logger(AiService.name);
     private providers: AiProvider[];
+    private usageCounts = new Map<string, number>();
     private locks: Record<string, boolean> = {
         gemini: false,
         groq: false,
@@ -51,46 +87,17 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
     }
 
     onModuleInit() {
-        // Build a lean Redis client reusing the same URL as BullMQ.
-        // Falls back to localhost for local dev (same as BullMQ fallback).
-        const redisUrl = this.configService.get<string>('KV_URL') ||
-                         this.configService.get<string>('REDIS_URL');
-        const options: any = {
-            tls: redisUrl?.startsWith('rediss://') ? {} : undefined,
-            lazyConnect: true,
-            maxRetriesPerRequest: 1, // Don't hang if Redis is down
-            retryStrategy: (times: number) => {
-                if (times > 3) {
-                    this.logger.error('Redis connection failed after 3 attempts. Caching disabled.');
-                    return null; // stop retrying
-                }
-                return Math.min(times * 200, 1000);
-            }
-        };
-
-        if (redisUrl) {
-            this.redis = new Redis(redisUrl, options);
-        } else {
-            const host = this.configService.get<string>('REDIS_HOST', 'localhost');
-            const port = this.configService.get<number>('REDIS_PORT', 6379);
-            this.redis = new Redis({ ...options, host, port });
-        }
-
-        // Add explicit error listener to stop ioredis from throwing unhandled errors to process.stderr
-        this.redis.on('error', (err) => {
-            if ((err as any).code === 'ETIMEDOUT' || (err as any).code === 'ECONNREFUSED') {
-                // Silently log once or handle gracefully
-                this.logger.debug(`Redis Background connection issue: ${err.message}`);
-            } else {
-                this.logger.warn(`Redis Error: ${err.message}`);
-            }
-        });
-
-        this.redis.connect().catch((err) => {
-            this.logger.warn(`Redis not reachable — caching and quota tracking disabled: ${err.message}`);
-        });
+        // In-memory LRU cache — replaces Redis. Zero external dependencies.
+        this.cache = new MemoryCache(200);
+        this.usageCounts = new Map();
 
         this.providers = [
+            {
+                name: 'ollama',
+                priority: 0, // Top priority if available (local & free)
+                cooldownUntil: null,
+                generate: (prompt) => this.callOllama(prompt),
+            },
             {
                 name: 'groq',
                 priority: 1,
@@ -124,9 +131,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         ];
     }
 
-    async onModuleDestroy() {
-        await this.redis?.quit();
-    }
+    // No external connections to clean up — in-memory cache is GC'd automatically
 
     // ─── Provider Infrastructure ──────────────────────────────────────────────
 
@@ -177,19 +182,14 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         return null;
     }
 
-    private async getDailyUsage(provider: string): Promise<number> {
-        try {
-            const key = `usage:${provider}:${new Date().toISOString().slice(0, 10)}`;
-            return parseInt((await this.redis.get(key)) ?? '0', 10);
-        } catch { return 0; }
+    private getDailyUsage(provider: string): number {
+        const key = `${provider}:${new Date().toISOString().slice(0, 10)}`;
+        return this.usageCounts.get(key) ?? 0;
     }
 
-    private async incrementUsage(provider: string) {
-        try {
-            const key = `usage:${provider}:${new Date().toISOString().slice(0, 10)}`;
-            await this.redis.incr(key);
-            await this.redis.expire(key, 86400);
-        } catch { /* non-critical */ }
+    private incrementUsage(provider: string): void {
+        const key = `${provider}:${new Date().toISOString().slice(0, 10)}`;
+        this.usageCounts.set(key, (this.usageCounts.get(key) ?? 0) + 1);
     }
 
     async generateCustomJson<T>(prompt: string, fallback: T, metadata?: any): Promise<T> {
@@ -212,15 +212,13 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
     }
 
     private async callWithFallback(prompt: string, metadata?: any): Promise<string | null> {
-        // ── Prompt caching: hash the prompt and check Redis (7-day TTL) ──
+        // ── Prompt caching: hash the prompt and check in-memory cache ──
         const cacheKey = `ai:${createHash('md5').update(prompt).digest('hex')}`;
-        try {
-            const cached = await this.redis.get(cacheKey);
-            if (cached) {
-                this.logger.log('AI response served from cache');
-                return cached;
-            }
-        } catch { /* cache miss — continue normally */ }
+        const cached = this.cache.get(cacheKey);
+        if (cached) {
+            this.logger.log('AI response served from cache');
+            return cached;
+        }
 
         const available = this.getAvailableProviders();
         for (const provider of available) {
@@ -230,7 +228,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                 continue;
             }
 
-            const usage = await this.getDailyUsage(provider.name);
+            const usage = this.getDailyUsage(provider.name);
             const limit = DAILY_LIMITS[provider.name] ?? Infinity;
             if (usage >= limit) {
                 this.logger.warn(`${provider.name} daily limit reached (${usage}/${limit}), skipping`);
@@ -244,7 +242,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                 const result = await provider.generate(prompt);
                 const latency = Date.now() - startTime;
 
-                await this.incrementUsage(provider.name);
+                this.incrementUsage(provider.name);
 
                 // Log success
                 this.aiLogRepository.save({
@@ -258,8 +256,8 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                     createdAt: new Date(),
                 }).catch(err => this.logger.error('Failed to save AI log', err));
 
-                // Cache successful response for 7 days
-                try { await this.redis.setex(cacheKey, 604800, result); } catch { /* non-critical */ }
+                // Cache successful response (1 hour TTL for in-memory)
+                this.cache.set(cacheKey, result, 3600);
 
                 return result;
             } catch (error) {
@@ -337,7 +335,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
                 'X-Title': 'Ease App',
             },
             body: JSON.stringify({
-                model: 'mistralai/mistral-7b-instruct:free', // Extremely stable free model
+                model: 'meta-llama/llama-3.1-8b-instruct:free', // Free tier model on OpenRouter
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
             }),
@@ -354,7 +352,7 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
             body: JSON.stringify({
-                model: 'open-mistral-7b', // Better quality than tiny
+                model: 'open-mistral-nemo', // Current Mistral small model
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
             }),
@@ -362,6 +360,26 @@ export class AiService implements OnModuleInit, OnModuleDestroy {
         if (!res.ok) throw new Error(`Mistral HTTP ${res.status}: ${await res.text()}`);
         const data = await res.json();
         return data.choices[0].message.content;
+    }
+
+    private async callOllama(prompt: string): Promise<string> {
+        const url = this.configService.get<string>('OLLAMA_URL') || 'http://localhost:11434';
+        const model = this.configService.get<string>('OLLAMA_MODEL') || 'llama3.2:3b';
+
+        const res = await fetch(`${url}/api/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model,
+                prompt,
+                stream: false,
+                options: { temperature: 0.6 },
+            }),
+        });
+
+        if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
+        const data = await res.json();
+        return data.response;
     }
 
     async generateProgramPlan(goal: string, options: any): Promise<any> {

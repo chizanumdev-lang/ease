@@ -18,6 +18,7 @@ import { AudioMixerService } from './audio-mixer.service';
 @Injectable()
 export class AudioProcessor extends WorkerHost implements OnModuleInit {
     private readonly logger = new Logger(AudioProcessor.name);
+    private readonly isVercel = !!process.env.VERCEL;
 
     constructor(
         @InjectRepository(AudioTrack)
@@ -37,6 +38,10 @@ export class AudioProcessor extends WorkerHost implements OnModuleInit {
      * Re-queue them so they get properly generated.
      */
     async onModuleInit() {
+        if (this.isVercel) {
+            this.logger.debug('Skipping AudioProcessor init on Vercel serverless');
+            return;
+        }
         try {
             const stuckTracks = await this.audioTrackRepository.find({
                 where: [
@@ -64,6 +69,10 @@ export class AudioProcessor extends WorkerHost implements OnModuleInit {
     }
 
     async process(job: Job<any, any, string>): Promise<any> {
+        if (this.isVercel) {
+            this.logger.warn(`Skipping audio job ${job.id} on Vercel serverless — needs dedicated worker`);
+            return { success: false, reason: 'serverless_skip' };
+        }
         const { audioTrackId, theme, audioFilename } = job.data;
         this.logger.log(`Processing audio generation job ${job.id} for track ${audioTrackId}`);
 

@@ -12,16 +12,16 @@ interface ReflectionTaskProps {
 }
 
 export default function ReflectionTaskComponent({ task, onComplete }: ReflectionTaskProps) {
-    const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    const { colors, fonts, shadows, isDark } = useTheme();
     const [rating, setRating] = useState<number | null>(null);
     const [mood, setMood] = useState<string | null>(null);
 
     const moods = [
-        { icon: 'happy', label: 'Energized', color: '#FFD700' },
-        { icon: 'sunny', label: 'Calm', color: '#87CEEB' },
-        { icon: 'cloudy', label: 'Focused', color: '#98FB98' },
-        { icon: 'rainy', label: 'Tired', color: '#B0C4DE' },
-        { icon: 'thunderstorm', label: 'Stressed', color: '#FA8072' }
+        { icon: 'happy', label: 'Energized' },
+        { icon: 'sunny', label: 'Calm' },
+        { icon: 'cloudy', label: 'Focused' },
+        { icon: 'rainy', label: 'Tired' },
+        { icon: 'thunderstorm', label: 'Stressed' }
     ];
 
     const handleComplete = () => {
@@ -32,118 +32,150 @@ export default function ReflectionTaskComponent({ task, onComplete }: Reflection
     };
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>Quick Check-in</Text>
-                <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                    How are you feeling after completing today's core lessons?
-                </Text>
-            </View>
-
-            <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Rate your current focus</Text>
-                <View style={styles.ratingRow}>
-                    {[1, 2, 3, 4, 5].map((num) => (
-                        <TouchableOpacity
-                            key={num}
-                            style={[
-                                styles.ratingButton,
-                                { 
-                                    backgroundColor: rating === num ? colors.primary : colors.surfaceContainerLow,
-                                    borderColor: rating === num ? colors.primary : colors.outlineVariant
-                                }
-                            ]}
-                            onPress={() => setRating(num)}
-                        >
-                            <Text style={[
-                                styles.ratingText, 
-                                { color: rating === num ? '#fff' : colors.text }
-                            ]}>
-                                {num}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
+        <View style={[styles.root, { backgroundColor: colors.background }]}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.header}>
+                    <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>Quick Check-in</Text>
+                    <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                        How are you feeling after completing today's core lessons?
+                    </Text>
                 </View>
-                <View style={styles.labelRow}>
-                    <Text style={[styles.labelText, { color: colors.textMuted }]}>Low</Text>
-                    <Text style={[styles.labelText, { color: colors.textMuted }]}>High</Text>
-                </View>
-            </View>
 
-            <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Select your primary mood</Text>
-                <View style={styles.moodGrid}>
-                    {moods.map((m) => (
-                        <TouchableOpacity
-                            key={m.label}
-                            style={[
-                                styles.moodCard,
-                                { 
-                                    backgroundColor: mood === m.label ? colors.secondaryContainer : colors.surface,
-                                    borderColor: mood === m.label ? colors.primary : colors.outlineVariant
-                                }
-                            ]}
-                            onPress={() => setMood(m.label)}
-                        >
-                            <Ionicons 
-                                name={m.icon as any} 
-                                size={32} 
-                                color={mood === m.label ? colors.primary : colors.textMuted} 
-                            />
-                            <Text style={[
-                                styles.moodLabel, 
-                                { color: mood === m.label ? colors.primary : colors.text }
-                            ]}>
-                                {m.label}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.primary, fontFamily: fonts.display, textTransform: 'uppercase', letterSpacing: 1.5 }]}>Focus Level</Text>
+                    <View style={styles.ratingRow}>
+                        {[1, 2, 3, 4, 5].map((num) => {
+                            const isSelected = rating === num;
+                            return (
+                                <TouchableOpacity
+                                    key={num}
+                                    style={[
+                                        styles.ratingButton,
+                                        { 
+                                            backgroundColor: isSelected ? colors.primary : colors.surfaceContainerLow,
+                                            ...(isSelected ? shadows.ambient : {})
+                                        }
+                                    ]}
+                                    onPress={() => setRating(num)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Text style={[
+                                        styles.ratingText, 
+                                        { color: isSelected ? colors.white : colors.text, fontFamily: fonts.display }
+                                    ]}>
+                                        {num}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                    <View style={styles.labelRow}>
+                        <Text style={[styles.labelText, { color: colors.textMuted, fontFamily: fonts.label }]}>Subtle</Text>
+                        <Text style={[styles.labelText, { color: colors.textMuted, fontFamily: fonts.label }]}>Intense</Text>
+                    </View>
                 </View>
-            </View>
 
-            <View style={styles.footer}>
-                <StitchButton 
-                    title="Finish Reflection"
-                    variant="primary"
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.primary, fontFamily: fonts.display, textTransform: 'uppercase', letterSpacing: 1.5 }]}>Primary Mood</Text>
+                    <View style={styles.moodGrid}>
+                        {moods.map((m) => {
+                            const isSelected = mood === m.label;
+                            return (
+                                <TouchableOpacity
+                                    key={m.label}
+                                    style={[
+                                        styles.moodCard,
+                                        { 
+                                            backgroundColor: isSelected ? colors.primaryContainer : colors.surfaceContainerLow,
+                                            ...(isSelected ? shadows.ambient : {})
+                                        }
+                                    ]}
+                                    onPress={() => setMood(m.label)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Ionicons 
+                                        name={isSelected ? (m.icon + '') as any : (m.icon + '-outline') as any} 
+                                        size={28} 
+                                        color={isSelected ? colors.primary : colors.textMuted} 
+                                    />
+                                    <Text style={[
+                                        styles.moodLabel, 
+                                        { color: isSelected ? colors.primary : colors.text, fontFamily: fonts.body }
+                                    ]}>
+                                        {m.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                </View>
+
+                <View style={{ height: 90 }} />
+            </ScrollView>
+
+            <View style={[styles.footer, { backgroundColor: colors.background }]}>
+                <TouchableOpacity
+                    style={[
+                        styles.finishBtn,
+                        { 
+                            backgroundColor: (rating && mood) ? colors.primary : colors.surfaceContainerHighest,
+                            ...((rating && mood) ? shadows.ambient : {})
+                        }
+                    ]}
                     onPress={handleComplete}
                     disabled={!rating || !mood}
-                    rightIcon="arrow-forward"
-                />
+                    activeOpacity={0.88}
+                >
+                    <Text style={[
+                        styles.finishBtnText, 
+                        { 
+                            fontFamily: fonts.display,
+                            color: (rating && mood) ? colors.white : colors.textMuted
+                        }
+                    ]}>
+                        Complete Reflection
+                    </Text>
+                    <Ionicons 
+                        name="checkmark-circle" 
+                        size={22} 
+                        color={(rating && mood) ? colors.white : colors.textMuted} 
+                    />
+                </TouchableOpacity>
             </View>
-        </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    root: {
         flex: 1,
     },
     scrollContent: {
-        padding: 24,
+        paddingHorizontal: 24,
+        paddingTop: 32,
         paddingBottom: 40,
     },
     header: {
-        marginBottom: 40,
+        marginBottom: 48,
         alignItems: 'center',
     },
     title: {
-        fontSize: 26,
-        fontWeight: '900',
-        marginBottom: 8,
+        fontSize: 28,
+        lineHeight: 36,
+        marginBottom: 12,
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
+        paddingHorizontal: 12,
     },
     section: {
-        marginBottom: 40,
+        marginBottom: 44,
     },
     sectionTitle: {
-        fontSize: 14,
-        fontWeight: '800',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
+        fontSize: 13,
         marginBottom: 20,
         textAlign: 'center',
     },
@@ -155,24 +187,21 @@ const styles = StyleSheet.create({
     ratingButton: {
         flex: 1,
         aspectRatio: 1,
-        borderRadius: 16,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1.5,
     },
     ratingText: {
-        fontSize: 20,
-        fontWeight: '800',
+        fontSize: 22,
     },
     labelRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 8,
+        marginTop: 12,
         paddingHorizontal: 4,
     },
     labelText: {
         fontSize: 12,
-        fontWeight: '700',
     },
     moodGrid: {
         flexDirection: 'row',
@@ -182,18 +211,33 @@ const styles = StyleSheet.create({
     moodCard: {
         width: '31%',
         aspectRatio: 1,
-        borderRadius: 20,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1.5,
         padding: 8,
     },
     moodLabel: {
         fontSize: 12,
-        fontWeight: '700',
-        marginTop: 8,
+        marginTop: 10,
     },
     footer: {
-        marginTop: 20,
-    }
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: 24,
+        paddingBottom: 24,
+        paddingTop: 16,
+    },
+    finishBtn: {
+        height: 64,
+        borderRadius: 32,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 10,
+    },
+    finishBtnText: {
+        fontSize: 18,
+    },
 });

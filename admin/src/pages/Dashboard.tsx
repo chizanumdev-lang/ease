@@ -117,7 +117,7 @@ export default function Dashboard() {
     const cards = [
         { 
           label: 'Active Users', 
-          value: pulse?.dau.toLocaleString(), 
+          value: pulse?.dau?.toLocaleString() || '0', 
           change: '+12.5%', 
           isPositive: true, 
           icon: Users, 
@@ -167,33 +167,33 @@ export default function Dashboard() {
           className="space-y-8 pb-10"
         >
             {/* KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
                 {cards.map((card) => (
                     <motion.div 
                       key={card.label} 
                       variants={itemVariants}
                       whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                      className="relative overflow-hidden bg-ease-surface/40 backdrop-blur-md p-6 rounded-[2rem] border border-white/5 shadow-ease-layered hover:shadow-2xl transition-all duration-300 group"
+                      className="relative overflow-hidden bg-ease-surface/40 backdrop-blur-md p-5 lg:p-6 rounded-[1.5rem] lg:rounded-[2rem] border border-white/5 shadow-ease-layered hover:shadow-2xl transition-all duration-300 group"
                     >
                         {/* Decorative Background Glow */}
                         <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-ease-${card.color}`} />
                         
-                        <div className="flex justify-between items-start mb-6 relative z-10">
+                        <div className="flex justify-between items-start mb-4 lg:mb-6 relative z-10">
                             <div className={clsx(
-                              "p-3.5 rounded-2xl transition-all duration-300 group-hover:scale-110",
-                              card.color === 'blue' && "bg-blue-500/10 text-blue-400 shadow-lg shadow-blue-500/5",
-                              card.color === 'green' && "bg-emerald-500/10 text-emerald-400 shadow-lg shadow-emerald-500/5",
-                              card.color === 'purple' && "bg-purple-500/10 text-purple-400 shadow-lg shadow-purple-500/5",
-                              card.color === 'teal' && "bg-teal-500/10 text-teal-400 shadow-lg shadow-teal-500/5",
-                            )}>
-                                <card.icon className="w-6 h-6" />
-                            </div>
+                               "p-3 rounded-xl lg:p-3.5 lg:rounded-2xl transition-all duration-300 group-hover:scale-110",
+                               card.color === 'blue' && "bg-blue-500/10 text-blue-400 shadow-lg shadow-blue-500/5",
+                               card.color === 'green' && "bg-emerald-500/10 text-emerald-400 shadow-lg shadow-emerald-500/5",
+                               card.color === 'purple' && "bg-purple-500/10 text-purple-400 shadow-lg shadow-purple-500/5",
+                               card.color === 'teal' && "bg-teal-500/10 text-teal-400 shadow-lg shadow-teal-500/5",
+                             )}>
+                                 <card.icon className="w-5 h-5 lg:w-6 lg:h-6" />
+                             </div>
                             <div className="flex flex-col items-end gap-1">
                               <div className={clsx(
-                                "flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg",
+                                "flex items-center gap-1 text-[9px] lg:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg",
                                 card.isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
                               )}>
-                                  {card.isPositive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                                  {card.isPositive ? <ArrowUpRight className="w-3 h-3 lg:w-3.5 lg:h-3.5" /> : <ArrowDownRight className="w-3 h-3 lg:w-3.5 lg:h-3.5" />}
                                   {card.change}
                               </div>
                               {card.isLive && (
@@ -207,27 +207,27 @@ export default function Dashboard() {
                               )}
                             </div>
                         </div>
-                        <h3 className="text-ease-text-secondary text-xs font-black uppercase tracking-[0.15em] mb-1">{card.label}</h3>
-                        <p className="text-4xl font-black text-ease-text-primary tracking-tighter">{card.value}</p>
+                        <h3 className="text-ease-text-secondary text-[10px] lg:text-xs font-black uppercase tracking-[0.15em] mb-1">{card.label}</h3>
+                        <p className="text-2xl lg:text-4xl font-black text-ease-text-primary tracking-tighter">{card.value}</p>
                     </motion.div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                 {/* Trend Chart */}
                 <motion.div 
                   variants={itemVariants}
-                  className="lg:col-span-2 bg-ease-surface/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/5 shadow-ease-layered"
+                  className="lg:col-span-2 bg-ease-surface/40 backdrop-blur-md p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-white/5 shadow-ease-layered"
                 >
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 lg:mb-10">
                         <div>
-                            <h3 className="text-2xl font-black text-ease-text-primary tracking-tighter">Growth Velocity</h3>
-                            <p className="text-sm text-ease-text-secondary font-medium mt-1">Analyzing user retention and task completion cycles.</p>
+                            <h3 className="text-xl lg:text-2xl font-black text-ease-text-primary tracking-tighter">Growth Velocity</h3>
+                            <p className="text-xs lg:text-sm text-ease-text-secondary font-medium mt-1">Analyzing user retention and task completion cycles.</p>
                         </div>
-                        <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5">
+                        <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/5 self-stretch sm:self-auto overflow-x-auto">
                             {['30D', '90D', '1Y'].map(t => (
                               <button key={t} className={clsx(
-                                "px-4 py-1.5 rounded-lg text-xs font-black transition-all",
+                                "flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-[10px] lg:text-xs font-black transition-all whitespace-nowrap",
                                 t === '30D' ? "bg-ease-blue text-white shadow-lg shadow-blue-500/20" : "text-ease-text-secondary hover:text-white"
                               )}>
                                 {t}
@@ -236,9 +236,9 @@ export default function Dashboard() {
                         </div>
                     </div>
                     
-                    <div className="h-[400px] w-full">
+                    <div className="h-[300px] lg:h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={trends} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <AreaChart data={trends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorDau" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
@@ -254,13 +254,13 @@ export default function Dashboard() {
                                   dataKey="date" 
                                   axisLine={false} 
                                   tickLine={false} 
-                                  tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} 
+                                  tick={{fill: '#94a3b8', fontSize: 9, fontWeight: 700}} 
                                   dy={15}
                                 />
                                 <YAxis 
                                   axisLine={false} 
                                   tickLine={false} 
-                                  tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} 
+                                  tick={{fill: '#94a3b8', fontSize: 9, fontWeight: 700}} 
                                   dx={-10}
                                 />
                                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
@@ -269,7 +269,7 @@ export default function Dashboard() {
                                   type="monotone" 
                                   dataKey="dau" 
                                   stroke="#3B82F6" 
-                                  strokeWidth={4} 
+                                  strokeWidth={3} 
                                   fillOpacity={1} 
                                   fill="url(#colorDau)" 
                                   animationDuration={2000}
@@ -279,7 +279,7 @@ export default function Dashboard() {
                                   type="monotone" 
                                   dataKey="completion" 
                                   stroke="#10B981" 
-                                  strokeWidth={3} 
+                                  strokeWidth={2} 
                                   strokeDasharray="5 5"
                                   fillOpacity={1} 
                                   fill="url(#colorCompletion)" 
@@ -289,22 +289,22 @@ export default function Dashboard() {
                         </ResponsiveContainer>
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-8 mt-12 pt-8 border-t border-white/5 relative">
+                    <div className="grid grid-cols-3 gap-2 lg:gap-8 mt-10 lg:mt-12 pt-8 border-t border-white/5 relative">
                       <div className="absolute inset-0 flex justify-around pointer-events-none">
                          <div className="w-px h-full bg-white/5" />
                          <div className="w-px h-full bg-white/5" />
                       </div>
                       <div className="text-center group">
-                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.2em]">Avg Streak</p>
-                        <p className="text-3xl font-black text-ease-text-primary mt-2 group-hover:text-ease-blue transition-colors">{pulse?.avgStreak || 0}d</p>
+                        <p className="text-[8px] lg:text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.1em] lg:tracking-[0.2em]">Avg Streak</p>
+                        <p className="text-lg lg:text-3xl font-black text-ease-text-primary mt-1 lg:mt-2 group-hover:text-ease-blue transition-colors">{pulse?.avgStreak || 0}d</p>
                       </div>
                       <div className="text-center group">
-                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.2em]">Retention</p>
-                        <p className="text-3xl font-black text-ease-text-primary mt-2 group-hover:text-emerald-400 transition-colors">{pulse?.completionRate || 0}%</p>
+                        <p className="text-[8px] lg:text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.1em] lg:tracking-[0.2em]">Retention</p>
+                        <p className="text-lg lg:text-3xl font-black text-ease-text-primary mt-1 lg:mt-2 group-hover:text-emerald-400 transition-colors">{pulse?.completionRate || 0}%</p>
                       </div>
                       <div className="text-center group">
-                        <p className="text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.2em]">Processing</p>
-                        <p className="text-3xl font-black text-ease-text-primary mt-2 group-hover:text-purple-400 transition-colors">{pulse?.latency || 0}ms</p>
+                        <p className="text-[8px] lg:text-[10px] text-ease-text-secondary font-black uppercase tracking-[0.1em] lg:tracking-[0.2em]">Processing</p>
+                        <p className="text-lg lg:text-3xl font-black text-ease-text-primary mt-1 lg:mt-2 group-hover:text-purple-400 transition-colors">{pulse?.latency || 0}ms</p>
                       </div>
                     </div>
                 </motion.div>
@@ -312,19 +312,19 @@ export default function Dashboard() {
                 {/* Alerts Section */}
                 <motion.div 
                   variants={itemVariants}
-                  className="bg-ease-surface/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/5 shadow-ease-layered flex flex-col"
+                  className="bg-ease-surface/40 backdrop-blur-md p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-white/5 shadow-ease-layered flex flex-col"
                 >
-                    <div className="flex items-center justify-between mb-8">
-                      <h3 className="text-xl font-black text-ease-text-primary tracking-tighter flex items-center gap-3">
+                    <div className="flex items-center justify-between mb-6 lg:mb-8">
+                      <h3 className="text-lg lg:text-xl font-black text-ease-text-primary tracking-tighter flex items-center gap-3">
                         <div className="p-2 bg-red-500/10 rounded-xl">
-                          <AlertCircle className="w-5 h-5 text-red-400" />
+                          <AlertCircle className="w-4 h-4 lg:w-5 lg:h-5 text-red-400" />
                         </div>
                         Signals
                       </h3>
-                      <span className="px-2 py-1 bg-white/5 text-[9px] font-black rounded-lg text-ease-text-secondary uppercase">Real-time</span>
+                      <span className="px-2 py-1 bg-white/5 text-[8px] lg:text-[9px] font-black rounded-lg text-ease-text-secondary uppercase">Real-time</span>
                     </div>
                     
-                    <div className="space-y-4 flex-1 overflow-y-auto max-h-[420px] pr-2 custom-scrollbar">
+                    <div className="space-y-3 lg:space-y-4 flex-1 overflow-y-auto max-h-[350px] lg:max-h-[420px] pr-2 custom-scrollbar">
                         <AnimatePresence mode="popLayout">
                           {pulse?.alerts?.map((alert, index) => (
                               <motion.div 
@@ -332,43 +332,43 @@ export default function Dashboard() {
                                 initial={{ x: -20, opacity: 0 }}
                                 animate={{ x: 0, opacity: 1 }}
                                 transition={{ delay: index * 0.1 }}
-                                className="p-5 rounded-3xl bg-white/5 border border-white/5 hover:border-white/10 transition-all duration-300 group cursor-pointer"
+                                className="p-4 lg:p-5 rounded-2xl lg:rounded-3xl bg-white/5 border border-white/5 hover:border-white/10 transition-all duration-300 group cursor-pointer"
                               >
-                                  <div className="flex justify-between items-start mb-3">
+                                  <div className="flex justify-between items-start mb-2 lg:mb-3">
                                       <span className={clsx(
-                                        "px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm",
+                                        "px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-lg text-[8px] lg:text-[9px] font-black uppercase tracking-widest shadow-sm",
                                         alert.type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/10' : 'bg-amber-500/10 text-amber-400 border border-amber-500/10'
                                       )}>
                                         {alert.type}
                                       </span>
-                                      <div className="p-1.5 bg-white/5 rounded-lg group-hover:bg-ease-blue/20 group-hover:text-ease-blue transition-all">
-                                        <ChevronRight className="w-3.5 h-3.5" />
+                                      <div className="p-1 lg:p-1.5 bg-white/5 rounded-lg group-hover:bg-ease-blue/20 group-hover:text-ease-blue transition-all">
+                                        <ChevronRight className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
                                       </div>
                                   </div>
-                                  <h4 className="text-sm font-bold text-ease-text-primary leading-tight mb-2">{alert.message}</h4>
-                                  <p className="text-xs text-ease-text-secondary font-medium leading-relaxed opacity-70">{alert.detail}</p>
+                                  <h4 className="text-xs lg:text-sm font-bold text-ease-text-primary leading-tight mb-1 lg:mb-2">{alert.message}</h4>
+                                  <p className="text-[10px] lg:text-xs text-ease-text-secondary font-medium leading-relaxed opacity-70">{alert.detail}</p>
                               </motion.div>
                           ))}
                         </AnimatePresence>
                         
                         {(!pulse?.alerts || pulse.alerts.length === 0) && (
-                          <div className="flex flex-col items-center justify-center py-20 text-ease-text-secondary text-center">
+                          <div className="flex flex-col items-center justify-center py-12 lg:py-20 text-ease-text-secondary text-center">
                             <motion.div 
                               initial={{ scale: 0.8, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
-                              className="w-20 h-20 rounded-full bg-emerald-500/5 flex items-center justify-center mb-6 border border-emerald-500/10"
+                              className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-emerald-500/5 flex items-center justify-center mb-4 lg:mb-6 border border-emerald-500/10"
                             >
-                              <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                              <CheckCircle2 className="w-8 h-8 lg:w-10 lg:h-10 text-emerald-500" />
                             </motion.div>
-                            <p className="font-black text-ease-text-primary text-sm uppercase tracking-wider">All Systems Nominal</p>
-                            <p className="text-xs mt-2 opacity-60 px-10">No engine anomalies detected in the current cycle.</p>
+                            <p className="font-black text-ease-text-primary text-xs lg:text-sm uppercase tracking-wider">All Systems Nominal</p>
+                            <p className="text-[10px] lg:text-xs mt-2 opacity-60 px-6 lg:px-10">No engine anomalies detected.</p>
                           </div>
                         )}
                     </div>
                     
                     <button 
                       onClick={() => window.location.href = '/health'}
-                      className="w-full mt-8 py-5 rounded-[1.5rem] bg-white/5 text-ease-text-primary font-black text-xs uppercase tracking-widest hover:bg-white/10 active:scale-[0.98] transition-all border border-white/5 shadow-xl"
+                      className="w-full mt-6 lg:mt-8 py-4 lg:py-5 rounded-[1.25rem] lg:rounded-[1.5rem] bg-white/5 text-ease-text-primary font-black text-[10px] lg:text-xs uppercase tracking-widest hover:bg-white/10 active:scale-[0.98] transition-all border border-white/5 shadow-xl"
                     >
                       Access Infrastructure Logs
                     </button>

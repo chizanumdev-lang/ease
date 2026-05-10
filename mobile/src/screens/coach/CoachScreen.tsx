@@ -15,6 +15,7 @@ import {
 import { CoachService, CoachResponse } from '../../services/coach.service';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Sentry from '@sentry/react-native';
 
@@ -89,7 +90,7 @@ export default function CoachScreen({ navigation }: any) {
         return (
             <View style={[styles.messageRow, isUser ? styles.userRow : styles.aiRow]}>
                 {!isUser && (
-                    <View style={[styles.botAvatar, { backgroundColor: colors.primary }]}>
+                    <View style={[styles.botAvatar, { backgroundColor: colors.therapeutic.sage }]}>
                         <Ionicons name="sparkles" size={18} color={isDark ? colors.background : "#fff"} />
                     </View>
                 )}
@@ -98,7 +99,7 @@ export default function CoachScreen({ navigation }: any) {
                     <Text style={[styles.senderName, { color: colors.textMuted, fontFamily: fonts.label }]}>{isUser ? 'You' : 'Ease Bo'}</Text>
                     <View style={[
                         styles.messageBubble, 
-                        isUser ? [styles.userBubble, { backgroundColor: colors.primary }] : [styles.aiBubble, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]
+                        isUser ? [styles.userBubble, { backgroundColor: colors.primary }] : [styles.aiBubble, { backgroundColor: isDark ? colors.surfaceContainerLow : colors.therapeutic.cream, borderColor: colors.outlineVariant }]
                     ]}>
                         <Text style={[
                             styles.messageText, 
@@ -142,13 +143,17 @@ export default function CoachScreen({ navigation }: any) {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? 
+                    [colors.background, colors.background] : 
+                    [colors.therapeutic.sage + '10', colors.therapeutic.sky + '05', colors.background]}
+                style={StyleSheet.absoluteFill}
+            />
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
             {/* Header */}
             <View style={[styles.header, { borderBottomColor: colors.outlineVariant, paddingTop: Math.max(insets.top, 20) }]}>
-                <TouchableOpacity style={styles.headerButton} onPress={() => navigation?.goBack()}>
-                    <Ionicons name="chevron-back" size={24} color={colors.primary} />
-                </TouchableOpacity>
+                <View style={styles.headerButton} />
                 <View style={styles.headerTitleContainer}>
                     <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.display }]}>Ease AI</Text>
                     <View style={styles.statusRow}>
@@ -156,16 +161,6 @@ export default function CoachScreen({ navigation }: any) {
                         <Text style={[styles.statusText, { color: colors.textMuted, fontFamily: fonts.label }]}>Always here for you</Text>
                     </View>
                 </View>
-                <TouchableOpacity 
-                    style={styles.headerButton} 
-                    onPress={() => {
-                        console.log('Testing Sentry...');
-                        Sentry.captureException(new Error('Sentry Mobile Test Error'));
-                        alert('Test error sent to Sentry!');
-                    }}
-                >
-                    <Ionicons name="bug-outline" size={24} color={colors.primary} />
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -195,7 +190,7 @@ export default function CoachScreen({ navigation }: any) {
                 style={[styles.inputArea, { 
                     borderTopColor: colors.outlineVariant, 
                     backgroundColor: colors.background, 
-                    marginBottom: 90
+                    marginBottom: 16
                 }]}
             >
                 <View style={[styles.inputWrapper, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
@@ -262,7 +257,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 16,
-        paddingBottom: 120,
+        paddingBottom: 90,
     },
     messageRow: {
         flexDirection: 'row',

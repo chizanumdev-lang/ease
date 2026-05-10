@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { DayPlan } from '../../programs/entities/day-plan.entity';
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
+import { GraphQLJSON } from 'graphql-type-json';
 
 @ObjectType('DailyTask')
 @Entity('tasks')
@@ -74,6 +75,10 @@ export class Task {
     @Column({ default: 0 })
     order: number;
 
+    @Field(() => GraphQLJSON, { nullable: true })
+    @Column({ type: 'jsonb', nullable: true })
+    metadata?: any;
+
     @Field()
     @Index()
     @Column({ name: 'day_plan_id' })
@@ -93,3 +98,4 @@ export class Task {
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 }
+

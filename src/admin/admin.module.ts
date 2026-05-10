@@ -14,7 +14,6 @@ import { Task } from '../tasks/entities/task.entity';
 import { Program } from '../programs/entities/program.entity';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { TaskTemplate } from '../tasks/entities/task-template.entity';
-import { BullModule } from '@nestjs/bullmq';
 
 @Module({
     imports: [
@@ -30,9 +29,6 @@ import { BullModule } from '@nestjs/bullmq';
             DayPlan,
             TaskTemplate
         ]),
-        BullModule.registerQueue({
-            name: 'program-generation',
-        }),
     ],
     controllers: [AdminController],
     providers: [

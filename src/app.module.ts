@@ -3,7 +3,6 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BullModule } from '@nestjs/bullmq';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -21,6 +20,7 @@ import { VideoModule } from './video/video.module';
 import { AudioModule } from './audio/audio.module';
 import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.module';
+import { RewardsModule } from './rewards/rewards.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { APP_FILTER } from '@nestjs/core';
@@ -28,6 +28,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { EngineModule } from './modules/engine/engine.module';
 import { WorkerModule } from './modules/worker/worker.module';
+import { StartupService } from './common/startup.service';
 
 @Module({
   imports: [
@@ -48,34 +49,6 @@ import { WorkerModule } from './modules/worker/worker.module';
       isGlobal: true,
       envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],
     }),
-    BullModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const redisUrlString = configService.get('KV_URL') || configService.get('REDIS_URL');
-        let connection: any = {
-          host: configService.get('REDIS_HOST', 'localhost'),
-          port: configService.get('REDIS_PORT', 6379),
-        };
-
-        if (redisUrlString) {
-          try {
-            const parsedUrl = new URL(redisUrlString);
-            connection = {
-              host: parsedUrl.hostname,
-              port: parseInt(parsedUrl.port, 10) || 6379,
-              password: parsedUrl.password || undefined,
-              username: parsedUrl.username || undefined,
-              tls: parsedUrl.protocol === 'rediss:' ? {} : undefined,
-            };
-          } catch (e) {
-            console.error('Failed to parse Redis URL from KV_URL/REDIS_URL', e);
-          }
-        }
-
-        return { connection };
-      },
-      inject: [ConfigService],
-    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
@@ -86,9 +59,9 @@ import { WorkerModule } from './modules/worker/worker.module';
         const dbConfig: any = {
           type: 'postgres',
           ssl: isLocal ? false : { rejectUnauthorized: false },
-          connectTimeoutMS: 10000,
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: false,
+          connectTimeoutMS: 5000, // Reduced for faster failover in serverless
+          autoLoadEntities: true, // More efficient for NestJS
+          synchronize: isLocal, // Automatically sync tables in local dev
         };
 
         if (url) {
@@ -120,11 +93,12 @@ import { WorkerModule } from './modules/worker/worker.module';
     AudioModule,
     AdminModule,
     MailModule,
+    RewardsModule,
     EngineModule,
     WorkerModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      autoSchemaFile: process.env.VERCEL ? true : join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
       playground: true,
       resolvers: { JSON: require('graphql-type-json') },
@@ -137,6 +111,7 @@ import { WorkerModule } from './modules/worker/worker.module';
   controllers: [AppController],
   providers: [
     AppService,
+    StartupService,
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,

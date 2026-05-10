@@ -159,7 +159,7 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
 
                 <View style={[styles.artworkContainer, { borderColor: `${colors.primary}33`, shadowColor: colors.primary }]}>
                     <Image
-                        source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC8q5xCzW2_MDxAkJvBp61VaReD2i7ECUKbRcx2xPz3thxQdyJFMbKXUq8GQwaI-FUmU4GvtSLDGmwQ-qPT6xgJr8Urwr3SAFem9ZH40kPHdIJgGNCan7VRpK7nMjScXn52xHxfYI09HBEKPbI4kAsI3wzuB56e-wXfW9rNIFOwVzuNQFK4Zj6wcWEaXodO3F6gGsbNJ-kiQhkwiCGoqIWKCVP477WhEsUZpkwV-fcxbwlVqTSKiPle6exeE2C3t-OqhhUTkm6vR5uK' }}
+                        source={{ uri: track.artwork || 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=300&auto=format&fit=crop' }}
                         style={styles.artwork}
                     />
                 </View>

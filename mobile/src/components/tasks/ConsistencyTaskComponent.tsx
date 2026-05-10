@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, Animated, Image } from 'react-native';
+import { View, StyleSheet, Text, Animated, Image, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Task, TaskMetadata, TaskStatus } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,7 +12,7 @@ interface ConsistencyTaskProps {
 }
 
 export default function ConsistencyTaskComponent({ task, onComplete }: ConsistencyTaskProps) {
-    const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    const { colors, fonts, shadows, isDark } = useTheme();
     const [confirmed, setConfirmed] = useState(false);
 
     const handleComplete = () => {
@@ -20,52 +20,79 @@ export default function ConsistencyTaskComponent({ task, onComplete }: Consisten
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.root, { backgroundColor: colors.background }]}>
             <View style={styles.mainContent}>
                 <View style={[styles.halo, { backgroundColor: colors.primaryContainer }]}>
-                    <View style={[styles.innerHalo, { backgroundColor: colors.primary }]}>
-                        <Ionicons name="flame" size={64} color="#fff" />
+                    <View style={[
+                        styles.innerHalo, 
+                        { 
+                            backgroundColor: colors.primary,
+                            ...(isDark ? {} : shadows.ambient)
+                        }
+                    ]}>
+                        <Ionicons name="flame" size={64} color={colors.white} />
                     </View>
                 </View>
 
-                <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>Keep the Streak Alive</Text>
-                <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                    Today is Day 7 of your consistent growth journey. Commit to your routine for tomorrow.
+                <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>Commit to Growth</Text>
+                <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                    Consistency is the bridge between goals and achievement. Your journey continues tomorrow.
                 </Text>
 
-                <StitchCard variant="elevated" style={styles.commitmentCard}>
-                    <Text style={[styles.commitmentTitle, { color: colors.text, fontFamily: fonts.display }]}>Daily Commitment</Text>
+                <View style={[
+                    styles.commitmentCard, 
+                    { 
+                        backgroundColor: colors.surfaceContainerLow,
+                        ...(isDark ? {} : shadows.ambient)
+                    }
+                ]}>
+                    <Text style={[styles.commitmentTitle, { color: colors.primary, fontFamily: fonts.display, textTransform: 'uppercase', letterSpacing: 1.5 }]}>Daily Commitment</Text>
+                    
                     <View style={styles.commitmentItem}>
-                        <Ionicons name="time" size={20} color={colors.primary} />
-                        <Text style={[styles.commitmentText, { color: colors.text }]}>I will complete my routine tomorrow at 8:00 AM.</Text>
+                        <View style={[styles.iconDot, { backgroundColor: colors.primaryContainer }]}>
+                            <Ionicons name="time" size={18} color={colors.primary} />
+                        </View>
+                        <Text style={[styles.commitmentText, { color: colors.text, fontFamily: fonts.body }]}>
+                            I will honor my scheduled routine tomorrow.
+                        </Text>
                     </View>
+                    
                     <View style={styles.commitmentItem}>
-                        <Ionicons name="checkmark-done-circle" size={20} color={colors.primary} />
-                        <Text style={[styles.commitmentText, { color: colors.text }]}>I will log my reflections regardless of the outcome.</Text>
+                        <View style={[styles.iconDot, { backgroundColor: colors.primaryContainer }]}>
+                            <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
+                        </View>
+                        <Text style={[styles.commitmentText, { color: colors.text, fontFamily: fonts.body }]}>
+                            I will prioritize my focus over distractions.
+                        </Text>
                     </View>
-                </StitchCard>
+                </View>
             </View>
 
-            <View style={styles.footer}>
+            <View style={[styles.footer, { backgroundColor: colors.background }]}>
                 {!confirmed ? (
-                    <StitchButton 
-                        title="I Commit to Consistency"
-                        variant="primary"
+                    <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: colors.primary, ...shadows.ambient }]}
                         onPress={() => setConfirmed(true)}
-                        rightIcon="hand-left"
-                    />
+                        activeOpacity={0.88}
+                    >
+                        <Text style={[styles.actionBtnText, { color: colors.white, fontFamily: fonts.display }]}>Register Commitment</Text>
+                        <Ionicons name="hand-left" size={20} color={colors.white} />
+                    </TouchableOpacity>
                 ) : (
                     <View style={styles.successSection}>
-                        <View style={styles.successMessage}>
-                            <Ionicons name="sparkles" size={24} color={colors.primary} />
-                            <Text style={[styles.successText, { color: colors.primary, fontWeight: '800' }]}>Commitment Registered!</Text>
+                        <View style={[styles.successBadge, { backgroundColor: colors.primaryContainer }]}>
+                            <Ionicons name="sparkles" size={22} color={colors.primary} />
+                            <Text style={[styles.successText, { color: colors.primary, fontFamily: fonts.display }]}>COMMITMENT ACTIVE</Text>
                         </View>
-                        <StitchButton 
-                            title="Finish All Today's Tasks"
-                            variant="primary"
+                        
+                        <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: colors.primary, ...shadows.ambient }]}
                             onPress={handleComplete}
-                            rightIcon="trophy"
-                        />
+                            activeOpacity={0.88}
+                        >
+                            <Text style={[styles.actionBtnText, { color: colors.white, fontFamily: fonts.display }]}>Finish Session</Text>
+                            <Ionicons name="trophy" size={20} color={colors.white} />
+                        </TouchableOpacity>
                     </View>
                 )}
             </View>
@@ -74,86 +101,100 @@ export default function ConsistencyTaskComponent({ task, onComplete }: Consisten
 }
 
 const styles = StyleSheet.create({
-    container: {
+    root: {
         flex: 1,
-        padding: 24,
     },
     mainContent: {
         flex: 1,
         alignItems: 'center',
-        paddingTop: 40,
+        paddingTop: 60,
+        paddingHorizontal: 28,
     },
     halo: {
-        width: 160,
-        height: 160,
-        borderRadius: 80,
+        width: 180,
+        height: 180,
+        borderRadius: 90,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 32,
+        marginBottom: 40,
     },
     innerHalo: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
+        width: 130,
+        height: 130,
+        borderRadius: 65,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 10,
     },
     title: {
-        fontSize: 28,
-        fontWeight: '900',
+        fontSize: 32,
+        lineHeight: 40,
         textAlign: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
     },
     subtitle: {
         fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
-        paddingHorizontal: 20,
-        marginBottom: 40,
+        paddingHorizontal: 12,
+        marginBottom: 48,
+        opacity: 0.8,
     },
     commitmentCard: {
-        padding: 24,
+        padding: 28,
         width: '100%',
+        borderRadius: 32,
     },
     commitmentTitle: {
-        fontSize: 18,
-        fontWeight: '800',
-        marginBottom: 20,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
+        fontSize: 13,
+        marginBottom: 24,
     },
     commitmentItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-        marginBottom: 16,
+        gap: 16,
+        marginBottom: 20,
+    },
+    iconDot: {
+        width: 36,
+        height: 36,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     commitmentText: {
         fontSize: 15,
-        fontWeight: '600',
+        lineHeight: 22,
         flex: 1,
     },
     footer: {
-        marginTop: 'auto',
+        paddingHorizontal: 24,
+        paddingBottom: 24,
+        paddingTop: 16,
+    },
+    actionBtn: {
+        height: 64,
+        borderRadius: 32,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+    },
+    actionBtnText: {
+        fontSize: 18,
     },
     successSection: {
         gap: 20,
     },
-    successMessage: {
+    successBadge: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 10,
         padding: 16,
-        backgroundColor: 'rgba(0,0,0,0.02)',
-        borderRadius: 12,
+        borderRadius: 20,
     },
     successText: {
-        fontSize: 16,
+        fontSize: 14,
+        letterSpacing: 1,
     }
 });

@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BullModule } from '@nestjs/bullmq';
 import { ProgramsService } from './programs.service';
 import { ProgressionService } from './progression.service';
-import { ProgramProcessor } from './program.processor';
 import { ProgramsResolver } from './programs.resolver';
 import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
@@ -18,6 +16,7 @@ import { UsersModule } from '../users/users.module';
 import { AiModule } from '../ai/ai.module';
 import { VideoModule } from '../video/video.module';
 import { AudioModule } from '../audio/audio.module';
+import { EngineModule } from '../modules/engine/engine.module';
 
 import { ProgramsController } from './programs.controller';
 
@@ -34,17 +33,14 @@ import { ProgramsController } from './programs.controller';
             AdaptationLog,
             Progress
         ]),
-        BullModule.registerQueue(
-            { name: 'audio-generation' },
-            { name: 'program-generation' },
-        ),
         UsersModule,
         AiModule,
         VideoModule,
         AudioModule,
+        EngineModule,
     ],
     controllers: [ProgramsController],
-    providers: [ProgramsService, ProgressionService, ProgramProcessor, ProgramsResolver],
+    providers: [ProgramsService, ProgressionService, ProgramsResolver],
     exports: [ProgramsService, ProgressionService],
 })
 export class ProgramsModule { }

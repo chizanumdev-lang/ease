@@ -10,6 +10,7 @@ import { CapabilityType } from '../../engine/entities/task-definition.entity';
 @Processor('engine_queue')
 export class TaskProcessor extends WorkerHost {
   private readonly logger = new Logger(TaskProcessor.name);
+  private readonly isVercel = !!process.env.VERCEL;
 
   constructor(
     @InjectRepository(Task)
@@ -21,6 +22,10 @@ export class TaskProcessor extends WorkerHost {
   }
 
   async process(job: Job<{ taskId: string }>): Promise<any> {
+    if (this.isVercel) {
+      this.logger.warn(`Skipping engine job ${job.id} on Vercel serverless — needs dedicated worker`);
+      return { success: false, reason: 'serverless_skip' };
+    }
     const { taskId } = job.data;
     this.logger.log(`Processing task: ${taskId}`);
 

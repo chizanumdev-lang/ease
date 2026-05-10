@@ -62,7 +62,7 @@ function getTakeaways(task: Task, theme: string) {
 // Main Component
 // ────────────────────────────────────────────────────────────
 export default function VideoTaskComponent({ task, onComplete }: VideoTaskComponentProps) {
-    const { colors } = useTheme();
+    const { colors, fonts, shadows, isDark } = useTheme();
     const navigation = useNavigation<any>();
     const { todayPlan, updateTask } = useProgramsStore();
 
@@ -73,7 +73,6 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
     const [maxWatched, setMaxWatched]     = useState(task.watchedSeconds ?? 0);
     const [isCompleted, setIsCompleted]   = useState(task.completed ?? false);
     
-    // Anti-skip toast
     const [showSkipWarning, setShowSkipWarning] = useState(false);
     const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
 
@@ -84,7 +83,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
 
     const videoId = task.videoUrl ? getVideoId(task.videoUrl) : null;
 
-    // ── Pulse animation on the timer icon ──
+    // Pulse animation for the timer icon
     const pulseAnim = useRef(new Animated.Value(1)).current;
     useEffect(() => {
         if (playing) {
@@ -100,7 +99,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
         }
     }, [playing]);
 
-    // ── Progress bar slide-in ──
+    // Progress bar animation
     const progressBarAnim = useRef(new Animated.Value(0)).current;
     useEffect(() => {
         if (duration > 0) {
@@ -112,7 +111,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
         }
     }, [currentTime, duration]);
 
-    // ── Heartbeat sync every 10 s ──
+    // Heartbeat sync every 10 s
     const syncProgress = useCallback(async (time: number) => {
         if (Math.abs(time - lastSyncedTime.current) > 10) {
             lastSyncedTime.current = time;
@@ -120,7 +119,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
         }
     }, [task.id, updateTask]);
 
-    // ── Anti-skip polling + progress tracking ──
+    // Anti-skip polling + progress tracking
     useEffect(() => {
         if (!playing) return;
         const interval = setInterval(async () => {
@@ -129,10 +128,8 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
             setCurrentTime(time);
 
             if (!isCompleted) {
-                // ANTI-SKIP: user tried to jump ahead
                 if (time > maxWatched + 2.5) {
                     playerRef.current.seekTo(maxWatched, true);
-                    // Show warning toast
                     clearTimeout(skipWarningTimeout.current);
                     setShowSkipWarning(true);
                     skipWarningTimeout.current = setTimeout(() => setShowSkipWarning(false), 2500);
@@ -145,19 +142,18 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
         return () => clearInterval(interval);
     }, [playing, maxWatched, isCompleted, syncProgress]);
 
-    // ── Back-button final sync ──
+    // Back-button final sync
     useFocusEffect(
         useCallback(() => {
             const onBack = () => {
                 if (currentTime > 0) updateTask(task.id, { watchedSeconds: Math.floor(currentTime) });
-                return false; // bubble up to navigation
+                return false;
             };
             const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
             return () => sub.remove();
         }, [currentTime, task.id, updateTask])
     );
 
-    // ── YouTube state changes ──
     const onStateChange = useCallback(async (state: string) => {
         if (state === 'playing') setPlaying(true);
         if (state === 'paused')  setPlaying(false);
@@ -172,39 +168,30 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
         }
     }, [task.id, duration, updateTask]);
 
-    // ── Player ready ──
     const onReady = useCallback(async () => {
         setLoading(false);
         if (!playerRef.current) return;
         const total = await playerRef.current.getDuration();
         setDuration(total);
         if (task.totalDuration !== total) updateTask(task.id, { totalDuration: total });
-        // Resume from saved position
         if ((task.watchedSeconds ?? 0) > 5 && !task.completed) {
             playerRef.current.seekTo(task.watchedSeconds!, true);
         }
     }, [task, updateTask]);
 
     const handleNextSession = useCallback(async () => {
-        // Signal completion to the parent (TaskScreenRouter), which handles navigation
         onComplete({ videoTimestamp: Math.floor(duration) });
     }, [onComplete, duration]);
 
-
     const remainingTime = Math.max(0, duration - currentTime);
     const takeaways     = getTakeaways(task, todayPlan?.theme ?? '');
-    const progressPct   = duration > 0 ? (currentTime / duration) * 100 : 0;
     const maxPct        = duration > 0 ? (maxWatched  / duration) * 100 : 0;
-
-    const phaseBadge = todayPlan?.theme
-        ? todayPlan.theme.toUpperCase()
-        : 'TODAY\'S LESSON';
 
     if (!videoId) {
         return (
             <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
                 <Ionicons name="alert-circle" size={64} color={colors.error} />
-                <Text style={[styles.errorText, { color: colors.text }]}>Invalid video URL</Text>
+                <Text style={[styles.errorText, { color: colors.text, fontFamily: fonts.display }]}>Invalid video URL</Text>
             </View>
         );
     }
@@ -212,9 +199,9 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
     return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
             {showSkipWarning && (
-                <View style={styles.skipToast} pointerEvents="none">
-                    <MaterialIcons name="lock" size={16} color="#FFF" />
-                    <Text style={styles.skipToastText}>Watch in order to continue</Text>
+                <View style={[styles.skipToast, { backgroundColor: colors.error + 'EE' }]}>
+                    <Ionicons name="lock-closed" size={16} color="#FFF" />
+                    <Text style={[styles.skipToastText, { fontFamily: fonts.body }]}>Watch in order to continue</Text>
                 </View>
             )}
 
@@ -227,7 +214,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                     {loading && (
                         <View style={styles.loadingOverlay}>
                             <Ionicons name="videocam-outline" size={40} color="rgba(255,255,255,0.5)" />
-                            <Text style={styles.loadingText}>Loading video…</Text>
+                            <Text style={[styles.loadingText, { fontFamily: fonts.body }]}>Loading video…</Text>
                         </View>
                     )}
 
@@ -252,13 +239,13 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                                 <View style={[styles.successIconCircle, { backgroundColor: colors.primary }]}>
                                     <Ionicons name="checkmark" size={32} color="#FFF" />
                                 </View>
-                                <Text style={styles.completionTitle}>Lesson Complete</Text>
-                                <Text style={styles.completionSubtitle}>You've mastered today's core insight.</Text>
+                                <Text style={[styles.completionTitle, { fontFamily: fonts.display }]}>Lesson Complete</Text>
+                                <Text style={[styles.completionSubtitle, { fontFamily: fonts.body }]}>You've mastered today's core insight.</Text>
                                 <TouchableOpacity 
-                                    style={[styles.completionBtn, { backgroundColor: '#FFF' }]}
+                                    style={[styles.completionBtn, { backgroundColor: colors.white, ...shadows.ambient }]}
                                     onPress={handleNextSession}
                                 >
-                                    <Text style={[styles.completionBtnText, { color: colors.primary }]}>Continue Circuit</Text>
+                                    <Text style={[styles.completionBtnText, { color: colors.primary, fontFamily: fonts.display }]}>Continue Circuit</Text>
                                     <Ionicons name="arrow-forward" size={18} color={colors.primary} />
                                 </TouchableOpacity>
                             </View>
@@ -271,7 +258,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                                 <View
                                     style={[
                                         styles.progressMaxZone,
-                                        { width: `${maxPct}%`, backgroundColor: 'rgba(255,255,255,0.2)' },
+                                        { width: `${maxPct}%`, backgroundColor: 'rgba(255,255,255,0.15)' },
                                     ]}
                                 />
                                 <Animated.View
@@ -283,14 +270,13 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                                                 outputRange: ['0%', '100%'],
                                             }),
                                             backgroundColor: colors.primary,
-                                            shadowColor: colors.primary,
                                         },
                                     ]}
                                 />
                             </View>
                             <View style={styles.timeRow}>
-                                <Text style={styles.timeLabel}>{formatTime(currentTime)}</Text>
-                                <Text style={styles.timeLabel}>{formatTime(duration)}</Text>
+                                <Text style={[styles.timeLabel, { fontFamily: fonts.label }]}>{formatTime(currentTime)}</Text>
+                                <Text style={[styles.timeLabel, { fontFamily: fonts.label }]}>{formatTime(duration)}</Text>
                             </View>
                         </View>
                     )}
@@ -298,48 +284,41 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
 
                 <View style={[styles.contentArea, { backgroundColor: colors.background }]}>
                     <View style={styles.titleBlock}>
-                        <View style={[styles.phaseBadge, { backgroundColor: colors.primaryContainer }]}>
-                            <Text style={[styles.phaseBadgeText, { color: colors.primary }]}>
-                                {phaseBadge}
-                            </Text>
-                        </View>
-                        <Text style={[styles.title, { color: colors.text }]}>{task.title}</Text>
+                        <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>{task.title}</Text>
                     </View>
 
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
-                            <MaterialCommunityIcons name="lightbulb-on-outline" size={22} color={colors.primary} />
-                            <Text style={[styles.sectionTitle, { color: colors.text }]}>Key Takeaways</Text>
+                            <Ionicons name="sparkles" size={20} color={colors.primary} />
+                            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.display }]}>Key Insights</Text>
                         </View>
 
                         <View style={styles.cardsGrid}>
                             {takeaways.map((item, idx) => (
-                                <BlurView
+                                <View
                                     key={idx}
-                                    intensity={28}
                                     style={[
                                         styles.takeawayCard,
                                         {
-                                            borderLeftColor: idx % 2 === 0 ? colors.primary : colors.secondary,
-                                            width: '100%',
+                                            backgroundColor: colors.surfaceContainerLow,
                                         },
                                     ]}
                                 >
                                     <View style={styles.cardInner}>
                                         <View style={[
                                             styles.cardIcon,
-                                            { backgroundColor: (idx % 2 === 0 ? colors.primary : colors.secondary) + '18' },
+                                            { backgroundColor: colors.primary + '1A' },
                                         ]}>
-                                            <MaterialCommunityIcons
-                                                name={item.icon as any}
+                                            <Ionicons
+                                                name={item.icon === 'brain' ? 'bulb' : (item.icon as any)}
                                                 size={20}
-                                                color={idx % 2 === 0 ? colors.primary : colors.secondary}
+                                                color={colors.primary}
                                             />
                                         </View>
-                                        <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
+                                        <Text style={[styles.cardTitle, { color: colors.text, fontFamily: fonts.display }]}>{item.title}</Text>
                                     </View>
-                                    <Text style={[styles.cardBody, { color: colors.textMuted }]}>{item.body}</Text>
-                                </BlurView>
+                                    <Text style={[styles.cardBody, { color: colors.textMuted, fontFamily: fonts.body }]}>{item.body}</Text>
+                                </View>
                             ))}
                         </View>
                     </View>
@@ -348,18 +327,18 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
             </ScrollView>
 
             <View style={styles.footer} pointerEvents="box-none">
-                <View style={[styles.countdownPill, { backgroundColor: isCompleted ? '#1B4332' : colors.primary }]}>
+                <View style={[styles.countdownPill, { backgroundColor: isCompleted ? colors.primary : colors.surfaceContainerHighest, ...shadows.ambient }]}>
                     <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-                        <MaterialIcons
-                            name={isCompleted ? 'check-circle' : 'schedule'}
+                        <Ionicons
+                            name={isCompleted ? 'checkmark-circle' : 'time'}
                             size={22}
-                            color="#FFF"
+                            color={isCompleted ? colors.white : colors.primary}
                         />
                     </Animated.View>
                     <View>
-                        <Text style={styles.countdownLabel}>{isCompleted ? 'COMPLETE' : 'REMAINING'}</Text>
-                        <Text style={styles.countdownValue}>
-                            {isCompleted ? 'Well Done!' : formatTime(remainingTime)}
+                        <Text style={[styles.countdownLabel, { color: isCompleted ? colors.white + 'CC' : colors.textMuted, fontFamily: fonts.label }]}>{isCompleted ? 'COMPLETE' : 'REMAINING'}</Text>
+                        <Text style={[styles.countdownValue, { color: isCompleted ? colors.white : colors.text, fontFamily: fonts.display }]}>
+                            {isCompleted ? 'Finished' : formatTime(remainingTime)}
                         </Text>
                     </View>
                 </View>
@@ -368,23 +347,22 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                     style={[
                         styles.nextBtn,
                         {
-                            backgroundColor: isCompleted ? '#FFFFFF' : 'rgba(255,255,255,0.06)',
-                            borderColor: isCompleted ? 'transparent' : 'rgba(255,255,255,0.12)',
+                            backgroundColor: isCompleted ? colors.primary : colors.surfaceContainerHighest,
+                            ...(isCompleted ? shadows.ambient : {})
                         },
                     ]}
                     disabled={!isCompleted}
                     onPress={handleNextSession}
-                    accessibilityLabel="Next Session"
                 >
-                    <Text style={[styles.nextBtnText, { color: isCompleted ? colors.primary : 'rgba(255,255,255,0.3)' }]}>
+                    <Text style={[styles.nextBtnText, { color: isCompleted ? colors.white : colors.textMuted, fontFamily: fonts.display }]}>
                         {todayPlan?.tasks?.findIndex(t => t.id === task.id) === (todayPlan?.tasks?.length || 0) - 1 
-                            ? 'Finish Day' 
-                            : 'Next Session'}
+                            ? 'Finish' 
+                            : 'Next'}
                     </Text>
                     <Ionicons
                         name="arrow-forward"
                         size={20}
-                        color={isCompleted ? colors.primary : 'rgba(255,255,255,0.3)'}
+                        color={isCompleted ? colors.white : colors.textMuted}
                     />
                 </TouchableOpacity>
             </View>
@@ -401,21 +379,19 @@ const styles = StyleSheet.create({
     },
     skipToast: {
         position: 'absolute',
-        top: 80,
+        top: 60,
         alignSelf: 'center',
         zIndex: 999,
-        backgroundColor: 'rgba(30,30,30,0.92)',
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
         paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 20,
+        paddingVertical: 12,
+        borderRadius: 24,
     },
     skipToastText: {
         color: '#FFF',
-        fontWeight: '700',
-        fontSize: 13,
+        fontSize: 14,
     },
     heroSection: {
         width: '100%',
@@ -427,7 +403,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: VIDEO_PLAYER_HEIGHT,
-        backgroundColor: 'rgba(0,0,0,0.65)',
+        backgroundColor: 'rgba(0,0,0,0.8)',
         zIndex: 20,
         justifyContent: 'center',
         alignItems: 'center',
@@ -435,8 +411,7 @@ const styles = StyleSheet.create({
     },
     loadingText: {
         color: 'rgba(255,255,255,0.6)',
-        fontSize: 13,
-        fontWeight: '600',
+        fontSize: 14,
     },
     progressWrapper: {
         position: 'absolute',
@@ -444,13 +419,13 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         paddingHorizontal: 24,
-        paddingBottom: 36,
+        paddingBottom: 28,
         gap: 6,
     },
     progressTrack: {
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: 'rgba(255,255,255,0.12)',
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: 'rgba(255,255,255,0.15)',
         overflow: 'hidden',
         position: 'relative',
     },
@@ -467,48 +442,30 @@ const styles = StyleSheet.create({
         left: 0,
         bottom: 0,
         zIndex: 2,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 6,
-        elevation: 4,
     },
     timeRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 4,
     },
     timeLabel: {
-        color: 'rgba(255,255,255,0.55)',
+        color: 'rgba(255,255,255,0.5)',
         fontSize: 11,
-        fontWeight: '600',
     },
     contentArea: {
-        marginTop: -28,
+        marginTop: -24,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
         paddingHorizontal: 24,
-        paddingTop: 28,
+        paddingTop: 32,
         zIndex: 5,
     },
     titleBlock: {
-        marginBottom: 28,
-        gap: 14,
-    },
-    phaseBadge: {
-        alignSelf: 'flex-start',
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-        borderRadius: 20,
-    },
-    phaseBadgeText: {
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 1.8,
-        textTransform: 'uppercase',
+        marginBottom: 32,
     },
     title: {
-        fontSize: 36,
-        fontWeight: '800',
-        lineHeight: 44,
-        letterSpacing: -0.8,
+        fontSize: 32,
+        lineHeight: 40,
+        letterSpacing: -0.5,
     },
     section: {
         gap: 20,
@@ -519,44 +476,36 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        letterSpacing: -0.3,
+        fontSize: 20,
     },
     cardsGrid: {
-        flexDirection: 'column',
         gap: 12,
     },
     takeawayCard: {
-        borderRadius: 20,
-        borderLeftWidth: 4,
-        overflow: 'hidden',
-        padding: 18,
-        backgroundColor: 'rgba(255,255,255,0.04)',
-        gap: 8,
+        borderRadius: 24,
+        padding: 24,
+        gap: 12,
     },
     cardInner: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 14,
     },
     cardIcon: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
     },
     cardTitle: {
-        fontSize: 14,
-        fontWeight: '700',
+        fontSize: 16,
         flexShrink: 1,
     },
     cardBody: {
-        fontSize: 13,
-        lineHeight: 19,
-        paddingLeft: 50,
+        fontSize: 14,
+        lineHeight: 22,
     },
     footer: {
         position: 'absolute',
@@ -567,9 +516,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingBottom: 36,
-        paddingTop: 12,
+        paddingHorizontal: 24,
+        paddingBottom: 24,
+        paddingTop: 16,
     },
     countdownPill: {
         flexDirection: 'row',
@@ -578,37 +527,26 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderRadius: 32,
         gap: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.25,
-        shadowRadius: 18,
-        elevation: 6,
     },
     countdownLabel: {
-        fontSize: 9,
-        fontWeight: '800',
-        color: 'rgba(255,255,255,0.65)',
-        letterSpacing: 1.2,
+        fontSize: 10,
+        letterSpacing: 1.5,
         textTransform: 'uppercase',
+        marginBottom: 2,
     },
     countdownValue: {
         fontSize: 17,
-        fontWeight: '700',
-        color: '#FFFFFF',
-        letterSpacing: -0.3,
     },
     nextBtn: {
-        height: 56,
-        paddingHorizontal: 22,
-        borderRadius: 28,
+        height: 64,
+        paddingHorizontal: 28,
+        borderRadius: 32,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        borderWidth: 1,
+        gap: 10,
     },
     nextBtnText: {
-        fontSize: 15,
-        fontWeight: '700',
+        fontSize: 16,
     },
     errorContainer: {
         flex: 1,
@@ -619,7 +557,6 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontSize: 18,
-        fontWeight: '700',
     },
     completionOverlay: {
         position: 'absolute',
@@ -632,49 +569,39 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 24,
     },
-
     completionContent: {
         alignItems: 'center',
-        maxWidth: 280,
     },
     successIconCircle: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
+        width: 72,
+        height: 72,
+        borderRadius: 36,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
+        marginBottom: 20,
     },
     completionTitle: {
-        fontFamily: 'Inter-Bold',
-        fontSize: 24,
+        fontSize: 26,
         color: '#FFF',
         textAlign: 'center',
         marginBottom: 8,
     },
     completionSubtitle: {
-        fontFamily: 'Inter-Regular',
-        fontSize: 15,
+        fontSize: 16,
         color: 'rgba(255,255,255,0.8)',
         textAlign: 'center',
-        marginBottom: 24,
-        lineHeight: 20,
+        marginBottom: 28,
+        lineHeight: 22,
     },
     completionBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        borderRadius: 30,
-        gap: 8,
+        paddingHorizontal: 28,
+        paddingVertical: 16,
+        borderRadius: 32,
+        gap: 10,
     },
     completionBtnText: {
-        fontFamily: 'Inter-SemiBold',
-        fontSize: 16,
+        fontSize: 17,
     },
 });

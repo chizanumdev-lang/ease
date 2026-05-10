@@ -76,7 +76,7 @@ export const useProgramsStore = create<ProgramsState>()(
         (set, get) => ({
             currentProgram: null,
             todayPlan: null,
-            isLoading: false,
+            isLoading: true,
             error: null,
             syncQueue: [],
 
@@ -120,15 +120,15 @@ export const useProgramsStore = create<ProgramsState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const program = await programsService.getActiveProgram();
-                    set({
-                        currentProgram: program,
-                        isLoading: false,
-                    });
-
+                    
                     if (program) {
+                        set({ currentProgram: program });
                         await get().fetchTodayPlan(program.id);
+                    } else {
+                        set({ currentProgram: null, todayPlan: null });
                     }
-
+                    
+                    set({ isLoading: false });
                     return program;
                 } catch (error: any) {
                     if (error.response?.status === 404) {
@@ -177,21 +177,23 @@ export const useProgramsStore = create<ProgramsState>()(
                         const existingStatuses = new Map(
                             (get().todayPlan?.tasks ?? []).map(t => [t.id, t.status])
                         );
+                        
+                        // 1. Sort by order first so migrateTask logic (index-based) is consistent
+                        const sortedTasks = [...todayPlan.tasks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+                        
                         let prevCompleted = true;
-                        todayPlan.tasks = todayPlan.tasks
-                            .map((t, idx) => {
-                                const task = migrateTask(t, idx, todayPlan.tasks!.length);
-                                // If we already have a richer local status, keep it
-                                const localStatus = existingStatuses.get(task.id);
-                                if (localStatus && localStatus !== TaskStatus.LOCKED) {
-                                    task.status = localStatus;
-                                } else if (prevCompleted && task.status === TaskStatus.LOCKED) {
-                                    task.status = TaskStatus.PENDING;
-                                }
-                                prevCompleted = task.status === TaskStatus.COMPLETED || task.status === TaskStatus.SKIPPED;
-                                return task;
-                            })
-                            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+                        todayPlan.tasks = sortedTasks.map((t, idx) => {
+                            const task = migrateTask(t, idx, sortedTasks.length);
+                            // If we already have a richer local status, keep it
+                            const localStatus = existingStatuses.get(task.id);
+                            if (localStatus && localStatus !== TaskStatus.LOCKED) {
+                                task.status = localStatus;
+                            } else if (prevCompleted && task.status === TaskStatus.LOCKED) {
+                                task.status = TaskStatus.PENDING;
+                            }
+                            prevCompleted = task.status === TaskStatus.COMPLETED || task.status === TaskStatus.SKIPPED;
+                            return task;
+                        });
                     }
 
                     set({ todayPlan, isLoading: false });

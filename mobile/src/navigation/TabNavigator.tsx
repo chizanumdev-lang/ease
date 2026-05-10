@@ -47,8 +47,8 @@ export default function TabNavigator() {
                     name="Progress"
                     component={ProgressScreen}
                     options={{
-                        tabBarLabel: 'Stats',
-                        tabBarIcon: ({ color }: { color: string }) => <Ionicons name="analytics-outline" size={20} color={color} />,
+                        tabBarLabel: 'Evolve',
+                        tabBarIcon: ({ color }: { color: string }) => <Ionicons name="sparkles-outline" size={20} color={color} />,
                     }}
                 />
                 <Tab.Screen

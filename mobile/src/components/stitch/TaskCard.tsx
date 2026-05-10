@@ -92,10 +92,10 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
                         style={[
                             styles.line, 
                             { 
-                                backgroundColor: isCompleted ? colors.primary : colors.surfaceContainerHighest,
-                                borderStyle: isLocked ? 'dashed' : 'solid',
-                                borderWidth: isLocked ? 1 : 0,
-                                width: isLocked ? 0 : 2,
+                                backgroundColor: isLocked ? colors.surfaceContainerHighest : colors.primary,
+                                borderStyle: isLocked ? 'solid' : 'dashed',
+                                borderWidth: isLocked ? 0 : 1,
+                                width: isLocked ? 2 : 0,
                             }
                         ]} 
                     />
@@ -195,13 +195,28 @@ export default function TaskCard({ task, onPress, isLast }: TaskCardProps) {
                             <View style={[
                                 styles.iconContainer,
                                 { 
-                                    backgroundColor: isCompleted ? colors.primaryContainer : (isInProgress ? colors.secondaryContainer : colors.surfaceContainerLow)
+                                    backgroundColor: isCompleted 
+                                        ? colors.primaryContainer 
+                                        : (task.type === 'video' ? colors.therapeutic.sky + '20' :
+                                           task.type === 'quiz' ? colors.therapeutic.peach + '20' :
+                                           task.type === 'audio' ? colors.therapeutic.lavender + '20' :
+                                           task.type === 'journal' ? colors.therapeutic.sage + '20' :
+                                           task.type === 'reflection' ? colors.therapeutic.terracotta + '20' :
+                                           task.type === 'micro-app' ? colors.therapeutic.apricot + '20' :
+                                           colors.surfaceContainerLow)
                                 }
                             ]}>
                                 <Ionicons 
                                     name={getTypeIcon()} 
                                     size={22} 
-                                    color={isCompleted ? colors.primary : (isInProgress ? colors.primary : colors.textMuted)} 
+                                    color={isCompleted ? colors.primary : 
+                                           (task.type === 'video' ? colors.therapeutic.sky :
+                                            task.type === 'quiz' ? colors.therapeutic.peach :
+                                            task.type === 'audio' ? colors.therapeutic.lavender :
+                                            task.type === 'journal' ? colors.therapeutic.sage :
+                                            task.type === 'reflection' ? colors.therapeutic.terracotta :
+                                            task.type === 'micro-app' ? colors.therapeutic.apricot :
+                                            colors.textMuted)} 
                                 />
                             </View>
                             

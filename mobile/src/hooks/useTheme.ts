@@ -26,6 +26,7 @@ export const useTheme = () => {
         error: Theme.colors.error,
         white: Theme.colors.white,
         slate: Theme.colors.slate,
+        therapeutic: Theme.colors.therapeutic,
         transparent: Theme.colors.transparent,
     };
 

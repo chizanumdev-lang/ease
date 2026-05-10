@@ -86,10 +86,16 @@ export class AudioController {
         const rituals = await this.ritualsService.findByDate(userId, date);
 
         if (rituals.length === 0) {
-            // Background generation if missing
-            this.ritualsService.generateDailyRituals(userId, date).catch(err => 
-                this.logger.error(`Lazy ritual generation failed: ${err.message}`)
-            );
+            // Claim generation slot BEFORE spawning the pipeline.
+            // This prevents the thundering herd: every subsequent poll sees
+            // the placeholder and returns 'generating' instead of spawning
+            // another AI + ffmpeg pipeline.
+            const claimed = await this.ritualsService.claimGeneration(userId, date);
+            if (claimed) {
+                this.ritualsService.generateDailyRituals(userId, date).catch(err =>
+                    this.logger.error(`Lazy ritual generation failed: ${err.message}`)
+                );
+            }
             return {
                 morning: null,
                 night: null,
@@ -97,10 +103,13 @@ export class AudioController {
             };
         }
 
+        // Check if any ritual is still generating (placeholder URL)
+        const allReady = rituals.every(r => r.url && r.url.length > 0);
+
         return {
-            morning: rituals.find(r => r.ritualType === 'morning'),
-            night: rituals.find(r => r.ritualType === 'night'),
-            status: 'ready'
+            morning: rituals.find(r => r.ritualType === 'morning') || null,
+            night: rituals.find(r => r.ritualType === 'night') || null,
+            status: allReady ? 'ready' : 'generating'
         };
     }
 
