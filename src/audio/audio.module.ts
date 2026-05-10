@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AudioService } from './audio.service';
 import { AudioController } from './audio.controller';
+import { AudioResolver } from './audio.resolver';
+
 import { AiModule } from '../ai/ai.module';
 import { AudioTrack } from './entities/audio-track.entity';
 import { RitualTrack } from './entities/ritual-track.entity';
@@ -21,7 +23,7 @@ import { RitualsService } from './rituals.service';
         UsersModule,
     ],
     controllers: [AudioController],
-    providers: [AudioService, AudioMixerService, RitualsService, YoutubeAudioService],
+    providers: [AudioService, AudioMixerService, RitualsService, YoutubeAudioService, AudioResolver],
     exports: [AudioService, AudioMixerService, RitualsService, YoutubeAudioService],
 })
 export class AudioModule { }

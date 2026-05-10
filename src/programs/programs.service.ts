@@ -28,6 +28,7 @@ import { YoutubeService } from '../video/youtube/youtube.service';
 import { AudioService } from '../audio/audio.service';
 import { AudioMixerService } from '../audio/audio-mixer.service';
 import { RitualsService } from '../audio/rituals.service';
+import { OrchestratorService } from '../modules/engine/services/orchestrator.service';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
@@ -94,6 +95,7 @@ export class ProgramsService {
         private audioMixerService: AudioMixerService,
         private ritualsService: RitualsService,
         private progressionService: ProgressionService,
+        private orchestratorService: OrchestratorService,
     ) { }
 
 
@@ -232,39 +234,24 @@ export class ProgramsService {
     }
 
     async hydrateDay(dayId: string, goalText: string, params: any): Promise<void> {
-        const day = await this.dayPlanRepository.findOne({ where: { id: dayId }, relations: ['program'] });
-        if (!day) return;
-
+        this.logger.log(`Hydrating Day ${dayId} via Orchestrator (Goal: ${goalText})`);
         try {
-            const content = await this.aiService.generateSingleDay(
-                goalText,
-                day.dayNumber,
-                params.duration || 7,
-                params,
-                { dayPlanId: day.id },
-            );
-
-            await this.saveDayContent(day, content, params);
-
-            await this.dayPlanRepository.update(day.id, {
-                theme: `Day ${day.dayNumber}: ${content.theme}`,
-                focusAreas: content.focusAreas,
-                status: 'ready',
-            });
-
-            // Trigger ritual generation for the user's current local date (non-blocking)
-            const user = await this.usersService.findById(day.program.userId);
-            const userTz = user?.settings?.timezone || 'UTC';
-            const localDateStr = new Intl.DateTimeFormat('sv-SE', { timeZone: userTz }).format(new Date());
+            await this.orchestratorService.orchestrateDay(dayId, goalText, params);
             
-            this.ritualsService.generateDailyRituals(day.program.userId, localDateStr).catch(err => 
-                this.logger.error(`Initial ritual generation failed for user ${day.program.userId} on ${localDateStr}: ${err.message}`)
-            );
-
-            this.logger.log(`Day ${day.dayNumber} of program ${day.programId} hydrated`);
+            // Trigger ritual generation (non-blocking)
+            const day = await this.dayPlanRepository.findOne({ where: { id: dayId }, relations: ['program'] });
+            if (day) {
+                const user = await this.usersService.findById(day.program.userId);
+                const userTz = user?.settings?.timezone || 'UTC';
+                const localDateStr = new Intl.DateTimeFormat('sv-SE', { timeZone: userTz }).format(new Date());
+                
+                this.ritualsService.generateDailyRituals(day.program.userId, localDateStr).catch(err => 
+                    this.logger.error(`Initial ritual generation failed for user ${day.program.userId} on ${localDateStr}: ${err.message}`)
+                );
+                this.logger.log(`Successfully hydrated Day ${dayId}`);
+            }
         } catch (error) {
-            this.logger.error(`Failed to hydrate day ${day.dayNumber}: ${error?.message}`);
-            await this.dayPlanRepository.update(day.id, { status: 'failed' });
+            this.logger.error(`Orchestration failed for Day ${dayId}: ${error.message}`);
             throw error;
         }
     }

@@ -93,6 +93,12 @@ export class AiService implements OnModuleInit {
 
         this.providers = [
             {
+                name: 'ollama',
+                priority: 0, // Top priority if available (local & free)
+                cooldownUntil: null,
+                generate: (prompt) => this.callOllama(prompt),
+            },
+            {
                 name: 'groq',
                 priority: 1,
                 cooldownUntil: null,
@@ -354,6 +360,26 @@ export class AiService implements OnModuleInit {
         if (!res.ok) throw new Error(`Mistral HTTP ${res.status}: ${await res.text()}`);
         const data = await res.json();
         return data.choices[0].message.content;
+    }
+
+    private async callOllama(prompt: string): Promise<string> {
+        const url = this.configService.get<string>('OLLAMA_URL') || 'http://localhost:11434';
+        const model = this.configService.get<string>('OLLAMA_MODEL') || 'llama3.2:3b';
+
+        const res = await fetch(`${url}/api/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model,
+                prompt,
+                stream: false,
+                options: { temperature: 0.6 },
+            }),
+        });
+
+        if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
+        const data = await res.json();
+        return data.response;
     }
 
     async generateProgramPlan(goal: string, options: any): Promise<any> {
