@@ -239,8 +239,18 @@ export class ProgramsService {
             await this.orchestratorService.orchestrateDay(dayId, goalText, params);
             
             // Trigger ritual generation (non-blocking)
-            const day = await this.dayPlanRepository.findOne({ where: { id: dayId }, relations: ['program'] });
+            const day = await this.dayPlanRepository.findOne({ 
+                where: { id: dayId }, 
+                relations: ['program'] 
+            });
+            
             if (day) {
+                // If this is Day 1, mark the program as ready so the mobile app knows it can show the tasks
+                if (day.dayNumber === 1 && day.program.status === 'generating') {
+                    await this.programRepository.update(day.program.id, { status: 'ready' });
+                    this.logger.log(`Program ${day.program.id} marked as ready after Day 1 hydration`);
+                }
+
                 const user = await this.usersService.findById(day.program.userId);
                 const userTz = user?.settings?.timezone || 'UTC';
                 const localDateStr = new Intl.DateTimeFormat('sv-SE', { timeZone: userTz }).format(new Date());

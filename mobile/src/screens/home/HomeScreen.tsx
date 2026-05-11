@@ -91,6 +91,27 @@ export default function HomeScreen({ navigation }: Props) {
         loadData();
     }, []);
 
+    // Status Polling for "Generating" state
+    React.useEffect(() => {
+        let pollInterval: NodeJS.Timeout | null = null;
+
+        if (currentProgram?.status === 'generating') {
+            console.log('[HomeScreen] Program is generating, starting status poll...');
+            pollInterval = setInterval(async () => {
+                const updatedProgram = await useProgramsStore.getState().fetchActiveProgram(true);
+                if (updatedProgram && updatedProgram.status === 'ready') {
+                    console.log('[HomeScreen] Program is now ready, fetching plan and stopping poll.');
+                    await useProgramsStore.getState().fetchTodayPlan(updatedProgram.id);
+                    if (pollInterval) clearInterval(pollInterval);
+                }
+            }, 5000); // Poll every 5 seconds
+        }
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+        };
+    }, [currentProgram?.status]);
+
     const handleTaskPress = (task: Task) => {
         // If task is completed and has a next task, navigate to the next task to maintain "Circuit Flow"
         if (task.status === TaskStatus.COMPLETED && task.next_task_id) {
