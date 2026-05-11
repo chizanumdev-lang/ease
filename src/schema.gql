@@ -24,6 +24,19 @@ type AudioTrack {
   url: String!
 }
 
+type AudioUrlResponse {
+  url: String!
+}
+
+type Badge {
+  description: String!
+  earned: Boolean!
+  earnedAt: DateTime
+  icon: String!
+  id: String!
+  name: String!
+}
+
 enum CapabilityType {
   AUDIO
   LOGIC
@@ -32,11 +45,29 @@ enum CapabilityType {
   VISION
 }
 
+input CreateCheckinDto {
+  checkinDate: String
+  metrics: JSON
+  mood: String
+  notes: String
+}
+
 input CreateGoalDto {
   category: String
   description: String
   targetDate: String
   title: String!
+}
+
+type DailyCompletion {
+  completionRate: Int!
+  date: String!
+}
+
+type DailyRitualsResponse {
+  morning: RitualTrack
+  night: RitualTrack
+  status: String!
 }
 
 type DailyTask {
@@ -48,7 +79,7 @@ type DailyTask {
   description: String
   duration: Int
   id: ID!
-  metadata: String
+  metadata: JSON
   order: Int!
   quizId: String
   scheduledAt: DateTime
@@ -147,14 +178,17 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 scalar JSON
 
 type Mutation {
+  createCheckin(createCheckinDto: CreateCheckinDto!): Progress!
   createGoal(createGoalDto: CreateGoalDto!): Goal!
   createProgram(templateId: String!, userGoal: String!, userId: String!): UserProgram!
   deleteGoal(id: ID!): Boolean!
   deleteProgram(id: String!): Boolean!
   evaluatePerformance(id: String!): Program!
+  generateBinauralPreview(frequency: Float!): AudioUrlResponse!
   generateProgram(generateProgramDto: GenerateProgramDto!): Program!
   saveBlueprint(edges: [EdgeInput!]!, nodes: [NodeInput!]!, templateId: String!): GoalTemplate!
   submitQuizAttempt(id: String!, submitQuizDto: SubmitQuizDto!): QuizAttempt!
+  updateTask(id: ID!, updateTaskDto: UpdateTaskDto!): DailyTask!
 }
 
 input NodeDataInput {
@@ -195,6 +229,17 @@ enum ProgramStatus {
   PENDING
 }
 
+type Progress {
+  checkinDate: DateTime!
+  createdAt: DateTime!
+  id: ID!
+  metrics: JSON
+  mood: String
+  notes: String
+  updatedAt: DateTime!
+  userId: String!
+}
+
 type Query {
   getActiveProgram: Program!
   getCategories: [GoalCategory!]!
@@ -204,8 +249,10 @@ type Query {
   getProgramById(id: String!): Program!
   getProgramPreview(generateProgramDto: GenerateProgramDto!): Program!
   getQuiz(id: String!): Quiz!
+  getRituals(date: String!): DailyRitualsResponse!
   getTaskDefinitions: [TaskDefinition!]!
   getTodaysPlan(id: String!): DayPlan!
+  getWeeklyAnalytics: WeeklyAnalyticsDto!
   hello: String!
 }
 
@@ -228,6 +275,19 @@ type QuizAttempt {
   quizId: String!
   score: Int!
   updatedAt: DateTime!
+  userId: String!
+}
+
+type RitualTrack {
+  createdAt: DateTime!
+  date: String!
+  duration: Int
+  id: ID!
+  metadata: JSON
+  ritualType: String!
+  title: String!
+  updatedAt: DateTime!
+  url: String
   userId: String!
 }
 
@@ -264,6 +324,15 @@ type TaskDefinition {
   name: String!
 }
 
+input UpdateTaskDto {
+  completed: Boolean
+  content: String
+  metadata: String
+  scheduledAt: DateTime
+  totalDuration: Int
+  watchedSeconds: Int
+}
+
 type UserProgram {
   createdAt: DateTime!
   id: ID!
@@ -276,6 +345,18 @@ type UserProgram {
   updatedAt: DateTime!
   userGoal: String!
   userId: String!
+}
+
+type WeeklyAnalyticsDto {
+  badges: [Badge!]!
+  completionRate: Int!
+  currentStreak: Int!
+  dailyCompletions: [DailyCompletion!]!
+  pointsEarned: Int!
+  progression: JSON
+  quizAverage: Int!
+  todayCompletionRate: Int!
+  weeklyCompletionRate: Int!
 }
 
 type WorkflowEdge {

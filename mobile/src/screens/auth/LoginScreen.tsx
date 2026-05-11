@@ -16,7 +16,7 @@ export default function LoginScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, fonts, shadows, isDark } = useTheme();
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
-    const { login, isLoading, error } = useAuthStore();
+    const { login, isSubmitting, error } = useAuthStore();
     const { showModal } = useModalStore();
 
     const handleLogin = async () => {
@@ -105,6 +105,7 @@ export default function LoginScreen({ navigation }: Props) {
                             title="Log In"
                             onPress={handleLogin}
                             variant="primary"
+                            isLoading={isSubmitting}
                             style={styles.loginButton}
                         />
 

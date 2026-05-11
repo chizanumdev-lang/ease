@@ -50,8 +50,9 @@ function App() {
 
     useEffect(() => {
         async function prepare() {
+            console.log('[APP] prepare start');
             try {
-                // Pre-load fonts, make any API calls you need to do here
+                console.log('[APP] Loading fonts...');
                 await Font.loadAsync({
                     Manrope_400Regular,
                     Manrope_500Medium,
@@ -60,10 +61,11 @@ function App() {
                     Inter_500Medium,
                     Inter_600SemiBold,
                 });
+                console.log('[APP] Fonts loaded');
             } catch (e) {
-                console.warn(e);
+                console.warn('[APP] prepare error:', e);
             } finally {
-                // Tell the application to render
+                console.log('[APP] setting appIsReady: true');
                 setAppIsReady(true);
             }
         }

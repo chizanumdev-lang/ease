@@ -43,6 +43,16 @@ export default function RootNavigator() {
         console.log('[NAV] RootNavigator mounted, calling loadUser');
         loadUser();
 
+        // Safety timeout: if we're still loading after 5 seconds, force it to false
+        const timer = setTimeout(() => {
+            if (useAuthStore.getState().isLoading) {
+                console.warn('[NAV] Loading took too long, forcing isLoading to false');
+                useAuthStore.setState({ isLoading: false });
+            }
+        }, 5000);
+
+        return () => clearTimeout(timer);
+
         // Register and sync push notifications
         notificationService.syncPushToken();
 
