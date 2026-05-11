@@ -28,7 +28,7 @@ interface ProgramsState {
             metadata?: any;
         }
     ) => Promise<Program>;
-    fetchActiveProgram: () => Promise<Program | void>;
+    fetchActiveProgram: (skipPlanFetch?: boolean) => Promise<Program | void>;
     fetchProgram: (id: string) => Promise<void>;
     fetchTodayPlan: (programId: string) => Promise<void>;
     updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
@@ -116,14 +116,17 @@ export const useProgramsStore = create<ProgramsState>()(
                 }
             },
 
-            fetchActiveProgram: async () => {
-                set({ isLoading: true, error: null });
+            fetchActiveProgram: async (skipPlanFetch = false) => {
+                set({ isLoading: !skipPlanFetch, error: null });
                 try {
                     const program = await programsService.getActiveProgram();
                     
                     if (program) {
                         set({ currentProgram: program });
-                        await get().fetchTodayPlan(program.id);
+                        // Only fetch today's plan if we're not just polling for status
+                        if (!skipPlanFetch) {
+                            await get().fetchTodayPlan(program.id);
+                        }
                     } else {
                         set({ currentProgram: null, todayPlan: null });
                     }
@@ -198,13 +201,21 @@ export const useProgramsStore = create<ProgramsState>()(
 
                     set({ todayPlan, isLoading: false });
                     
-                    // Schedule notifications for the new plan
+                    // Schedule notifications for the new plan ONLY if something changed or we don't have it
                     if (todayPlan) {
                         const { morningRitualTime, nightRitualTime } = (require('./audioStore').useAudioStore).getState();
-                        notificationService.scheduleForDay(todayPlan, {
-                            morning: morningRitualTime,
-                            night: nightRitualTime
-                        });
+                        
+                        // Use a simple ID check to avoid re-scheduling the same plan constantly
+                        // This prevents notification "spam" during polling or re-fetches
+                        const lastScheduledPlanId = await AsyncStorage.getItem('last_scheduled_plan_id');
+                        if (lastScheduledPlanId !== todayPlan.id) {
+                            console.log('[ProgramsStore] Scheduling notifications for new plan:', todayPlan.id);
+                            await notificationService.scheduleForDay(todayPlan, {
+                                morning: morningRitualTime,
+                                night: nightRitualTime
+                            });
+                            await AsyncStorage.setItem('last_scheduled_plan_id', todayPlan.id);
+                        }
                     }
                 } catch (error: any) {
                     const status = error.response?.status;

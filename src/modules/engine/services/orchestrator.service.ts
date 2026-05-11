@@ -39,6 +39,7 @@ export class OrchestratorService {
 
     // 1. Get candidate shards (all for now, filtered by modality later)
     const shards = await this.shardRepository.find();
+    this.logger.log(`Found ${shards.length} total shards in database`);
     
     // 2. Use AI to select the best 4-6 shards for this specific goal/day
     const selectionPrompt = `
@@ -53,15 +54,30 @@ export class OrchestratorService {
       Balance them: 1 WATCH, 1 CHECK-IN, 1 PRACTICE, 1 REFLECTION, 1 COMMITMENT.
       
       Return a JSON array of shard names: ["name1", "name2", ...]
+      IMPORTANT: Use the EXACT names from the list above.
     `;
 
-    const selectedNames = await this.aiService.generateCustomJson<string[]>(selectionPrompt, []);
-    
-    const selectedShards = shards.filter(s => selectedNames.includes(s.name));
+    const selectedNamesRaw = await this.aiService.generateCustomJson<string[]>(selectionPrompt, []);
+    this.logger.log(`AI selected ${selectedNamesRaw.length} shard names: ${selectedNamesRaw.join(', ')}`);
+
+    // Case-insensitive matching and normalization
+    const selectedNames = selectedNamesRaw.map(name => name.toLowerCase().trim());
+    const selectedShards = shards.filter(s => {
+        const shardName = s.name.toLowerCase().trim();
+        return selectedNames.includes(shardName);
+    });
+
+    this.logger.log(`Matched ${selectedShards.length} shards after normalization`);
+
+    if (selectedShards.length === 0 && shards.length > 0) {
+        this.logger.warn('No shards matched AI selection. Falling back to default selection.');
+        // Fallback: pick first 5 shards if AI fails to match
+        selectedShards.push(...shards.slice(0, 5));
+    }
 
     // 3. Generate content for ALL selected shards in ONE call (Efficiency)
     const contentPrompt = `
-      Create specific content for these 5 task shards for the goal: "${goal}".
+      Create specific content for these ${selectedShards.length} task shards for the goal: "${goal}".
       
       SHARDS TO HYDRATE:
       ${selectedShards.map(s => `- ${s.name}: ${s.description}`).join('\n')}
@@ -79,18 +95,19 @@ export class OrchestratorService {
     `;
 
     const batchContent = await this.aiService.generateCustomJson<Record<string, any>>(contentPrompt, {});
+    this.logger.log(`Generated content for ${Object.keys(batchContent).length} tasks`);
 
     // 4. Save as Tasks
     for (let i = 0; i < selectedShards.length; i++) {
       const shard = selectedShards[i];
       const content = batchContent[shard.name] || {};
       
-      await this.taskRepository.save(this.taskRepository.create({
+      const task = this.taskRepository.create({
         dayPlanId: dayPlan.id,
         type: shard.name,
         title: content.title || shard.displayName,
         description: content.description || shard.description,
-        duration: shard.typicalDurationMinutes,
+        duration: shard.typicalDurationMinutes || 10,
         order: i,
         metadata: {
           ...content,
@@ -98,9 +115,14 @@ export class OrchestratorService {
           modality: shard.modality,
           energy: shard.energyLevel
         }
-      }));
+      });
+      
+      await this.taskRepository.save(task);
     }
 
+    this.logger.log(`Saved ${selectedShards.length} tasks to DayPlan ${dayPlan.id}`);
+
     await this.dayPlanRepository.update(dayPlan.id, { status: 'ready' });
+    this.logger.log(`DayPlan ${dayPlan.id} marked as ready`);
   }
 }
