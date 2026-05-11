@@ -91,13 +91,9 @@ export class AiService implements OnModuleInit {
         this.cache = new MemoryCache(200);
         this.usageCounts = new Map();
 
+        const isDev = this.configService.get('NODE_ENV') === 'development';
+
         this.providers = [
-            {
-                name: 'ollama',
-                priority: 0, // Top priority if available (local & free)
-                cooldownUntil: null,
-                generate: (prompt) => this.callOllama(prompt),
-            },
             {
                 name: 'groq',
                 priority: 1,
@@ -129,6 +125,16 @@ export class AiService implements OnModuleInit {
                 generate: (prompt) => this.callCohere(prompt),
             },
         ];
+
+        // Only add Ollama in development and if configured
+        if (isDev) {
+            this.providers.unshift({
+                name: 'ollama',
+                priority: 0, // Top priority in dev
+                cooldownUntil: null,
+                generate: (prompt) => this.callOllama(prompt),
+            });
+        }
     }
 
     // No external connections to clean up — in-memory cache is GC'd automatically

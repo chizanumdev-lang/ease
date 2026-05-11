@@ -135,6 +135,43 @@ export default function HomeScreen({ navigation }: Props) {
         );
     }
 
+    if (currentProgram?.status === 'generating' && !todayPlan) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+                <View style={styles.topNavWrapper}>
+                    <View style={styles.topNav}>
+                        <View style={styles.navButton} />
+                        <Logo size={32} />
+                        <TouchableOpacity 
+                            style={[styles.profileButton, { backgroundColor: colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' }]}
+                            onPress={() => navigation.navigate('Settings')}
+                        >
+                            <Ionicons name="settings-outline" size={24} color={colors.text} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+                    <Animated.View style={{ opacity: 0.8 }}>
+                        <Ionicons name="sparkles-outline" size={80} color={colors.primary} />
+                    </Animated.View>
+                    <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, textAlign: 'center', marginTop: 24, fontFamily: fonts.display }}>
+                        Building your path...
+                    </Text>
+                    <Text style={{ fontSize: 16, color: colors.textMuted, textAlign: 'center', marginTop: 12, lineHeight: 24, fontFamily: fonts.body }}>
+                        We're selecting the best shards for your goal. This usually takes less than 30 seconds.
+                    </Text>
+                    <TouchableOpacity 
+                        style={{ marginTop: 40, padding: 16 }}
+                        onPress={() => useProgramsStore.getState().fetchActiveProgram()}
+                    >
+                        <Text style={{ color: colors.primary, fontWeight: '700' }}>Check Status</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     if (!currentProgram && !todayPlan) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>

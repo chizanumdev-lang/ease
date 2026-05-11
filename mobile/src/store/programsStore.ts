@@ -208,7 +208,13 @@ export const useProgramsStore = create<ProgramsState>()(
                     }
                 } catch (error: any) {
                     const status = error.response?.status;
-                    if (status === 404 || status === 500) {
+                    const { currentProgram } = get();
+                    
+                    if (status === 404 && currentProgram?.status === 'generating') {
+                        // Expected if program is still being built in background
+                        console.log('[ProgramsStore] Plan not found but program is generating — staying in loading state');
+                        set({ todayPlan: null, isLoading: false, error: null });
+                    } else if (status === 404 || status === 500) {
                         // Plan doesn't exist or server error for this program — clear stale state
                         console.warn('[ProgramsStore] fetchTodayPlan failed with', status, '— clearing stale program');
                         set({ currentProgram: null, todayPlan: null, isLoading: false, error: null });
