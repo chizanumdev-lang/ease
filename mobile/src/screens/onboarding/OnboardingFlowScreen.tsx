@@ -44,7 +44,7 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
     const { showModal } = useModalStore();
     const [currentStep, setCurrentStep] = useState(1);
-    const { updateSettings, isLoading } = useAuthStore();
+    const { updateSettings, isSubmitting } = useAuthStore();
     const { control, handleSubmit, watch, setValue } = useForm<OnboardingFormData>({
         defaultValues: {
             nickname: '',
@@ -447,7 +447,7 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                 <StitchButton
                     title={currentStep === TOTAL_STEPS ? "Start My Program" : "Continue"}
                     onPress={handleNext}
-                    isLoading={isLoading}
+                    isLoading={isSubmitting}
                     showArrow={currentStep < TOTAL_STEPS}
                 />
                 <Text style={[styles.footerSubtext, { color: colors.textMuted }]}>

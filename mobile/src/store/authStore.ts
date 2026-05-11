@@ -11,7 +11,8 @@ import { setUnauthorizedHandler } from '../services/api';
 interface AuthState {
     user: User | null;
     isAuthenticated: boolean;
-    isLoading: boolean;
+    isLoading: boolean; // For initial app load
+    isSubmitting: boolean; // For auth actions
     error: string | null;
 
     // Actions
@@ -26,11 +27,12 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     isAuthenticated: false,
-    isLoading: false,
+    isLoading: true, // Start in loading state for loadUser
+    isSubmitting: false,
     error: null,
 
     login: async (email, password) => {
-        set({ isLoading: true, error: null });
+        set({ isSubmitting: true, error: null });
         try {
             const response = await authService.login(email, password);
             await secureStorage.setAccessToken(response.accessToken);
@@ -39,19 +41,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             set({
                 user: response.user,
                 isAuthenticated: true,
-                isLoading: false,
+                isSubmitting: false,
             });
         } catch (error: any) {
             set({
                 error: error.response?.data?.message || 'Login failed',
-                isLoading: false,
+                isSubmitting: false,
             });
             throw error;
         }
     },
 
     signup: async (email, password, name) => {
-        set({ isLoading: true, error: null });
+        set({ isSubmitting: true, error: null });
         try {
             console.log('[AUTH] Starting signup...');
             const response = await authService.signup(email, password, name);
@@ -72,7 +74,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     }
                 },
                 isAuthenticated: true,
-                isLoading: false,
+                isSubmitting: false,
             });
             console.log('[AUTH] State updated - isAuthenticated: true, user has no cached data');
         } catch (error: any) {
@@ -91,7 +93,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             set({
                 error: errorMessage,
-                isLoading: false,
+                isSubmitting: false,
             });
             throw error;
         }
@@ -117,31 +119,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     loadUser: async (forceRefresh = false) => {
-        console.log('[AUTH] loadUser called, forceRefresh:', forceRefresh);
+        console.log('[AUTH] loadUser start, forceRefresh:', forceRefresh);
         set({ isLoading: true });
         try {
+            console.log('[AUTH] Checking for token...');
             const token = await secureStorage.getAccessToken();
             console.log('[AUTH] Has token:', !!token);
             if (token) {
+                console.log('[AUTH] Token found, checking cache...');
                 const cachedUser = forceRefresh ? null : await mmkvStorage.getUserAsync();
-                console.log('[AUTH] Cached user:', cachedUser ? 'found' : 'not found');
+                console.log('[AUTH] Cached user found:', !!cachedUser);
                 
                 if (cachedUser) {
-                    console.log('[AUTH] Using cached user, onboardingCompleted:', cachedUser.settings?.onboardingCompleted);
+                    console.log('[AUTH] Using cached user');
                     set({
                         user: cachedUser,
                         isAuthenticated: true,
                         isLoading: false,
                     });
                 } else {
-                    // No cached user or forced - fetch from API
-                    console.log('[AUTH] Fetching user from API...');
+                    console.log('[AUTH] No cached user, fetching from API...');
                     const user = await authService.getCurrentUser();
-                    console.log('[AUTH] Fetched user from API, isVerified:', user.isVerified, 'onboardingCompleted:', user.settings?.onboardingCompleted);
-                    
-                    // Update cache with fresh data
+                    console.log('[AUTH] API fetch success');
                     await mmkvStorage.setUser(user);
-                    
                     set({
                         user,
                         isAuthenticated: true,
@@ -149,29 +149,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     });
                 }
             } else {
-                console.log('[AUTH] No token, user not authenticated');
-                set({ isLoading: false });
+                console.log('[AUTH] No token, setting authenticated: false');
+                set({ isLoading: false, isAuthenticated: false });
             }
         } catch (error) {
-            console.error('[AUTH] loadUser error:', error);
-            set({ isLoading: false });
+            console.error('[AUTH] loadUser CRITICAL ERROR:', error);
+            set({ isLoading: false, isAuthenticated: false });
         }
+        console.log('[AUTH] loadUser complete');
     },
 
     updateSettings: async (settings) => {
-        set({ isLoading: true, error: null });
+        set({ isSubmitting: true, error: null });
         try {
             const updatedUser = await authService.updateSettings(settings);
             // Cache user after onboarding completion
             await mmkvStorage.setUser(updatedUser);
             set({
                 user: updatedUser,
-                isLoading: false,
+                isSubmitting: false,
             });
         } catch (error: any) {
             set({
                 error: error.response?.data?.message || 'Failed to update settings',
-                isLoading: false,
+                isSubmitting: false,
             });
             throw error;
         }

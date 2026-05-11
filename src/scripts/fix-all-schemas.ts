@@ -70,6 +70,7 @@ async function fixAllSchemas() {
     await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS watched_seconds INT DEFAULT 0;`);
     await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS total_duration INT DEFAULT 0;`);
     await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS day_plan_id UUID;`);
+    await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';`);
     await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now();`);
     await client.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();`);
 
@@ -132,6 +133,27 @@ async function fixAllSchemas() {
     await client.query(`ALTER TABLE audio_tracks ADD COLUMN IF NOT EXISTS day_plan_id UUID;`);
     await client.query(`ALTER TABLE audio_tracks ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now();`);
     await client.query(`ALTER TABLE audio_tracks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();`);
+
+    // --- TABLE: task_shards ---
+    console.log('Checking task_shards...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS task_shards (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT UNIQUE NOT NULL,
+        display_name TEXT NOT NULL,
+        modality TEXT,
+        description TEXT,
+        typical_duration_minutes INT DEFAULT 5,
+        energy_level TEXT DEFAULT 'medium',
+        difficulty_base INT DEFAULT 3,
+        xp_reward INT DEFAULT 20,
+        skill_targets JSONB DEFAULT '[]',
+        ai_prompt_template JSONB DEFAULT '{}',
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT now(),
+        updated_at TIMESTAMP DEFAULT now()
+      );
+    `);
 
     // 4. Ensure admin exists and is verified
     console.log('Ensuring admin status for ichizanum@gmail.com...');

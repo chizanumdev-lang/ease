@@ -20,7 +20,7 @@ export class Task {
     id: string;
 
     @Field()
-    @Column()
+    @Column({ type: 'text' })
     title: string;
 
     @Field({ nullable: true })

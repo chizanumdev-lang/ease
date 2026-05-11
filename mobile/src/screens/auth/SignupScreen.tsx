@@ -18,7 +18,7 @@ export default function SignupScreen({ navigation }: Props) {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [acceptTerms, setAcceptTerms] = React.useState(false);
-    const { signup, isLoading, error } = useAuthStore();
+    const { signup, isSubmitting, error } = useAuthStore();
     const { showModal } = useModalStore();
 
     const handleSignup = async () => {
@@ -154,7 +154,7 @@ export default function SignupScreen({ navigation }: Props) {
                         <StitchButton
                             title="Join Now"
                             onPress={handleSignup}
-                            isLoading={isLoading}
+                            isLoading={isSubmitting}
                             variant="primary"
                             style={styles.signupButton}
                         />

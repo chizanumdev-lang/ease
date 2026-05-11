@@ -23,6 +23,16 @@ export default function LoadingState({
     const dashOffsetAnim = React.useRef(new Animated.Value(CIRCUMFERENCE)).current;
 
     React.useEffect(() => {
+        // Rotation Animation
+        Animated.loop(
+            Animated.timing(rotateAnim, {
+                toValue: 1,
+                duration: 2000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            })
+        ).start();
+
         // Dash Offset Animation (mimicking the 0% -> 50% -> 100% flow)
         Animated.loop(
             Animated.sequence([
@@ -30,13 +40,13 @@ export default function LoadingState({
                     toValue: CIRCUMFERENCE * 0.25, // 50% step in CSS (110 / 440 is ~0.25)
                     duration: 1500,
                     easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
+                    useNativeDriver: false,
                 }),
                 Animated.timing(dashOffsetAnim, {
                     toValue: CIRCUMFERENCE,
                     duration: 1500,
                     easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
+                    useNativeDriver: false,
                 }),
             ])
         ).start();
