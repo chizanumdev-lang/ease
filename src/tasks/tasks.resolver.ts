@@ -16,7 +16,7 @@ export class TasksResolver {
   @UseGuards(JwtAuthGuard)
   async updateTask(
     @Args('id', { type: () => ID }) id: string,
-    @Args('updateTaskDto') updateTaskDto: UpdateTaskDto,
+    @Args('updateTaskDto', { type: () => UpdateTaskDto }) updateTaskDto: UpdateTaskDto,
   ): Promise<Task> {
     return this.tasksService.update(id, updateTaskDto);
   }

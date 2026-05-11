@@ -1,31 +1,36 @@
 import { InputType, Field, Int } from '@nestjs/graphql';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsInt, IsDate } from 'class-validator';
+import { GraphQLJSON } from 'graphql-type-json';
 
 @InputType()
 export class UpdateTaskDto {
-    @Field({ nullable: true })
+    @Field(() => Boolean, { nullable: true })
     @IsBoolean()
     @IsOptional()
     completed?: boolean;
 
-    @Field({ nullable: true })
+    @Field(() => Date, { nullable: true })
+    @IsDate()
     @IsOptional()
     scheduledAt?: Date;
 
-    @Field({ nullable: true })
+    @Field(() => String, { nullable: true })
+    @IsString()
     @IsOptional()
     content?: string;
 
     @Field(() => Int, { nullable: true })
+    @IsInt()
     @IsOptional()
     watchedSeconds?: number;
 
     @Field(() => Int, { nullable: true })
+    @IsInt()
     @IsOptional()
     totalDuration?: number;
 
-    @Field({ nullable: true })
+    @Field(() => GraphQLJSON, { nullable: true })
     @IsOptional()
-    metadata?: string;
+    metadata?: any;
 }
 
