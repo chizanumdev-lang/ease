@@ -19,6 +19,7 @@ import { AudioModule } from '../audio/audio.module';
 import { EngineModule } from '../modules/engine/engine.module';
 
 import { ProgramsController } from './programs.controller';
+import { InternalController } from '../common/internal.controller';
 
 @Module({
     imports: [
@@ -39,7 +40,7 @@ import { ProgramsController } from './programs.controller';
         AudioModule,
         EngineModule,
     ],
-    controllers: [ProgramsController],
+    controllers: [ProgramsController, InternalController],
     providers: [ProgramsService, ProgressionService, ProgramsResolver],
     exports: [ProgramsService, ProgressionService],
 })

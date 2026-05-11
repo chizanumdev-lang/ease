@@ -503,14 +503,15 @@ export class ProgramsService {
                 params: generationParams,
             });
             if (handle) {
+                this.logger.log(`Day 1 hydration queued via Trigger.dev: ${handle.id}`);
                 program.status = 'generating';
-                await this.programRepository.save(program);
             } else {
                 this.logger.warn('Trigger.dev unavailable for Day 1 hydration, processing synchronously');
                 await this.hydrateDay(day1.id, generationParams.goalText, generationParams);
                 program.status = 'ready';
-                await this.programRepository.save(program);
             }
+        } else {
+            program.status = 'ready';
         }
 
         // ─── PHASE 3: Dispatch Day 2 to background queue (JIT) ─────────────
@@ -519,17 +520,13 @@ export class ProgramsService {
         });
 
         if (day2 && day2.status === 'pending') {
-            const handle = await triggerHydrateDay({
+            await triggerHydrateDay({
                 dayPlanId: day2.id,
                 goalText: generationParams.goalText,
                 params: generationParams,
             });
-            if (!handle) {
-                this.logger.warn('Trigger.dev unavailable for Day 2, will hydrate on-demand');
-            }
         }
 
-        program.status = 'ready'; // Mark program ready as skeleton + Day 1 are good
         await this.programRepository.save(program);
 
         return program;
