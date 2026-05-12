@@ -86,7 +86,7 @@ export default function TaskScreenRouter({ route, navigation }: Props) {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <SafeAreaView style={styles.header}>
+            <SafeAreaView style={[styles.header, { backgroundColor: isDark ? colors.glass.dark : colors.glass.light, borderBottomWidth: 1, borderBottomColor: colors.glass.border }]}>
                 <View style={styles.headerContent}>
                     <TouchableOpacity onPress={handleBack} style={styles.backButton} activeOpacity={0.7}>
                         <Ionicons name="chevron-back" size={26} color={colors.text} />

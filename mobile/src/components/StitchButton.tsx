@@ -40,7 +40,7 @@ export default function StitchButton({
     leftIcon,
     rightIcon,
 }: StitchButtonProps) {
-    const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    const { colors, spacing, borderRadius, fonts, isDark, shadows } = useTheme();
     const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
     const handlePressIn = () => {
@@ -63,10 +63,10 @@ export default function StitchButton({
         const baseStyle: ViewStyle[] = [styles.button];
         
         // Dynamic borderRadius
-        baseStyle.push({ borderRadius: borderRadius.xl });
+        baseStyle.push({ borderRadius: borderRadius.xxxl });
 
-        if (size === 'sm') baseStyle.push(styles.sm);
-        if (size === 'lg') baseStyle.push(styles.lg);
+        if (size === 'sm') baseStyle.push({ height: 44, paddingHorizontal: 20, borderRadius: borderRadius.xl });
+        if (size === 'lg') baseStyle.push({ height: 72, paddingHorizontal: 36, borderRadius: borderRadius.xxxxl });
 
         if (variant === 'destructive') {
             baseStyle.push({ backgroundColor: colors.error });
@@ -155,7 +155,7 @@ export default function StitchButton({
 
     if (variant === 'primary') {
         return (
-            <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+            <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, shadows.ambient, style]}>
                 <Pressable
                     onPress={onPress}
                     onPressIn={handlePressIn}
@@ -163,7 +163,7 @@ export default function StitchButton({
                     disabled={disabled || isLoading}
                 >
                     <LinearGradient
-                        colors={isDark ? [colors.primary, '#2d5a4c'] : ['#225344', '#3b6b5b']}
+                        colors={colors.gradients.primary}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={getButtonStyle()}

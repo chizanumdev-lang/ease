@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { User } from '../users/entities/user.entity';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
@@ -69,8 +70,8 @@ export class AuthService {
         // Generate tokens
         const tokens = await this.generateTokens(user.id, user.email);
 
-        // Save refresh token
-        const hashedRefreshToken = await bcrypt.hash(tokens.refreshToken, 10);
+        // Save refresh token using SHA-256 for performance (random JWTs)
+        const hashedRefreshToken = crypto.createHash('sha256').update(tokens.refreshToken).digest('hex');
         user.refreshToken = hashedRefreshToken;
         await this.userRepository.save(user);
 
@@ -106,8 +107,8 @@ export class AuthService {
         // Generate tokens
         const tokens = await this.generateTokens(user.id, user.email);
 
-        // Save refresh token
-        const hashedRefreshToken = await bcrypt.hash(tokens.refreshToken, 10);
+        // Save refresh token using SHA-256 for performance (random JWTs)
+        const hashedRefreshToken = crypto.createHash('sha256').update(tokens.refreshToken).digest('hex');
         user.refreshToken = hashedRefreshToken;
         await this.userRepository.save(user);
 
@@ -149,10 +150,8 @@ export class AuthService {
             throw new UnauthorizedException('Access Denied');
         }
 
-        const refreshTokenMatches = await bcrypt.compare(
-            refreshToken,
-            user.refreshToken,
-        );
+        const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
+        const refreshTokenMatches = hashedToken === user.refreshToken;
 
         if (!refreshTokenMatches) {
             throw new UnauthorizedException('Access Denied');
@@ -161,7 +160,7 @@ export class AuthService {
         const tokens = await this.generateTokens(user.id, user.email);
         
         // Update stored refresh token
-        const hashedRefreshToken = await bcrypt.hash(tokens.refreshToken, 10);
+        const hashedRefreshToken = crypto.createHash('sha256').update(tokens.refreshToken).digest('hex');
         user.refreshToken = hashedRefreshToken;
         await this.userRepository.save(user);
 

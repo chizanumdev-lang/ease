@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { EngineModule } from '../engine/engine.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Task } from '../engine/entities/task.entity';
+import { EngineTask } from '../engine/entities/task.entity';
 import { UserProgram } from '../engine/entities/user-program.entity';
 
 @Module({
   imports: [
     EngineModule,
-    TypeOrmModule.forFeature([Task, UserProgram]),
+    TypeOrmModule.forFeature([EngineTask, UserProgram]),
   ],
   providers: [],
   exports: [],

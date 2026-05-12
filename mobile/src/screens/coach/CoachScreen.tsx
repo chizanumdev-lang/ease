@@ -89,17 +89,14 @@ export default function CoachScreen({ navigation }: any) {
         const isUser = item.sender === 'user';
         return (
             <View style={[styles.messageRow, isUser ? styles.userRow : styles.aiRow]}>
-                {!isUser && (
-                    <View style={[styles.botAvatar, { backgroundColor: colors.therapeutic.sage }]}>
-                        <Ionicons name="sparkles" size={18} color={isDark ? colors.background : "#fff"} />
+                    <View style={[styles.botAvatar, { backgroundColor: colors.primaryContainer }]}>
+                        <Ionicons name="sparkles" size={18} color={colors.primary} />
                     </View>
-                )}
                 
                 <View style={[styles.bubbleWrapper, isUser ? styles.userWrapper : styles.aiWrapper]}>
                     <Text style={[styles.senderName, { color: colors.textMuted, fontFamily: fonts.label }]}>{isUser ? 'You' : 'Ease Bo'}</Text>
                     <View style={[
-                        styles.messageBubble, 
-                        isUser ? [styles.userBubble, { backgroundColor: colors.primary }] : [styles.aiBubble, { backgroundColor: isDark ? colors.surfaceContainerLow : colors.therapeutic.cream, borderColor: colors.outlineVariant }]
+                        isUser ? [styles.userBubble, { backgroundColor: colors.primary }] : [styles.aiBubble, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]
                     ]}>
                         <Text style={[
                             styles.messageText, 
@@ -145,8 +142,8 @@ export default function CoachScreen({ navigation }: any) {
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <LinearGradient
                 colors={isDark ? 
-                    [colors.background, colors.background] : 
-                    [colors.therapeutic.sage + '10', colors.therapeutic.sky + '05', colors.background]}
+                    [colors.background, colors.surface] : 
+                    [colors.primary + '10', colors.secondary + '05', colors.background]}
                 style={StyleSheet.absoluteFill}
             />
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />

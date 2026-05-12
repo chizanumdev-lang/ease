@@ -59,24 +59,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
             exception?.stack,
         );
 
-        // Log to Database
-        try {
-            await this.errorLogRepository.save({
-                message: responseBody.message,
-                stack: exception?.stack,
-                path: responseBody.path,
-                method: request?.method || 'N/A',
-                userId: request?.user?.id,
-                context: request ? {
-                    statusCode: httpStatus,
-                    body: request.body,
-                    query: request.query,
-                    params: request.params,
-                } : { statusCode: httpStatus },
-                createdAt: new Date(),
-            });
-        } catch (dbError) {
-            this.logger.error('Failed to save error to log database', dbError);
+        // Log to Database (Skip 401/404 to avoid noise)
+        if (httpStatus !== HttpStatus.UNAUTHORIZED && httpStatus !== HttpStatus.NOT_FOUND) {
+            try {
+                await this.errorLogRepository.save({
+                    message: responseBody.message,
+                    stack: exception?.stack,
+                    path: responseBody.path,
+                    method: request?.method || 'N/A',
+                    userId: request?.user?.id,
+                    context: request ? {
+                        statusCode: httpStatus,
+                        body: request.body,
+                        query: request.query,
+                        params: request.params,
+                    } : { statusCode: httpStatus },
+                    createdAt: new Date(),
+                });
+            } catch (dbError) {
+                this.logger.error('Failed to save error to log database', dbError);
+            }
         }
 
         if (isHttp) {

@@ -11,32 +11,32 @@ export class WorkflowEdge {
   id: string;
 
   @Field()
-  @Column()
+  @Column({ name: 'template_id' })
   templateId: string;
 
   @ManyToOne(() => GoalTemplate, (template) => template.edges)
-  @JoinColumn({ name: 'templateId' })
+  @JoinColumn({ name: 'template_id' })
   template: GoalTemplate;
 
   @Field()
-  @Column()
+  @Column({ name: 'from_node_id' })
   fromNodeId: string;
 
   @Field(() => WorkflowNode)
   @ManyToOne(() => WorkflowNode)
-  @JoinColumn({ name: 'fromNodeId' })
+  @JoinColumn({ name: 'from_node_id' })
   fromNode: WorkflowNode;
 
   @Field()
-  @Column()
+  @Column({ name: 'to_node_id' })
   toNodeId: string;
 
   @Field(() => WorkflowNode)
   @ManyToOne(() => WorkflowNode)
-  @JoinColumn({ name: 'toNodeId' })
+  @JoinColumn({ name: 'to_node_id' })
   toNode: WorkflowNode;
 
   @Field()
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

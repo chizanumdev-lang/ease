@@ -135,9 +135,9 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     iconBox: {
-        width: 56,
-        height: 56,
-        borderRadius: 18,
+        width: 64,
+        height: 64,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
         opacity: 0.9,
     },
     inputContainer: {
-        borderRadius: 24,
+        borderRadius: 32,
         minHeight: 280,
-        padding: 20,
+        padding: 24,
     },
     input: {
         flex: 1,

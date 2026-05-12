@@ -12,12 +12,12 @@ export class GoalTemplate {
   id: string;
 
   @Field()
-  @Column()
+  @Column({ name: 'category_id' })
   categoryId: string;
 
   @Field(() => GoalCategory)
   @ManyToOne(() => GoalCategory, (category) => category.templates)
-  @JoinColumn({ name: 'categoryId' })
+  @JoinColumn({ name: 'category_id' })
   category: GoalCategory;
 
   @Field()
@@ -29,11 +29,11 @@ export class GoalTemplate {
   description: string;
 
   @Field()
-  @Column({ type: 'text' })
+  @Column({ name: 'meta_prompt', type: 'text' })
   metaPrompt: string;
 
   @Field()
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
   @Field(() => Int)
@@ -49,10 +49,10 @@ export class GoalTemplate {
   edges: WorkflowEdge[];
 
   @Field()
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @Field()
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

@@ -17,7 +17,7 @@ export default function StitchCard({
     style,
     borderRadius: customRadius,
 }: StitchCardProps) {
-    const { colors, spacing, borderRadius, isDark } = useTheme();
+    const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
 
     const getPadding = () => {
         if (padding === 'none') return 0;
@@ -31,13 +31,10 @@ export default function StitchCard({
                     backgroundColor: colors.surface,
                     ...Platform.select({
                         ios: {
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: isDark ? 0.3 : 0.05,
-                            shadowRadius: 12,
+                            ...shadows.ambient
                         },
                         android: {
-                            elevation: 4,
+                            elevation: 8,
                         },
                     }),
                 };
@@ -53,9 +50,9 @@ export default function StitchCard({
                 };
             case 'glass':
                 return {
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.7)',
+                    backgroundColor: isDark ? colors.glass.dark : colors.glass.light,
                     borderWidth: 1,
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    borderColor: colors.glass.border,
                 };
             default:
                 return {};

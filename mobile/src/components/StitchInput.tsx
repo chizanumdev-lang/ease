@@ -88,9 +88,9 @@ export default function StitchInput({
                 style={[
                     styles.inputWrapper,
                     { 
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : colors.surfaceContainerHighest,
-                        borderRadius: borderRadius.lg,
-                        borderColor: error ? colors.error : (isFocused ? colors.primary : 'transparent'),
+                        backgroundColor: isDark ? colors.surfaceContainerLow : colors.surfaceContainerHighest,
+                        borderRadius: borderRadius.xl,
+                        borderColor: error ? colors.error : (isFocused ? colors.primary : colors.outlineVariant),
                         borderWidth: 1.5,
                     }
                 ]}

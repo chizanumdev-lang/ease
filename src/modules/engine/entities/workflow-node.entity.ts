@@ -11,20 +11,20 @@ export class WorkflowNode {
   id: string;
 
   @Field()
-  @Column()
+  @Column({ name: 'template_id' })
   templateId: string;
 
   @ManyToOne(() => GoalTemplate, (template) => template.nodes)
-  @JoinColumn({ name: 'templateId' })
+  @JoinColumn({ name: 'template_id' })
   template: GoalTemplate;
 
   @Field()
-  @Column()
+  @Column({ name: 'task_definition_id' })
   taskDefinitionId: string;
 
   @Field(() => TaskDefinition)
   @ManyToOne(() => TaskDefinition)
-  @JoinColumn({ name: 'taskDefinitionId' })
+  @JoinColumn({ name: 'task_definition_id' })
   taskDefinition: TaskDefinition;
 
   @Field()
@@ -36,14 +36,14 @@ export class WorkflowNode {
   config: any;
 
   @Field(() => Float)
-  @Column({ type: 'float', default: 0 })
+  @Column({ name: 'position_x', type: 'float', default: 0 })
   positionX: number;
 
   @Field(() => Float)
-  @Column({ type: 'float', default: 0 })
+  @Column({ name: 'position_y', type: 'float', default: 0 })
   positionY: number;
 
   @Field()
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

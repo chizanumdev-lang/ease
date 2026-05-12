@@ -36,10 +36,10 @@ export class TaskDefinition {
   description: string;
 
   @Field(() => String, { nullable: true })
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ name: 'default_config', type: 'jsonb', default: {} })
   defaultConfig: any;
 
   @Field()
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

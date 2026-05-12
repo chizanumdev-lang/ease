@@ -126,11 +126,11 @@ export class AiService implements OnModuleInit {
             },
         ];
 
-        // Only add Ollama in development and if configured
+        // Add Ollama in development as a fallback
         if (isDev) {
-            this.providers.unshift({
+            this.providers.push({
                 name: 'ollama',
-                priority: 0, // Top priority in dev
+                priority: 10, // Lower priority, use as fallback
                 cooldownUntil: null,
                 generate: (prompt) => this.callOllama(prompt),
             });
@@ -203,14 +203,13 @@ export class AiService implements OnModuleInit {
             const result = await this.callWithFallback(prompt, metadata);
             if (!result) return fallback;
 
-            // Clean result of any markdown fences
-            const cleanJson = result
-                .replace(/^```json\s*/i, '')
-                .replace(/^```\s*/i, '')
-                .replace(/\s*```$/i, '')
-                .trim();
+            const extracted = this.extractJson(result);
+            if (!extracted) {
+                this.logger.warn('Failed to extract JSON from AI response, using fallback');
+                return fallback;
+            }
 
-            return JSON.parse(cleanJson) as T;
+            return extracted as T;
         } catch (e) {
             this.logger.error(`Failed to generate custom JSON: ${e.message}`);
             return fallback;
@@ -372,20 +371,29 @@ export class AiService implements OnModuleInit {
         const url = this.configService.get<string>('OLLAMA_URL') || 'http://localhost:11434';
         const model = this.configService.get<string>('OLLAMA_MODEL') || 'llama3.2:3b';
 
-        const res = await fetch(`${url}/api/generate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model,
-                prompt,
-                stream: false,
-                options: { temperature: 0.6 },
-            }),
-        });
+        // Add timeout for local Ollama to prevent infinite hang
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 45000); // 45s timeout
 
-        if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
-        const data = await res.json();
-        return data.response;
+        try {
+            const res = await fetch(`${url}/api/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model,
+                    prompt,
+                    stream: false,
+                    options: { temperature: 0.6 },
+                }),
+                signal: controller.signal,
+            });
+
+            if (!res.ok) throw new Error(`Ollama HTTP ${res.status}`);
+            const data = await res.json();
+            return data.response;
+        } finally {
+            clearTimeout(timeout);
+        }
     }
 
     async generateProgramPlan(goal: string, options: any): Promise<any> {
@@ -541,8 +549,8 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
         try {
             let text = await this.callWithFallback(prompt, metadata);
             if (!text) throw new Error('All providers failed for single day');
-            text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
-            const day = JSON.parse(text);
+            const day = this.extractJson(text);
+            if (!day) throw new Error('Could not parse day JSON');
             this.validateDay(day, dayNumber);
             return day;
         } catch (error) {
@@ -658,10 +666,8 @@ Return ONLY the raw JSON object.
             const response = await this.callWithFallback(prompt);
             if (!response) throw new Error('AI providers failed to generate audio script');
             
-            const jsonMatch = response.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error('Failed to extract JSON from AI response');
-            
-            const data = JSON.parse(jsonMatch[0]);
+            const data = this.extractJson(response);
+            if (!data) throw new Error('Failed to extract valid JSON from AI response');
             
             // Validation & Sanitization
             return {
@@ -838,5 +844,34 @@ Return ONLY the raw JSON object.
             days.push(this.getFallbackDay(i, category));
         }
         return days;
+    }
+
+    private extractJson(text: string): any {
+        if (!text) return null;
+        try {
+            // 1. Clean markdown code fences
+            const cleaned = text.replace(/^```json\s*/i, '')
+                               .replace(/^```\s*/i, '')
+                               .replace(/\s*```$/i, '')
+                               .trim();
+            
+            // 2. Try direct parse
+            try {
+                return JSON.parse(cleaned);
+            } catch {
+                // Ignore and try regex
+            }
+
+            // 3. Robust regex extraction (handles preamble/commentary)
+            const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                return JSON.parse(jsonMatch[0]);
+            }
+            
+            return null;
+        } catch (err) {
+            this.logger.warn(`JSON extraction failed: ${err.message}`);
+            return null;
+        }
     }
 }

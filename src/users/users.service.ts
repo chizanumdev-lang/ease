@@ -35,4 +35,20 @@ export class UsersService {
     async findAll(): Promise<User[]> {
         return this.userRepository.find();
     }
+
+    async deleteUser(userId: string): Promise<void> {
+        const result = await this.userRepository.delete(userId);
+        if (result.affected === 0) {
+            throw new NotFoundException('User not found');
+        }
+    }
+
+    async skipVerification(email: string): Promise<User> {
+        const user = await this.findByEmail(email);
+        if (!user) throw new NotFoundException('User not found');
+        user.isVerified = true;
+        user.verificationCode = null;
+        user.verificationExpires = null;
+        return this.userRepository.save(user);
+    }
 }

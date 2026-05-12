@@ -1,112 +1,104 @@
 export const Theme = {
     colors: {
-        // Core Palettes (Nested for legacy compatibility and theme switching)
+        // Premium Palette
         primary: {
-            main: '#225344', // Dark Green (Light Mode Primary)
-            light: '#3b6b5b',
-            dark: '#fafaf5', // Contrast Neutral (Dark Mode Primary)
+            main: '#0284c7', // Calm Ocean Blue
+            light: '#38bdf8',
+            dark: '#0369a1', 
         },
         primaryContainer: {
-            light: '#3b6b5b',
-            dark: '#163a2f',
+            light: '#e0f2fe',
+            dark: '#0c4a6e',
         },
         secondary: {
-            main: '#56624b', // Updated from design
-            light: '#dae7ca',
-            dark: '#becbaf',
+            main: '#10b981', // Serene Mint Green
+            light: '#6ee7b7',
+            dark: '#065f46',
         },
         secondaryContainer: {
-            light: '#d7e4c7', // New from design
-            dark: '#3f4a35',
+            light: '#d1fae5',
+            dark: '#064e3b',
         },
         
         background: {
-            light: '#fafaf5', // Warm Neutral Base
-            dark: '#225344', // Deep Green Base
+            light: '#ffffff',
+            dark: '#020617', // Rich Black-Blue
         },
         surface: {
-            light: '#ffffff',
-            dark: '#2b5d4e', // Lighter Green Surface
+            light: '#f8fafc',
+            dark: '#0f172a', 
         },
         
         text: {
-            light: '#1a1c19', // onSurface High-end charcoal
-            dark: '#fafaf5',  // onSurface Warm Neutral
-            muted: '#3e494a', // onSurfaceVariant
+            light: '#0f172a',
+            dark: '#f1f5f9',
+            muted: '#64748b',
         },
 
         surfaceContainerLow: {
-            light: '#f4f4ef',
-            dark: '#1e4a3c',
+            light: '#f1f5f9',
+            dark: '#334155',
         },
         surfaceContainer: {
-            light: '#eeeee9',
-            dark: '#1a1c19',
+            light: '#e2e8f0',
+            dark: '#1e293b',
         },
         surfaceContainerHigh: {
-            light: '#e8e8e3',
-            dark: '#1b4236',
+            light: '#cbd5e1',
+            dark: '#475569',
         },
         surfaceContainerHighest: {
-            light: '#e3e3de',
-            dark: '#163a2f',
+            light: '#94a3b8',
+            dark: '#64748b',
         },
         
         onSurface: {
-            light: '#1a1c19',
-            dark: '#fafaf5',
+            light: '#0f172a',
+            dark: '#f8fafc',
         },
         onSurfaceVariant: {
-            light: '#3e494a',
-            dark: '#b0babb',
+            light: '#475569',
+            dark: '#94a3b8',
         },
         
         outline: {
-            light: '#6f797a', // Updated from design
-            dark: '#89938f',
+            light: '#cbd5e1',
+            dark: '#475569',
         },
         outlineVariant: {
-            light: '#bec8ca', // Updated from design
-            dark: '#3f4948',
+            light: '#e2e8f0',
+            dark: '#334155',
         },
         
-        error: '#ba1a1a',
+        error: '#ef4444',
+        success: '#10b981',
+        warning: '#f59e0b',
+        info: '#3b82f6',
 
-        // Legacy & Utility Palettes (to prevent crashes in un-migrated components)
-        accent: '#225344', 
-        slate: {
-            50: '#f8fafc',
-            100: '#f1f5f9',
-            200: '#e2e8f0',
-            300: '#cbd5e1',
-            400: '#94a3b8',
-            500: '#64748b',
-            600: '#475569',
-            700: '#334155',
-            800: '#1e293b',
-            900: '#0f172a',
+        // Premium Gradients
+        gradients: {
+            primary: ['#0284c7', '#10b981'], // Blue to Green
+            secondary: ['#10b981', '#34d399'], // Green to Mint
+            surface: ['#ffffff', '#f8fafc'],
+            dark: ['#020617', '#0f172a'],
         },
 
-        // Therapeutic Palette (New: Mental Health & Grounding)
-        therapeutic: {
-            sage: '#A8C69F',       // Calming Nature
-            sky: '#A2C5E0',        // Serenity
-            terracotta: '#C65D3B', // Grounding
-            peach: '#FF9671',      // Friendly Action
-            cream: '#FDF2ED',      // Warm Comfort
-            lavender: '#E6E6FA',   // Contemplation
-            apricot: '#FFB38A',    // Soft Encouragement
+        // Glassmorphism
+        glass: {
+            light: 'rgba(255, 255, 255, 0.7)',
+            dark: 'rgba(15, 23, 42, 0.7)',
+            border: 'rgba(255, 255, 255, 0.2)',
         },
 
-        // Quick access / Flattended aliases for components
         white: '#ffffff',
         transparent: 'transparent',
     },
     fonts: {
-        display: 'Manrope_700Bold',
-        label: 'Manrope_500Medium',
+        display: 'Outfit_700Bold', // High-end rounded geometric
+        label: 'Outfit_500Medium',
         body: 'Inter_400Regular',
         bodyMedium: 'Inter_500Medium',
+        mono: 'SpaceMono_400Regular',
     },
     spacing: {
         xs: 4,
@@ -115,22 +107,39 @@ export const Theme = {
         lg: 24,
         xl: 32,
         xxl: 48,
+        xxxl: 64,
     },
     borderRadius: {
-        sm: 4,
-        md: 8,
+        xs: 4,
+        sm: 8,
+        md: 12,
         lg: 16,
         xl: 24,
-        xxl: 48,
+        xxl: 32,
+        xxxl: 48,
         full: 9999,
     },
     shadows: {
+        soft: {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.05,
+            shadowRadius: 12,
+            elevation: 2,
+        },
         ambient: {
-            shadowColor: '#225344',
+            shadowColor: '#0284c7',
             shadowOffset: { width: 0, height: 12 },
-            shadowOpacity: 0.06,
-            shadowRadius: 40,
+            shadowOpacity: 0.12,
+            shadowRadius: 24,
             elevation: 8,
+        },
+        premium: {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 20 },
+            shadowOpacity: 0.15,
+            shadowRadius: 30,
+            elevation: 12,
         }
     }
 };

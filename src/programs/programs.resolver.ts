@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { ProgramsService } from './programs.service';
+import { UsersService } from '../users/users.service';
 import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
 import { GenerateProgramDto } from './dto/generate-program.dto';
@@ -15,7 +16,10 @@ const pubSub = new PubSub();
 export class ProgramsResolver {
   private readonly logger = new Logger(ProgramsResolver.name);
 
-  constructor(private readonly programsService: ProgramsService) {}
+  constructor(
+    private readonly programsService: ProgramsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Query(() => Program, { name: 'getActiveProgram' })
   @UseGuards(JwtAuthGuard)
@@ -100,5 +104,27 @@ export class ProgramsResolver {
   })
   programStatusChanged(@Args('id') id: string) {
     return pubSub.asyncIterableIterator('programStatusChanged');
+  }
+
+  @Mutation(() => Boolean, { name: 'devSkipVerification' })
+  async devSkipVerification(
+    @Args('email') email: string,
+    @Args('key') key: string,
+  ): Promise<boolean> {
+    const expected = process.env.INTERNAL_API_KEY || 'dev-key';
+    if (key !== expected) throw new UnauthorizedException('Invalid dev key');
+    await this.usersService.skipVerification(email);
+    return true;
+  }
+
+  @Mutation(() => Boolean, { name: 'devDeleteUser' })
+  async devDeleteUser(
+    @Args('id') id: string,
+    @Args('key') key: string,
+  ): Promise<boolean> {
+    const expected = process.env.INTERNAL_API_KEY || 'dev-key';
+    if (key !== expected) throw new UnauthorizedException('Invalid dev key');
+    await this.usersService.deleteUser(id);
+    return true;
   }
 }

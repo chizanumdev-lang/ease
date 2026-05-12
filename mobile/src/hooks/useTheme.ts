@@ -24,10 +24,11 @@ export const useTheme = () => {
         outlineVariant: isDark ? Theme.colors.outlineVariant.dark : Theme.colors.outlineVariant.light,
         accent: isDark ? Theme.colors.primary.dark : Theme.colors.primary.main,
         error: Theme.colors.error,
+        success: Theme.colors.success,
         white: Theme.colors.white,
-        slate: Theme.colors.slate,
-        therapeutic: Theme.colors.therapeutic,
         transparent: Theme.colors.transparent,
+        glass: Theme.colors.glass,
+        gradients: Theme.colors.gradients,
     };
 
     const toggleTheme = () => {

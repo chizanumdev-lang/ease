@@ -41,7 +41,7 @@ export default function StitchModal({
     secondaryAction,
 }: StitchModalProps) {
     const { width } = useWindowDimensions();
-    const { colors, fonts, spacing, borderRadius, isDark } = useTheme();
+    const { colors, fonts, spacing, borderRadius, isDark, shadows } = useTheme();
 
     const getIcon = () => {
         switch (type) {
@@ -102,6 +102,7 @@ export default function StitchModal({
                             borderRadius: 32,
                             padding: spacing.xl,
                             width: width * 0.85,
+                            ...shadows.premium,
                         }
                     ]}
                 >
@@ -162,11 +163,7 @@ const styles = StyleSheet.create({
     },
     content: {
         alignItems: 'center',
-        shadowColor: '#225344',
-        shadowOffset: { width: 0, height: 20 },
-        shadowOpacity: 0.1,
-        shadowRadius: 30,
-        elevation: 10,
+        elevation: 12,
     },
     loadingWrapper: {
         width: '100%',
