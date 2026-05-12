@@ -17,13 +17,13 @@ registerEnumType(ExecutionStatus, {
 
 @ObjectType()
 @Entity('engine_tasks')
-export class Task {
+export class EngineTask {
   @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Field()
-  @Column()
+  @Column({ name: 'program_id' })
   programId: string;
 
   @ManyToOne(() => UserProgram, (program) => program.tasks)
@@ -31,7 +31,7 @@ export class Task {
   program: UserProgram;
 
   @Field()
-  @Column()
+  @Column({ name: 'node_id' })
   nodeId: string;
 
   @Field(() => WorkflowNode)
@@ -48,23 +48,23 @@ export class Task {
   status: ExecutionStatus;
 
   @Field(() => String, { nullable: true })
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ name: 'input_data', type: 'jsonb', default: {} })
   inputData: any;
 
   @Field(() => String, { nullable: true })
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ name: 'output_data', type: 'jsonb', default: {} })
   outputData: any;
 
   @Field({ nullable: true })
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'error_log', type: 'text', nullable: true })
   errorLog: string;
 
   @Field({ nullable: true })
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ name: 'started_at', type: 'timestamptz', nullable: true })
   startedAt: Date;
 
   @Field({ nullable: true })
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ name: 'completed_at', type: 'timestamptz', nullable: true })
   completedAt: Date;
 
   @Field(() => [AudioAsset])
@@ -72,6 +72,6 @@ export class Task {
   audioAssets: AudioAsset[];
 
   @Field()
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

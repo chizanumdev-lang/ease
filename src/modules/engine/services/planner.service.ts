@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { AiService } from '../../../ai/ai.service';
 import { UserProgram, ProgramStatus } from '../entities/user-program.entity';
 import { GoalTemplate } from '../entities/goal-template.entity';
-import { Task, ExecutionStatus } from '../entities/task.entity';
+import { EngineTask, ExecutionStatus } from '../entities/task.entity';
 import { WorkflowNode } from '../entities/workflow-node.entity';
 import { TaskDefinition, CapabilityType } from '../entities/task-definition.entity';
 
@@ -17,8 +17,8 @@ export class PlannerService {
     private programRepo: Repository<UserProgram>,
     @InjectRepository(GoalTemplate)
     private templateRepo: Repository<GoalTemplate>,
-    @InjectRepository(Task)
-    private taskRepo: Repository<Task>,
+    @InjectRepository(EngineTask)
+    private taskRepo: Repository<EngineTask>,
     private aiService: AiService,
   ) {}
 
@@ -55,7 +55,7 @@ export class PlannerService {
     const savedProgram = await this.programRepo.save(program);
 
     // 3. Generate Sub-Prompts for each node using the Meta-Prompt
-    const tasks: Task[] = [];
+    const tasks: EngineTask[] = [];
     
     for (const node of template.nodes) {
       this.logger.debug(`Generating plan for node: ${node.label} (${node.taskDefinition.capability})`);

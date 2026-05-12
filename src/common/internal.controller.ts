@@ -1,6 +1,7 @@
-import { Controller, Post, Body, Headers, UnauthorizedException, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Headers, UnauthorizedException, Logger, Param, Delete } from '@nestjs/common';
 import { ProgramsService } from '../programs/programs.service';
 import { RitualsService } from '../audio/rituals.service';
+import { UsersService } from '../users/users.service';
 
 @Controller('internal')
 export class InternalController {
@@ -9,6 +10,7 @@ export class InternalController {
   constructor(
     private readonly programsService: ProgramsService,
     private readonly ritualsService: RitualsService,
+    private readonly usersService: UsersService,
   ) {}
 
   private validateKey(key: string) {
@@ -44,5 +46,27 @@ export class InternalController {
     // but for now we'll just log that we received it.
     // In the future, we can call AudioService or RitualsService.
     return { success: true };
+  }
+  
+  @Post('users/skip-verification')
+  async skipVerification(
+    @Headers('x-internal-key') key: string,
+    @Body('email') email: string,
+  ) {
+    this.validateKey(key);
+    this.logger.log(`Skipping verification for user: ${email}`);
+    await this.usersService.skipVerification(email);
+    return { success: true, message: 'User verified' };
+  }
+
+  @Delete('users/:id')
+  async deleteUser(
+    @Headers('x-internal-key') key: string,
+    @Param('id') id: string,
+  ) {
+    this.validateKey(key);
+    this.logger.log(`Deleting user: ${id}`);
+    await this.usersService.deleteUser(id);
+    return { success: true, message: 'User deleted' };
   }
 }

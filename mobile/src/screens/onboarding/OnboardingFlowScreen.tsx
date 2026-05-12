@@ -13,6 +13,7 @@ import {
     Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Localization from 'expo-localization';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types';
@@ -41,7 +42,7 @@ const TOTAL_STEPS = 7;
 const { width } = Dimensions.get('window');
 
 export default function OnboardingFlowScreen({ navigation }: Props) {
-    const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
+    const { colors, spacing, borderRadius, isDark, shadows, fonts } = useTheme();
     const { showModal } = useModalStore();
     const [currentStep, setCurrentStep] = useState(1);
     const { updateSettings, isSubmitting } = useAuthStore();
@@ -106,48 +107,26 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                 return (
                     <View style={styles.stepContainer}>
                         <View style={styles.textCenter}>
-                            <Text style={[styles.stepTitleLarge, { color: colors.text }]}>Your personal growth system</Text>
-                            <Text style={[styles.stepSubtitleLarge, { color: colors.textMuted }]}>
+                            <Text style={[styles.stepTitleLarge, { color: colors.text, fontFamily: fonts.display }]}>Your personal growth system</Text>
+                            <Text style={[styles.stepSubtitleLarge, { color: colors.textMuted, fontFamily: fonts.body }]}>
                                 Ease into a better you with intelligent guidance and sustainable habit-building.
                             </Text>
                         </View>
                         
-                        <View style={[styles.timelineIllustration, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
-                            <View style={[styles.timelineLine, { backgroundColor: colors.outlineVariant }]} />
-                            
-                            <View style={styles.timelineItem}>
-                                <View style={[styles.timelineIconContainer, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
-                                    <Ionicons name="sunny-outline" size={24} color={colors.primary} />
-                                </View>
-                                <View>
-                                    <Text style={[styles.timelineText, { color: colors.text }]}>Morning Reflection</Text>
-                                    <Text style={[styles.timelineSubtext, { color: colors.textMuted }]}>8:00 AM • Mindset</Text>
-                                </View>
-                            </View>
-                            
-                            <View style={styles.timelineItem}>
-                                <View style={[styles.timelineIconContainer, { backgroundColor: colors.primary, borderColor: colors.primary }]}>
-                                    <Ionicons name="book-outline" size={24} color={isDark ? colors.background : "#fff"} />
-                                </View>
-                                <View>
-                                    <Text style={[styles.timelineText, { color: colors.text }]}>Deep Work Session</Text>
-                                    <Text style={[styles.timelineSubtext, { color: colors.textMuted }]}>2:00 PM • Focus</Text>
-                                </View>
-                            </View>
-                            
-                            <View style={styles.timelineItem}>
-                                <View style={[styles.timelineIconContainer, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
-                                    <Ionicons name="moon-outline" size={24} color={colors.primary} />
-                                </View>
-                                <View>
-                                    <Text style={[styles.timelineText, { color: colors.text }]}>Evening Wind-down</Text>
-                                    <Text style={[styles.timelineSubtext, { color: colors.textMuted }]}>9:00 PM • Recovery</Text>
-                                </View>
-                            </View>
+                        <View style={styles.illustrationContainer}>
+                            <View style={[styles.glowCircle, { backgroundColor: colors.primary + '15' }]} />
+                            <Image 
+                                source={require('../../../assets/images/3d/onboarding_3d_illustration_1778517402291.png')} 
+                                style={styles.onboardingImage}
+                                resizeMode="contain"
+                            />
+                        </View>
 
-                            <View style={styles.illustrationBadge}>
-                                <Ionicons name="trending-up" size={80} color={colors.primary} style={{ opacity: 0.05 }} />
-                            </View>
+                        <View style={[styles.glassCard, { backgroundColor: isDark ? colors.glass.dark : colors.glass.light, borderColor: colors.glass.border }]}>
+                            <Ionicons name="sparkles" size={24} color={colors.primary} />
+                            <Text style={[styles.glassText, { color: colors.text, fontFamily: fonts.bodyMedium }]}>
+                                Join over 240k users building lasting habits with AI-powered rituals.
+                            </Text>
                         </View>
                     </View>
                 );
@@ -174,6 +153,12 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                                     ]}
                                     onPress={() => setValue('growthGoal', goal.id)}
                                 >
+                                    <LinearGradient
+                                        colors={isDark ? 
+                                            [colors.background, colors.surface] : 
+                                            [colors.primary + '10', colors.secondary + '05', colors.background]}
+                                        style={StyleSheet.absoluteFill}
+                                    />
                                     <View style={[
                                         styles.goalIconContainer, 
                                         { backgroundColor: colors.surfaceContainerLow },
@@ -353,12 +338,11 @@ export default function OnboardingFlowScreen({ navigation }: Props) {
                 return (
                     <View style={styles.stepContainer}>
                         <View style={styles.textCenter}>
-                            <View style={styles.lottieContainer}>
-                                <LottieView
-                                    source={{ uri: 'https://assets9.lottiefiles.com/packages/lf20_toum81uz.json' }}
-                                    autoPlay
-                                    loop
-                                    style={styles.lottieCelebration}
+                            <View style={styles.illustrationContainerSmall}>
+                                <Image 
+                                    source={require('../../../assets/images/3d/success_3d_illustration_1778518505705.png')} 
+                                    style={styles.successImage}
+                                    resizeMode="contain"
                                 />
                             </View>
                             <Text style={[styles.stepTitleLarge, { color: colors.text }]}>Ready to evolve?</Text>
@@ -766,20 +750,51 @@ const styles = StyleSheet.create({
         marginTop: 16,
         fontWeight: '700',
     },
-    lottieContainer: {
-        height: 120,
-        width: '100%',
+    illustrationContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 20,
+        marginVertical: 40,
+        height: 300,
     },
-    lottieCelebration: {
-        width: 200,
-        height: 200,
+    onboardingImage: {
+        width: 340,
+        height: 340,
+        zIndex: 10,
+    },
+    glowCircle: {
+        position: 'absolute',
+        width: 280,
+        height: 280,
+        borderRadius: 140,
+        zIndex: 1,
+    },
+    glassCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 24,
+        borderRadius: 32,
+        borderWidth: 1,
+        gap: 16,
+    },
+    glassText: {
+        flex: 1,
+        fontSize: 16,
+        lineHeight: 24,
     },
     chartWrapper: {
         paddingTop: 10,
         alignItems: 'center',
         justifyContent: 'center',
-    }
+    },
+    illustrationContainerSmall: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginVertical: 20,
+        height: 240,
+    },
+    successImage: {
+        width: 280,
+        height: 280,
+        zIndex: 10,
+    },
 });

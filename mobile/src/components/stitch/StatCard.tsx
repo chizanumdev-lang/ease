@@ -95,12 +95,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     value: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: '800',
+        letterSpacing: -1,
     },
     unit: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '700',
+        opacity: 0.7,
     },
     trendRow: {
         flexDirection: 'row',

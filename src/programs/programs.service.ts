@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm'; // Import MoreThan
 import { Program } from './entities/program.entity';
@@ -96,6 +97,7 @@ export class ProgramsService {
         private ritualsService: RitualsService,
         private progressionService: ProgressionService,
         private orchestratorService: OrchestratorService,
+        private configService: ConfigService,
     ) { }
 
 
@@ -105,9 +107,20 @@ export class ProgramsService {
         this.logger.log('Starting hourly user-sync check...');
         const users = await this.usersService.findAll();
         const now = new Date();
+        const isLocal = this.configService.get('NODE_ENV') === 'local' || !this.configService.get('NODE_ENV');
 
         for (const user of users) {
             try {
+                // Optimization: Skip inactive users (not updated in 48h) on local machine
+                // to prevent background AI noise for stale test accounts.
+                if (isLocal && user.updatedAt) {
+                    const diffHours = (now.getTime() - new Date(user.updatedAt).getTime()) / (1000 * 60 * 60);
+                    if (diffHours > 48) {
+                        this.logger.debug(`Skipping hourly sync for inactive user ${user.id}`);
+                        continue;
+                    }
+                }
+
                 const userTz = user.settings?.timezone || 'UTC';
                 
                 // Get user's local hour and date
@@ -516,9 +529,12 @@ export class ProgramsService {
                 this.logger.log(`Day 1 hydration queued via Trigger.dev: ${handle.id}`);
                 program.status = 'generating';
             } else {
-                this.logger.warn('Trigger.dev unavailable for Day 1 hydration, processing synchronously');
-                await this.hydrateDay(day1.id, generationParams.goalText, generationParams);
-                program.status = 'ready';
+                this.logger.warn('Trigger.dev unavailable for Day 1 hydration, processing in background');
+                // Don't await here — return immediately so the client can start polling
+                this.hydrateDay(day1.id, generationParams.goalText, generationParams).catch(err => 
+                    this.logger.error(`Background hydration failed: ${err.message}`)
+                );
+                program.status = 'generating';
             }
         } else {
             program.status = 'ready';

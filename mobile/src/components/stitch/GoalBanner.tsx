@@ -32,7 +32,7 @@ export default function GoalBanner({
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={isDark ? ['#163a2f', '#225344'] : [colors.primary, colors.therapeutic.sage]}
+                colors={(colors.gradients?.primary || ['#6366f1', '#a855f7']) as readonly [string, string]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.gradientBg}

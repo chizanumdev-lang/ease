@@ -62,7 +62,7 @@ import { StartupService } from './common/startup.service';
           connectTimeoutMS: 5000, // Reduced for faster failover in serverless
           autoLoadEntities: true, // More efficient for NestJS
           synchronize: false, // Automatically sync tables in local dev
-          logging: true,
+          logging: isLocal, // Only log SQL queries in local development
         };
 
         if (url) {

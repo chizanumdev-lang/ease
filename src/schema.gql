@@ -116,6 +116,21 @@ input EdgeInput {
   target: String!
 }
 
+type EngineTask {
+  audioAssets: [AudioAsset!]!
+  completedAt: DateTime
+  createdAt: DateTime!
+  errorLog: String
+  id: ID!
+  inputData: String
+  node: WorkflowNode!
+  nodeId: String!
+  outputData: String
+  programId: String!
+  startedAt: DateTime
+  status: ExecutionStatus!
+}
+
 enum ExecutionStatus {
   COMPLETED
   FAILED
@@ -154,7 +169,6 @@ type GoalCategory {
   name: String!
   slug: String!
   templates: [GoalTemplate!]!
-  updatedAt: DateTime!
 }
 
 type GoalTemplate {
@@ -183,6 +197,8 @@ type Mutation {
   createProgram(templateId: String!, userGoal: String!, userId: String!): UserProgram!
   deleteGoal(id: ID!): Boolean!
   deleteProgram(id: String!): Boolean!
+  devDeleteUser(id: String!, key: String!): Boolean!
+  devSkipVerification(email: String!, key: String!): Boolean!
   evaluatePerformance(id: String!): Program!
   generateBinauralPreview(frequency: Float!): AudioUrlResponse!
   generateProgram(generateProgramDto: GenerateProgramDto!): Program!
@@ -300,21 +316,6 @@ type Subscription {
   programStatusChanged(id: String!): Program!
 }
 
-type Task {
-  audioAssets: [AudioAsset!]!
-  completedAt: DateTime
-  createdAt: DateTime!
-  errorLog: String
-  id: ID!
-  inputData: String
-  node: WorkflowNode!
-  nodeId: String!
-  outputData: String
-  programId: String!
-  startedAt: DateTime
-  status: ExecutionStatus!
-}
-
 type TaskDefinition {
   capability: CapabilityType!
   createdAt: DateTime!
@@ -327,7 +328,7 @@ type TaskDefinition {
 input UpdateTaskDto {
   completed: Boolean
   content: String
-  metadata: String
+  metadata: JSON
   scheduledAt: DateTime
   totalDuration: Int
   watchedSeconds: Int
@@ -339,7 +340,7 @@ type UserProgram {
   metadata: String
   progress: Float!
   status: ProgramStatus!
-  tasks: [Task!]!
+  tasks: [EngineTask!]!
   template: GoalTemplate!
   templateId: String!
   updatedAt: DateTime!

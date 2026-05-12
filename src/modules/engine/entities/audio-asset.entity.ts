@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { ObjectType, Field, ID, Float } from '@nestjs/graphql';
-import { Task } from './task.entity';
+import { EngineTask } from './task.entity';
 
 @ObjectType()
 @Entity('audio_assets')
@@ -10,15 +10,15 @@ export class AudioAsset {
   id: string;
 
   @Field()
-  @Column()
+  @Column({ name: 'task_id' })
   taskId: string;
 
-  @ManyToOne(() => Task, (task) => task.audioAssets)
-  @JoinColumn({ name: 'taskId' })
-  task: Task;
+  @ManyToOne(() => EngineTask, (task) => task.audioAssets)
+  @JoinColumn({ name: 'task_id' })
+  task: EngineTask;
 
   @Field()
-  @Column()
+  @Column({ name: 'storage_path' })
   storagePath: string;
 
   @Field(() => Float, { nullable: true })
@@ -26,7 +26,7 @@ export class AudioAsset {
   duration: number;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Column({ name: 'mime_type', nullable: true })
   mimeType: string;
 
   @Field(() => String, { nullable: true })
@@ -34,6 +34,6 @@ export class AudioAsset {
   metadata: any;
 
   @Field()
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

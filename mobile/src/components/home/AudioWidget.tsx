@@ -118,20 +118,23 @@ const AudioWidget = () => {
 
                         <TouchableOpacity 
                             style={[styles.startButton, { 
-                                backgroundColor: canPlay ? colors.primary : 'rgba(0,0,0,0.05)',
-                                opacity: canPlay ? 1 : 0.6
+                                backgroundColor: canPlay ? colors.primary : colors.surfaceContainerHigh,
+                                opacity: canPlay ? 1 : 0.8,
+                                borderBottomWidth: canPlay ? 4 : 0,
+                                borderBottomColor: canPlay ? 'rgba(0,0,0,0.2)' : 'transparent'
                             }]}
                             disabled={!canPlay}
                             onPress={handleStartRitual}
                         >
                             <Text style={[styles.buttonText, { 
-                                color: canPlay ? '#fff' : colors.textMuted 
+                                color: canPlay ? '#fff' : colors.textMuted,
+                                fontFamily: fonts.label
                             }]}>
                                 {!trackReady ? 'GENERATING' : proximityStatus === 'READY' ? 'BEGIN' : 'LOCKED'}
                             </Text>
                             <Ionicons 
-                                name={canPlay ? 'play-outline' : trackReady ? 'lock-closed-outline' : 'hourglass-outline'} 
-                                size={14} 
+                                name={canPlay ? 'play-circle' : trackReady ? 'lock-closed' : 'hourglass'} 
+                                size={16} 
                                 color={canPlay ? '#fff' : colors.textMuted} 
                             />
                         </TouchableOpacity>

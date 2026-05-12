@@ -3,7 +3,7 @@ import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Task, ExecutionStatus } from '../../engine/entities/task.entity';
+import { EngineTask, ExecutionStatus } from '../../engine/entities/task.entity';
 import { UserProgram } from '../../engine/entities/user-program.entity';
 import { CapabilityType } from '../../engine/entities/task-definition.entity';
 
@@ -13,8 +13,8 @@ export class TaskProcessor extends WorkerHost {
   private readonly isVercel = !!process.env.VERCEL;
 
   constructor(
-    @InjectRepository(Task)
-    private taskRepo: Repository<Task>,
+    @InjectRepository(EngineTask)
+    private taskRepo: Repository<EngineTask>,
     @InjectRepository(UserProgram)
     private programRepo: Repository<UserProgram>,
   ) {
@@ -77,14 +77,14 @@ export class TaskProcessor extends WorkerHost {
     }
   }
 
-  private async handleTextTask(task: Task): Promise<any> {
+  private async handleTextTask(task: EngineTask): Promise<any> {
     // Placeholder for text/scripting logic
     // In a real scenario, this might call another service to refine a script
     this.logger.debug(`Handling TEXT task for ${task.id}`);
     return { ...task.inputData, status: 'text_processed' };
   }
 
-  private async handleAudioTask(task: Task): Promise<any> {
+  private async handleAudioTask(task: EngineTask): Promise<any> {
     // Placeholder for audio/TTS logic
     this.logger.debug(`Handling AUDIO task for ${task.id}`);
     return { ...task.inputData, status: 'audio_generated', url: 'https://example.com/audio.mp3' };

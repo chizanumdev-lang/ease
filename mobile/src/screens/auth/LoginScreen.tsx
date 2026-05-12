@@ -9,6 +9,7 @@ import StitchInput from '../../components/StitchInput';
 import Logo from '../../components/Logo';
 import { Ionicons } from '@expo/vector-icons';
 import { useModalStore } from '../../store/modalStore';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -60,6 +61,12 @@ export default function LoginScreen({ navigation }: Props) {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <LinearGradient
+                colors={isDark ? 
+                    [colors.background, colors.surface] : 
+                    [colors.primary + '10', colors.secondary + '05', colors.background]}
+                style={StyleSheet.absoluteFill}
+            />
             <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
             <KeyboardAvoidingView 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -71,10 +78,10 @@ export default function LoginScreen({ navigation }: Props) {
                     keyboardShouldPersistTaps="handled"
                 >
                     <View style={styles.header}>
-                        <Logo size={80} style={styles.logo} />
-                        <Text style={[styles.brandName, { fontFamily: fonts.display, color: colors.onSurface }]}>EASE</Text>
-                        <Text style={[styles.welcomeText, { fontFamily: fonts.body, color: colors.onSurfaceVariant }]}>
-                            Welcome back. Let's continue your journey.
+                        <Logo size={100} style={styles.logo} />
+                        <Text style={[styles.brandName, { fontFamily: fonts.display, color: colors.onSurface, fontSize: 40, letterSpacing: -1 }]}>ease</Text>
+                        <Text style={[styles.welcomeText, { fontFamily: fonts.body, color: colors.textMuted, fontSize: 16 }]}>
+                            Your journey to consistency continues.
                         </Text>
                     </View>
 

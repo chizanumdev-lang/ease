@@ -16,6 +16,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { MainStackParamList, Task, TaskStatus, WeeklyAnalytics } from '../../types';
 import { useProgramsStore } from '../../store/programsStore';
 import { useAuthStore } from '../../store/authStore';
@@ -38,10 +39,30 @@ type Props = NativeStackScreenProps<MainStackParamList> & {
     navigation: any;
 };
 
-const { width } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
+    
+    const CARD_WIDTH = SCREEN_WIDTH - 40;
+    const CARD_HEIGHT = 480;
+    const DENT_DEPTH = 130;
+    const R_BUBBLE = 85; 
+
+    const heroCardPath = `
+        M ${R_BUBBLE},0
+        Q ${CARD_WIDTH / 2},-25 ${CARD_WIDTH - R_BUBBLE},0
+        A ${R_BUBBLE},${R_BUBBLE} 0 0 1 ${CARD_WIDTH},${R_BUBBLE}
+        Q ${CARD_WIDTH + 30},${CARD_HEIGHT * 0.25} ${CARD_WIDTH - DENT_DEPTH},${CARD_HEIGHT * 0.5}
+        Q ${CARD_WIDTH + 30},${CARD_HEIGHT * 0.75} ${CARD_WIDTH},${CARD_HEIGHT - R_BUBBLE}
+        A ${R_BUBBLE},${R_BUBBLE} 0 0 1 ${CARD_WIDTH - R_BUBBLE},${CARD_HEIGHT}
+        Q ${CARD_WIDTH / 2},${CARD_HEIGHT + 25} ${R_BUBBLE},${CARD_HEIGHT}
+        A ${R_BUBBLE},${R_BUBBLE} 0 0 1 0,${CARD_HEIGHT - R_BUBBLE}
+        Q -25,${CARD_HEIGHT / 2} 0,${R_BUBBLE}
+        A ${R_BUBBLE},${R_BUBBLE} 0 0 1 ${R_BUBBLE},0
+        Z
+    `;
+
     const { showModal } = useModalStore();
     const { user, updateSettings } = useAuthStore();
     const { todayPlan, currentProgram, isLoading, updateTask } = useProgramsStore();
@@ -104,7 +125,7 @@ export default function HomeScreen({ navigation }: Props) {
                     await useProgramsStore.getState().fetchTodayPlan(updatedProgram.id);
                     if (pollInterval) clearInterval(pollInterval);
                 }
-            }, 5000); // Poll every 5 seconds
+            }, 10000); // Poll every 5 seconds
         }
 
         return () => {
@@ -228,25 +249,66 @@ export default function HomeScreen({ navigation }: Props) {
                 </TouchableOpacity>
             </View>
 
-            {/* Greeting */}
-            <View style={styles.greetingSection}>
-                <Text style={[styles.greeting, { color: colors.text, fontFamily: fonts.display }]}>
-                    Good morning, {user?.name?.split(' ')[0] || 'Alex'}
-                </Text>
-                <View>
-                    <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>Ready for your session?</Text>
+            {/* Editorial Illustrative Hero Section */}
+            <View style={styles.editorialHeroContainer}>
+                <View style={[styles.editorialHeroCard, { backgroundColor: 'transparent', height: CARD_HEIGHT }]}>
+                    {/* SVG Background with Dent */}
+                    <View style={StyleSheet.absoluteFill}>
+                        <Svg width={CARD_WIDTH} height={CARD_HEIGHT}>
+                            <Defs>
+                                <SvgGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
+                                    <Stop offset="0" stopColor={colors.primary} stopOpacity="1" />
+                                    <Stop offset="1" stopColor={colors.primary} stopOpacity="0.8" />
+                                </SvgGradient>
+                            </Defs>
+                            <Path d={heroCardPath} fill="url(#heroGrad)" />
+                        </Svg>
+                    </View>
+
+                    {/* Background Structural Text */}
+                    <Text style={styles.heroWatermarkText}>EASE</Text>
+
+                    {/* Floating Decorative Elements */}
+                    <View style={[styles.heroParticle, { top: '20%', left: '40%', width: 12, height: 12 }]} />
+                    <View style={[styles.heroParticle, { bottom: '30%', left: '15%', width: 18, height: 18, opacity: 0.4 }]} />
+                    <View style={[styles.heroParticle, { top: '10%', right: '10%', width: 8, height: 8 }]} />
+
+                    <View style={styles.editorialContent}>
+                        <View style={styles.editorialTextSide}>
+                            <Text style={[styles.editorialGreeting, { color: colors.white, fontFamily: fonts.display }]}>
+                                GOOD{"\n"}MORNING,{"\n"}{user?.name?.split(' ')[0]?.toUpperCase() || 'ALEX'}
+                            </Text>
+                        </View>
+
+                        <View style={styles.editorialImageSide}>
+                            <View style={[styles.heroImagePortal, { width: 300, height: 300, borderRadius: 150, right: -50, top: 40 }]}>
+                                <Image 
+                                    source={require('../../../assets/images/hero_person.jpg')} 
+                                    style={styles.heroImageFull}
+                                    resizeMode="cover"
+                                />
+                                <LinearGradient
+                                    colors={['transparent', 'rgba(0,0,0,0.4)']}
+                                    style={StyleSheet.absoluteFill}
+                                />
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Subtitle at the bottom */}
+                    <View style={styles.heroBottomTextContainer}>
+                        <Text style={[styles.editorialSubtitle, { color: colors.white, opacity: 0.8, fontFamily: fonts.body }]}>
+                            The next step is the most important.{"\n"}Ready to elevate your state?
+                        </Text>
+                    </View>
                 </View>
             </View>
-
-            {/* Goal Banner */}
-            {currentProgram && (
-                <GoalBanner 
-                    title={currentProgram.title || "Your Spirit Tree is flourishing"}
-                    subtitle={analytics?.progression?.currentPhase?.subtitle || "Today's progress starts with one small step. You're closer to your goal than yesterday."}
-                    progress={(analytics?.progression?.progressPercentage || 0) / 100}
-                    phase={analytics?.progression?.currentPhase?.title || "Growing"}
-                />
-            )}
+            <GoalBanner 
+                title={currentProgram?.title || "Your Spirit Tree is flourishing"}
+                subtitle={analytics?.progression?.currentPhase?.subtitle || "Today's progress starts with one small step. You're closer to your goal than yesterday."}
+                progress={(analytics?.progression?.progressPercentage || 0) / 100}
+                phase={analytics?.progression?.currentPhase?.title || "Growing"}
+            />
 
             <AudioWidget />
 
@@ -262,7 +324,7 @@ export default function HomeScreen({ navigation }: Props) {
                         value={analytics?.currentStreak?.toString() || "0"} 
                         unit="days"
                         icon="flame"
-                        color={colors.therapeutic.terracotta}
+                        color={colors.secondary}
                         trend={analytics?.currentStreak && analytics.currentStreak > 0 ? { value: "+1 from yesterday", isPositive: true } : undefined}
                     />
                     <StatCard 
@@ -270,13 +332,13 @@ export default function HomeScreen({ navigation }: Props) {
                         value={analytics?.todayCompletionRate?.toString() || "0"} 
                         unit="%"
                         icon="checkmark-circle"
-                        color={colors.therapeutic.sage}
+                        color={colors.primary}
                     />
                     <StatCard 
                         label="Spirit Level" 
                         value={analytics?.progression?.level?.toString() || "1"} 
                         icon="sparkles"
-                        color={colors.therapeutic.sky}
+                        color={colors.success}
                         trend={{ value: "Steady", isPositive: true }}
                     />
                 </ScrollView>
@@ -297,8 +359,8 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <LinearGradient
                 colors={isDark ? 
-                    [colors.background, colors.background] : 
-                    [colors.therapeutic.sage + '15', colors.therapeutic.sky + '10', colors.background]}
+                    [colors.background, colors.surface] : 
+                    [colors.primary + '10', colors.secondary + '05', colors.background]}
                 style={StyleSheet.absoluteFill}
             />
             <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -310,6 +372,7 @@ export default function HomeScreen({ navigation }: Props) {
                         renderItem={({ item, index }) => (
                             <TaskCard 
                                 task={item} 
+                                index={index}
                                 onPress={handleTaskPress}
                                 isLast={index === sortedTasks.length - 1}
                             />
@@ -376,17 +439,119 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    greetingSection: {
-        marginBottom: 16,
+    editorialHeroContainer: {
+        marginBottom: 24,
     },
-    greeting: {
-        fontSize: 28,
-        fontWeight: '800',
-        letterSpacing: -0.5,
+    editorialHeroCard: {
+        borderRadius: 32,
+        minHeight: 380,
+        overflow: 'visible',
     },
-    subtitle: {
-        fontSize: 16,
-        marginTop: 4,
+    heroWatermarkText: {
+        position: 'absolute',
+        bottom: -40,
+        left: -10,
+        fontSize: 160,
+        fontWeight: '900',
+        color: 'rgba(255,255,255,0.15)',
+        letterSpacing: -10,
+    },
+    heroParticle: {
+        position: 'absolute',
+        backgroundColor: '#fff',
+        borderRadius: 10,
+    },
+    editorialContent: {
+        flex: 1,
+        flexDirection: 'row',
+        zIndex: 2,
+        paddingHorizontal: 32,
+        paddingTop: 32,
+        overflow: 'visible',
+    },
+    editorialTextSide: {
+        flex: 1,
+        justifyContent: 'flex-start',
+        paddingTop: 30,
+        zIndex: 10,
+    },
+    editorialGreeting: {
+        fontSize: 56,
+        fontWeight: '900',
+        lineHeight: 60, // Increased to prevent clipping
+        letterSpacing: -3,
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        marginRight: -120,
+    },
+    editorialSubtitle: {
+        fontSize: 14,
+        lineHeight: 18,
+    },
+    heroBottomTextContainer: {
+        marginTop: 'auto',
+        paddingHorizontal: 32,
+        paddingBottom: 32,
+        zIndex: 10,
+        overflow: 'visible',
+    },
+    heroActionRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    heroPrimaryBtn: {
+        backgroundColor: '#E2FF54', 
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 20,
+    },
+    heroPrimaryBtnText: {
+        color: '#000',
+        fontWeight: '900',
+        fontSize: 12,
+    },
+    heroSecondaryBtn: {
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 20,
+    },
+    heroSecondaryBtnText: {
+        color: '#fff',
+        fontWeight: '900',
+        fontSize: 12,
+    },
+    editorialImageSide: {
+        position: 'absolute',
+        right: -40,
+        top: '5%',
+        bottom: '5%',
+        justifyContent: 'center',
+        alignItems: 'flex-end',
+        zIndex: 1,
+    },
+    heroImagePortal: {
+        width: 220,
+        height: 220,
+        borderRadius: 110, // Perfect circle
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+    },
+    heroImageFull: {
+        width: '100%',
+        height: '100%',
+    },
+    heroPortalRing: {
+        position: 'absolute',
+        width: 220,
+        height: 220,
+        borderRadius: 110,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+        right: -40,
+        top: 40,
     },
     statsSection: {
         marginHorizontal: -20, // Negative margin to allow full-width scroll

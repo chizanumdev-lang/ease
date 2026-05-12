@@ -96,14 +96,34 @@ export default function ProgressScreen({ navigation }: any) {
         );
     }
 
+    if (!analytics && !isLoading) {
+        return (
+            <View style={[styles.safeArea, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
+                <Ionicons name="cloud-offline-outline" size={64} color={colors.primary} />
+                <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, textAlign: 'center', marginTop: 24, fontFamily: fonts.display }}>
+                    Evolution data pending
+                </Text>
+                <Text style={{ fontSize: 16, color: colors.textMuted, textAlign: 'center', marginTop: 12, lineHeight: 24, fontFamily: fonts.body }}>
+                    Complete a few more tasks to see your spirit tree begin to grow.
+                </Text>
+                <TouchableOpacity 
+                    style={{ marginTop: 40, padding: 16, backgroundColor: colors.primary, borderRadius: 16, width: '100%' }}
+                    onPress={onRefresh}
+                >
+                    <Text style={{ color: '#fff', fontWeight: '700', textAlign: 'center' }}>Refresh Evolution</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
     const { progression } = analytics || {};
 
     return (
         <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
             <LinearGradient
                 colors={isDark ? 
-                    [colors.background, colors.background] : 
-                    [colors.therapeutic.peach + '10', colors.therapeutic.lavender + '05', colors.background]}
+                    [colors.background, colors.surface] : 
+                    [colors.primary + '10', colors.secondary + '05', colors.background]}
                 style={StyleSheet.absoluteFill}
             />
             <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -111,7 +131,7 @@ export default function ProgressScreen({ navigation }: any) {
             
             <View style={styles.topNav}>
                 <View style={styles.headerButton} />
-                <Text style={[styles.navTitle, { color: colors.text }]}>EVOLVE</Text>
+                <Text style={[styles.navTitle, { color: colors.text, fontFamily: fonts.display }]}>EVOLVE</Text>
                 <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -135,22 +155,22 @@ export default function ProgressScreen({ navigation }: any) {
                     />
                     
                     <View style={styles.treePulseContainer}>
-                        <PulseCircle delay={0} gradientColors={[colors.therapeutic.sage, colors.therapeutic.sky]} />
-                        <PulseCircle delay={2000} gradientColors={[colors.therapeutic.peach, colors.therapeutic.apricot]} />
-                        <PulseCircle delay={4000} gradientColors={[colors.therapeutic.lavender, colors.therapeutic.cream]} />
+                        <PulseCircle delay={0} gradientColors={[colors.success, colors.primary]} />
+                        <PulseCircle delay={2000} gradientColors={[colors.secondary, colors.primary]} />
+                        <PulseCircle delay={4000} gradientColors={[colors.success, colors.secondary]} />
                     </View>
 
                     <View style={[styles.artworkContainer, { borderColor: isDark ? colors.outline : colors.outlineVariant }, shadows.ambient]}>
                         <Image
-                            source={{ uri: progression?.currentPhase.imageUrl }}
+                            source={{ uri: progression?.currentPhase?.imageUrl }}
                             style={styles.artwork}
                             loadingIndicatorSource={require('../../../assets/icon.png')} // Fallback
                         />
                     </View>
                     
                     <View style={styles.treeMeta}>
-                        <Text style={[styles.treeName, { color: colors.text }]}>{progression?.currentPhase.title}</Text>
-                        <Text style={[styles.treeSubtitle, { color: colors.textMuted }]}>{progression?.currentPhase.subtitle}</Text>
+                        <Text style={[styles.treeName, { color: colors.text }]}>{progression?.currentPhase?.title}</Text>
+                        <Text style={[styles.treeSubtitle, { color: colors.textMuted }]}>{progression?.currentPhase?.subtitle}</Text>
                         
                         <View style={styles.levelRow}>
                             <View style={[styles.levelBadge, { backgroundColor: '#fff' }]}>
@@ -202,11 +222,11 @@ export default function ProgressScreen({ navigation }: any) {
                     <View style={styles.milestoneHeader}>
                         <Ionicons name="flag-outline" size={14} color={colors.textMuted} />
                         <Text style={[styles.milestoneLabel, { color: colors.textMuted }]}>
-                            NEXT MILESTONE: <Text style={{ color: colors.text }}>{progression?.journey.find(p => !p.unlocked)?.title || 'Max Sovereignty'}</Text>
+                            NEXT MILESTONE: <Text style={{ color: colors.text }}>{progression?.journey?.find(p => !p.unlocked)?.title || 'Max Sovereignty'}</Text>
                         </Text>
                     </View>
                     <Text style={[styles.milestoneLevelText, { color: colors.primary }]}>
-                        At Level {progression?.journey.find(p => !p.unlocked)?.unlockedAtLevel || (progression?.level || 0) + 1}
+                        At Level {progression?.journey?.find(p => !p.unlocked)?.unlockedAtLevel || (progression?.level || 0) + 1}
                     </Text>
                 </View>
 
@@ -214,13 +234,13 @@ export default function ProgressScreen({ navigation }: any) {
                 <View style={styles.journeySection}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Evolution Roadmap</Text>
 
-                {progression?.journey.map((phase, index) => {
+                {progression?.journey?.map((phase, index) => {
                     const journeyColors = [
-                        colors.therapeutic.sage,
-                        colors.therapeutic.sky,
-                        colors.therapeutic.lavender,
-                        colors.therapeutic.peach,
-                        colors.therapeutic.apricot,
+                        colors.success,
+                        colors.primary,
+                        colors.secondary,
+                        colors.primary,
+                        colors.success,
                     ];
                     const stageColor = journeyColors[index % journeyColors.length];
 
@@ -249,16 +269,16 @@ export default function ProgressScreen({ navigation }: any) {
                                 <View style={styles.activeLabelRow}>
                                     <Text style={[
                                         styles.stageTitle, 
-                                        { color: phase.active ? stageColor : phase.unlocked ? colors.text : colors.textMuted }
+                                        { color: phase.active ? stageColor : colors.text }
                                     ]}>
                                         {phase.title}
                                     </Text>
                                     {phase.active && <View style={[styles.activeDot, { backgroundColor: stageColor }]} />}
                                 </View>
-                                <Text style={[styles.stageDesc, { color: colors.textMuted }]}>
+                                <Text style={[styles.stageDesc, { color: isDark ? colors.onSurfaceVariant : colors.text, opacity: phase.active ? 0.8 : 1 }]}>
                                     {phase.levelRange} {phase.unlocked ? '— Achieved' : '— Locked'}
                                 </Text>
-                                <Text style={[styles.stageSubtitle, { color: colors.textMuted, opacity: 0.7 }]}>
+                                <Text style={[styles.stageSubtitle, { color: isDark ? colors.onSurfaceVariant : colors.text, opacity: phase.active ? 0.6 : 0.8 }]}>
                                     {phase.subtitle}
                                 </Text>
                             </View>

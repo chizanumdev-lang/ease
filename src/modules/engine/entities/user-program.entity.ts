@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { ObjectType, Field, ID, Float, registerEnumType } from '@nestjs/graphql';
 import { GoalTemplate } from './goal-template.entity';
-import { Task } from './task.entity';
+import { EngineTask } from './task.entity';
 
 export enum ProgramStatus {
   PENDING = 'PENDING',
@@ -22,20 +22,20 @@ export class UserProgram {
   id: string;
 
   @Field()
-  @Column()
+  @Column({ name: 'user_id' })
   userId: string;
 
   @Field()
-  @Column()
+  @Column({ name: 'template_id' })
   templateId: string;
 
   @Field(() => GoalTemplate)
   @ManyToOne(() => GoalTemplate)
-  @JoinColumn({ name: 'templateId' })
+  @JoinColumn({ name: 'template_id' })
   template: GoalTemplate;
 
   @Field()
-  @Column({ type: 'text' })
+  @Column({ name: 'user_goal', type: 'text' })
   userGoal: string;
 
   @Field(() => ProgramStatus)
@@ -54,15 +54,15 @@ export class UserProgram {
   @Column({ type: 'jsonb', default: {} })
   metadata: any;
 
-  @Field(() => [Task])
-  @OneToMany(() => Task, (task) => task.program)
-  tasks: Task[];
+  @Field(() => [EngineTask])
+  @OneToMany(() => EngineTask, (task) => task.program)
+  tasks: EngineTask[];
 
   @Field()
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @Field()
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

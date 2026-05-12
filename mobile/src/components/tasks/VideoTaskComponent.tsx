@@ -45,16 +45,16 @@ function getTakeaways(task: Task, theme: string) {
     const content = task.content || '';
     const items = content.split('\n').filter(l => l.trim().startsWith('-')).map(l => l.trim().substring(1).trim());
     
-    if (items.length >= 1) {
+    if (items.length > 0) {
         return [
             { title: 'Key Takeaway', body: items[0], icon: 'brain' },
-            { title: 'Key Insights', body: items.length > 1 ? items.slice(1).join('. ') : 'Focus on the "Why" and the practical application of this technique.', icon: 'lightbulb-on-outline' },
+            { title: 'Key Insights', body: items.length > 1 ? items.slice(1).join('. ') : 'Focus on the "Why" and the practical application of this technique.', icon: 'bulb-outline' },
         ];
     }
 
     return [
         { title: 'Key Takeaway', body: `Master the core of ${theme.toLowerCase()}.`, icon: 'eye-outline' },
-        { title: 'Key Insights', body: 'Learn the underlying mechanics and how to integrate them into your routine.', icon: 'lightbulb-on-outline' },
+        { title: 'Key Insights', body: 'Learn the underlying mechanics and how to integrate them into your routine.', icon: 'bulb-outline' },
     ];
 }
 
@@ -236,13 +236,13 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                     {showCompletionOverlay && (
                         <BlurView intensity={100} tint="dark" style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
                             <View style={styles.completionContent}>
-                                <View style={[styles.successIconCircle, { backgroundColor: colors.primary }]}>
+                                <View style={[styles.successIconCircle, { backgroundColor: colors.success }]}>
                                     <Ionicons name="checkmark" size={32} color="#FFF" />
                                 </View>
                                 <Text style={[styles.completionTitle, { fontFamily: fonts.display }]}>Lesson Complete</Text>
                                 <Text style={[styles.completionSubtitle, { fontFamily: fonts.body }]}>You've mastered today's core insight.</Text>
                                 <TouchableOpacity 
-                                    style={[styles.completionBtn, { backgroundColor: colors.white, ...shadows.ambient }]}
+                                    style={[styles.completionBtn, { backgroundColor: colors.white, ...shadows.premium }]}
                                     onPress={handleNextSession}
                                 >
                                     <Text style={[styles.completionBtnText, { color: colors.primary, fontFamily: fonts.display }]}>Continue Circuit</Text>
@@ -453,8 +453,8 @@ const styles = StyleSheet.create({
     },
     contentArea: {
         marginTop: -24,
-        borderTopLeftRadius: 32,
-        borderTopRightRadius: 32,
+        borderTopLeftRadius: 48,
+        borderTopRightRadius: 48,
         paddingHorizontal: 24,
         paddingTop: 32,
         zIndex: 5,
