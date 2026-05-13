@@ -66,7 +66,7 @@ export default function StitchButton({
         baseStyle.push({ borderRadius: borderRadius.xxxl });
 
         if (size === 'sm') baseStyle.push({ height: 44, paddingHorizontal: 20, borderRadius: borderRadius.xl });
-        if (size === 'lg') baseStyle.push({ height: 72, paddingHorizontal: 36, borderRadius: borderRadius.xxxxl });
+        if (size === 'lg') baseStyle.push({ height: 72, paddingHorizontal: 36, borderRadius: borderRadius.xxxl });
 
         if (variant === 'destructive') {
             baseStyle.push({ backgroundColor: colors.error });
@@ -163,7 +163,7 @@ export default function StitchButton({
                     disabled={disabled || isLoading}
                 >
                     <LinearGradient
-                        colors={colors.gradients.primary}
+                        colors={colors.gradients.primary as unknown as readonly [string, string, ...string[]]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={getButtonStyle()}

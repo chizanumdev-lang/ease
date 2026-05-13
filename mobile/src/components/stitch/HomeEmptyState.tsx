@@ -6,12 +6,14 @@ import {
     Image, 
     TouchableOpacity, 
     ScrollView, 
-    Dimensions 
+    Dimensions,
+    ImageBackground 
 } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../store/authStore';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -25,78 +27,98 @@ export default function HomeEmptyState({ onStartPress }: HomeEmptyStateProps) {
     const firstName = user?.name?.split(' ')[0] || 'Alex';
 
     return (
-        <ScrollView 
-            style={styles.container} 
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
+        <ImageBackground 
+            source={require('../../../assets/images/wizard_bg.png')}
+            style={styles.container}
+            imageStyle={{ opacity: 0.3 }}
         >
-            {/* Header section (replaces top header logic in empty state) */}
+            <ScrollView 
+                style={{ flex: 1 }}
+                contentContainerStyle={styles.contentContainer}
+                showsVerticalScrollIndicator={false}
+            >
             <View style={styles.editorialHeader}>
+                {/* Decorative background elements */}
+                <View style={[styles.floatingCircle, { top: -20, right: -30, width: 140, height: 140, backgroundColor: colors.primary + '15' }]} />
+                <View style={[styles.floatingCircle, { top: 120, left: -40, width: 100, height: 100, backgroundColor: colors.secondary + '15' }]} />
+                <View style={[styles.floatingCircle, { top: 280, right: 20, width: 60, height: 60, backgroundColor: colors.primary + '08' }]} />
+                
                 <Text style={[styles.headerTitle, { color: colors.text, fontFamily: fonts.display }]}>
-                    Timeline of Potential
+                    Your Sacred Space
                 </Text>
                 <Text style={[styles.headerSubtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase()}
                 </Text>
             </View>
 
             <View style={styles.tactileStack}>
-                {/* Genesis Card */}
-                <View style={[styles.card, styles.genesisCard, { backgroundColor: colors.surfaceContainerLow }]}>
-                    <View style={styles.lottieContainer}>
-                        <LottieView 
-                            source={{ uri: 'https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json' }} 
-                            autoPlay 
-                            loop 
-                            style={styles.lottie}
-                        />
-                    </View>
+                {/* Intro Card */}
+                <View style={[styles.card, styles.introCard, { backgroundColor: colors.surfaceContainerLow }]}>
                     <View style={styles.cardHeader}>
-                        <View style={[styles.iconBox, { backgroundColor: colors.primary }]}>
-                            <Ionicons name="compass-outline" size={18} color="#fff" />
+                        <View style={[styles.iconBox, { backgroundColor: colors.secondaryContainer }]}>
+                            <Ionicons name="sparkles-outline" size={20} color={colors.secondary} />
                         </View>
-                        <Text style={[styles.cardLabel, { color: colors.textMuted }]}>GENESIS</Text>
+                        <Text style={[styles.cardLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>MANIFESTO</Text>
                     </View>
-                    <Text style={[styles.quoteText, { color: colors.text, fontFamily: fonts.body }]}>
-                        "Welcome to your unfolding story, {firstName}. Everything you see here is a whisper of what's to come."
+                    <Text style={[styles.quoteText, { color: colors.text, fontFamily: fonts.display }]}>
+                        "A journey of a thousand miles begins with a single intention."
+                    </Text>
+                    <Text style={[styles.bodyText, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                        Welcome, {firstName}. Ease is your sanctuary for deep focus and intentional living. Your journey hasn't started yet, but your potential is infinite.
                     </Text>
                 </View>
 
-                {/* Canvas Card */}
-                <View style={[styles.card, styles.canvasCard, { backgroundColor: colors.surfaceContainerLow }]}>
+                {/* Visual Card */}
+                <View style={[styles.card, styles.visualCard, { backgroundColor: colors.surfaceContainerLow, padding: 0 }]}>
                     <Image 
-                        source={{ uri: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800' }} 
-                        style={styles.canvasImage}
-                        resizeMode="cover"
+                        source={{ uri: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000' }} 
+                        style={styles.heroImage}
                     />
-                    <View style={styles.canvasContent}>
-                        <Text style={[styles.canvasText, { color: colors.text, fontFamily: fonts.display }]}>
-                            "{firstName}, your path is a blank canvas. Shall we sketch the first milestone?"
+                    <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.6)']}
+                        style={styles.imageOverlay}
+                    />
+                    <View style={styles.imageContent}>
+                        <Text style={[styles.imageTag, { fontFamily: fonts.label }]}>GUIDANCE</Text>
+                        <Text style={[styles.imageText, { color: '#fff', fontFamily: fonts.display }]}>
+                            Define your horizon. We'll build the path.
                         </Text>
                     </View>
                 </View>
 
-                {/* Action Card */}
+                {/* CTA Card */}
                 <TouchableOpacity 
-                    style={[styles.card, styles.actionCard, { backgroundColor: colors.primary }]}
                     onPress={onStartPress}
                     activeOpacity={0.9}
+                    style={styles.ctaWrapper}
                 >
-                    <View style={styles.actionHeader}>
-                        <View style={styles.actionIconBox}>
-                            <Ionicons name="create-outline" size={28} color="#fff" />
+                    <LinearGradient
+                        colors={colors.gradients.primary as unknown as readonly [string, string, ...string[]]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.card, styles.ctaCard]}
+                    >
+                        <View style={styles.ctaTop}>
+                            <View style={styles.ctaIconBox}>
+                                <Ionicons name="leaf-outline" size={32} color="#fff" />
+                            </View>
+                            <View style={styles.arrowBox}>
+                                <Ionicons name="arrow-forward" size={24} color="#fff" />
+                            </View>
                         </View>
-                        <Ionicons name="arrow-forward-outline" size={18} color="rgba(255,255,255,0.6)" />
-                    </View>
-                    <View>
-                        <Text style={[styles.actionTitle, { color: '#fff', fontFamily: fonts.display }]}>Begin My Story</Text>
-                        <Text style={[styles.actionSubtitle, { color: 'rgba(255,255,255,0.7)', fontFamily: fonts.label }]}>
-                            AWAITING YOUR FIRST DECISION...
-                        </Text>
-                    </View>
+                        <View>
+                            <Text style={[styles.ctaTitle, { color: '#fff', fontFamily: fonts.display }]}>
+                                Plant Your First Seed
+                            </Text>
+                            <Text style={[styles.ctaSubtitle, { color: 'rgba(255,255,255,0.8)', fontFamily: fonts.label }]}>
+                                START YOUR JOURNEY TODAY
+                            </Text>
+                        </View>
+                    </LinearGradient>
                 </TouchableOpacity>
             </View>
-        </ScrollView>
+            </ScrollView>
+        </ImageBackground>
     );
 }
 
@@ -110,123 +132,152 @@ const styles = StyleSheet.create({
     },
     editorialHeader: {
         width: '100%',
-        paddingHorizontal: 24,
-        paddingTop: 32,
-        paddingBottom: 16,
+        paddingHorizontal: 28,
+        paddingTop: 40,
+        paddingBottom: 24,
     },
     headerTitle: {
-        fontSize: 22,
-        fontWeight: '800',
-        letterSpacing: -0.5,
+        fontSize: 34,
+        fontWeight: '900',
+        letterSpacing: -1,
+        lineHeight: 40,
     },
     headerSubtitle: {
-        fontSize: 12,
-        fontWeight: '600',
-        marginTop: 2,
+        fontSize: 13,
+        fontWeight: '700',
+        marginTop: 6,
+        letterSpacing: 1.5,
     },
     tactileStack: {
         width: '100%',
         alignItems: 'center',
-        paddingTop: 10,
     },
     card: {
         borderRadius: 40,
-        padding: 28,
-        width: width * 0.9,
-        marginBottom: 16, // Removed negative overlap to prevent text cutoff
-        shadowColor: '#225344',
+        width: width * 0.92,
+        marginBottom: 20,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.08,
-        shadowRadius: 15,
+        shadowOpacity: 0.05,
+        shadowRadius: 20,
         elevation: 5,
     },
-    genesisCard: {
-        zIndex: 1,
-        transform: [{ rotate: '-2deg' }, { translateX: -8 }],
+    introCard: {
+        padding: 32,
+        transform: [{ rotate: '-1.5deg' }],
     },
-    canvasCard: {
-        zIndex: 2,
-        padding: 12,
-        width: width * 0.94,
-        transform: [{ rotate: '1.5deg' }, { translateY: -10 }, { translateX: 8 }],
+    visualCard: {
+        height: 320,
+        overflow: 'hidden',
+        transform: [{ rotate: '1deg' }],
     },
-    actionCard: {
-        zIndex: 3,
-        padding: 28,
-        width: width * 0.88,
-        transform: [{ rotate: '-1deg' }, { translateY: -20 }, { translateX: -4 }],
+    heroImage: {
+        width: '100%',
+        height: '100%',
+    },
+    imageOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '60%',
+    },
+    imageContent: {
+        position: 'absolute',
+        bottom: 28,
+        left: 28,
+        right: 28,
+    },
+    imageTag: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 2,
+        marginBottom: 8,
+    },
+    imageText: {
+        fontSize: 24,
+        fontWeight: '800',
+        lineHeight: 30,
+    },
+    ctaWrapper: {
+        width: width * 0.92,
+        marginTop: 10,
+        transform: [{ rotate: '-0.5deg' }],
+    },
+    ctaCard: {
+        width: '100%',
+        padding: 32,
+        marginBottom: 0,
+    },
+    ctaTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+    ctaIconBox: {
+        width: 72,
+        height: 72,
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    arrowBox: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    ctaTitle: {
+        fontSize: 32,
+        fontWeight: '900',
+        lineHeight: 38,
+        letterSpacing: -0.5,
+    },
+    ctaSubtitle: {
+        fontSize: 12,
+        fontWeight: '700',
+        letterSpacing: 2,
+        marginTop: 8,
     },
     cardHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
-        marginBottom: 12,
+        marginBottom: 20,
     },
     iconBox: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
     },
     cardLabel: {
         fontSize: 11,
-        fontWeight: '700',
+        fontWeight: '800',
         letterSpacing: 2,
     },
-    lottieContainer: {
-        width: '100%',
-        height: 120,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    lottie: {
-        width: 150,
-        height: 150,
-    },
     quoteText: {
-        fontSize: 15,
-        fontStyle: 'italic',
-        lineHeight: 22,
-    },
-    canvasImage: {
-        width: '100%',
-        height: 240,
-        borderRadius: 32,
-        marginBottom: 16,
-    },
-    canvasContent: {
-        paddingHorizontal: 12,
-        paddingBottom: 8,
-    },
-    canvasText: {
-        fontSize: 17,
-        fontWeight: '600',
-        lineHeight: 24,
-    },
-    actionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 24,
-    },
-    actionIconBox: {
-        width: 56,
-        height: 56,
-        borderRadius: 18,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    actionTitle: {
-        fontSize: 30,
+        fontSize: 22,
         fontWeight: '800',
+        lineHeight: 28,
+        marginBottom: 16,
         letterSpacing: -0.5,
     },
-    actionSubtitle: {
-        fontSize: 10,
-        letterSpacing: 1.5,
-        marginTop: 4,
+    bodyText: {
+        fontSize: 15,
+        lineHeight: 24,
+        opacity: 0.8,
+    },
+    floatingCircle: {
+        position: 'absolute',
+        borderRadius: 100,
+        zIndex: -1,
     },
 });

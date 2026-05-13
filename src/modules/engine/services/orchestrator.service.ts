@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { TaskShard } from '../entities/task-shard.entity';
 import { AiService } from '../../../ai/ai.service';
 import { YoutubeService } from '../../../video/youtube/youtube.service';
+import { AudioService } from '../../../audio/audio.service';
 import { Program } from '../../../programs/entities/program.entity';
 import { DayPlan } from '../../../programs/entities/day-plan.entity';
 import { Task } from '../../../tasks/entities/task.entity';
@@ -30,6 +31,7 @@ export class OrchestratorService {
     @InjectRepository(DayPlan)
     private dayPlanRepository: Repository<DayPlan>,
     private youtubeService: YoutubeService,
+    private audioService: AudioService,
   ) {}
 
   /**
@@ -48,90 +50,107 @@ export class OrchestratorService {
     });
     if (!dayPlan) throw new Error('DayPlan not found');
 
-    // 1. Get candidate shards (all for now, filtered by modality later)
+    // 0. Clean up existing tasks for this day to prevent duplicates on retries
+    await this.taskRepository.delete({ dayPlanId });
+    this.logger.log(`Cleaned up existing tasks for DayPlan ${dayPlanId}`);
+
+    // 1. Get candidate shards
     const shards = await this.shardRepository.find();
-    this.logger.log(`Found ${shards.length} total shards in database`);
     
-    // 2. Use AI to select the best 4-6 shards for this specific goal/day
+    // 2. Use AI to select the best 4-6 shards
     const selectionPrompt = `
       You are the Cognitive Coordinator for Ease.
       USER GOAL: "${goal}"
       DAY NUMBER: ${dayPlan.dayNumber}
       
-      The user is building a habit of "${goal}". Select shards that provide a progression of learning, practice, and reflection.
+      Select exactly 5 task types from the list that best fit this goal and day.
+      Choose a mix of: Awareness (Learning), Action (Practice), and Reflection.
       
-      AVAILABLE TASK TYPES (SHARDS):
-      ${shards.map(s => `- ${s.name}: ${s.description} (Modality: ${s.modality}, Energy: ${s.energyLevel})`).join('\n')}
-      
-      Select exactly 5 task types from the list above that best fit this goal and day.
-      Choose a mix of:
-      1. Awareness (Learning/Watching)
-      2. Action (Practice/Micro-App)
-      3. Reflection (Journaling/Reflection)
+      AVAILABLE SHARDS:
+      ${shards.map(s => `- ${s.name}: ${s.description}`).join('\n')}
       
       Return a JSON array of strings containing the EXACT shard names.
       Format: ["name-1", "name-2", "name-3", "name-4", "name-5"]
-      
-      RULES:
-      1. Only use names provided in the AVAILABLE TASK TYPES list.
-      2. Choose a diverse mix of modalities.
     `;
 
     const selectedNamesRaw = await this.aiService.generateCustomJson<string[]>(selectionPrompt, []);
-    this.logger.log(`AI selection (raw): ${JSON.stringify(selectedNamesRaw)}`);
-
-    // Resilient matching: lowerCase, trim, and remove special chars for comparison
     const normalize = (s: string) => s.toLowerCase().trim().replace(/[-_]/g, ' ');
     const selectedNormalized = (selectedNamesRaw || []).map(normalize);
 
-    const selectedShards = shards.filter(s => {
+    let selectedShards = shards.filter(s => {
       const shardNameNorm = normalize(s.name);
       return selectedNormalized.some(sel => sel === shardNameNorm || sel.includes(shardNameNorm) || shardNameNorm.includes(sel));
     });
 
-    this.logger.log(`Matched ${selectedShards.length} shards after normalization`);
-
     if (selectedShards.length === 0 && shards.length > 0) {
-        this.logger.warn('No shards matched AI selection. Falling back to dynamic selection.');
-        // Fallback: pick 5 random shards to avoid "default list" feel
         const shuffled = [...shards].sort(() => 0.5 - Math.random());
-        selectedShards.push(...shuffled.slice(0, 5));
+        selectedShards = shuffled.slice(0, 5);
     }
 
-    // 3. Generate content for ALL selected shards in ONE call (Efficiency)
-    const contentPrompt = `
-      Create specific content for these ${selectedShards.length} task shards for the goal: "${goal}".
-      Day ${dayPlan.dayNumber} of the journey.
+    // 2.5 Sort shards by logical progression (Video -> Practice -> Reflection/Review)
+    // This ensures Awareness/Learning happens first and Review/Reflection happens last.
+    const getModalityPriority = (modality: string = '', name: string = ''): number => {
+      const m = modality.toLowerCase();
+      const n = name.toLowerCase();
       
-      SHARDS TO HYDRATE:
-      ${selectedShards.map(s => `- ${s.name}: ${s.description}`).join('\n')}
+      // Awareness/Learning (Lowest numbers = First)
+      if (m.includes('watch') || m.includes('video') || n.includes('tutorial')) return 1;
+      if (m.includes('listen') || m.includes('audio')) return 2;
       
-      Requirements for each:
-      - Title: Punchy and action-oriented (e.g. "Draft your consistency contract" instead of "Consistency Journal")
-      - Description: Clear, encouraging instructions
-      - Fields: Include specific fields like "searchQuery" for videos, "questions" for quizzes, "prompt" for journals.
+      // Verification (Middle)
+      if (m.includes('quiz') || m.includes('test') || n.includes('recall')) return 5;
       
-      Return a JSON object where keys are shard names:
-      {
-        "shard-name-1": { "title": "...", "description": "...", "searchQuery": "..." },
-        "shard-name-2": { ... }
-      }
-    `;
+      // Application/Action (High numbers)
+      if (m.includes('practice') || m.includes('app') || m.includes('action') || m.includes('practical') || m.includes('speaking')) return 10;
+      if (m.includes('habit') || m.includes('consistency')) return 11;
+      if (m.includes('social')) return 12;
 
-    const batchContent = await this.aiService.generateCustomJson<Record<string, any>>(contentPrompt, {});
-    this.logger.log(`Generated content for ${Object.keys(batchContent).length} tasks`);
+      // Reflection/Review (Highest numbers = Last)
+      if (m.includes('write') || m.includes('journal') || m.includes('reflect') || n.includes('review') || n.includes('journal')) return 100;
+      
+      return 50; // Default for unknown
+    };
 
-    // 4. Save as Tasks
+    selectedShards.sort((a, b) => getModalityPriority(a.modality, a.name) - getModalityPriority(b.modality, b.name));
+    this.logger.log(`Sorted shards into logical order: ${selectedShards.map(s => s.name).join(' -> ')}`);
+
+    // 3. Generate content SEQUENTIALLY to allow context grounding
+    // This ensures that a Quiz can reference the specific Video content generated just before it.
+    const plannedContext: Array<{ type: string; title: string; output: any }> = [];
+    
     for (let i = 0; i < selectedShards.length; i++) {
       const shard = selectedShards[i];
-      const content = batchContent[shard.name] || {};
       
-      let videoUrl: string | undefined;
+      const contextPrompt = plannedContext.length > 0
+        ? `PREVIOUS TASKS IN THIS RITUAL:
+           ${plannedContext.map(p => `- ${p.type} ("${p.title}"): ${JSON.stringify(p.output)}`).join('\n')}`
+        : '';
+
+      const contentPrompt = `
+        Create specific content for the task shard "${shard.name}" for the goal: "${goal}".
+        Day ${dayPlan.dayNumber} of the journey.
+        
+        SHARD DESCRIPTION: ${shard.description}
+        
+        ${contextPrompt}
+        
+        INSTRUCTION:
+        Generate the specific JSON content for this task.
+        CRITICAL: If this task (e.g. Quiz or Reflection) depends on previous tasks (e.g. Video), base the content DIRECTLY on the details provided in the PREVIOUS TASKS context. 
+        Avoid abstract questions. Ground everything in the specific output of preceding tasks.
+        
+        IF generating a "searchQuery" for a video task:
+        - Keep it under 5 words.
+        - Make it highly searchable on YouTube (e.g., "how to build consistency habit" instead of "I want to build a habit of consistency in my daily life").
+        
+        Return JSON: { "title": "...", "description": "...", "searchQuery": "...", "questions": [...], "prompt": "..." }
+      `;
+
+      const content = await this.aiService.generateCustomJson<any>(contentPrompt, {});
       
-      // Determine mobile type with robust fallback
-      let mobileType: string = 'video'; // Safe default
+      // Determine mobile type
+      let mobileType: string = 'video';
       const modality = shard.modality?.toLowerCase() || '';
-      
       if (modality.includes('watch') || modality.includes('video')) mobileType = 'video';
       else if (modality.includes('write') || modality.includes('journal')) mobileType = 'journal';
       else if (modality.includes('listen') || modality.includes('audio')) mobileType = 'audio';
@@ -139,23 +158,32 @@ export class OrchestratorService {
       else if (modality.includes('quiz') || modality.includes('test')) mobileType = 'quiz';
       else if (modality.includes('practice') || modality.includes('app')) mobileType = 'micro-app';
       else if (modality.includes('habit') || modality.includes('consistency')) mobileType = 'consistency';
-      else {
-        // Fallback to shard name mapping if modality is ambiguous
-        mobileType = SHARD_TO_MOBILE_TYPE[shard.name] || 'video';
-      }
-      
+      else mobileType = SHARD_TO_MOBILE_TYPE[shard.name] || 'video';
+
+      let videoUrl: string | undefined;
+      let audioUrl: string | undefined;
+
       if (mobileType === 'video' && content.searchQuery) {
         try {
           const video = await this.youtubeService.getRecommendedVideo(goal, content.searchQuery);
-          if (video && video.url && !video.url.includes('/results?')) {
-            videoUrl = video.url;
-          } else {
-             // Fallback to a high-quality meditation/focus video if specific search fails
-             videoUrl = 'https://www.youtube.com/watch?v=inpok4MKVLM'; // Deep Focus
-          }
-        } catch (error) {
-          this.logger.error(`Failed to fetch video for task: ${error.message}`);
+          videoUrl = video?.url || 'https://www.youtube.com/watch?v=inpok4MKVLM';
+        } catch {
           videoUrl = 'https://www.youtube.com/watch?v=inpok4MKVLM';
+        }
+      }
+
+      if (mobileType === 'audio') {
+        try {
+          const script = content.script || content.description || `A guided ${content.title || shard.displayName} session for the goal: ${goal}.`;
+          const mood = content.mood || 'focus';
+          const filename = `task_${dayPlan.id}_${i}`;
+          this.logger.log(`Generating audio for task ${i}: "${content.title}"`);
+          audioUrl = await this.audioService.generateAudioTrack(script, mood, filename);
+          this.logger.log(`Audio generated: ${audioUrl}`);
+        } catch (err) {
+          this.logger.error(`Failed to generate audio for task ${i}:`, err);
+          // Fallback to ambient background
+          audioUrl = 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
         }
       }
 
@@ -170,17 +198,21 @@ export class OrchestratorService {
         metadata: {
           ...content,
           shardId: shard.id,
-          modality: shard.modality,
-          energy: shard.energyLevel
+          audioUrl: audioUrl,
         }
       });
       
       await this.taskRepository.save(task);
+      
+      // Add to context for next tasks in the loop
+      plannedContext.push({
+        type: mobileType,
+        title: task.title,
+        output: content
+      });
     }
 
-    this.logger.log(`Saved ${selectedShards.length} tasks to DayPlan ${dayPlan.id}`);
-
     await this.dayPlanRepository.update(dayPlan.id, { status: 'ready' });
-    this.logger.log(`DayPlan ${dayPlan.id} marked as ready`);
+    this.logger.log(`DayPlan ${dayPlanId} orchestrated with ${plannedContext.length} grounded tasks.`);
   }
 }

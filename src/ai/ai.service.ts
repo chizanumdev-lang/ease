@@ -465,7 +465,7 @@ export class AiService implements OnModuleInit {
             // Strip any residual markdown fences just in case
             text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
 
-            let rawPlan = JSON.parse(text);
+            let rawPlan = this.extractJson(text);
             
             // Validate each day independently so one bad day doesn't kill the whole plan
             const plan = rawPlan.map((day: any, i: number) => {
@@ -733,7 +733,7 @@ Return ONLY the raw JSON object.
             let text = await this.callWithFallback(systemInstruction);
             if (!text) throw new Error('Preview generation failed');
             text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
-            const preview = JSON.parse(text);
+            const preview = this.extractJson(text);
             
             // Self-repair: Ensure title exists
             if (!preview.title || preview.title === "") {
@@ -863,9 +863,25 @@ Return ONLY the raw JSON object.
             }
 
             // 3. Robust regex extraction (handles preamble/commentary)
-            const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+            const jsonMatch = cleaned.match(/\{[\s\S]*\}/) || cleaned.match(/\[[\s\S]*\]/);
             if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
+                let jsonString = jsonMatch[0];
+                
+                // Sanitization for "Bad control character in string literal"
+                // Replace literal newlines/tabs with escaped versions
+                jsonString = jsonString.replace(/[\u0000-\u001F]/g, (match) => {
+                    if (match === '\n') return '\\n';
+                    if (match === '\r') return '\\r';
+                    if (match === '\t') return '\\t';
+                    return ''; 
+                });
+
+                try {
+                    return JSON.parse(jsonString);
+                } catch (innerErr) {
+                    this.logger.warn(`JSON parse failed after sanitization: ${innerErr.message}`);
+                    return null;
+                }
             }
             
             return null;

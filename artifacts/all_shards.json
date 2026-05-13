@@ -1,0 +1,6452 @@
+[
+  {
+    "name": "french-reading",
+    "displayName": "French Reading",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reading"
+  },
+  {
+    "name": "conversation-practice",
+    "displayName": "Conversation Practice",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "speaking"
+  },
+  {
+    "name": "vocabulary-quiz",
+    "displayName": "Vocabulary Quiz",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "spaced-recall-quiz"
+  },
+  {
+    "name": "journal-entry",
+    "displayName": "French Journal Entry",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "audio-listening",
+    "displayName": "French Audio Listening",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Daily Japanese Tutorial Watch",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reading"
+  },
+  {
+    "name": "write-journal",
+    "displayName": "Japanese Journal Writing",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "writing"
+  },
+  {
+    "name": "listen-podcast",
+    "displayName": "Daily Japanese Podcast Listen",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-vocabulary",
+    "displayName": "Japanese Vocabulary Practice",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Spanish Language Tutorial",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "video"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Language Learning Journal",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spanish Vocabulary Quiz",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "remembering"
+  },
+  {
+    "name": "listen-to-podcast",
+    "displayName": "Spanish Language Podcast",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "converse-with-native",
+    "displayName": "Language Exchange Conversation",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a German tutorial video",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Keep a daily journal in German",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "writing"
+  },
+  {
+    "name": "flashcard-quiz",
+    "displayName": "Flashcard quiz with vocabulary words",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "listen-to-podcast",
+    "displayName": "Listen to a German podcast for 30 minutes",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "write-letter",
+    "displayName": "Write a letter to a friend in German",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "writing"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Business English Tutorials",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "watching"
+  },
+  {
+    "name": "write-article",
+    "displayName": "Write Business Articles",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quizzes",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "listen-to-podcast",
+    "displayName": "Listen to Business Podcasts",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "reflect-on-assignment",
+    "displayName": "Reflect on Writing Assignments",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Mandarin Chinese Tutorial Video",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "video"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journal Entries",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Mandarin Chinese Quiz",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "practical"
+  },
+  {
+    "name": "pinyin-practice",
+    "displayName": "Pinyin Practice",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reading"
+  },
+  {
+    "name": "listen-to-mandarin",
+    "displayName": "Listening Practice with Podcasts",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Sign Language Tutorial Watch",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Sign Language Journal",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-signing",
+    "displayName": "Sign Language Practice Session",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "physical"
+  },
+  {
+    "name": "recall-practice",
+    "displayName": "Sign Language Recall Practice",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "converse-with-colleague",
+    "displayName": "Conversing with Colleague",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Arabic Language Tutorial",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reading"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Arabic Reading Journal",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Arabic Vocabulary Spaced Recall Quiz",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "prayer-interpreter",
+    "displayName": "Practice Interpreting Arabic Prayers",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reading"
+  },
+  {
+    "name": "listen-to-podcast",
+    "displayName": "Listen to an Arabic Podcast",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "listen-to-podcast",
+    "displayName": "Listen to Portuguese Podcasts",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "write-journal-entry",
+    "displayName": "Write in Portuguese Journal",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial-video",
+    "displayName": "Watch Portuguese Tutorial Videos",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "visual"
+  },
+  {
+    "name": "practise-conversation",
+    "displayName": "Practice Portuguese Conversation",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "social"
+  },
+  {
+    "name": "watch-episode",
+    "displayName": "Watch an episode of a K-drama with English subtitles",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-vocab",
+    "displayName": "Daily vocabulary review",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reading"
+  },
+  {
+    "name": "korean-grammar-quiz",
+    "displayName": "Korean grammar quiz",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "analytical"
+  },
+  {
+    "name": "watch-no-subtitles",
+    "displayName": "Watch a K-drama without subtitles for 10 minutes",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "korean-phrase-practice",
+    "displayName": "Practice Korean phrases in context",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "creative"
+  },
+  {
+    "name": "learn-italian-cooking-vocab",
+    "displayName": "Learn Italian Cooking Vocabulary",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reading"
+  },
+  {
+    "name": "cookbook-reviews",
+    "displayName": "Review Italian Cookbooks",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "taste-test-recipe",
+    "displayName": "Taste Test Italian Recipe",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "practical"
+  },
+  {
+    "name": "italian-recipe-search",
+    "displayName": "Search for Italian Recipes",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "creative"
+  },
+  {
+    "name": "flashcard-practice",
+    "displayName": "Practice Italian Cooking Vocabulary Flashcards",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "practical"
+  },
+  {
+    "name": "ielts-vocab-list",
+    "displayName": "IELTS Vocab List Review",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reading"
+  },
+  {
+    "name": "speaking-script-practice",
+    "displayName": "Speaking Script Practice",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "speaking"
+  },
+  {
+    "name": "ielts-lifestyle-talks",
+    "displayName": "IELTS Lifestyle Talks",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "creative"
+  },
+  {
+    "name": "ielts-culture-discussions",
+    "displayName": "IELTS Culture Discussions",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "social"
+  },
+  {
+    "name": "ielts-speech-rehearsal",
+    "displayName": "IELTS Speech Rehearsal",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "speaking"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a Russian language tutorial",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Write in a daily journal in Russian",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a spaced recall quiz on Russian vocabulary",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "listen-to-audio",
+    "displayName": "Listen to an audiobook in Russian",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "summarize-article",
+    "displayName": "Summarize a Russian article on a topic of interest",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "analytical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Hindi Tutorial Watch",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "video"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Hindi Language Journal",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Hindi Vocabulary Quiz",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "memory"
+  },
+  {
+    "name": "listen-to-podcast",
+    "displayName": "Hindi Podcast Listening",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "write-in-hindi",
+    "displayName": "Write in Hindi",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "writing"
+  },
+  {
+    "name": "swahili-reading",
+    "displayName": "Daily Swahili Reading",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reading"
+  },
+  {
+    "name": "conversation-practice",
+    "displayName": "Weekly Conversation Practice",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "speaking"
+  },
+  {
+    "name": "swahili-vocabulary-quiz",
+    "displayName": "Vocabulary Quizzes",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "analytical"
+  },
+  {
+    "name": "listening-listening",
+    "displayName": "Daily Listening Practice",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "listening"
+  },
+  {
+    "name": "swahili-writing-journal",
+    "displayName": "Swahili Writing Journal",
+    "domain": "LANGUAGE ACQUISITION",
+    "modality": "reflective"
+  },
+  {
+    "name": "pacing-practice",
+    "displayName": "Pace Yourself",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "distance-recall",
+    "displayName": "Remember the Distance",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "breathing-applications",
+    "displayName": "Breathe Like a Pro",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Proper Form Tutorial",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "social-endorsement",
+    "displayName": "Running Buddy Finders",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "meal-planning-tuesday",
+    "displayName": "Weekly Meal Planning",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "workout-schedule-creator",
+    "displayName": "Workout Schedule Creator",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "food-diary-entry-maker",
+    "displayName": "Daily Food Diary Entry",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "physical-activity-tracker",
+    "displayName": "Physical Activity Tracker",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "calorie-counting-practice",
+    "displayName": "Calorie Counting Practice",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "pull-up-practice",
+    "displayName": "Pull-Up Practice",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "pull-up-reminders",
+    "displayName": "Pull-Up Reminders",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "pull-up-accounts",
+    "displayName": "Pull-Up Accounts",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "pull-up-motivation",
+    "displayName": "Pull-Up Motivation",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "pull-up-tracking",
+    "displayName": "Pull-Up Tracking",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "flexibility-practice",
+    "displayName": "Daily Flexibility Practice",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "touch-toe-goal-recall",
+    "displayName": "Touch-Toe Goal Reminders",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "flexibility-tutorial-watch",
+    "displayName": "Flexibility Tutorial Watch",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "spine-stretch-application",
+    "displayName": "Spine Stretch Application",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "flexibility-journal-entry",
+    "displayName": "Flexibility Journal Entry",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-plan",
+    "displayName": "Create a weekly practice plan",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "track-progress",
+    "displayName": "Log daily run distance and time",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Half marathon course mapping",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "social-share",
+    "displayName": "Share running goals on social media",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a half marathon training video",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "listening"
+  },
+  {
+    "name": "watch-intro-video",
+    "displayName": "Watch Introduction Video",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Gym Journal Entry",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Gym Quiz",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "gym-accountability-partner",
+    "displayName": "Gym Accountability Partner",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "create-workout-plan",
+    "displayName": "Create Workout Plan",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "posture-check",
+    "displayName": "Posture Check",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "stretching-exercise",
+    "displayName": "Stretching Exercise",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "posture-reflection",
+    "displayName": "Posture Reflection",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Posture Tutorial",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "posture-reminder",
+    "displayName": "Posture Reminder",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Swimming Tutorial",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "speaking"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Swimming Journal Entry",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "swim-practice-30-min",
+    "displayName": "30-Minute Swim Practice",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "ask-coach-question",
+    "displayName": "Ask Swimming Coach Question",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "swim-with-friend-20-min",
+    "displayName": "Swim with Friend for 20 Minutes",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "meditation-practice",
+    "displayName": "Daily Meditation Practice",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "blood-pressure-journal",
+    "displayName": "Blood Pressure Journaling",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "spiral-fitness-plan",
+    "displayName": "Spiral Fitness Plan Creation",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "social-support-group",
+    "displayName": "Blood Pressure Support Group",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "healthy-recipe-search",
+    "displayName": "Healthy Recipe Search",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "creative"
+  },
+  {
+    "name": "meal-planning",
+    "displayName": "Meal Planning",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "workout-tracking",
+    "displayName": "Workout Tracking",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "protein-logging",
+    "displayName": "Protein Log",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "progress-tracking",
+    "displayName": "Progress Tracking",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "supplement-planning",
+    "displayName": "Supplement Planning",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "rehab-protocol",
+    "displayName": "Rehab Protocol Review",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "knee-stretching",
+    "displayName": "Knee Stretching Practice",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "injury-diagram-quiz",
+    "displayName": "Injury Diagram Quiz",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "rehab-exercise-portfolio",
+    "displayName": "Rehab Exercise Portfolio",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "creative"
+  },
+  {
+    "name": "physical-therapy-scheduling",
+    "displayName": "Physical Therapy Scheduling",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "find-yoga-studio",
+    "displayName": "Find a yoga studio near you",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a beginner's yoga tutorial",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily yoga journaling",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced recall quiz: Yoga poses",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "find-yoga-class",
+    "displayName": "Find a daily yoga class online or in-person",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "sleep-tracking-reminder",
+    "displayName": "Set Sleep Tracking Reminder",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "circadian-rhythm-quiz",
+    "displayName": "Daily Circadian Rhythm Quiz",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "bedtime-contract",
+    "displayName": "Bedtime Contract",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "sleep-schedule-planner",
+    "displayName": "Sleep Schedule Planner",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "sleep-journal-entries",
+    "displayName": "Daily Sleep Journal Entries",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on exercise techniques for back pain management",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Track progress in my exercise routine through journaling",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Practice recalling specific exercise techniques through spaced recall quizzes",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "exercise-plan-creation",
+    "displayName": "Create a customized exercise plan tailored to my specific needs and goals",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "accountability-partner-connection",
+    "displayName": "Connect with a workout buddy or accountability partner for regular check-ins",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "research-hike-route",
+    "displayName": "Research Hike Route",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "training-plan-creation",
+    "displayName": "Create Training Plan",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "physical-conditioning-workout",
+    "displayName": "Physical Conditioning Workout",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "spaced-recall-hike-simulation",
+    "displayName": "Spaced Recall Hike Simulation",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "accountability-group-signup",
+    "displayName": "Accountability Group Signup",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "practice-intervals",
+    "displayName": "Soccer Drills Practice",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Cardiovascular Fitness Tutorial",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Soccer Cardio Quiz",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Fitness Journal Entry",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "share-workout",
+    "displayName": "Share Workout with Friend",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "nutrition-tutorial-watch",
+    "displayName": "Watch a nutrition tutorial",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "listening"
+  },
+  {
+    "name": "meal-plan-quiz",
+    "displayName": "Meal plan quiz",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "recipe-book-write",
+    "displayName": "Write down new recipes",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "meal-prep-planner-create",
+    "displayName": "Meal prep planner create",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "creative"
+  },
+  {
+    "name": "nutrition-journal-reflect",
+    "displayName": "Reflect on nutrition progress",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "smoke-quit-plan",
+    "displayName": "Create a Quit Smoking Plan",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "healthy-habits-list",
+    "displayName": "Make a List of Healthy Habits",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "creative"
+  },
+  {
+    "name": "quit-smoking-reminder",
+    "displayName": "Set Up Quit Smoking Reminders",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "craving-management-strategy",
+    "displayName": "Develop a Craving Management Strategy",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "quit-smoking-support-group",
+    "displayName": "Join a Quit Smoking Support Group",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "eye-test",
+    "displayName": "Eye Test",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "task-list",
+    "displayName": "Task List",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "screen-limit-reminder",
+    "displayName": "Screen Limit Reminder",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "blue-light-filter",
+    "displayName": "Blue Light Filter",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "screen-time-accountability",
+    "displayName": "Screen Time Accountability Partner",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "plank-hold",
+    "displayName": "Plank Hold",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "core-strengthening-exercise-video-watch",
+    "displayName": "Core Strengthening Exercise Video Watch",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "core-strengthening-exercise-practice-2-minutes",
+    "displayName": "Core Strengthening Exercise Practice (2 minutes)",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "core-strengthening-exercise-practice-3-minutes",
+    "displayName": "Core Strengthening Exercise Practice (3 minutes)",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "physical"
+  },
+  {
+    "name": "reflect-on-core-strengthens-progression",
+    "displayName": "Reflect on Core Strengthens Progression",
+    "domain": "PHYSICAL FITNESS & HEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on anxiety management techniques",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "mindfulness-practice",
+    "displayName": "Mindfulness Practice",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "physical"
+  },
+  {
+    "name": "support-group-join",
+    "displayName": "Join an Online Support Group",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "meditate-for-5-minutes",
+    "displayName": "Short Daily Meditation Session",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-meditation-tutorial",
+    "displayName": "Guided Meditation Tutorial",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journaling-exercise",
+    "displayName": "Morning Reflections Journal",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "meditation-practice-schedule",
+    "displayName": "Daily Meditation Planner",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "practical"
+  },
+  {
+    "name": "share-meditation-journey-with-friend",
+    "displayName": "Accountability Partner Share",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Public Speaking Tutorial",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Fear Journal",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Public Speaking Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-presentation",
+    "displayName": "Practice Presentation",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "speaking"
+  },
+  {
+    "name": "social-accountability-partner",
+    "displayName": "Public Speaking Buddy",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Emotional Regulation Tutorial",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Emotional Reflection Journal",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "mindfulness-practice-quiz",
+    "displayName": "Mindfulness Practice Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "emotional-intelligence-app",
+    "displayName": "Emotional Intelligence App",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "practical"
+  },
+  {
+    "name": "social-emotional-check-in",
+    "displayName": "Social Emotional Check-In with a Friend",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "mindful-breathing",
+    "displayName": "Mindful Breathing Exercise",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "stress-journal",
+    "displayName": "Daily Stress Journaling",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "meditation-quiz",
+    "displayName": "Meditation Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "analytical"
+  },
+  {
+    "name": "progress-tracking-sheet",
+    "displayName": "Stress Reduction Tracker",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "self-care-planning",
+    "displayName": "Self-Care Plan",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "creative"
+  },
+  {
+    "name": "prac-encounter",
+    "displayName": "Practice Encounter",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "rec-reflect",
+    "displayName": "Reflect and Recall",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "appl-social-proofing",
+    "displayName": "Social Proofing Application",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "rec-quiz",
+    "displayName": "Anxiety Quizzes",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "prac-simulated",
+    "displayName": "Simulated Social Practice",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "resilience-practice",
+    "displayName": "Daily Reflections",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "support-group-listen",
+    "displayName": "Weekly Support Group Call",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "listening"
+  },
+  {
+    "name": "mindfulness-practice",
+    "displayName": "Daily Mindfulness Meditation",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "physical"
+  },
+  {
+    "name": "resilience-recall",
+    "displayName": "Quarterly Review of Progress",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "self-care-application",
+    "displayName": "Daily Self-Care Routine",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "practical"
+  },
+  {
+    "name": "gratitude-reflect",
+    "displayName": "Daily Gratitude Reflection",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Guided Meditation on Gratitude",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "listening"
+  },
+  {
+    "name": "gratitude-practice-exercise",
+    "displayName": "Daily Gratitude Exercise",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "practical"
+  },
+  {
+    "name": "social-accountability",
+    "displayName": "Gratitude Buddy Check-in",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "gratitude-recall-quiz",
+    "displayName": "Weekly Gratitude Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "analytical"
+  },
+  {
+    "name": "practise-positives",
+    "displayName": "Daily Positive Affirmations",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "watch-reframe-negative-thoughts",
+    "displayName": "Understanding Negative Self-Talk",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "listening"
+  },
+  {
+    "name": "spaced-recall-reframe",
+    "displayName": "Reframing Negative Thoughts with Spaced Recall",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "social-share-positivity",
+    "displayName": "Sharing Positive Affirmations with a Friend or Family Member",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "apply-reframe-negative-thoughts-practically",
+    "displayName": "Practical Application of Reframed Negative Thoughts",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "practical"
+  },
+  {
+    "name": "mindfulness-reminder-watch-tutorial",
+    "displayName": "Daily Mindfulness Tutorial Watch",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "watching"
+  },
+  {
+    "name": "adhd-mindfulness-journal-write",
+    "displayName": "ADHD Mindfulness Journal Writing",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "guided-meditation-practice-listen",
+    "displayName": "Guided Meditation Practice Listening",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "listening"
+  },
+  {
+    "name": "mindfulness-applications-reflect-on-experience",
+    "displayName": "Reflecting on Mindfulness Experience",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "adhd-mindfulness-group-discussion-participate",
+    "displayName": "ADHD Mindfulness Group Discussion Participation",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "grief-reflect",
+    "displayName": "Grief Reflection",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "journal-entry",
+    "displayName": "Daily Journal Entry",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "guided-tutorial",
+    "displayName": "Guided Grief Processing Tutorial",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "listening"
+  },
+  {
+    "name": "support-group-lookup",
+    "displayName": "Support Group Lookup",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "mindfulness-practice",
+    "displayName": "Mindfulness Practice",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "physical"
+  },
+  {
+    "name": "mindfulness-tutorial",
+    "displayName": "Mindfulness Tutorial",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "thought-listing",
+    "displayName": "Thought Listing",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "meditation-practice",
+    "displayName": "Meditation Practice",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "physical"
+  },
+  {
+    "name": "cognitive-behavioral-quiz",
+    "displayName": "Cognitive Behavioral Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "analytical"
+  },
+  {
+    "name": "journal-entry-reflection",
+    "displayName": "Journal Entry Reflection",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "boundaries-checklist",
+    "displayName": "Boundary Checklist Review",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "healthy-limit-assertion-practice",
+    "displayName": "Asserting Healthy Limits",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "practical"
+  },
+  {
+    "name": "boundaries-education-watch-tutorial",
+    "displayName": "Boundary Education Watch Tutorial",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reading"
+  },
+  {
+    "name": "self-care-schedule-write",
+    "displayName": "Self-Care Schedule Writing",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "accountability-partner-recall-quiz",
+    "displayName": "Accountability Partner Recall Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Phone Addiction Tutorial",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Reflection Journal",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Phone Addiction Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "set-boundaries-reminder",
+    "displayName": "Phone Boundaries Reminder",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "physical"
+  },
+  {
+    "name": "find-phone-free-timezone",
+    "displayName": "Phone-Free Timezone Finder",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "analytical"
+  },
+  {
+    "name": "mindful-breathing",
+    "displayName": "Mindful Breathing Practice",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "career-reflection",
+    "displayName": "Daily Career Reflection",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "self-care-plan",
+    "displayName": "Self-Care Plan Creation",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "passion-connection",
+    "displayName": "Exploring Career Passions",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "creative"
+  },
+  {
+    "name": "accountability-partner",
+    "displayName": "Career Accountability Partner",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a mindfulness tutorial",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "speaking"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "journal-reflect",
+    "displayName": "Reflect on Journal Entries",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "mindfulness-meditation",
+    "displayName": "Mindfulness Meditation",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "physical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on overcoming imposter syndrome",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily journal reflection",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Imposter syndrome quiz recall",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "analytical"
+  },
+  {
+    "name": "apply-practice",
+    "displayName": "Practice self-compassion in a challenging situation",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "practical"
+  },
+  {
+    "name": "share-accountability",
+    "displayName": "Share your struggles with a trusted friend or mentor",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "practice--affirmations",
+    "displayName": "Daily Affirmations Practice",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "reflective-journaling",
+    "displayName": "Morning Reflections Journaling",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "social-support-call",
+    "displayName": "Weekly Support Call with Friend",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "speaking"
+  },
+  {
+    "name": "analytical--self-assessment",
+    "displayName": "Weekly Self-Assessment Report",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "practical-action-plan",
+    "displayName": "Action Plan Development",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a breathwork technique tutorial",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "listening"
+  },
+  {
+    "name": "write-journal",
+    "displayName": "Write about breathwork experiences",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "practise-technique",
+    "displayName": "Practice a specific breathwork technique",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "physical"
+  },
+  {
+    "name": "reflect-on-journal",
+    "displayName": "Reflect on journal entries about breathwork",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-with-friend",
+    "displayName": "Share breathwork techniques with a friend",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "social"
+  },
+  {
+    "name": "food-acceptance-practice",
+    "displayName": "Practice Accepting Food",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "reflective"
+  },
+  {
+    "name": "body-image-quiz",
+    "displayName": "Body Image Quiz",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "analytical"
+  },
+  {
+    "name": "mindful-movement-exercise",
+    "displayName": "Mindful Movement Exercise",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "physical"
+  },
+  {
+    "name": "body-positive-affirmations-list",
+    "displayName": "Body Positive Affirmations List",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "food-diary-entry",
+    "displayName": "Food Diary Entry",
+    "domain": "MENTAL HEALTH & MINDFULNESS",
+    "modality": "writing"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Marketing Fundamentals Tutorial",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reading"
+  },
+  {
+    "name": "write-journal",
+    "displayName": "Transition Journal Entries",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-quiz",
+    "displayName": "Product Management Quizzes",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "reflective-log",
+    "displayName": "Career Reflection Log",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "network-meeting",
+    "displayName": "Product Management Networking",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "practice-problem",
+    "displayName": "Practice Problems",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "reflect-on-project",
+    "displayName": "Reflect on Projects",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Tutorials",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reading"
+  },
+  {
+    "name": "application-exercise",
+    "displayName": "Application Exercises",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "social-networking",
+    "displayName": "Social Networking",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "leaderboard-analysis",
+    "displayName": "Analyze Leadership Board Posts",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "scenario-plan",
+    "displayName": "Develop a Crisis Management Plan",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "mentor-meeting",
+    "displayName": "Schedule a Mentorship Meeting",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "public-speaking-practice",
+    "displayName": "Practice Public Speaking in Front of Others",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "speaking"
+  },
+  {
+    "name": "journal-reflection",
+    "displayName": "Reflect on Leadership Experiences in Journal",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-networking-conversations",
+    "displayName": "Practice Networking Conversations",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "speaking"
+  },
+  {
+    "name": "networking-event-recall",
+    "displayName": "Recall Networking Event Stories",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-introvert-networking-tips-videos",
+    "displayName": "Watch Introvert Networking Tips Videos",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reading"
+  },
+  {
+    "name": "networking-skills-journal",
+    "displayName": "Networking Skills Journal",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "join-an-introvert-networking-group",
+    "displayName": "Join an Introvert Networking Group",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "learn-new-languages",
+    "displayName": "Learn New Programming Languages",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "watch-tutorials",
+    "displayName": "Watch Data Science Tutorials",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling for Reflection",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-problems",
+    "displayName": "Practice Data Science Problems",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "read-books",
+    "displayName": "Read Data Science Books",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reading"
+  },
+  {
+    "name": "practice-vocalization",
+    "displayName": "Practice Vocalizing Key Phrases in Front of a Mirror",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "speaking"
+  },
+  {
+    "name": "reflect-on-past-meetings",
+    "displayName": "Reflect on Past Board Meetings to Identify Areas for Improvement",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-board-room-demos",
+    "displayName": "Watch Boardroom Demos to Observe Effective Communication Strategies",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "listening"
+  },
+  {
+    "name": "write-executive-voice-prompt",
+    "displayName": "Write Executive Voice Prompts to Clarify Thoughts Before Speaking",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-rehearsal",
+    "displayName": "Spaced Recall Rehearsal of Key Executive Presence Phrases",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "delegate--scenario-planning",
+    "displayName": "Delegate Scenario Planning",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "team-member-interviews",
+    "displayName": "Team Member Interviews",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "delegate--decision-making",
+    "displayName": "Delegate Decision Making",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "delegate-practice-journaling",
+    "displayName": "Delegate Practice Journaling",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "coach-myself-on-delegation",
+    "displayName": "Coach Myself on Delegation",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "post-article",
+    "displayName": "Post an article on LinkedIn",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "comment-on-post",
+    "displayName": "Comment on another post",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "watch-video-tutorial",
+    "displayName": "Watch a video tutorial on LinkedIn skills",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reading"
+  },
+  {
+    "name": "create-linkedin-profile",
+    "displayName": "Update my LinkedIn profile",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "share-post-on-twitter",
+    "displayName": "Share a post on Twitter to promote my LinkedIn content",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "negotiation-script-practice",
+    "displayName": "Practice Negotiation Scripts",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "salary-data-recall",
+    "displayName": "Salary Data Recall",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "realistic-salary-examples-creation",
+    "displayName": "Create Realistic Salary Examples",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "creative"
+  },
+  {
+    "name": "negotiation-role-playing-with-peer",
+    "displayName": "Negotiation Role-Playing with Peer",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "salary-negotiation-case-study-analysis",
+    "displayName": "Salary Negotiation Case Study Analysis",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "mba-prep-notes",
+    "displayName": "MBA Prep Notes Review",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "mfa-exam-practice-problems",
+    "displayName": "GMAT Practice Problems",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "business-case-study-analysis",
+    "displayName": "Business Case Study Analysis",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "mba-application-letter-writing-exercise",
+    "displayName": "MBA Application Letter Writing Exercise",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "mba-topic-revision-quizzes",
+    "displayName": "MBA Topic Revision Quizzes",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Corporate Consulting Tutorial Watch",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "speaking"
+  },
+  {
+    "name": "create-case-study",
+    "displayName": "Freelance Consulting Case Study Creation",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "creative"
+  },
+  {
+    "name": "network-meeting",
+    "displayName": "Networking Meeting Participation",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "reflect-journal-entry",
+    "displayName": "Freelance Consulting Reflection Journal Entry",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "create-business-plan",
+    "displayName": "Freelance Business Plan Creation",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "pm-book-reading",
+    "displayName": "Read Project Management Book",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reading"
+  },
+  {
+    "name": "pmp-practice-problem",
+    "displayName": "Practice PMP Problems",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "pm-tutorial-watching",
+    "displayName": "Watch Project Management Tutorial",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "watching"
+  },
+  {
+    "name": "pmp-reflection-journaling",
+    "displayName": "Reflect on PMP Study Notes",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "pm-group-discussion",
+    "displayName": "Join Project Management Group Discussion",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "practise-presentation-techniques",
+    "displayName": "Practice Presentation Techniques",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "speaking"
+  },
+  {
+    "name": "review-client-pitch-examples",
+    "displayName": "Review Client Pitch Examples",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reading"
+  },
+  {
+    "name": "pitch-to-a-small-group",
+    "displayName": "Pitch to a Small Group",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "speaking"
+  },
+  {
+    "name": "take-constructive-feedback",
+    "displayName": "Take Constructive Feedback",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "create-a-pitch-portfolio",
+    "displayName": "Create a Pitch Portfolio",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "strategic-thinking-tutorial",
+    "displayName": "Strategic Thinking Tutorial",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "director-case-study",
+    "displayName": "Director Case Study Analysis",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "mind-map-practice",
+    "displayName": "Strategic Thinking Mind Mapping",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "creative"
+  },
+  {
+    "name": "strategic-planning-exercise",
+    "displayName": "Strategic Planning Exercise",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "strategic-thought-recall",
+    "displayName": "Strategic Thinking Recall",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "team-meeting-watch",
+    "displayName": "Watch a Remote Team Meeting",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "watching"
+  },
+  {
+    "name": "action-plan-write",
+    "displayName": "Write an Action Plan",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "remote-team-simulation",
+    "displayName": "Participate in a Remote Team Simulation",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "team-management-journal",
+    "displayName": "Reflect on Team Management Experience",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "team-building-activity",
+    "displayName": "Complete a Team-Building Activity",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "task-1",
+    "displayName": "Weekly Review Planning",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "task-2",
+    "displayName": "Time Management Journal Entry",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "task-3",
+    "displayName": "Parenting Class Watch-Tutorial",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "listening"
+  },
+  {
+    "name": "task-4",
+    "displayName": "Prioritization Spaced-Recall Quiz",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "task-5",
+    "displayName": "Daily Task List Creation",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "creative"
+  },
+  {
+    "name": "boundaries-checklist",
+    "displayName": "Work-Life Boundary Checklist",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "weekly-planning-sheet",
+    "displayName": "Weekly Planning Sheet",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "email-filter-rules",
+    "displayName": "Email Filter Rules",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "work-life--boundary-rules",
+    "displayName": "Work-Life Boundary Rules",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "accountability-partner",
+    "displayName": "Accountability Partner",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "mentor-observation",
+    "displayName": "Observe a Junior Staff Member",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "watching"
+  },
+  {
+    "name": "junior-staff-interview",
+    "displayName": "Interview Junior Staff",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "speaking"
+  },
+  {
+    "name": "mentoring-protocol",
+    "displayName": "Develop a Mentoring Protocol",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "junior-staff-portfolio-review",
+    "displayName": "Review Junior Staff Portfolio",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "mentoring-simulation",
+    "displayName": "Mentoring Simulation Exercise",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "practise-interview-questions",
+    "displayName": "Practise Interview Questions",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "review-faang-company-site",
+    "displayName": "Review FAANG Company Site",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reading"
+  },
+  {
+    "name": "create-personal-branding-materials",
+    "displayName": "Create Personal Branding Materials",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "creative"
+  },
+  {
+    "name": "watch-interview-examples",
+    "displayName": "Watch Interview Examples",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "listening"
+  },
+  {
+    "name": "reflect-on-own-strengths-and-weaknesses",
+    "displayName": "Reflect on Own Strengths and Weaknesses",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "propose-template-watch",
+    "displayName": "Watch a business proposal template tutorial",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "watching"
+  },
+  {
+    "name": "propose-example-write",
+    "displayName": "Write a practice business proposal example",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "propose-review-recall",
+    "displayName": "Review and recall key business proposal concepts",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "business-meeting-participate-listen",
+    "displayName": "Participate in a mock business meeting and listen to feedback",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "listening"
+  },
+  {
+    "name": "propose-reflection-reflective",
+    "displayName": "Reflect on your own business proposal writing process",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on side hustling",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily journaling on side hustle ideas",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "side-hustle-plan",
+    "displayName": "Create a basic side hustle plan",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "social-networking",
+    "displayName": "Connect with people on social media for side hustle ideas",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "side-hustle-application",
+    "displayName": "Apply a skill from a side hustle to a day job project",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "practical-exercise",
+    "displayName": "Practical Exercise",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "reflective-journaling",
+    "displayName": "Reflective Journaling",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Conflict Resolution Tutorial",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reading"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Conflicts Quiz",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "social-accountability",
+    "displayName": "Peer Review",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Financial Modeling Tutorial",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journal - Investment Banking",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz: Financial Modeling",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "case-study-solve",
+    "displayName": "Solving Investment Banking Case Studies",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "network-with-expert",
+    "displayName": "Networking with an Investment Banking Expert",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a technical writing tutorial",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "watching"
+  },
+  {
+    "name": "write-sample",
+    "displayName": "Write a sample technical document",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a spaced recall quiz on technical writing concepts",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "review-example",
+    "displayName": "Review a well-crafted technical document",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "analytical"
+  },
+  {
+    "name": "join-discussion",
+    "displayName": "Participate in a technical writing discussion forum",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a people management tutorial",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily journal on leadership lessons",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "People management scenarios quiz",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "reflective"
+  },
+  {
+    "name": "lead-team-meeting",
+    "displayName": "Lead a team meeting to practice management skills",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "practical"
+  },
+  {
+    "name": "social-accountability-pairing",
+    "displayName": "Pair with a mentor for people management guidance",
+    "domain": "CAREER & PROFESSIONAL DEVELOPMENT",
+    "modality": "social"
+  },
+  {
+    "name": "review-notes",
+    "displayName": "Review and Summarize Notes",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Calculus Tutorials",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-problems",
+    "displayName": "Practice Calculus Problems",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "flashcard-creation",
+    "displayName": "Create Flashcards for Key Terms",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "practise-questions",
+    "displayName": "Practice GRE Questions",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "recall-glossary",
+    "displayName": "GRE Glossary Recall",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "apply-concepts",
+    "displayName": "Apply GRE Concepts",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "review-notes",
+    "displayName": "Review GRE Notes",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "score-analysis",
+    "displayName": "Score Analysis",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "watch-lecture",
+    "displayName": "Watch Organic Chemistry Lectures",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "take-practice-quiz",
+    "displayName": "Practice Organic Chemistry Quizzes",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "spaced-recall-journal",
+    "displayName": "Organic Chemistry Journaling",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Organic Chemistry Tutorials",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "create-concept-map",
+    "displayName": "Create Organic Chemistry Concept Maps",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "creative"
+  },
+  {
+    "name": "practise-paragraph-writing",
+    "displayName": "Practice writing paragraphs",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "review-notes-revision",
+    "displayName": "Review notes revision",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reading"
+  },
+  {
+    "name": "spaced-recall-quiz-writing",
+    "displayName": "Spaced recall quiz writing",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "reflect-on-writing-process",
+    "displayName": "Reflect on writing process",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "get-feedback-from-colleague",
+    "displayName": "Get feedback from colleague",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "social"
+  },
+  {
+    "name": "bar-prep-summary-daily",
+    "displayName": "Daily Bar Prep Summary",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "flashcard-sets-practice",
+    "displayName": "Flashcard Practice Sets",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "study-group-discussion",
+    "displayName": "Study Group Discussion",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "social"
+  },
+  {
+    "name": "bar-exam-questions-practice",
+    "displayName": "Bar Exam Questions Practice",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "active-learning-quizzes",
+    "displayName": "Active Learning Quizzes",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "cpa-study-plan",
+    "displayName": "CPA Study Plan",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "review-notebook",
+    "displayName": "Review Notebook",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-problem-set",
+    "displayName": "Practice Problem Set",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "accountability-post",
+    "displayName": "Accountability Post",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "social"
+  },
+  {
+    "name": "learn-statistics-terms",
+    "displayName": "Learn Statistics Terms",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reading"
+  },
+  {
+    "name": "watch-statistics-lectures",
+    "displayName": "Watch Statistics Lectures",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "take-statistics-quizzes",
+    "displayName": "Take Statistics Quizzes",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "create-statistics-experiments",
+    "displayName": "Create Statistics Experiments",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "creative"
+  },
+  {
+    "name": "review-statistics-notes",
+    "displayName": "Review Statistics Notes",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "read-aloud",
+    "displayName": "Practice Reading Aloud",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reading"
+  },
+  {
+    "name": "flashcard-quiz",
+    "displayName": "Law School Flashcards Quiz",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "speed-reading-tutorial",
+    "displayName": "Speed Reading Tutorial",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "skim-then-summarize",
+    "displayName": "Skim and Summarize",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reading"
+  },
+  {
+    "name": "group-discussion",
+    "displayName": "Law School Reading Group",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "social"
+  },
+  {
+    "name": "mcat-reading-log",
+    "displayName": "MCAT Reading Log",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-problem-set",
+    "displayName": "Practice Problem Set",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial-explanation",
+    "displayName": "Watch Tutorial Explanation",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "mcat-application-practice",
+    "displayName": "MCAT Application Practice",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "read-article",
+    "displayName": "Read a constitutional law article",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reading"
+  },
+  {
+    "name": "write-summary",
+    "displayName": "Write a summary of the article",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "create-flashcard",
+    "displayName": "Create a flashcard on constitutional law",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-lecture",
+    "displayName": "Watch a lecture on constitutional law",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "practiced-case-study",
+    "displayName": "Practice applying constitutional law to a case study",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "read-chapter",
+    "displayName": "Read a Chapter on Microeconomics",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reading"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz on Microeconomics",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a Microeconomics Tutorial",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "apply-concept",
+    "displayName": "Apply Microeconomic Concepts to a Scenario",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "journal-entry",
+    "displayName": "Write a Journal Entry on Microeconomics",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "aws-tutorial-watch",
+    "displayName": "Watch AWS Tutorial Videos",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "watching"
+  },
+  {
+    "name": "solutions-architect-practice-problems",
+    "displayName": "Practice Problems for Solutions Architect",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "aws-concepts-recall-quiz",
+    "displayName": "Recall Quiz on AWS Concepts",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "solution-design-sprint",
+    "displayName": "Design Solution Sprint",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "creative"
+  },
+  {
+    "name": "solutions-architect-journal-reflection",
+    "displayName": "Reflect on Solutions Architect Progress",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "real-estate-study-group",
+    "displayName": "Real Estate Study Group",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "social"
+  },
+  {
+    "name": "license-exam-practice-questions",
+    "displayName": "License Exam Practice Questions",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reading"
+  },
+  {
+    "name": "spaced-recall-real-estate-study",
+    "displayName": "Spaced Recall Real Estate Study",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial-on-real-estate-law",
+    "displayName": "Watch Tutorial on Real Estate Law",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "create-an-outline-of-real-estate-concepts",
+    "displayName": "Create an Outline of Real Estate Concepts",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "read-thesis",
+    "displayName": "Read a PhD thesis on research methodology",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reading"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a video tutorial on research design",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "write-essay",
+    "displayName": "Write an essay on research methodology challenges",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "reflect-diary",
+    "displayName": "Reflect on my own research experience",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-quiz",
+    "displayName": "Take an online quiz on research design",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "review-notes",
+    "displayName": "Daily Notes Review",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-problem",
+    "displayName": "Practice Problem Set",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "financial-news-watch",
+    "displayName": "Financial News Watch",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "study-group-discussion",
+    "displayName": "Study Group Discussion",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "social"
+  },
+  {
+    "name": "practice-essay",
+    "displayName": "Daily Essay Practice",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "recall-examples",
+    "displayName": "Essay Writing Examples Review",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "application-exercise",
+    "displayName": "Essay Writing Application Exercise",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "social-discussion",
+    "displayName": "Essay Writing Discussion Group",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "social"
+  },
+  {
+    "name": "reflection-journal",
+    "displayName": "Essay Writing Reflection Journal",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a data structures tutorial",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "practice-problem",
+    "displayName": "Practice solving problems",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a spaced recall quiz on data structures",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "review-notes",
+    "displayName": "Review notes on data structures and algorithms",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "code-along",
+    "displayName": "Code along with a problem set",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "pharmacology-note-review",
+    "displayName": "Pharmacology Note Review",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "pharmacology-watch-tutorial",
+    "displayName": "Pharmacology Watch Tutorial",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "pharmacology-assignment-write",
+    "displayName": "Pharmacology Assignment Write",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "pharmacology-discussion-forum",
+    "displayName": "Pharmacology Discussion Forum",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "social"
+  },
+  {
+    "name": "lsat-practice-sessions",
+    "displayName": "LSAT Practice Sessions",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "logic-games-exercises",
+    "displayName": "Logic Games Exercises",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "lsat-vocabulary-build",
+    "displayName": "LSAT Vocabulary Build",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "lsat-strategy-discussions",
+    "displayName": "LSAT Strategy Discussions",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Biostatistics Tutorial Watch",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Biostatistics Journal Entry",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Biostatistics Quiz with Spaced Recall",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "practice-problem-solve",
+    "displayName": "Biostatistics Practice Problem Solving",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "application-case-study",
+    "displayName": "Biostatistics Case Study Application",
+    "domain": "ACADEMIC & EXAM PREPARATION",
+    "modality": "practical"
+  },
+  {
+    "name": "draw-portrait-practice",
+    "displayName": "Daily Portrait Drawing Practice",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Weekly Portrait Drawing Tutorial",
+    "domain": "CREATIVE SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Monthly Portrait Drawing Quiz",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "draw-portrait-example",
+    "displayName": "Daily Example Drawing Study",
+    "domain": "CREATIVE SKILLS",
+    "modality": "physical"
+  },
+  {
+    "name": "reflect-on-portfolio",
+    "displayName": "Weekly Portfolio Review and Reflection",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-licks",
+    "displayName": "Practice Guitar Licks",
+    "domain": "CREATIVE SKILLS",
+    "modality": "physical"
+  },
+  {
+    "name": "watch-lessons",
+    "displayName": "Watch Guitar Lessons",
+    "domain": "CREATIVE SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Guitar Journal Entry",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-practice-songs",
+    "displayName": "Spaced Recall Guitar Song Practice",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-song-choices",
+    "displayName": "Share Guitar Song Choices with a Friend",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "practice-assignment",
+    "displayName": "Photography Composition Practice Assignment",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Composition Tutorial Watch",
+    "domain": "CREATIVE SKILLS",
+    "modality": "visual"
+  },
+  {
+    "name": "reflect-on-experience",
+    "displayName": "Reflecting on Composition Mistakes",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "composition-quiz",
+    "displayName": "Composition Quiz to Recall",
+    "domain": "CREATIVE SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "share-work",
+    "displayName": "Sharing Photography Composition Work",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "write-paragraph",
+    "displayName": "Write a paragraph every day",
+    "domain": "CREATIVE SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "read-fantasy-book",
+    "displayName": "Read fantasy books for inspiration",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "create-character-profile",
+    "displayName": "Create character profiles",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "write-sentence-out-loud",
+    "displayName": "Practice writing out loud",
+    "domain": "CREATIVE SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "keep-writing-journal",
+    "displayName": "Keep a journal of my writing progress",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Video Editing Tutorials",
+    "domain": "CREATIVE SKILLS",
+    "modality": "visual"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling - Notes on Video Editing",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-edit",
+    "displayName": "Practice Video Editing (10 minutes)",
+    "domain": "CREATIVE SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Video Editing Trivia Quiz",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "collaborate-project",
+    "displayName": "Collaborate on a Video Editing Project",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "daily-practice",
+    "displayName": "Daily Piano Practice",
+    "domain": "CREATIVE SKILLS",
+    "modality": "physical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Piano Tutorials",
+    "domain": "CREATIVE SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Piano Quiz Practice",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "application-exercise",
+    "displayName": "Piano Application Exercise",
+    "domain": "CREATIVE SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "reflective-journaling",
+    "displayName": "Reflect on Piano Progress",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Graphic Design Tutorial",
+    "domain": "CREATIVE SKILLS",
+    "modality": "speaking"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Design Journaling",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-design-project",
+    "displayName": "Freelance Design Project",
+    "domain": "CREATIVE SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Graphic Design Quiz",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "peer-review-design-work",
+    "displayName": "Design Review Partnership",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Watercolor Tutorial",
+    "domain": "CREATIVE SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "sketch-practice",
+    "displayName": "Practice Sketching",
+    "domain": "CREATIVE SKILLS",
+    "modality": "physical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watercolor-journal",
+    "displayName": "Watercolor Journal",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-work",
+    "displayName": "Share Watercolor Work",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Audio Production Basics",
+    "domain": "CREATIVE SKILLS",
+    "modality": "video"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Podcast Idea Journaling",
+    "domain": "CREATIVE SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Audio Production Trivia",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-mixing",
+    "displayName": "Podcast Mixing Practice",
+    "domain": "CREATIVE SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "social-share-accountability",
+    "displayName": "Share Podcast Progress with Friends",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Vocal Technique Tutorial",
+    "domain": "CREATIVE SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Vocal Technique Journal",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "record-singing",
+    "displayName": "Record Yourself Singing",
+    "domain": "CREATIVE SKILLS",
+    "modality": "physical"
+  },
+  {
+    "name": "apply-technique",
+    "displayName": "Practice New Technique",
+    "domain": "CREATIVE SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "review-recording",
+    "displayName": "Review and Reflect on Recording",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "tutorial-watch",
+    "displayName": "Watch 3D modeling tutorials",
+    "domain": "CREATIVE SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "practice-try",
+    "displayName": "Practice basic shapes and models",
+    "domain": "CREATIVE SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "quiz-recall",
+    "displayName": "Recall and identify common 3D modeling concepts",
+    "domain": "CREATIVE SKILLS",
+    "modality": "spaced-recall-quiz"
+  },
+  {
+    "name": "project-create",
+    "displayName": "Create a simple game environment using 3D modeling tools",
+    "domain": "CREATIVE SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "journal-reflect",
+    "displayName": "Reflect on progress and challenges in learning 3D modeling",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a Creative Writing Tutorial",
+    "domain": "CREATIVE SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling for Writers",
+    "domain": "CREATIVE SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz for Short Stories",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "write-exercise",
+    "displayName": "Daily Writing Exercise",
+    "domain": "CREATIVE SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "read-samples",
+    "displayName": "Reading and Analyzing Short Stories",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Music Production Tutorial",
+    "domain": "CREATIVE SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "practice-beat-making",
+    "displayName": "Practice Beat Making",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz on Music Production",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-project",
+    "displayName": "Share Music Production Project",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "analyze-songs",
+    "displayName": "Analyze Songs for Beat Making Inspiration",
+    "domain": "CREATIVE SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "practice-sketching",
+    "displayName": "Daily Sketching Practice",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "sketchbook-review",
+    "displayName": "Weekly Sketchbook Review",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "sketching--inspiration-board",
+    "displayName": "Monthly Inspiration Board",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "sketching--challenge-acceptance",
+    "displayName": "Weekly Sketching Challenge",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "sketchbook--journaling",
+    "displayName": "Daily Sketchbook Journaling",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Calligraphy Tutorial",
+    "domain": "CREATIVE SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-practice-sheet",
+    "displayName": "Daily Calligraphy Practice Sheet",
+    "domain": "CREATIVE SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "calligraphy-project",
+    "displayName": "Calligraphy Project: Hand Lettering Sample",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Calligraphy Spaced Recall Quiz",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-work-on-social-media",
+    "displayName": "Share Calligraphy Work on Social Media",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Dance Tutorials",
+    "domain": "CREATIVE SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-drills",
+    "displayName": "Practice Dance Drills",
+    "domain": "CREATIVE SKILLS",
+    "modality": "physical"
+  },
+  {
+    "name": "watch-performance",
+    "displayName": "Watch Dance Performances",
+    "domain": "CREATIVE SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "share-accountability",
+    "displayName": "Share Accountability with a Friend",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a Pottery Tutorial Video",
+    "domain": "CREATIVE SKILLS",
+    "modality": "speaking"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling for Creative Inspiration",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Pottery Terms Flashcard Quiz",
+    "domain": "CREATIVE SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "practice-project",
+    "displayName": "Practice Hand-Building a Small Project",
+    "domain": "CREATIVE SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "pottery-community-join",
+    "displayName": "Join a Pottery Community for Support and Feedback",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Screenwriting Tutorial",
+    "domain": "CREATIVE SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "script-rewrite",
+    "displayName": "Script Rewrite",
+    "domain": "CREATIVE SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "screenplay-analysis",
+    "displayName": "Screenplay Analysis",
+    "domain": "CREATIVE SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "collaboration-discussion",
+    "displayName": "Collaboration Discussion",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "practise-line",
+    "displayName": "Practice a line from a play",
+    "domain": "CREATIVE SKILLS",
+    "modality": "speaking"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch an acting tutorial video",
+    "domain": "CREATIVE SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "scene-rehearse",
+    "displayName": "Rehearse a scene with a partner",
+    "domain": "CREATIVE SKILLS",
+    "modality": "speaking"
+  },
+  {
+    "name": "reflect-journal",
+    "displayName": "Reflect on your acting progress in a journal",
+    "domain": "CREATIVE SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "share-performance",
+    "displayName": "Share your acting work with others on social media",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a Digital Illustration Tutorial",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling for Skill Practice",
+    "domain": "CREATIVE SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "sketch-book-entries",
+    "displayName": "Create Sketch Book Entries",
+    "domain": "CREATIVE SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "illustration-exercise",
+    "displayName": "Digital Illustration Exercise",
+    "domain": "CREATIVE SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "social-share-portfolio",
+    "displayName": "Share Portfolio Piece on Social Media",
+    "domain": "CREATIVE SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Python Tutorial",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "practice-code",
+    "displayName": "Practice Coding",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "recall-quiz",
+    "displayName": "Python Recall Quiz",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "learn-concepts",
+    "displayName": "Learn Data Analysis Concepts",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "build-project",
+    "displayName": "Build a Project",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "build-prototype",
+    "displayName": "Build a Prototype",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "physical"
+  },
+  {
+    "name": "watch-tutorial-series",
+    "displayName": "Watch Full-Stack Tutorial Series",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "practice-code-snippets",
+    "displayName": "Practice Code Snippets",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "code-review-community",
+    "displayName": "Code Review with Community",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "reflect-on-experience",
+    "displayName": "Reflect on Learning Experience",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a machine learning tutorial",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "practical-project",
+    "displayName": "Work on a practical project",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a spaced recall quiz on machine learning",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "daily-notebook",
+    "displayName": "Take notes on machine learning readings",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "apply-algorithm",
+    "displayName": "Apply a machine learning algorithm to a sample dataset",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-front-end-tutorial",
+    "displayName": "Frontend Tutorial Watch",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "build-minimal-frontend-app",
+    "displayName": "Build Minimal Frontend App",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "review-full-stack-course-materials",
+    "displayName": "Full Stack Course Review",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "create-personal-portfolio-app",
+    "displayName": "Personal Portfolio App",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "join-full-stack-discord-community",
+    "displayName": "Full Stack Discord Community Join",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a DevOps tutorial video",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "code-practice",
+    "displayName": "Practice coding exercises for CI/CD pipelines",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a spaced recall quiz on DevOps concepts",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-knowledge",
+    "displayName": "Share knowledge with others about CI/CD pipelines",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "design-pipeline",
+    "displayName": "Design and visualize a CI/CD pipeline",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch React Native Tutorial",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "build-minimal-app",
+    "displayName": "Build Minimal App",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "code-review-articles",
+    "displayName": "Code Review Articles",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "react-native-project-management",
+    "displayName": "React Native Project Management",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "sql-practice",
+    "displayName": "SQL Practice Sessions",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "database-design-quiz",
+    "displayName": "Database Design Quizzes",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "sql-tutorial-watches",
+    "displayName": "SQL Tutorial Watch Sessions",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "code-review-partners",
+    "displayName": "Code Review Partners",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "sql-reflection-journal",
+    "displayName": "SQL Reflection Journaling",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch--tutorial",
+    "displayName": "Watch Design Patterns Tutorial",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily System Design Journaling",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "System Design Quiz",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "code-sprint",
+    "displayName": "Code Sprint: System Design Challenge",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "pair-programming",
+    "displayName": "Pair Programming: Review System Designs",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Cybersecurity Tutorial Watch",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Cybersecurity Journal Entry",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-quiz",
+    "displayName": "Cybersecurity Quiz Practice",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "social-group",
+    "displayName": "Cybersecurity Community Discussion",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "build-portfolio",
+    "displayName": "Cybersecurity Project Portfolio",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "code-snippet-lookup",
+    "displayName": "Code Snippet Lookup",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "design-prototyping",
+    "displayName": "Design Prototyping",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "product-feasibility-quiz",
+    "displayName": "Product Feasibility Quiz",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "code-review-reading",
+    "displayName": "Code Review Reading",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "business-model-planning",
+    "displayName": "Business Model Planning",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a Kubernetes tutorial video",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "speaking"
+  },
+  {
+    "name": "practice-deployment",
+    "displayName": "Practice deploying applications with Kubernetes",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a Kubernetes quiz to recall key concepts",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "read-documentation",
+    "displayName": "Read the official Kubernetes documentation",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "code-review",
+    "displayName": "Review code written by others using Kubernetes",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "git-workflow-practice",
+    "displayName": "Git Workflow Practice",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "tutorial-watch",
+    "displayName": "Git Tutorial Watch",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "pull-request-creation",
+    "displayName": "Pull Request Creation",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "git-branching-recall",
+    "displayName": "Git Branching Recall",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "code-review-participation",
+    "displayName": "Code Review Participation",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch TypeScript Tutorial Videos",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "practice-exercises",
+    "displayName": "Practice TypeScript Exercises",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "recall-quiz",
+    "displayName": "TypeScript Recall Quiz",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "app-build",
+    "displayName": "Build Small TypeScript Projects",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "journal-entries",
+    "displayName": "Daily Journal Entries on TypeScript",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a web development tutorial",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "write-code-snippet",
+    "displayName": "Write a new code snippet",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "build-portfolio-page",
+    "displayName": "Build a new portfolio page",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "review-code-reviews",
+    "displayName": "Review code reviews from others",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "plan-website-structure",
+    "displayName": "Plan website structure using a mind map",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch AWS Tutorial Videos",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Cloud Architecture Journal",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-problem",
+    "displayName": "Practice AWS Architecture Problems",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "recall-quizzes",
+    "displayName": "AWS Architecture Quizzes",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "collaborate-discuss",
+    "displayName": "Discuss AWS Architecture with Others",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Embedded Systems Tutorial Videos",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "practice-code",
+    "displayName": "Practice Embedded Systems Programming Code",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "recall-quiz",
+    "displayName": "Embedded Systems Quizzes",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "join-community",
+    "displayName": "Join Embedded Systems Communities",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "design-project",
+    "displayName": "Design an Embedded Systems Project",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Blockchain Tutorial Watch",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journal - Blockchain Notes",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz: Solidity Basics",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "build-small-project",
+    "displayName": "Build Small Project - Blockchain App",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "share-knowledge",
+    "displayName": "Share Knowledge with Community",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "debug-logs",
+    "displayName": "Review Debug Logs",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "code-challenges",
+    "displayName": "Solve Coding Challenges",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "problem-statement-analysis",
+    "displayName": "Analyze Problem Statements",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "debugging-session-record",
+    "displayName": "Record Debugging Sessions",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "pair-programming-discussion",
+    "displayName": "Participate in Pair Programming Discussion",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Linux Tutorial Videos",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "listening"
+  },
+  {
+    "name": "practice-commands",
+    "displayName": "Practice Linux Commands",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Linux System Administration Quizzes",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Linux Journaling",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "collaborate-project",
+    "displayName": "Collaborate on a Linux Project",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on AI chatbot development",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "code-snippet-clone",
+    "displayName": "Clone and modify an open-source AI chatbot code snippet",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "chatbot-test-run",
+    "displayName": "Test-run a small-scale chatbot for validation",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "design-concept--sketch",
+    "displayName": "Sketch out design concepts for the chatbot interface",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "chatbot-stakes-talk",
+    "displayName": "Discuss with a peer or mentor about chatbot development challenges",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch D3.js Tutorial",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "code-practice",
+    "displayName": "Code Practice",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "recall-exercises",
+    "displayName": "D3.js Recall Exercises",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "project-build",
+    "displayName": "Build a Data Visualization Project",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "social-community",
+    "displayName": "Join the D3.js Community",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Unity Tutorials",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Game Development Journal",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "code-practice",
+    "displayName": "Code Practice with Unity Projects",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "recall-quizzes",
+    "displayName": "Unity Recall Quizzes",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "game-dev-discuss",
+    "displayName": "Game Development Discussion Forum",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "api-design-study",
+    "displayName": "API Design Study Sessions",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "analytical"
+  },
+  {
+    "name": "doc-generation-exercise",
+    "displayName": "Documentation Generation Exercise",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "api-review-club",
+    "displayName": "API Review Club",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "social"
+  },
+  {
+    "name": "design-sprint",
+    "displayName": "Design Sprint",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "creative"
+  },
+  {
+    "name": "api-case-study",
+    "displayName": "API Case Study Analysis",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Rust Tutorial",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "code-practice-1hr",
+    "displayName": "Code Practice in Rust",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "rust-book-reading",
+    "displayName": "Read Rust Book",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "reading"
+  },
+  {
+    "name": "write-rust-code",
+    "displayName": "Write Rust Code",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "rust-project-1hr",
+    "displayName": "Work on Rust Project",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch iOS Tutorials",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "writing"
+  },
+  {
+    "name": "swift-practice",
+    "displayName": "Swift Practice Exercises",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "ios-app-prototype",
+    "displayName": "Prototype iOS App",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "practical"
+  },
+  {
+    "name": "swift-recall",
+    "displayName": "Swift Recall Quiz",
+    "domain": "TECHNICAL & CODING SKILLS",
+    "modality": "spaced-recall-quiz"
+  },
+  {
+    "name": "budge-watch",
+    "displayName": "Daily Budget Review",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "spend-tracker",
+    "displayName": "Spend Tracker Journal",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "budget-quiz",
+    "displayName": "Budget Quiz Series",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "financial-plan-write",
+    "displayName": "Monthly Budget Plan",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "accountability-group-meet",
+    "displayName": "Weekly Financial Check-in",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a stock market tutorial video",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "read-article",
+    "displayName": "Read an article on investing for beginners",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Keep a daily journal of investment ideas",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a spaced recall quiz on investing concepts",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-investing",
+    "displayName": "Practice investing in a simulated portfolio",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "cryptocurrency-reading-list",
+    "displayName": "Cryptocurrency Reading List",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "blockchain-diagrams",
+    "displayName": "Blockchain Diagrams",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "creative"
+  },
+  {
+    "name": "investing-news-feeds",
+    "displayName": "Investing News Feeds",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "listening"
+  },
+  {
+    "name": "spaced-recall-quiz-cryptocurrency",
+    "displayName": "Cryptocurrency Spaced Recall Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "investing-case-study",
+    "displayName": "Investing Case Study",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Financial Literacy Tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Emergency Fund Tracker Journal",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Emergency Fund Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-accountability-group",
+    "displayName": "Accountability Group Share",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "practical-savings-plan",
+    "displayName": "Practical Savings Plan",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Real Estate Investing Fundamentals Tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling for Real Estate Knowledge",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz for Real Estate Knowledge Retention",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "read-article",
+    "displayName": "Reading Articles on Real Estate Investing",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "create-business-plan",
+    "displayName": "Creating a Basic Business Plan for Real Estate Investing",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "loan-calculator-practice",
+    "displayName": "Loan Calculator Practice",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "student-loan-budget-quiz",
+    "displayName": "Student Loan Budget Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "monthly-payment-planner-reflection",
+    "displayName": "Monthly Payment Planner Reflection",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "spending-habits-tracking-write",
+    "displayName": "Spending Habits Tracking Write",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "loan-payoff-strategy-discussion-social",
+    "displayName": "Loan Payoff Strategy Discussion Social",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a Retirement Planning Tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "listening"
+  },
+  {
+    "name": "read-article",
+    "displayName": "Read an Article on 401k Basics",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a Retirement Planning Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journal on Financial Literacy",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "practical-exercise",
+    "displayName": "Practice Creating a Retirement Plan",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "financial-statements-watch-tutorial",
+    "displayName": "Financial Statements Tutorial Watch",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "financial-statements-daily-journal",
+    "displayName": "Daily Financial Journal",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "financial-statements-spaced-recall-quiz",
+    "displayName": "Financial Statements Spaced Recall Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "financial-statements-case-study-analysis",
+    "displayName": "Financial Statement Analysis Case Study",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "financial-statements-peer-discussion",
+    "displayName": "Financial Statement Discussion with Peer",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Financial Literacy Tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Income Stream Journaling",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Passive Income Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "create-prototype",
+    "displayName": "Income Stream Idea Generation",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "creative"
+  },
+  {
+    "name": "account-share",
+    "displayName": "Passive Income Accountability Partner",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Tax Optimization Tutorial Watch",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "take-note",
+    "displayName": "Tax Optimization Notes",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-formula",
+    "displayName": "Tax Optimization Formula Practice",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "reflect-journal",
+    "displayName": "Tax Optimization Reflection Journal",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "quiz-applicability",
+    "displayName": "Tax Optimization Application Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Financial Day Trading Tutorial Watch",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Day Trading Journal Entry",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Day Trading Quiz (Spaced Recall)",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-trade-simulation",
+    "displayName": "Day Trade Simulation Practice",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "accountability-partner-meeting",
+    "displayName": "Daily Trading Accountability Partner Meeting",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Financial Literacy Tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Spending Journal",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spending Habits Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "budget-plan",
+    "displayName": "Budget Plan Creation",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "social-accountability-group",
+    "displayName": "Financial Support Group",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Insurance Tutorial Watch",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "listening"
+  },
+  {
+    "name": "take-note",
+    "displayName": "Insurance Notes",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "quiz-myself",
+    "displayName": "Insurance Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "calculate-costs",
+    "displayName": "Insurance Cost Calculator",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "discuss-with-peer",
+    "displayName": "Insurance Discussion",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "save-plan",
+    "displayName": "Create a Savings Plan",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "invest-education",
+    "displayName": "Investment Education",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "savings-account-open",
+    "displayName": "Open a Savings Account",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "spend-budget",
+    "displayName": "Track Expenses",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "down-payment-calculator",
+    "displayName": "Down Payment Calculator",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "read-article",
+    "displayName": "Read an Estate Planning Article",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch an Estate Planning Tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take an Estate Planning Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "write-plan",
+    "displayName": "Write a Basic Will Plan",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "discuss-planning",
+    "displayName": "Discuss Estate Planning with a Friend",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "vc-fundamentals-watch",
+    "displayName": "Venture Capital Fundamentals Watch",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "vc-journal-entry",
+    "displayName": "VC Journal Entry",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "vc-quiz",
+    "displayName": "Venture Capital Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "spaced-recall-quiz"
+  },
+  {
+    "name": "read-case-study",
+    "displayName": "Read a Case Study on Venture Capital",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reading"
+  },
+  {
+    "name": "vc-discuss-forum",
+    "displayName": "VC Discussion Forum",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "w-tutorial",
+    "displayName": "Watch forex trading tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "d-journal",
+    "displayName": "Daily journal forex notes",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "s-recall-quiz",
+    "displayName": "Spaced recall quiz on forex terms",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "p-practice-chart",
+    "displayName": "Practice trading with a demo account",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "r-reflection-log",
+    "displayName": "Reflect on forex learning progress",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "tutorial-watch",
+    "displayName": "Watch a financial modeling tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "watching"
+  },
+  {
+    "name": "notes-write",
+    "displayName": "Write notes on key concepts",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-apply",
+    "displayName": "Practice building a simple financial model",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "quiz-recall",
+    "displayName": "Take a financial modeling quiz to test recall",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "spaced-recall-quiz"
+  },
+  {
+    "name": "journal-reflect",
+    "displayName": "Reflect on what you learned and how to apply it",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Credit Score Tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journal Entry",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Credit Score Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "calculate-score",
+    "displayName": "Calculate Your Credit Score",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "accountability-group",
+    "displayName": "Accountability Partner",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "negotiation-case-study",
+    "displayName": "Negotiation Case Study Analysis",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "deal-analysis-exercise",
+    "displayName": "Deal Analysis Exercise",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Negotiation Tutorial",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Negotiation Quiz",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "accountability-partner",
+    "displayName": "Negotiation Accountability Partner",
+    "domain": "FINANCIAL LITERACY & WEALTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Active Listening Tutorial",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journal Entries",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "listen-to-podcast",
+    "displayName": "Active Listening Podcasts",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "listening"
+  },
+  {
+    "name": "reflect-on-conversation",
+    "displayName": "Reflecting on Conversations",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "record-self-reflection",
+    "displayName": "Recording Self-Reflections",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "practise-communication-scenarios",
+    "displayName": "Practising Communication Scenarios with Spouse",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "daily-reflection-journal",
+    "displayName": "Daily Reflection Journal on Communication",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-explainer-video",
+    "displayName": "Watching Explainer Videos on Effective Communication",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reading"
+  },
+  {
+    "name": "spouse-accountability-meeting",
+    "displayName": "Spousal Accountability Meeting",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "recall-communication-rules",
+    "displayName": "Recalling Communication Rules and Principles",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on difficult conversations",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Write about a recent conversation that went well despite challenges",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "practise-roleplay",
+    "displayName": "Practice having a difficult conversation with a friend or family member",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "reflect-on-quiz",
+    "displayName": "Take a quiz on difficult conversation topics and reflect on the answers",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-experience",
+    "displayName": "Share a difficult conversation experience with a trusted friend or mentor",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "friendship-list",
+    "displayName": "Friendship List",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "connection-question",
+    "displayName": "Connection Question",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "friendship-activity",
+    "displayName": "Friendship Activity",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "practical"
+  },
+  {
+    "name": "recall-conversation",
+    "displayName": "Recall Conversation",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "social-accountability-group",
+    "displayName": "Social Accountability Group",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "prac-recall",
+    "displayName": "Practice and Recall",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Parenting Tutorials",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reading"
+  },
+  {
+    "name": "apply-theory",
+    "displayName": "Apply Theoretical Concepts",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "practical"
+  },
+  {
+    "name": "share-experience",
+    "displayName": "Share Your Experience",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "social-accountability",
+    "displayName": "Join a Parenting Group",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a Nonviolent Communication tutorial",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Write about nonviolent communication",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-conversation",
+    "displayName": "Practice nonviolent communication in conversation",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "recall-principles",
+    "displayName": "Recall the principles of nonviolent communication",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a spaced recall quiz on nonviolent communication",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "empathy-reading-list",
+    "displayName": "Empathy Reading List",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "active-listening-practice",
+    "displayName": "Active Listening Practice",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "listening"
+  },
+  {
+    "name": "emotional-intelligence-journaling",
+    "displayName": "Emotional Intelligence Journaling",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "perspective-taking-exercise",
+    "displayName": "Perspective Taking Exercise",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "creative"
+  },
+  {
+    "name": "feedback-loop-creation",
+    "displayName": "Feedback Loop Creation",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "b-boundary-explain",
+    "displayName": "Explain Boundaries to Family Members",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "f-family-map",
+    "displayName": "Map Out Family Dynamics",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "c-communicate-limit",
+    "displayName": "Practice Limiting Communication",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "p-practice-set",
+    "displayName": "Practice Setting Boundaries in Daily Life",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "practical"
+  },
+  {
+    "name": "r-review-rules",
+    "displayName": "Review Boundary Rules and Expectations",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Dating Skills Tutorial Watch",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Dating Reflections Journal",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Dating Skills Recall Quiz",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-date",
+    "displayName": "Practicing Social Interactions",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "social-accountability",
+    "displayName": "Accountable Friendship Buddy",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a feedback tutorial",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Reflect on past interactions",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "practise-with-a-partner",
+    "displayName": "Practice giving feedback with a partner",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a feedback quiz",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "social-accountability-group",
+    "displayName": "Join a feedback group discussion",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Team Communication Tutorial",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling for Self-Reflection",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-conversation",
+    "displayName": "Practice Active Listening with a Team Member",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "social--accountability",
+    "displayName": "Share Feedback with the Team",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz on Team Communication Strategies",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on assertive communication",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily journaling: Reflecting on people-pleasing incidents",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-refusal",
+    "displayName": "Practice saying no in low-stakes interactions",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Quiz yourself on assertive communication principles",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "social-accountability-pair",
+    "displayName": "Accountable conversation with a friend or family member",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "no-guilt-practice",
+    "displayName": "Practice Saying No Without Guilt",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "practical"
+  },
+  {
+    "name": "guilt-reflection-journal",
+    "displayName": "Reflecting on Guilty Feelings",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "social-accountability-group-chat",
+    "displayName": "Social Accountability Group Chat",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "no-guilt-quiz",
+    "displayName": "No Guilt Quiz",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "watch-tutorial-on-no-guilt",
+    "displayName": "Learning About No Guilt",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reading"
+  },
+  {
+    "name": "cultural-newsletter",
+    "displayName": "Cultural Newsletter Readings",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reading"
+  },
+  {
+    "name": "team-members-interviews",
+    "displayName": "Team Member Interviews",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "listening"
+  },
+  {
+    "name": "cross-cultural-case-study",
+    "displayName": "Cross-Cultural Case Study Analysis",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "language-learning-app",
+    "displayName": "Language Learning App Practice",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "practical"
+  },
+  {
+    "name": "cross-cultural-coffee-breaks",
+    "displayName": "Cross-Cultural Coffee Breaks",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "storytelling-tutorial-watch",
+    "displayName": "Watch Storytelling Tutorials",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-story-journal-write",
+    "displayName": "Daily Story Journal Writing",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "storytelling-quiz-spaced-recall",
+    "displayName": "Spaced Recall Storytelling Quizzes",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "story-sharing-practice-speak",
+    "displayName": "Practice Sharing Stories",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "story-critique-listen-analyse",
+    "displayName": "Analyze and Critique Stories",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "join-forum",
+    "displayName": "Join a Forum Related to My Interests",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "write-post",
+    "displayName": "Write a Post About My Interest",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "attend-meeting",
+    "displayName": "Attend an Event for My Interests",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "record-video",
+    "displayName": "Record a Video About My Interest",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "creative"
+  },
+  {
+    "name": "peer-review",
+    "displayName": "Peer Review Another Person's Work in My Field",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Mediation Tutorial",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "video"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "practicedialogue",
+    "displayName": "Practice Dialogue",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "speaking"
+  },
+  {
+    "name": "reflective-activity",
+    "displayName": "Reflective Activity",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "mediation-case-study",
+    "displayName": "Mediation Case Study",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "analytical"
+  },
+  {
+    "name": "practise-writing",
+    "displayName": "Daily Writing Sprints",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Communication Skills Tutorial",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reading"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Quiz: Remote Work Communication",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "apply-practice",
+    "displayName": "Email Template Practice",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "social-share",
+    "displayName": "Share Feedback with Colleagues",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a body language tutorial",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journal: Body Language Reflections",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz: Body Language Cues",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "apply-to-situation",
+    "displayName": "Apply Nonverbal Awareness to Daily Situations",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "practical"
+  },
+  {
+    "name": "share-with-friend",
+    "displayName": "Share Your Knowledge with a Friend",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "small-talk-questions",
+    "displayName": "Small Talk Questions",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "writing"
+  },
+  {
+    "name": "conversation-starters",
+    "displayName": "Conversation Starters",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reading"
+  },
+  {
+    "name": "social-accountability-group",
+    "displayName": "Small Talk Group",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "social"
+  },
+  {
+    "name": "video-watch-tutorial",
+    "displayName": "Small Talk Tutorial",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "watching"
+  },
+  {
+    "name": "reflective-journal",
+    "displayName": "Reflective Journal",
+    "domain": "RELATIONSHIPS & COMMUNICATION",
+    "modality": "reflective"
+  },
+  {
+    "name": "wake-up-time",
+    "displayName": "Set Wake Up Time Reminder",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "alarm-simulation",
+    "displayName": "Simulate Alarm Sound",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "listening"
+  },
+  {
+    "name": "morning-routine",
+    "displayName": "Plan Morning Routine",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "habit-tracker",
+    "displayName": "Track Consistency",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "accountability-check-in",
+    "displayName": "Morning Accountability Check-In",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Morning Routine Tutorial Watch",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "video"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Morning Journal",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "morning-habit-tracker",
+    "displayName": "Morning Habit Tracker",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "review-morning-routine",
+    "displayName": "Review and Refine Morning Routine",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-with-accountability-group",
+    "displayName": "Share Morning Routine with Accountability Group",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "analytical"
+  },
+  {
+    "name": "task-breakdown",
+    "displayName": "Task Breakdown",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "practical"
+  },
+  {
+    "name": "accountability-partner",
+    "displayName": "Accountability Partner",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "habit-tracker",
+    "displayName": "Habit Tracker",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a GTD tutorial video",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "listening"
+  },
+  {
+    "name": "read-book",
+    "displayName": "Read a book on GTD",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reading"
+  },
+  {
+    "name": "create-system",
+    "displayName": "Create a personal GTD system",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "physical"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Keep a daily journal using GTD",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-implementation",
+    "displayName": "Practice implementing GTD for 30 minutes",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on deep work practice",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily journal reflection",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced recall quiz for deep work skills",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "create-sample-project",
+    "displayName": "Create a sample project for practice",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "creative"
+  },
+  {
+    "name": "share-work-with-mentor",
+    "displayName": "Share your work with a mentor for feedback",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "book-review",
+    "displayName": "Book Review Microtask",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "reading-log",
+    "displayName": "Reading Log Microtask",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "reading-quiz",
+    "displayName": "Reading Quiz Microtask",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "analytical"
+  },
+  {
+    "name": "reading-challenge-acceptance",
+    "displayName": "Reading Challenge Acceptance Microtask",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "book-association",
+    "displayName": "Book Association Microtask",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "creative"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Batching Tutorial Watch",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "listening"
+  },
+  {
+    "name": "write-plan",
+    "displayName": "Task Batching Plan",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "practice-scheduling",
+    "displayName": "Scheduling Practice Sessions",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "practical"
+  },
+  {
+    "name": "reflect-on-successes",
+    "displayName": "Reflecting on Successes",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-with-accountability",
+    "displayName": "Sharing with Accountability Partner",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "note-taking-practice",
+    "displayName": "Daily Note-Taking Practice",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "recall-recall-practice",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "application-application-practice",
+    "displayName": "Note-Taking Application Practice",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "practical"
+  },
+  {
+    "name": "reflection-reflection-exercise",
+    "displayName": "Note-Taking Reflection Exercise",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "social-social-support",
+    "displayName": "Note-Taking Buddy Check-In",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on minimalism and focus environments",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journal: Reflect on habits and distractions",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz: Practice minimizing distractions",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "apply-template",
+    "displayName": "Apply a minimal workspace template (e.g., Pomodoro timer)",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "practical"
+  },
+  {
+    "name": "share-accountability",
+    "displayName": "Share progress with an accountability partner (e.g., friend, mentor)",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "review-tutorial-watch",
+    "displayName": "Weekly Review Tutorial Watch",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "watching"
+  },
+  {
+    "name": "planning-journal-write",
+    "displayName": "Weekly Planning Journal Write",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "review-reflection-reflect",
+    "displayName": "Weekly Review Reflection",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "habit-tracking-app-practice",
+    "displayName": "Habit Tracking App Practice",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "practical"
+  },
+  {
+    "name": "weekly-review-share-social",
+    "displayName": "Weekly Review Share with Accountability Partner",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "speed-reading-tutorial-watch",
+    "displayName": "Watch a speed reading tutorial",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "watching"
+  },
+  {
+    "name": "speed-reading-exercise-write",
+    "displayName": "Write down what you've learned",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "speed-reading-practice-recall",
+    "displayName": "Practice recalling information quickly",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "speed-reading-quizzes-practical",
+    "displayName": "Complete speed reading quizzes",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "practical"
+  },
+  {
+    "name": "speed-reading-journal-write",
+    "displayName": "Journal about your progress",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "think-aloud-reflect",
+    "displayName": "Daily System Thinking Reflection",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "system-map-prototype",
+    "displayName": "Daily System Map Sketching",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "creative"
+  },
+  {
+    "name": "watch-tutorial-101",
+    "displayName": "Introduction to Systems Thinking Tutorials",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reading"
+  },
+  {
+    "name": "read-case-study",
+    "displayName": "Systems Thinking Case Studies Reading",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reading"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Systems Thinking Concepts Quizzes",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "analytical"
+  },
+  {
+    "name": "mem-watch",
+    "displayName": "Watch Memory Tutorial",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "watching"
+  },
+  {
+    "name": "mem-journal",
+    "displayName": "Daily Journal Entry",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "mem-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "mem-practice",
+    "displayName": "Memory Exercise Routine",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "physical"
+  },
+  {
+    "name": "mem-reflect",
+    "displayName": "Reflective Analysis",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "analytical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on prioritization",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily journal review of low-value tasks",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Prioritization quiz with spaced recall",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-accountability-group",
+    "displayName": "Share accountability with friends",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "social"
+  },
+  {
+    "name": "practice-prioritization-exercise",
+    "displayName": "Practice prioritization exercises",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "practical"
+  },
+  {
+    "name": "build-architecture",
+    "displayName": "Design My Knowledge System",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "creative"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Learn About Note-Taking Systems",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reading"
+  },
+  {
+    "name": "write-prototype",
+    "displayName": "Create a Basic Prototype",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "writing"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Record Progress and Thoughts",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Test My Knowledge",
+    "domain": "PRODUCTIVITY & HABITS",
+    "modality": "reflective"
+  },
+  {
+    "name": "search-recipes",
+    "displayName": "Search for Recipes",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reading"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Cooking Tutorial",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "listening"
+  },
+  {
+    "name": "practice-ingredient-listing",
+    "displayName": "Make Ingredient List",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-practice",
+    "displayName": "Spaced Recall Practice",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "test-cooking-skills",
+    "displayName": "Test Cooking Skills",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "practical"
+  },
+  {
+    "name": "declutter-101",
+    "displayName": "Declutter 101",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "daily-tidy",
+    "displayName": "Daily Tidy",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "physical"
+  },
+  {
+    "name": "clean-room-quizzes",
+    "displayName": "Clean Room Quizzes",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "organize-journal",
+    "displayName": "Organize Journal",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "writing"
+  },
+  {
+    "name": "spaced-reminder",
+    "displayName": "Spaced Reminder",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "listening"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a DIY tutorial on YouTube",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "listening"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Take a spaced recall quiz on home maintenance topics",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "practical-exercise",
+    "displayName": "Perform a simple DIY repair task",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "practical"
+  },
+  {
+    "name": "write-notebook",
+    "displayName": "Write down notes on what I've learned about home maintenance",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "writing"
+  },
+  {
+    "name": "share-experience",
+    "displayName": "Share a DIY success or failure with a friend or family member",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a tutorial on personal philosophy and value systems",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling: Reflecting on values",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "writing"
+  },
+  {
+    "name": "create-philosophy-map",
+    "displayName": "Create a Philosophy Map",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "creative"
+  },
+  {
+    "name": "share-with-community",
+    "displayName": "Share with a community: Discuss personal philosophy",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "reflect-on-values",
+    "displayName": "Weekly Reflections: Evaluate values",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a First Aid Tutorial",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "video"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily Journaling: Reflecting on First Aid Knowledge",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "writing"
+  },
+  {
+    "name": "first-aid-practice-simulation",
+    "displayName": "Practice First Aid Scenarios",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "practical"
+  },
+  {
+    "name": "recall-first-aid-procedures",
+    "displayName": "Recall First Aid Procedures",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-with-a-friend",
+    "displayName": "Share First Aid Knowledge with a Friend",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Environmental Awareness Tutorial",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "listening"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Sustainable Habit Tracker",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-quiz",
+    "displayName": "Eco-Friendly Quiz",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "share-post",
+    "displayName": "Sustainable Share",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "habit-form-2",
+    "displayName": "New Habit Challenge",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "practical"
+  },
+  {
+    "name": "practice-driving",
+    "displayName": "Practice Driving",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "physical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Driving Tutorial",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "visual"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "apply-theory",
+    "displayName": "Apply Driving Theory",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "journal-reflection",
+    "displayName": "Driving Journal Reflections",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "practise-decision-making-situations",
+    "displayName": "Practice Decision Making in Low-Stakes Situations",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "decisive-questions-quiz",
+    "displayName": "Decisive Questions Quiz",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "watch-case-study",
+    "displayName": "Watch a Decision-Making Case Study",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reading"
+  },
+  {
+    "name": "spaced-recall-decision-making",
+    "displayName": "Spaced Recall Decision Making",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "social-accountability-decision-making-group",
+    "displayName": "Social Accountability Decision Making Group",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a self-defense tutorial",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "watching"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Daily journal reflection on safety habits",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "practice-drills",
+    "displayName": "Practice basic self-defense drills",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "physical"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Self-test on safety knowledge via spaced recall",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "share-with-friend",
+    "displayName": "Discuss self-defense with a trusted friend",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch a documentary on global culture",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "watching"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Test knowledge of historical events",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "read-article",
+    "displayName": "Read a foreign language news article",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reading"
+  },
+  {
+    "name": "write-reflection",
+    "displayName": "Write about cultural differences you've experienced",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "join-discussion",
+    "displayName": "Participate in a global discussion forum",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Solo Travel Tutorial Watch",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "speaking"
+  },
+  {
+    "name": "daily-journal",
+    "displayName": "Solo Travel Journaling",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "practical-planning",
+    "displayName": "Solo Travel Planning Template",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "social-accountability",
+    "displayName": "Share Solo Travel Goals with Friend",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "recall-exercise",
+    "displayName": "Solo Travel Risk Assessment",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "style-inspo-board",
+    "displayName": "Style Inspiration Board",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "wardrobe-cleaning-day",
+    "displayName": "Wardrobe Cleaning Day",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "physical"
+  },
+  {
+    "name": "clothing-budgeting-plan",
+    "displayName": "Clothing Budgeting Plan",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "style-philosophy-reflection",
+    "displayName": "Style Philosophy Reflection",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "clothing-try-on-exercise",
+    "displayName": "Clothing Try-On Exercise",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "physical"
+  },
+  {
+    "name": "negotiation-practice-scenario",
+    "displayName": "Negotiation Practice Scenario",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "practical"
+  },
+  {
+    "name": "watch-tutorial",
+    "displayName": "Watch Negotiation Tutorial",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "watching"
+  },
+  {
+    "name": "negotiation-reflection-journal",
+    "displayName": "Negotiation Reflection Journal",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Negotiation Vocabulary Quiz",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "negotiation-accountability-partner",
+    "displayName": "Negotiation Accountability Partner",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "read-article",
+    "displayName": "Read an article on critical thinking",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reading"
+  },
+  {
+    "name": "think-aloud-quiz",
+    "displayName": "Take a think-aloud quiz",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "solve-case-study",
+    "displayName": "Solve a case study on critical thinking",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "analytical"
+  },
+  {
+    "name": "debate-opponent-idea",
+    "displayName": "Debate an opposing idea on critical thinking",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "social"
+  },
+  {
+    "name": "reflect-journal-entry",
+    "displayName": "Write a reflection journal entry on critical thinking",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "writing"
+  },
+  {
+    "name": "read-legal-article",
+    "displayName": "Read a Legal Article",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reading"
+  },
+  {
+    "name": "create-concept-map",
+    "displayName": "Create Concept Map",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "creative"
+  },
+  {
+    "name": "spaced-recall-quiz",
+    "displayName": "Spaced Recall Quiz",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "reflective"
+  },
+  {
+    "name": "watch-tutorial-videos",
+    "displayName": "Watch Legal Tutorial Videos",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "visual"
+  },
+  {
+    "name": "write-letter-to-authority",
+    "displayName": "Write Letter to Authority",
+    "domain": "LIFE SKILLS & PERSONAL GROWTH",
+    "modality": "writing"
+  }
+]
