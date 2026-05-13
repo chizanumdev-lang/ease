@@ -5,6 +5,7 @@ import { PlannerService } from './services/planner.service';
 import { EngineResolver } from './resolvers/engine.resolver';
 import { AiModule } from '../../ai/ai.module';
 import { VideoModule } from '../../video/video.module';
+import { AudioModule } from '../../audio/audio.module';
 import { GoalCategory } from './entities/goal-category.entity';
 import { GoalTemplate } from './entities/goal-template.entity';
 import { WorkflowNode } from './entities/workflow-node.entity';
@@ -24,6 +25,7 @@ import { AudioAsset } from './entities/audio-asset.entity';
   imports: [
     AiModule,
     VideoModule,
+    AudioModule,
     TypeOrmModule.forFeature([
       GoalCategory,
       GoalTemplate,

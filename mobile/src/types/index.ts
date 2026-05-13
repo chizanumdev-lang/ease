@@ -91,6 +91,11 @@ export interface TaskMetadata {
     consistencyConfirmed?: boolean;
     timerDuration?: number;
     externalLink?: string;
+    // Audio task fields
+    audioUrl?: string;    // URL to the generated TTS audio file
+    subtype?: string;     // e.g. 'guided', 'binaural', 'ambient'
+    script?: string;      // TTS script used to generate the audio
+    mood?: string;        // Audio mood: 'focus' | 'meditation' | 'ambient'
 }
 
 export interface Task {

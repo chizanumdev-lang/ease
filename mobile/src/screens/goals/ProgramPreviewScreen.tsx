@@ -8,13 +8,15 @@ import StitchButton from '../../components/StitchButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import LoadingState from '../../components/LoadingState';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ImageBackground, StatusBar, Platform } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 type Props = NativeStackScreenProps<MainStackParamList, 'ProgramPreview'>;
 
 export default function ProgramPreviewScreen({ route, navigation }: Props) {
-    const { colors, spacing, borderRadius } = useTheme();
+    const { colors, spacing, borderRadius, fonts } = useTheme();
     const { programId } = route.params;
     const { currentProgram, fetchProgram, isLoading } = useProgramsStore();
 
@@ -72,7 +74,13 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
     );
 
     return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+        <ImageBackground 
+            source={require('../../../assets/images/wizard_bg.png')}
+            style={styles.safeArea}
+            imageStyle={{ opacity: 0.3 }}
+        >
+            <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+                <StatusBar barStyle="dark-content" />
             <View style={[styles.topNav, { borderBottomColor: colors.outlineVariant, flexDirection: 'row', justifyContent: 'space-between' }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Ionicons name="chevron-back" size={24} color={colors.primary} />
@@ -161,7 +169,8 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
                     size="lg"
                 />
             </View>
-        </SafeAreaView>
+            </SafeAreaView>
+        </ImageBackground>
     );
 }
 

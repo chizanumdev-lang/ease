@@ -39,7 +39,6 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
     const [duration, setDuration] = useState(task.totalDuration || 0);
     const [maxWatched, setMaxWatched] = useState(task.watchedSeconds || 0);
     const [isCompleted, setIsCompleted] = useState(task.completed || false);
-    const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
 
     const playerRef = useRef<YoutubeIframeRef>(null);
     const tutorialCompleteTriggered = useRef(false);
@@ -119,6 +118,12 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                         triggerCompletion();
                     }
 
+                    // 3. Stop before end screens (last 20 seconds) to prevent video suggestions
+                    if (duration > 0 && time >= duration - 21) {
+                        setPlaying(false);
+                        playerRef.current.seekTo(duration - 21, true);
+                    }
+
                     syncProgress(time);
                 }
             }, 1000);
@@ -128,6 +133,11 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                 if (playerRef.current) {
                     const time = await playerRef.current.getCurrentTime();
                     setCurrentTime(time);
+
+                    if (duration > 0 && time >= duration - 21) {
+                        setPlaying(false);
+                        playerRef.current.seekTo(duration - 21, true);
+                    }
                 }
             }, 1000);
         }
@@ -158,10 +168,13 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
         
         if (state === 'ended') {
             setPlaying(false);
-            setShowCompletionOverlay(true);
             triggerCompletion();
+            // Prevent suggestion grid by seeking back before end screens
+            if (playerRef.current && duration > 0) {
+                playerRef.current.seekTo(duration - 21, true);
+            }
         }
-    }, [triggerCompletion]);
+    }, [triggerCompletion, duration]);
 
 
     const onReady = useCallback(async () => {
@@ -345,7 +358,6 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                                 <LoadingState variant="compact" title="Entering state..." />
                             </View>
                         )}
-
                         <View style={styles.playerWrapper}>
                             <View style={styles.playerContainer}>
                                 <YoutubePlayer
@@ -361,60 +373,11 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                                         rel: 0,
                                         cc_load_policy: 0,
                                         iv_load_policy: 3,
+                                        fs: 0,
                                     }}
                                 />
                             </View>
-
-                            {/* Completion Overlay to hide suggestions */}
-                            {showCompletionOverlay && (
-                                <BlurView intensity={100} tint="dark" style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
-                                    <View style={styles.completionContent}>
-                                        <View style={[styles.successIconCircle, { backgroundColor: colors.primary }]}>
-                                            <Ionicons name="checkmark" size={32} color="#FFF" />
-                                        </View>
-                                        <Text style={styles.completionTitle}>Lesson Complete</Text>
-                                        <Text style={styles.completionSubtitle}>You've mastered today's core insight.</Text>
-                                        <TouchableOpacity 
-                                            style={[styles.completionBtn, { backgroundColor: '#FFF' }]}
-                                            onPress={handleNextSession}
-                                        >
-                                            <Text style={[styles.completionBtnText, { color: colors.primary }]}>
-                                                {todayPlan?.tasks?.findIndex(t => t.id === task.id) === (todayPlan?.tasks?.length || 0) - 1 
-                                                    ? 'Finish Day' 
-                                                    : 'Continue Circuit'}
-                                            </Text>
-                                            <Ionicons name="arrow-forward" size={18} color={colors.primary} />
-                                        </TouchableOpacity>
-                                    </View>
-                                </BlurView>
-                            )}
                         </View>
-
-                        {/* Sleek Progress Bar */}
-                        {!showCompletionOverlay && (
-                            <View style={styles.progressBarWrapper}>
-                                <View style={[styles.progressBarTrack, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
-                                    <View 
-                                        style={[
-                                            styles.progressBarFill, 
-                                            { 
-                                                width: `${(currentTime / (duration || 1)) * 100}%`,
-                                                backgroundColor: colors.primary,
-                                            }
-                                        ]} 
-                                    />
-                                    <View 
-                                        style={[
-                                            styles.maxWatchIndicator, 
-                                            { 
-                                                left: `${(maxWatched / (duration || 1)) * 100}%`,
-                                                backgroundColor: isCompleted ? colors.primary : 'rgba(255,255,255,0.3)'
-                                            }
-                                        ]} 
-                                    />
-                                </View>
-                            </View>
-                        )}
                     </ImageBackground>
                 </View>
 
@@ -424,6 +387,33 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
                     <Text style={[styles.title, { color: colors.text }]}>
                         {task.title}
                     </Text>
+
+                    {/* Task Progress Bar */}
+                    <View style={styles.progressBarWrapper}>
+                        <View style={[styles.progressBarTrack, { backgroundColor: 'rgba(150,150,150,0.2)' }]}>
+                            <View 
+                                style={[
+                                    styles.progressBarFill, 
+                                    { 
+                                        width: `${(currentTime / (duration || 1)) * 100}%`,
+                                        backgroundColor: colors.primary,
+                                    }
+                                ]} 
+                            />
+                            <View 
+                                style={[
+                                    styles.maxWatchIndicator, 
+                                    { 
+                                        left: `${(maxWatched / (duration || 1)) * 100}%`,
+                                        backgroundColor: isCompleted ? colors.primary : 'rgba(150,150,150,0.4)'
+                                    }
+                                ]} 
+                            />
+                        </View>
+                        <Text style={[styles.progressText, { color: colors.textMuted }]}>
+                            {Math.round((currentTime / (duration || 1)) * 100)}% Completed
+                        </Text>
+                    </View>
 
                     {/* Key Takeaways */}
                     <View style={styles.section}>
@@ -594,6 +584,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: (width * 9) / 16,
         justifyContent: 'center',
+        position: 'relative',
     },
     playerContainer: {
         width: '100%',
@@ -654,12 +645,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     progressBarWrapper: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: 24,
-        paddingBottom: 40,
+        marginBottom: 32,
+    },
+    progressText: {
+        fontSize: 12,
+        fontFamily: 'Inter-Medium',
+        marginTop: 8,
+        textAlign: 'right',
     },
     progressBarTrack: {
         height: 6,

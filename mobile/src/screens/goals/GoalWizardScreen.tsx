@@ -10,8 +10,10 @@ import {
     Platform,
     Dimensions,
     ImageBackground,
-    StatusBar
+    StatusBar,
+    Animated
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../types';
 import { useAuthStore } from '../../store/authStore';
@@ -112,6 +114,8 @@ const GOAL_INSPIRATIONS = [
 export default function GoalWizardScreen({ navigation }: Props) {
     const { colors, spacing, borderRadius, isDark, fonts, shadows } = useTheme();
     const [step, setStep] = useState<Step>('CATEGORY');
+    const [stepAnim] = useState(new Animated.Value(1));
+    const [slideAnim] = useState(new Animated.Value(0));
 
     const { control, handleSubmit, watch, setValue } = useForm({
         defaultValues: {
@@ -135,19 +139,49 @@ export default function GoalWizardScreen({ navigation }: Props) {
     const [previewData, setPreviewData] = useState<any>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
 
+    const animateStepChange = (newStep: Step) => {
+        Animated.parallel([
+            Animated.timing(stepAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: -20,
+                duration: 200,
+                useNativeDriver: true,
+            })
+        ]).start(() => {
+            setStep(newStep);
+            slideAnim.setValue(20);
+            Animated.parallel([
+                Animated.timing(stepAnim, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                })
+            ]).start();
+        });
+    };
+
     const handleNext = async () => {
         if (step === 'CATEGORY') {
             if (!formData.category) {
                 showModal({ type: 'info', title: 'Selection Required', description: 'Choose your journey foundation.' });
                 return;
             }
-            setStep('DEFINITION');
+            animateStepChange('DEFINITION');
         } else if (step === 'DEFINITION') {
             if (!formData.goalDescription.trim()) {
                 showModal({ type: 'info', title: 'Define Your Path', description: 'Tell us a bit about your goal.' });
                 return;
             }
-            setStep('COMMITMENT');
+            animateStepChange('COMMITMENT');
         } else if (step === 'COMMITMENT') {
             setIsLoadingPreview(true);
             showModal({
@@ -168,7 +202,6 @@ export default function GoalWizardScreen({ navigation }: Props) {
                 }
 
                 // Fetch preview metadata for the Review screen
-                // We omit the goalId as it hasn't been created yet
                 const data = await fetchPreviewMetadata(undefined, formData.timeframe, {
                     minutesPerDay: formData.dailyMinutes,
                     category: formData.category,
@@ -176,7 +209,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
                 });
                 setPreviewData(data);
                 useModalStore.getState().hideModal();
-                setStep('REVIEW');
+                animateStepChange('REVIEW');
             } catch (error: any) {
                 console.error('Preview error:', error);
                 
@@ -191,7 +224,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
                 // Fallback: Proceed to review anyway but without AI projections for generic errors
                 useModalStore.getState().hideModal();
-                setStep('REVIEW');
+                animateStepChange('REVIEW');
             } finally {
                 setIsLoadingPreview(false);
             }
@@ -201,9 +234,9 @@ export default function GoalWizardScreen({ navigation }: Props) {
     };
 
     const handleBack = () => {
-        if (step === 'DEFINITION') setStep('CATEGORY');
-        else if (step === 'COMMITMENT') setStep('DEFINITION');
-        else if (step === 'REVIEW') setStep('COMMITMENT');
+        if (step === 'DEFINITION') animateStepChange('CATEGORY');
+        else if (step === 'COMMITMENT') animateStepChange('DEFINITION');
+        else if (step === 'REVIEW') animateStepChange('COMMITMENT');
         else navigation.goBack();
     };
 
@@ -256,10 +289,22 @@ export default function GoalWizardScreen({ navigation }: Props) {
     const renderHeader = (stepNum: number, title: string, subtitle: string) => (
         <View style={styles.header}>
             <View style={styles.stepIndicator}>
-                <Text style={[styles.stepText, { color: colors.primary, fontFamily: fonts.label }]}>Step {stepNum} of 5</Text>
-            </View>
-            <View style={[styles.progressTrack, { backgroundColor: colors.surfaceContainerLow }]}>
-                <View style={[styles.progressFill, { width: `${stepNum * 20}%`, backgroundColor: colors.primary }]} />
+                <View style={styles.stepIndicatorTextRow}>
+                    <Text style={[styles.stepText, { color: colors.primary, fontFamily: fonts.label }]}>
+                        PHASE {stepNum}
+                    </Text>
+                    <Text style={[styles.stepCount, { color: colors.textMuted, fontFamily: fonts.label }]}>
+                        OF 4
+                    </Text>
+                </View>
+                <View style={[styles.progressTrack, { backgroundColor: colors.surfaceContainerLow }]}>
+                    <LinearGradient
+                        colors={colors.gradients.primary as unknown as readonly [string, string, ...string[]]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[styles.progressFill, { width: `${(stepNum / 4) * 100}%` }]}
+                    />
+                </View>
             </View>
             <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>{title}</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>{subtitle}</Text>
@@ -311,7 +356,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
     return (
         <ImageBackground 
-            source={require('../../../assets/images/paper_texture.png')}
+            source={require('../../../assets/images/wizard_bg.png')}
             style={[styles.bgContainer, { backgroundColor: colors.background }]}
             imageStyle={{ opacity: 0.3 }}
         >
@@ -328,14 +373,15 @@ export default function GoalWizardScreen({ navigation }: Props) {
                         </TouchableOpacity>
                         <View style={styles.logoContainer}>
                             <Text style={[styles.logoText, { color: colors.primary, fontFamily: fonts.display }]}>MIND/SET</Text>
+                            <View style={[styles.logoUnderline, { backgroundColor: colors.primary + '30' }]} />
                         </View>
                         <TouchableOpacity style={[styles.navIconButton, { opacity: 0 }]}>
                             <Ionicons name="settings-outline" size={24} color={colors.primary} />
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView
-                        style={styles.scrollView}
+                    <Animated.ScrollView
+                        style={[styles.scrollView, { opacity: stepAnim, transform: [{ translateY: slideAnim }] }]}
                         contentContainerStyle={styles.scrollContent}
                         showsVerticalScrollIndicator={false}
                     >
@@ -346,10 +392,10 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                     categories={CATEGORIES}
                                     selectedId={formData.category}
                                     onSelect={(id) => {
-                                        setValue('category', id);
-                                        // Auto-advance with a slight delay for visual feedback
-                                        setTimeout(() => setStep('DEFINITION'), 300);
-                                    }}
+                                         setValue('category', id);
+                                         // Auto-advance with a slight delay for visual feedback
+                                         setTimeout(() => animateStepChange('DEFINITION'), 300);
+                                     }}
                                 />
                                 
                                 <EditorialCard style={styles.tipCard}>
@@ -369,46 +415,129 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
                         {step === 'DEFINITION' && (
                             <View style={styles.stepContainer}>
-                                {renderHeader(2, "Describe Goal", "Bring your vision to life by detailing what you want to achieve.")}
+                                {renderHeader(2, "Bring it to Life", "In your own words, describe the destination you are aiming for.")}
                                 
                                 <View style={styles.inputSection}>
-                                    <View style={[styles.editorialTextAreaContainer, { backgroundColor: colors.surfaceContainerHighest }]}>
+                                    <View style={[styles.contrastGuide, { backgroundColor: colors.surfaceContainerLow + '80', marginBottom: 12 }]}>
+                                        <View style={styles.contrastHeader}>
+                                            <Ionicons name="compass-outline" size={16} color={colors.primary} />
+                                            <Text style={[styles.contrastTitle, { color: colors.text, fontFamily: fonts.display }]}>Manifestation Guide</Text>
+                                        </View>
+                                        
+                                        <View style={styles.contrastPairs}>
+                                            <View style={styles.contrastItem}>
+                                                <View style={[styles.contrastBadge, { backgroundColor: colors.error + '10' }]}>
+                                                    <Text style={[styles.contrastBadgeText, { color: colors.error, fontFamily: fonts.label }]}>VAGUE</Text>
+                                                </View>
+                                                <Text style={[styles.contrastText, { color: colors.textMuted, fontFamily: fonts.body, fontStyle: 'italic' }]}>
+                                                    "Consistency"
+                                                </Text>
+                                            </View>
+                                            
+                                            <Ionicons name="arrow-forward" size={16} color={colors.outlineVariant} style={{ marginTop: 24 }} />
+                                            
+                                            <View style={styles.contrastItem}>
+                                                <View style={[styles.contrastBadge, { backgroundColor: colors.success + '10' }]}>
+                                                    <Text style={[styles.contrastBadgeText, { color: colors.success, fontFamily: fonts.label }]}>POWERFUL</Text>
+                                                </View>
+                                                <Text style={[styles.contrastText, { color: colors.text, fontFamily: fonts.bodyMedium }]}>
+                                                    "I want to build a daily habit of consistency in my work life."
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                    <View style={[styles.sacredNotepad, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+                                        <View style={[styles.notepadAccent, { backgroundColor: colors.primary + '20' }]} />
                                         <Controller
                                             control={control}
                                             name="goalDescription"
                                             rules={{ required: true }}
                                             render={({ field: { onChange, onBlur, value } }) => (
-                                                <TextInput
-                                                    style={[styles.editorialTextArea, { color: colors.text, fontFamily: fonts.body }]}
-                                                    placeholder="Describe your goal..."
-                                                    placeholderTextColor={colors.outlineVariant}
-                                                    multiline
-                                                    numberOfLines={6}
-                                                    value={value}
-                                                    onChangeText={onChange}
-                                                    onBlur={onBlur}
-                                                    textAlignVertical="top"
-                                                />
+                                                <View>
+                                                    <TextInput
+                                                        style={[styles.sacredInput, { color: colors.text, fontFamily: fonts.body, fontSize: 18 }]}
+                                                        placeholder="What does mastery look like to you?"
+                                                        placeholderTextColor={colors.textMuted + '80'}
+                                                        multiline
+                                                        numberOfLines={8}
+                                                        value={value}
+                                                        onChangeText={onChange}
+                                                        onBlur={onBlur}
+                                                        textAlignVertical="top"
+                                                        selectionColor={colors.primary}
+                                                    />
+                                                    <View style={styles.notepadFooter}>
+                                                        <View style={styles.clarityIndicator}>
+                                                            {(() => {
+                                                                const words = value.trim().toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                                                                const charCount = value.length;
+                                                                const wordCount = words.length;
+                                                                
+                                                                // Core Intent & Action Patterns
+                                                                const subjects = ['i', 'my', 'goal', 'want', 'need', 'desire'];
+                                                                const actions = ['learn', 'build', 'master', 'achieve', 'grow', 'become', 'practice', 'improve', 'create', 'run', 'read', 'cook', 'code', 'develop', 'start', 'finish'];
+                                                                
+                                                                const hasSubject = words.some(w => subjects.includes(w));
+                                                                const hasAction = words.some(w => actions.includes(w));
+                                                                
+                                                                let label = '';
+                                                                let color = colors.primary;
+                                                                
+                                                                if (charCount === 0) {
+                                                                    label = '';
+                                                                } else if (charCount < 20 || wordCount < 4 || (!hasSubject && !hasAction)) {
+                                                                    // High-bar for entry: requires a subject or a clear action verb
+                                                                    label = 'BLURRY';
+                                                                    color = colors.error;
+                                                                } else if (!hasSubject || !hasAction) {
+                                                                    // Incomplete but getting there: has one but lacks full context
+                                                                    label = 'GETTING CLEARER';
+                                                                    color = colors.primary;
+                                                                } else if (charCount < 50 || wordCount < 10) {
+                                                                    label = 'GETTING CLEARER';
+                                                                    color = colors.primary;
+                                                                } else {
+                                                                    label = 'VIVID VISION';
+                                                                    color = colors.secondary;
+                                                                }
+
+                                                                return (
+                                                                    <>
+                                                                        <View style={[styles.clarityDot, { backgroundColor: label ? color : 'transparent' }]} />
+                                                                        <Text style={[styles.clarityText, { color: label ? color : colors.textMuted, fontFamily: fonts.label }]}>
+                                                                            {label}
+                                                                        </Text>
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </View>
+                                                        <Text style={[styles.charCount, { color: colors.textMuted + '60', fontFamily: fonts.mono }]}>
+                                                            {value.length} chars
+                                                        </Text>
+                                                    </View>
+                                                </View>
                                             )}
                                         />
-                                        <View style={styles.textAreaIcon}>
-                                            <Ionicons name="pencil-outline" size={16} color={colors.outlineVariant} />
-                                        </View>
                                     </View>
 
                                     <View style={styles.inspirationSection}>
-                                        <Text style={[styles.inspirationLabel, { color: colors.primary, fontFamily: fonts.label }]}>INSPIRATION</Text>
-                                        <View style={styles.chipContainer}>
+                                        <View style={styles.inspirationHeader}>
+                                            <Ionicons name="flash-outline" size={14} color={colors.primary} />
+                                            <Text style={[styles.inspirationLabel, { color: colors.primary, fontFamily: fonts.label }]}>SPARKS OF INTENT</Text>
+                                        </View>
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
                                             {GOAL_INSPIRATIONS.map((text, idx) => (
                                                 <TouchableOpacity 
                                                     key={idx} 
-                                                    style={[styles.chip, { backgroundColor: colors.secondaryContainer, borderColor: 'rgba(34, 83, 68, 0.1)' }]}
+                                                    activeOpacity={0.7}
+                                                    style={[styles.floatingChip, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}
                                                     onPress={() => setValue('goalDescription', text)}
                                                 >
-                                                    <Text style={[styles.chipText, { color: colors.primary, fontFamily: fonts.bodyMedium }]}>"{text}"</Text>
+                                                    <Text style={[styles.chipText, { color: colors.text, fontFamily: fonts.bodyMedium }]}>{text}</Text>
                                                 </TouchableOpacity>
                                             ))}
-                                        </View>
+                                        </ScrollView>
                                     </View>
                                 </View>
 
@@ -429,14 +558,29 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                                 render={({ field: { onChange, value } }) => (
                                                     <>
                                                         <TouchableOpacity 
-                                                            style={[styles.dateInput, { backgroundColor: colors.surface, justifyContent: 'center' }]}
+                                                            activeOpacity={0.8}
+                                                            style={[
+                                                                styles.dateInput, 
+                                                                { 
+                                                                    backgroundColor: colors.surface, 
+                                                                    justifyContent: 'center',
+                                                                    borderWidth: 2,
+                                                                    borderColor: value ? colors.secondary + '40' : colors.primary + '60',
+                                                                    elevation: 4,
+                                                                    shadowColor: colors.primary,
+                                                                    shadowOffset: { width: 0, height: 4 },
+                                                                    shadowOpacity: 0.1,
+                                                                    shadowRadius: 8,
+                                                                }
+                                                            ]}
                                                             onPress={() => setShowDatePicker(true)}
                                                         >
                                                             <Text style={{ 
-                                                                color: value ? colors.text : colors.outlineVariant, 
-                                                                fontFamily: fonts.body,
-                                                                fontSize: 16 
-                                                            }}>
+                                                                    color: value ? colors.text : colors.primary, 
+                                                                    fontFamily: fonts.display,
+                                                                    fontSize: 16,
+                                                                    fontWeight: '700'
+                                                                }}>
                                                                 {value ? format(new Date(value), 'PPP') : 'Pick a target date'}
                                                             </Text>
                                                             <View style={styles.dateIconWrapper}>
@@ -486,23 +630,31 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                         {DURATIONS.map(dur => (
                                             <TouchableOpacity 
                                                 key={dur.id}
+                                                activeOpacity={0.9}
                                                 style={[
                                                     styles.selectionItem, 
                                                     { 
-                                                        backgroundColor: formData.timeframe === dur.id ? colors.primary : colors.surfaceContainerLow,
-                                                        borderColor: formData.timeframe === dur.id ? colors.primary : 'rgba(0,0,0,0.05)',
-                                                    },
-                                                    formData.timeframe === dur.id && shadows.ambient
+                                                        backgroundColor: formData.timeframe === dur.id ? 'transparent' : colors.surfaceContainerLow,
+                                                        borderColor: formData.timeframe === dur.id ? 'transparent' : colors.outlineVariant,
+                                                    }
                                                 ]}
                                                 onPress={() => setValue('timeframe', dur.id)}
                                             >
-                                                <Text style={[styles.selectionTitle, { color: formData.timeframe === dur.id ? colors.background : colors.text, fontFamily: fonts.display }]}>{dur.title}</Text>
-                                                <Text style={[styles.selectionSub, { color: formData.timeframe === dur.id ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontFamily: fonts.body }]}>{dur.subtitle}</Text>
+                                                {formData.timeframe === dur.id && (
+                                                    <LinearGradient
+                                                        colors={colors.gradients.primary as unknown as readonly [string, string, ...string[]]}
+                                                        style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
+                                                        start={{ x: 0, y: 0 }}
+                                                        end={{ x: 1, y: 1 }}
+                                                    />
+                                                )}
+                                                <Text style={[styles.selectionTitle, { color: formData.timeframe === dur.id ? '#fff' : colors.text, fontFamily: fonts.display }]}>{dur.title}</Text>
+                                                <Text style={[styles.selectionSub, { color: formData.timeframe === dur.id ? 'rgba(255,255,255,0.8)' : colors.textMuted, fontFamily: fonts.body }]}>{dur.subtitle}</Text>
                                             </TouchableOpacity>
                                         ))}
                                     </View>
 
-                                    <View style={[styles.groupHeader, { marginTop: 16 }]}>
+                                    <View style={[styles.groupHeader, { marginTop: 24 }]}>
                                         <View style={[styles.groupLine, { backgroundColor: colors.secondary }]} />
                                         <Text style={[styles.sectionLabel, { color: colors.text, fontFamily: fonts.label }]}>DAILY TIME INVESTMENT</Text>
                                     </View>
@@ -510,18 +662,18 @@ export default function GoalWizardScreen({ navigation }: Props) {
                                         {COMMITMENTS.map(comm => (
                                             <TouchableOpacity 
                                                 key={comm.id}
+                                                activeOpacity={0.9}
                                                 style={[
                                                     styles.selectionItem, 
                                                     { 
                                                         backgroundColor: formData.dailyMinutes === comm.id ? colors.secondary : colors.surfaceContainerLow,
-                                                        borderColor: formData.dailyMinutes === comm.id ? colors.secondary : 'rgba(0,0,0,0.05)',
-                                                    },
-                                                    formData.dailyMinutes === comm.id && shadows.ambient
+                                                        borderColor: formData.dailyMinutes === comm.id ? colors.secondary : colors.outlineVariant,
+                                                    }
                                                 ]}
                                                 onPress={() => setValue('dailyMinutes', comm.id)}
                                             >
-                                                <Text style={[styles.selectionTitle, { color: formData.dailyMinutes === comm.id ? colors.background : colors.text, fontFamily: fonts.display }]}>{comm.title}</Text>
-                                                <Text style={[styles.selectionSub, { color: formData.dailyMinutes === comm.id ? 'rgba(255,255,255,0.7)' : colors.textMuted, fontFamily: fonts.body }]}>{comm.type}</Text>
+                                                <Text style={[styles.selectionTitle, { color: formData.dailyMinutes === comm.id ? '#fff' : colors.text, fontFamily: fonts.display }]}>{comm.title}</Text>
+                                                <Text style={[styles.selectionSub, { color: formData.dailyMinutes === comm.id ? 'rgba(255,255,255,0.8)' : colors.textMuted, fontFamily: fonts.body }]}>{comm.type}</Text>
                                             </TouchableOpacity>
                                         ))}
                                     </View>
@@ -539,91 +691,88 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
                         {step === 'REVIEW' && (
                             <View style={styles.stepContainer}>
-                                {renderHeader(4, "Check Your Plan", "Take a quick look at your journey before we get started.")}
+                                {renderHeader(4, "Your Manifesto", "Review the architecture of your journey. This is the blueprint of your evolution.")}
                                 
                                 <View style={styles.reviewContent}>
-                                        {/* Summary Card */}
-                                        <View style={[styles.reviewSummaryCard, shadows.ambient]}>
-                                            {/* TODO: Replace with specialized category-specific high-fidelity images in the future */}
-                                            <ImageBackground
-                                                source={CATEGORIES.find(c => c.id === formData.category)?.bgImage}
-                                                style={styles.reviewSummaryBg}
-                                                imageStyle={{ borderRadius: 32 }}
+                                    {/* Summary Card */}
+                                    <View style={[styles.reviewSummaryCard, shadows.premium]}>
+                                        <ImageBackground
+                                            source={CATEGORIES.find(c => c.id === formData.category)?.bgImage}
+                                            style={styles.reviewSummaryBg}
+                                            imageStyle={{ borderRadius: 40 }}
+                                        >
+                                            <LinearGradient
+                                                colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)']}
+                                                style={styles.reviewSummaryOverlay}
                                             >
-                                                <View style={styles.reviewSummaryOverlay}>
-                                                    <View style={[styles.categoryBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                                                        <Text style={[styles.categoryBadgeText, { color: '#fff', fontFamily: fonts.label }]}>
-                                                            {previewData?.category?.toUpperCase() || formData.category.toUpperCase()}
-                                                        </Text>
-                                                    </View>
-                                                    <Text style={[styles.reviewSummaryTitle, { color: '#fff', fontFamily: fonts.display }]}>
-                                                        {previewData?.title || formData.goalDescription.substring(0, 40) + '...'}
+                                                <View style={[styles.categoryBadge, { backgroundColor: colors.primary }]}>
+                                                    <Text style={[styles.categoryBadgeText, { color: '#fff', fontFamily: fonts.label }]}>
+                                                        {formData.category.toUpperCase()}
                                                     </Text>
                                                 </View>
-                                            </ImageBackground>
+                                                <Text style={[styles.reviewSummaryTitle, { color: '#fff', fontFamily: fonts.display }]}>
+                                                    {formData.goalDescription.substring(0, 60) + (formData.goalDescription.length > 60 ? '...' : '')}
+                                                </Text>
+                                            </LinearGradient>
+                                        </ImageBackground>
+                                    </View>
+                                    
+                                    <View style={[styles.intensityCard, { backgroundColor: colors.surfaceContainerLow, borderRadius: 32, padding: 24, marginBottom: 20 }]}>
+                                        <View style={styles.intensityHeader}>
+                                            <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>EFFORT SPECTRUM</Text>
+                                            <Ionicons name="stats-chart-outline" size={16} color={colors.primary} />
                                         </View>
-                                        
-                                        {previewData?.weeklyIntensity && (
-                                            <View style={[styles.intensityCard, { backgroundColor: colors.surfaceContainerLow, borderRadius: 24, padding: 20, marginBottom: 20 }]}>
-                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label, marginBottom: 12 }]}>YOUR PACE</Text>
-                                                <BarChart
-                                                    data={previewData.weeklyIntensity.map((val: number, i: number) => ({
-                                                        value: val,
-                                                        label: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]
-                                                    }))}
-                                                    height={80}
-                                                    barWidth={30}
-                                                    noOfSections={3}
-                                                    barBorderRadius={4}
-                                                    frontColor={colors.primary}
-                                                    yAxisThickness={0}
-                                                    xAxisThickness={0}
-                                                    hideRules
-                                                    hideYAxisText
-                                                    xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 10, fontWeight: '900' }}
-                                                />
-                                            </View>
-                                        )}
+                                        <View style={styles.chartContainer}>
+                                            <BarChart
+                                                data={(previewData?.weeklyIntensity || [20, 45, 60, 40, 75, 50, 30]).map((val: number, i: number) => ({
+                                                    value: val,
+                                                    label: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i],
+                                                    frontColor: val > 60 ? colors.primary : colors.secondary,
+                                                }))}
+                                                height={100}
+                                                barWidth={width * 0.08}
+                                                noOfSections={3}
+                                                barBorderRadius={8}
+                                                yAxisThickness={0}
+                                                xAxisThickness={0}
+                                                hideRules
+                                                hideYAxisText
+                                                xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 10, fontWeight: '900', marginTop: 8 }}
+                                                isAnimated
+                                            />
+                                        </View>
+                                    </View>
 
-                                        {/* Coach Insight - Glassmorphism style */}
-                                        <View style={[styles.insightPanel, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(34, 83, 68, 0.05)', borderColor: colors.primary + '20' }]}>
-                                            <View style={[styles.insightIconBox, { backgroundColor: colors.primary }]}>
-                                                <Ionicons name="sparkles" size={20} color="#fff" />
-                                            </View>
+                                    {/* Coach Insight */}
+                                    <View style={[styles.insightPanel, { backgroundColor: colors.primary + '08', borderColor: colors.primary + '15', borderWidth: 1 }]}>
+                                        <View style={[styles.insightIconBox, { backgroundColor: colors.primary }]}>
+                                            <Ionicons name="sparkles" size={18} color="#fff" />
+                                        </View>
+                                        <View style={styles.insightContent}>
+                                            <Text style={[styles.insightHeaderLabel, { color: colors.primary, fontFamily: fonts.label }]}>AI PROJECTION</Text>
                                             <Text style={[styles.insightText, { color: colors.text, fontFamily: fonts.bodyMedium }]}>
-                                                {previewData?.coachInsight || "This journey is balanced for steady growth. We've optimized the intensity to match your 30-day rhythm."}
+                                                {previewData?.coachInsight || "Your path is optimized for sustainable progression. We've balanced deep work with restorative phases."}
                                             </Text>
                                         </View>
+                                    </View>
 
-                                        {/* Details Grid */}
-                                        <View style={styles.reviewGrid}>
-                                            <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
-                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>DURATION</Text>
-                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{formData.timeframe} Days</Text>
-                                            </View>
-                                            <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
-                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>INVESTMENT</Text>
-                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{formData.dailyMinutes} Min</Text>
-                                            </View>
-                                            <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
-                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>HIGHEST EFFORT</Text>
-                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>
-                                                    {previewData ? Math.max(...previewData.weeklyIntensity) + '%' : 'Balanced'}
-                                                </Text>
-                                            </View>
-                                            <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
-                                                <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>PRIMARY FOCUS</Text>
-                                                <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.bodyMedium, fontSize: 14 }]} numberOfLines={2}>
-                                                    {previewData?.primaryGoal || 'Growth & Mastery'}
-                                                </Text>
-                                            </View>
+                                    {/* Details Grid */}
+                                    <View style={styles.reviewGrid}>
+                                        <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
+                                            <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>DURATION</Text>
+                                            <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{formData.timeframe} Days</Text>
+                                        </View>
+                                        <View style={[styles.reviewGridItem, { backgroundColor: colors.surfaceContainerLow }]}>
+                                            <Text style={[styles.gridLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>INVESTMENT</Text>
+                                            <Text style={[styles.gridValue, { color: colors.text, fontFamily: fonts.display }]}>{formData.dailyMinutes}m/Day</Text>
+                                        </View>
                                     </View>
                                 </View>
                                 
                                 {renderFooterActions()}
                             </View>
                         )}
-                    </ScrollView>
+                    </Animated.ScrollView>
 
                     {step !== 'CATEGORY' && (
                         <View style={{ height: 20 }} />
@@ -665,7 +814,14 @@ const styles = StyleSheet.create({
     logoText: {
         fontSize: 16,
         fontWeight: '900',
-        letterSpacing: 2,
+        letterSpacing: 4,
+        textTransform: 'uppercase',
+    },
+    logoUnderline: {
+        width: 24,
+        height: 2,
+        borderRadius: 1,
+        marginTop: 4,
     },
     scrollView: {
         flex: 1,
@@ -792,70 +948,100 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         justifyContent: 'center',
     },
-    selectionTitle: {
-        fontSize: 18,
-        fontWeight: '800',
-        marginBottom: 4,
-    },
     selectionSub: {
-        fontSize: 13,
+        fontSize: 12,
+        fontWeight: '600',
     },
-    reviewCard: {
-        padding: 32,
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.05)',
+    stepIndicatorTextRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
     },
-    reviewRow: {
+    stepCount: {
+        fontSize: 10,
+        letterSpacing: 1,
+    },
+    sacredNotepad: {
+        borderRadius: 32,
+        borderWidth: 1.5,
+        padding: 24,
+        paddingTop: 40,
+        overflow: 'hidden',
+        minHeight: 280,
+    },
+    notepadAccent: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 12,
+    },
+    sacredInput: {
+        lineHeight: 28,
+        minHeight: 180,
+    },
+    notepadFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 20,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+        paddingTop: 16,
+    },
+    clarityIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
         gap: 8,
     },
-    reviewLabel: {
+    clarityDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    clarityText: {
+        fontSize: 10,
+        letterSpacing: 1,
+        fontWeight: '900',
+    },
+    charCount: {
+        fontSize: 10,
+    },
+    inspirationHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 16,
+    },
+    floatingChip: {
+        paddingHorizontal: 18,
+        paddingVertical: 12,
+        borderRadius: 24,
+        borderWidth: 1,
+        marginRight: 10,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+    },
+    chipText: {
+        fontSize: 14,
+    },
+    chipScroll: {
+        marginHorizontal: -24,
+        paddingHorizontal: 24,
+        marginTop: 8,
+    },
+    inspirationSection: {
+        marginTop: 24,
+    },
+    inspirationLabel: {
         fontSize: 10,
         fontWeight: '800',
         letterSpacing: 1.5,
-    },
-    reviewValue: {
-        fontSize: 18,
-        lineHeight: 26,
-    },
-    coachQuoteBox: {
-        flexDirection: 'row',
         marginTop: 24,
-        paddingHorizontal: 8,
-    },
-    quoteLine: {
-        width: 4,
-        borderRadius: 2,
-        marginRight: 20,
-    },
-    quoteText: {
-        flex: 1,
-        fontSize: 22,
-        fontWeight: '800',
-        lineHeight: 32,
-        fontStyle: 'italic',
-    },
-    footer: {
-        padding: 24,
-        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-        backgroundColor: 'rgba(255,255,255,0.8)',
-    },
-    footerButtons: {
-        gap: 16,
-        alignItems: 'center',
-        paddingVertical: 32,
-    },
-    primaryFooterButton: {
-        width: '100%',
-    },
-    secondaryFooterButton: {
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        width: '100%',
-        alignItems: 'center',
-    },
-    secondaryButtonText: {
-        fontSize: 16,
-        fontWeight: '700',
     },
     stepContainer: {
         gap: 40,
@@ -863,44 +1049,47 @@ const styles = StyleSheet.create({
     inputSection: {
         gap: 32,
     },
-    editorialTextAreaContainer: {
-        borderRadius: 24,
+    contrastGuide: {
+        marginTop: 12,
         padding: 24,
-        minHeight: 180,
-    },
-    editorialTextArea: {
-        fontSize: 20,
-        lineHeight: 28,
-        flex: 1,
-    },
-    textAreaIcon: {
-        position: 'absolute',
-        bottom: 20,
-        right: 20,
-    },
-    inspirationSection: {
-        gap: 12,
-    },
-    inspirationLabel: {
-        fontSize: 12,
-        fontWeight: '800',
-        letterSpacing: 1.5,
-        paddingHorizontal: 4,
-    },
-    chipContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    chip: {
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 99,
+        borderRadius: 32,
         borderWidth: 1,
         borderColor: 'rgba(0,0,0,0.03)',
     },
-    chipText: {
+    contrastHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 20,
+    },
+    contrastTitle: {
         fontSize: 14,
+        letterSpacing: 0.5,
+    },
+    contrastPairs: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: 12,
+    },
+    contrastItem: {
+        flex: 1,
+        gap: 12,
+    },
+    contrastBadge: {
+        alignSelf: 'flex-start',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+    },
+    contrastBadgeText: {
+        fontSize: 8,
+        letterSpacing: 1,
+        fontWeight: '900',
+    },
+    contrastText: {
+        fontSize: 13,
+        lineHeight: 18,
     },
     dateCard: {
         padding: 32,
@@ -940,92 +1129,143 @@ const styles = StyleSheet.create({
         right: 16,
         top: 16,
     },
-    // New Review Styles
-    loadingPreviewContainer: {
-        height: 400,
-        borderRadius: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 24,
+    selectionTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        marginBottom: 4,
+    },
+    coachQuoteBox: {
+        flexDirection: 'row',
+        marginTop: 24,
+        paddingHorizontal: 8,
+    },
+    quoteLine: {
+        width: 4,
+        borderRadius: 2,
+        marginRight: 20,
+    },
+    quoteText: {
+        flex: 1,
+        fontSize: 22,
+        fontWeight: '800',
+        lineHeight: 32,
+        fontStyle: 'italic',
     },
     reviewContent: {
         gap: 24,
     },
     reviewSummaryCard: {
         height: 240,
-        borderRadius: 32,
+        borderRadius: 40,
         overflow: 'hidden',
+        marginBottom: 24,
     },
     reviewSummaryBg: {
         flex: 1,
     },
     reviewSummaryOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.3)',
         padding: 32,
         justifyContent: 'flex-end',
-        gap: 12,
+    },
+    reviewSummaryTitle: {
+        fontSize: 26,
+        lineHeight: 32,
+        fontWeight: '900',
     },
     categoryBadge: {
         alignSelf: 'flex-start',
         paddingHorizontal: 12,
         paddingVertical: 6,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderRadius: 12,
+        marginBottom: 12,
     },
     categoryBadgeText: {
         fontSize: 10,
-        fontWeight: '800',
+        fontWeight: '900',
         letterSpacing: 1,
     },
-    reviewSummaryTitle: {
-        fontSize: 28,
-        lineHeight: 34,
-        fontWeight: '900',
+    intensityCard: {
+        padding: 24,
+        borderRadius: 32,
+        marginBottom: 20,
+    },
+    intensityHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    chartContainer: {
+        alignItems: 'center',
+        width: '100%',
     },
     insightPanel: {
         flexDirection: 'row',
         padding: 24,
-        borderRadius: 24,
+        borderRadius: 32,
+        marginBottom: 24,
+        alignItems: 'flex-start',
         borderWidth: 1,
-        alignItems: 'center',
-        gap: 20,
     },
     insightIconBox: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 40,
+        height: 40,
+        borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
+        marginRight: 16,
+    },
+    insightContent: {
+        flex: 1,
+    },
+    insightHeaderLabel: {
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 1,
+        marginBottom: 4,
     },
     insightText: {
-        flex: 1,
         fontSize: 15,
         lineHeight: 22,
     },
     reviewGrid: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
         gap: 12,
     },
     reviewGridItem: {
-        width: '48%',
+        flex: 1,
         padding: 20,
         borderRadius: 24,
-        gap: 8,
     },
     gridLabel: {
         fontSize: 10,
         fontWeight: '800',
         letterSpacing: 1,
+        marginBottom: 4,
     },
     gridValue: {
         fontSize: 20,
         fontWeight: '900',
     },
-    intensityCard: {
+    footer: {
         padding: 24,
-        borderRadius: 24,
-    }
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    },
+    footerButtons: {
+        marginTop: 32,
+        gap: 16,
+    },
+    primaryFooterButton: {
+        width: '100%',
+    },
+    secondaryFooterButton: {
+        alignItems: 'center',
+        padding: 16,
+    },
+    secondaryButtonText: {
+        fontSize: 14,
+        letterSpacing: 1,
+        fontWeight: '700',
+    },
 });

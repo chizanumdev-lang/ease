@@ -216,22 +216,30 @@ export default function HomeScreen({ navigation }: Props) {
 
     if (!currentProgram && !todayPlan) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-                <View style={styles.topNavWrapper}>
-                    <View style={styles.topNav}>
-                        <View style={styles.navButton} />
-                        <Logo size={32} />
-                        <TouchableOpacity 
-                            style={[styles.profileButton, { backgroundColor: colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' }]}
-                            onPress={() => navigation.navigate('Settings')}
-                        >
-                            <Ionicons name="settings-outline" size={24} color={colors.text} />
-                        </TouchableOpacity>
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+                <LinearGradient
+                    colors={isDark ? 
+                        [colors.background, colors.surface] : 
+                        [colors.primary + '10', colors.secondary + '05', colors.background]}
+                    style={StyleSheet.absoluteFill}
+                />
+                <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+                    <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+                    <View style={styles.topNavWrapper}>
+                        <View style={styles.topNav}>
+                            <View style={styles.navButton} />
+                            <Logo size={32} />
+                            <TouchableOpacity 
+                                style={[styles.profileButton, { backgroundColor: colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' }]}
+                                onPress={() => navigation.navigate('Settings')}
+                            >
+                                <Ionicons name="settings-outline" size={24} color={colors.text} />
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
-                <HomeEmptyState onStartPress={handleBeginStory} />
-            </SafeAreaView>
+                    <HomeEmptyState onStartPress={handleBeginStory} />
+                </SafeAreaView>
+            </View>
         );
     }
 

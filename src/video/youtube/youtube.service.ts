@@ -60,7 +60,12 @@ export class YoutubeService {
 
         if (validVideos.length === 0) {
             this.logger.warn(`No valid videos found after filtering for query: ${query}`);
-            return { url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}` };
+            // Return a high-quality fallback focus/productivity video instead of a search page
+            return { 
+                url: 'https://www.youtube.com/watch?v=inpok4MKVLM',
+                title: 'Deep Focus & Consistency Protocol',
+                channel: 'Ease Focus Labs'
+            };
         }
 
         const bestVideo = validVideos[0];
@@ -115,7 +120,7 @@ export class YoutubeService {
                     const isPublic = video.status.privacyStatus === 'public';
                     const isEmbeddable = video.status.embeddable;
                     const duration = this.parseDuration(video.contentDetails.duration || '');
-                    const isNotShort = duration > 180; // Filter out shorts (< 3 mins)
+                    const isNotShort = duration > 60; // Filter out shorts (< 1 min)
                     const isNotTooLong = duration < 45 * 60; // Max 45 mins
                     
                     // Enforce English if a language is explicitly set

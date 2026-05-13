@@ -19,14 +19,34 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     
     const [gaveUp, setGaveUp] = useState(false);
     const [isCompleted, setIsCompleted] = useState(task.completed || false);
+    const [playError, setPlayError] = useState<string | null>(null);
     
+    // Resolve audio URL — prefer the task's own audio first, then fall back to ritual tracks
+    const taskAudioUrl: string | null = 
+        task.metadata?.audioUrl
+        ?? task.metadata?.externalLink
+        ?? null;
+
+    const ritualAudioTrack: AudioTrack | undefined = 
+        todayPlan?.audioTracks?.find(t => t.dayPlanId === task.dayPlanId)
+        ?? todayPlan?.audioTracks?.[0];
+
+    // Build the AudioTrack object we'll actually play
+    const audioTrack: AudioTrack | undefined = taskAudioUrl
+        ? {
+            id: task.id,
+            url: taskAudioUrl,
+            title: task.title,
+            type: task.metadata?.subtype ?? 'guided',
+            dayPlanId: task.dayPlanId,
+          } as AudioTrack
+        : ritualAudioTrack;
+
+    const audioUrl = audioTrack?.url ?? null;
+
+    console.log('[AudioTask] Resolved audioUrl:', audioUrl, '| task.metadata:', task.metadata);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const pulseAnim = useRef(new Animated.Value(0.4)).current;
-
-    // Resolve audio URL
-    const audioTrack: AudioTrack | undefined = todayPlan?.audioTracks?.find(t => t.dayPlanId === task.dayPlanId)
-        ?? todayPlan?.audioTracks?.[0];
-    const audioUrl = audioTrack?.url ?? task.metadata?.externalLink ?? null;
 
     const isStillGenerating = (audioUrl?.includes('static_binaural') ?? false) && !gaveUp;
 
@@ -77,10 +97,16 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     };
 
     const handlePlayPause = async () => {
-        if (audioStore.isPlaying) {
-            await audioStore.pause();
-        } else {
-            await audioStore.play();
+        setPlayError(null);
+        try {
+            if (audioStore.isPlaying) {
+                await audioStore.pause();
+            } else {
+                await audioStore.play();
+            }
+        } catch (err: any) {
+            console.error('[AudioTask] Play error:', err);
+            setPlayError('Could not play audio. Please try again.');
         }
     };
 
