@@ -17,6 +17,7 @@ export const useTheme = () => {
         textMuted: isDark ? Theme.colors.onSurfaceVariant.dark : Theme.colors.text.muted,
         onSurface: isDark ? Theme.colors.onSurface.dark : Theme.colors.onSurface.light,
         onSurfaceVariant: isDark ? Theme.colors.onSurfaceVariant.dark : Theme.colors.onSurfaceVariant.light,
+        surfaceContainerLowest: isDark ? Theme.colors.surfaceContainerLowest.dark : Theme.colors.surfaceContainerLowest.light,
         surfaceContainerLow: isDark ? Theme.colors.surfaceContainerLow.dark : Theme.colors.surfaceContainerLow.light,
         surfaceContainerHigh: isDark ? Theme.colors.surfaceContainerHigh.dark : Theme.colors.surfaceContainerHigh.light,
         surfaceContainerHighest: isDark ? Theme.colors.surfaceContainerHighest.dark : Theme.colors.surfaceContainerHighest.light,
@@ -40,7 +41,10 @@ export const useTheme = () => {
         isDark,
         spacing: Theme.spacing,
         borderRadius: Theme.borderRadius,
-        fonts: Theme.fonts,
+        fonts: {
+            ...Theme.fonts,
+            labelBold: Theme.fonts.labelBold,
+        },
         shadows: Theme.shadows,
         toggleTheme,
     };

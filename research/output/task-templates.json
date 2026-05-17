@@ -1,0 +1,235 @@
+[
+  {
+    "name": "tutorial-watch-template",
+    "displayName": "Tutorial Watch",
+    "category": "video",
+    "modality": "watching",
+    "intensity": 5,
+    "description": "Watch a video tutorial to learn a specific skill or concept.",
+    "metadata": {
+      "templateType": "video",
+      "uses": [
+        "Language acquisition (vocab/grammar)",
+        "Technical skills (AWS, SQL, Coding)",
+        "Creative techniques (Art, Design)",
+        "Professional frameworks (PM, Systems Thinking)"
+      ]
+    }
+  },
+  {
+    "name": "guided-session-template",
+    "displayName": "Guided Session",
+    "category": "video",
+    "modality": "watching",
+    "intensity": 3,
+    "description": "Interactive or guided video sessions for mental or physical regulation.",
+    "metadata": {
+      "templateType": "video",
+      "uses": ["Meditation", "Mindfulness", "Grief processing", "Breathwork"]
+    }
+  },
+  {
+    "name": "lecture-analysis-template",
+    "displayName": "Lecture Analysis",
+    "category": "video",
+    "modality": "watching",
+    "intensity": 8,
+    "description": "Academic deep-dives requiring high focus and note-taking.",
+    "metadata": {
+      "templateType": "video",
+      "uses": ["Science (Bio/Chem)", "Legal concepts", "Finance/VC", "Statistics"]
+    }
+  },
+  {
+    "name": "observational-skill-template",
+    "displayName": "Observational Skill",
+    "category": "video",
+    "modality": "watching",
+    "intensity": 6,
+    "description": "Learning through observation of soft skills and human interaction.",
+    "metadata": {
+      "templateType": "video",
+      "uses": ["Networking", "Leadership", "Communication", "Interviews", "Storytelling"]
+    }
+  },
+  {
+    "name": "technique-demo-template",
+    "displayName": "Technique Demo",
+    "category": "video",
+    "modality": "watching",
+    "intensity": 7,
+    "description": "Visual demonstrations of physical form, movement, or craft.",
+    "metadata": {
+      "templateType": "video",
+      "uses": ["Stretching/Flexibility", "Fitness/Form", "Musical instruments", "Dance/Performance"]
+    }
+  },
+  {
+    "name": "audio-immersion-template",
+    "displayName": "Audio Immersion",
+    "category": "audio",
+    "modality": "listening",
+    "intensity": 3,
+    "description": "Passive or semi-active listening to build familiarity or gain insights.",
+    "metadata": {
+      "templateType": "audio",
+      "uses": ["Podcasts", "Interviews", "Music", "Immersion audio"]
+    }
+  },
+  {
+    "name": "guided-audio-template",
+    "displayName": "Guided Audio",
+    "category": "audio",
+    "modality": "listening",
+    "intensity": 4,
+    "description": "Active guided sessions focusing on mental or emotional states.",
+    "metadata": {
+      "templateType": "audio",
+      "uses": ["Breathing", "Meditation", "Binaural sessions", "Affirmations"]
+    }
+  },
+  {
+    "name": "vocal-practice-template",
+    "displayName": "Vocal Practice",
+    "category": "audio",
+    "modality": "listening",
+    "intensity": 6,
+    "description": "Focused audio for speech development and pronunciation.",
+    "metadata": {
+      "templateType": "audio",
+      "uses": ["Listen and repeat", "Accent mimicry", "Pronunciation drills"]
+    }
+  },
+  {
+    "name": "recall-quiz-template",
+    "displayName": "Recall Quiz",
+    "category": "quiz",
+    "modality": "reflective",
+    "intensity": 8,
+    "description": "High-frequency testing for memory retention using spaced repetition.",
+    "metadata": {
+      "templateType": "quiz",
+      "uses": ["Vocabulary", "Kanji/Characters", "Term matching", "Flashcards"]
+    }
+  },
+  {
+    "name": "knowledge-check-template",
+    "displayName": "Knowledge Check",
+    "category": "quiz",
+    "modality": "analytical",
+    "intensity": 6,
+    "description": "Assessment of conceptual understanding and factual knowledge.",
+    "metadata": {
+      "templateType": "quiz",
+      "uses": ["Concept checks", "Industry facts", "Legal fundamentals", "MCQs"]
+    }
+  },
+  {
+    "name": "problem-solving-template",
+    "displayName": "Problem Solving",
+    "category": "quiz",
+    "modality": "analytical",
+    "intensity": 9,
+    "description": "Practical application of logic, strategy, and decision making.",
+    "metadata": {
+      "templateType": "quiz",
+      "uses": ["Coding problems", "Case studies", "Decision simulations", "Critical thinking"]
+    }
+  },
+  {
+    "name": "speaking-assessment-template",
+    "displayName": "Speaking Assessment",
+    "category": "quiz",
+    "modality": "speaking",
+    "intensity": 7,
+    "description": "Testing verbal output, clarity, and conversational flow.",
+    "metadata": {
+      "templateType": "quiz",
+      "uses": ["AI pronunciation check", "Conversation simulation", "Speaking prompts"]
+    }
+  },
+  {
+    "name": "reflective-journal-template",
+    "displayName": "Reflective Journal",
+    "category": "journal",
+    "modality": "reflective",
+    "intensity": 4,
+    "description": "Subjective, emotional, and introspective writing.",
+    "metadata": {
+      "templateType": "journal",
+      "uses": ["Morning reflections", "Gratitude", "Mood tracking", "Values alignment"]
+    }
+  },
+  {
+    "name": "deep-work-journal-template",
+    "displayName": "Deep Work Journal",
+    "category": "journal",
+    "modality": "writing",
+    "intensity": 8,
+    "description": "Objective analysis and knowledge synthesis for complex goals.",
+    "metadata": {
+      "templateType": "journal",
+      "uses": ["Technical architecture", "Summary writing", "Legal briefs", "Note synthesis"]
+    }
+  },
+  {
+    "name": "action-planning-template",
+    "displayName": "Action Planning",
+    "category": "journal",
+    "modality": "writing",
+    "intensity": 5,
+    "description": "Structured writing for organization, scheduling, and foresight.",
+    "metadata": {
+      "templateType": "journal",
+      "uses": ["Meal planning", "Budgeting", "Weekly reviews", "Workflow design"]
+    }
+  },
+  {
+    "name": "creative-practice-template",
+    "displayName": "Creative Practice",
+    "category": "journal",
+    "modality": "writing",
+    "intensity": 7,
+    "description": "Craft-specific output drills and creative expression.",
+    "metadata": {
+      "templateType": "journal",
+      "uses": ["Storytelling", "Calligraphy", "Free-writing", "Drafting"]
+    }
+  },
+  {
+    "name": "habit-tracker-template",
+    "displayName": "Habit Tracker",
+    "category": "consistency",
+    "modality": "reflective",
+    "intensity": 2,
+    "description": "Quantitative logging of daily progress and physical metrics.",
+    "metadata": {
+      "templateType": "consistency",
+      "uses": ["Steps/Activity", "Sleep logs", "Spending", "Streak tracking"]
+    }
+  },
+  {
+    "name": "daily-ritual-template",
+    "displayName": "Daily Ritual",
+    "category": "consistency",
+    "modality": "physical",
+    "intensity": 3,
+    "description": "Foundation-setting recurring actions and routine maintenance.",
+    "metadata": {
+      "templateType": "consistency",
+      "uses": ["Morning/Evening routines", "Workspace tidying", "Self-care rituals"]
+    }
+  },
+  {
+    "name": "micro-practice-template",
+    "displayName": "Micro Practice",
+    "category": "consistency",
+    "modality": "practical",
+    "intensity": 5,
+    "description": "Short, daily bursts of practice to build muscle memory.",
+    "metadata": {
+      "templateType": "consistency",
+      "uses": ["Rapid vocab review", "Finger exercises", "Daily calligraphy strokes"]
+    }
+  }
+]

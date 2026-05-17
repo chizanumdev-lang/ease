@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { 
+    View, 
+    StyleSheet, 
+    Text, 
+    ScrollView, 
+    TouchableOpacity, 
+    Dimensions, 
+    Image,
+    StatusBar 
+} from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../hooks/useTheme';
 import { Task, TaskMetadata, QuizQuestion } from '../../types';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useProgramsStore } from '../../store/programsStore';
+import VocalTestPattern from './patterns/VocalTestPattern';
+import SpacedRecallPattern from './patterns/SpacedRecallPattern';
+import ProblemSolvingPattern from './patterns/ProblemSolvingPattern';
+import GuidedSessionPattern from './patterns/GuidedSessionPattern';
+import DebatePattern from './patterns/DebatePattern';
+import ActiveMeditationPattern from './patterns/ActiveMeditationPattern';
+import { BlurView } from 'expo-blur';
+import PetalBackground from '../PetalBackground';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const HERO_HEIGHT = SCREEN_HEIGHT * 0.35;
+const CARD_OVERLAP = 24;
 
 interface QuizTaskProps {
     task: Task;
     onComplete: (metadata: TaskMetadata) => void;
 }
 
-// ─────────────────────────────────────────────────────────
-// Contextual fallback questions — used only when the backend
-// hasn't provided a quiz yet (e.g. the program was created
-// before the AI quiz-generation was in place).
-// ─────────────────────────────────────────────────────────
 function generateFallbackQuestions(task: Task, theme: string): QuizQuestion[] {
     const t = task.title.toLowerCase();
     const th = (theme || '').toLowerCase();
@@ -67,30 +82,6 @@ function generateFallbackQuestions(task: Task, theme: string): QuizQuestion[] {
         ];
     }
 
-    if (t.includes('mindset') || t.includes('growth') || th.includes('mindset')) {
-        return [
-            {
-                question: `What belief underpins the lesson in "${task.title}"?`,
-                options: ['Talent is fixed at birth', 'Abilities can be grown through effort', 'Environment is everything', 'Genetics determine success'],
-                correctAnswer: 1,
-                explanation: 'A growth mindset holds that skills develop through dedication and hard work.',
-            },
-            {
-                question: 'How should you frame failure according to a growth mindset?',
-                options: ['As proof of limited ability', 'As feedback and a step forward', 'As something to avoid', 'As others\' fault'],
-                correctAnswer: 1,
-                explanation: 'Failure is information — it reveals exactly where to focus next.',
-            },
-            {
-                question: 'What is the role of effort in developing mastery?',
-                options: ['Effort is overrated — talent wins', 'Effort is the path through which talent becomes ability', 'Effort only helps at advanced levels', 'Effort causes diminishing returns'],
-                correctAnswer: 1,
-                explanation: 'Deliberate effort is the primary driver of skill acquisition.',
-            },
-        ];
-    }
-
-    // Generic high-quality fallback for any topic
     return [
         {
             question: `What is the central idea behind "${task.title}"?`,
@@ -129,10 +120,36 @@ function generateFallbackQuestions(task: Task, theme: string): QuizQuestion[] {
 }
 
 export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
-    const { colors, fonts, shadows, isDark } = useTheme();
+    const { colors, fonts, shadows, isDark, borderRadius } = useTheme();
     const { todayPlan } = useProgramsStore();
 
-    // ── Resolve questions: backend quiz first, contextual fallback second ──
+    const metadata = task.metadata as TaskMetadata;
+    const pattern = metadata?.pattern || 'standard';
+
+    if (pattern === 'vocal-test') {
+        return <VocalTestPattern task={task} onComplete={onComplete} />;
+    }
+
+    if (pattern === 'spaced-recall') {
+        return <SpacedRecallPattern task={task} onComplete={onComplete} />;
+    }
+
+    if (pattern === 'problem-solving') {
+        return <ProblemSolvingPattern task={task} onComplete={onComplete} />;
+    }
+
+    if (pattern === 'guided-session') {
+        return <GuidedSessionPattern task={task} onComplete={onComplete} />;
+    }
+
+    if (pattern === 'debate') {
+        return <DebatePattern task={task} onComplete={onComplete} />;
+    }
+
+    if (pattern === 'active-meditation') {
+        return <ActiveMeditationPattern task={task} onComplete={onComplete} />;
+    }
+
     const backendQuiz = todayPlan?.quizzes?.find(q => q.id === task.quizId);
     const questions: QuizQuestion[] = (backendQuiz?.questions?.length ?? 0) > 0
         ? backendQuiz!.questions
@@ -143,7 +160,6 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
     const [showResults, setShowResults] = useState(false);
 
     const OPTION_LABELS = ['A', 'B', 'C', 'D'];
-
     const selected = answers[currentQuestionIndex];
 
     const handleSelectOption = (optionIndex: number) => {
@@ -165,126 +181,141 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
     );
     const passed = score >= 70;
 
-    // ─────────────────────────────────────────────────────────
-    // RESULTS SCREEN
-    // ─────────────────────────────────────────────────────────
     if (showResults) {
-        const RADIUS = 110;
+        const RADIUS = 90;
         const CIRC = 2 * Math.PI * RADIUS;
         const offset = CIRC * (1 - score / 100);
 
-        const insightTitle = passed ? 'Mastery Achieved' : 'Keep Going';
-        const insightBody = passed
-            ? "You've demonstrated solid understanding of today's concepts. Your consistency is building real capability."
-            : "Review the video lesson and revisit these questions. Mastery is built through repetition, not perfection.";
-
         return (
             <View style={[styles.root, { backgroundColor: colors.background }]}>
-                {/* Decorative blobs */}
-                <View style={[styles.blob, styles.blobTR, { backgroundColor: colors.secondaryContainer }]} />
-                <View style={[styles.blob, styles.blobBL, { backgroundColor: colors.primaryContainer }]} />
+                <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+                <PetalBackground />
 
-                <ScrollView contentContainerStyle={styles.resultsScroll} showsVerticalScrollIndicator={false}>
-                    {/* Header */}
-                    <View style={styles.resultsHeader}>
-                        <Text style={[styles.resultsTitle, { color: colors.primary, fontFamily: fonts.display, textTransform: 'uppercase', letterSpacing: 2 }]}>Quiz Results</Text>
-                    </View>
-
-                    {/* SVG Ring */}
-                    <View style={styles.ringContainer}>
-                        <Svg width={288} height={288} viewBox="0 0 288 288">
-                            <Defs>
-                                <SvgLinearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <Stop offset="0%" stopColor={colors.primary} />
-                                    <Stop offset="100%" stopColor={colors.secondary} />
-                                </SvgLinearGradient>
-                            </Defs>
-                            <Circle
-                                cx={144} cy={144} r={RADIUS}
-                                fill="transparent"
-                                stroke={colors.surfaceContainerHigh}
-                                strokeWidth={12}
-                            />
-                            <Circle
-                                cx={144} cy={144} r={RADIUS}
-                                fill="transparent"
-                                stroke="url(#ringGrad)"
-                                strokeWidth={12}
-                                strokeLinecap="round"
-                                strokeDasharray={CIRC}
-                                strokeDashoffset={offset}
-                                rotation={-90}
-                                origin="144, 144"
-                            />
-                        </Svg>
-                        <View style={styles.ringCenter}>
-                            <Text style={[styles.ringPct, { color: colors.text, fontFamily: fonts.display }]}>{score}%</Text>
-                            <Text style={[styles.ringLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>SCORE</Text>
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces={false}>
+                    {/* Hero Header */}
+                    <View style={[styles.heroSection, { height: HERO_HEIGHT }]}>
+                        <Image 
+                            source={{ uri: 'https://images.unsplash.com/photo-1516534775068-ba3e7458af70?q=80&w=2560&auto=format&fit=crop' }} 
+                            style={StyleSheet.absoluteFill}
+                            resizeMode="cover"
+                        />
+                        <View style={styles.heroOverlay} />
+                        <View style={styles.heroContent}>
+                            <Text style={[styles.heroTitle, { color: colors.white, fontFamily: fonts.displayBold }]}>Results</Text>
                         </View>
                     </View>
 
-                    {/* Status message */}
-                    <View style={styles.statusBlock}>
-                        <Text style={[styles.statusHeadline, { color: colors.text, fontFamily: fonts.display }]}>
-                            {passed ? 'Mastery Achieved' : 'Keep Practicing'}
-                        </Text>
-                        <Text style={[styles.statusBody, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                            {passed
-                                ? "You've integrated the core concepts from today's lesson. You're ready to proceed."
-                                : 'Review the session, then try again. Each attempt makes the knowledge stick deeper.'}
-                        </Text>
-                    </View>
+                    {/* Content Card */}
+                    <View style={[
+                        styles.contentArea, 
+                        { 
+                            backgroundColor: colors.surfaceContainerLowest,
+                            borderTopLeftRadius: borderRadius.xxxl,
+                            borderTopRightRadius: borderRadius.xxxl,
+                            marginTop: -CARD_OVERLAP,
+                        }
+                    ]}>
+                        <View style={styles.dragHandle} />
 
-                    {/* Insight card */}
-                    <View style={[styles.insightCard, { backgroundColor: colors.surfaceContainerLow }]}>
-                        <View style={[styles.insightIcon, { backgroundColor: colors.primary + '1A' }]}>
-                            <Ionicons name="sparkles" size={22} color={colors.primary} />
+                        <View style={styles.ringContainer}>
+                            <Svg width={200} height={200} viewBox="0 0 200 200">
+                                <Defs>
+                                    <SvgLinearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <Stop offset="0%" stopColor={colors.primary} />
+                                        <Stop offset="100%" stopColor={colors.primaryLight} />
+                                    </SvgLinearGradient>
+                                </Defs>
+                                <Circle
+                                    cx={100} cy={100} r={RADIUS}
+                                    fill="transparent"
+                                    stroke={colors.surfaceContainerHigh}
+                                    strokeWidth={8}
+                                />
+                                <Circle
+                                    cx={100} cy={100} r={RADIUS}
+                                    fill="transparent"
+                                    stroke="url(#ringGrad)"
+                                    strokeWidth={8}
+                                    strokeLinecap="round"
+                                    strokeDasharray={CIRC}
+                                    strokeDashoffset={offset}
+                                    rotation={-90}
+                                    origin="100, 100"
+                                />
+                            </Svg>
+                            <View style={styles.ringCenter}>
+                                <Text style={[styles.ringPct, { color: colors.primary, fontFamily: fonts.displayBold }]}>{score}%</Text>
+                                <Text style={[styles.ringLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>SCORE</Text>
+                            </View>
                         </View>
-                        <View style={styles.insightText}>
-                            <Text style={[styles.insightTitle, { color: colors.text, fontFamily: fonts.display, fontSize: 16 }]}>{insightTitle}</Text>
-                            <Text style={[styles.insightBody, { color: colors.textMuted, fontFamily: fonts.body }]}>{insightBody}</Text>
-                        </View>
-                    </View>
 
-                    <View style={{ height: 140 }} />
+                        <View style={styles.statusBlock}>
+                            <Text style={[styles.statusHeadline, { color: colors.primary, fontFamily: fonts.displayBold }]}>
+                                {passed ? 'Mastery Achieved' : 'Keep Practicing'}
+                            </Text>
+                            <Text style={[styles.statusBody, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                                {passed
+                                    ? "You've integrated the core concepts from today's lesson. You're ready to proceed."
+                                    : 'Review the session, then try again. Each attempt makes the knowledge stick deeper.'}
+                            </Text>
+                        </View>
+
+                        <View style={[styles.insightCard, { backgroundColor: colors.surfaceContainerLow }]}>
+                            <View style={[styles.insightIcon, { backgroundColor: colors.primaryContainer }]}>
+                                <Ionicons name="sparkles" size={20} color={colors.white} />
+                            </View>
+                            <View style={styles.insightText}>
+                                <Text style={[styles.insightTitle, { color: colors.primary, fontFamily: fonts.labelBold }]}>
+                                    {passed ? 'NEXT STEPS' : 'RECOMMENDATION'}
+                                </Text>
+                                <Text style={[styles.insightBody, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                                    {passed 
+                                        ? "Great job! You've unlocked the next phase of your program."
+                                        : "We recommend re-watching the core lesson for better retention."}
+                                </Text>
+                            </View>
+                        </View>
+
+                        <View style={{ height: 140 }} />
+                    </View>
                 </ScrollView>
 
-                {/* Fixed footer */}
-                <View style={[styles.fixedFooter, { backgroundColor: colors.background }]}>
+                <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.footer} pointerEvents="box-none">
                     <TouchableOpacity
-                        style={[styles.continueBtn, { backgroundColor: colors.primary, ...shadows.ambient }]}
+                        style={[styles.continueBtn, { backgroundColor: colors.primary }]}
                         onPress={() => passed
                             ? onComplete({ quizScore: score, quizAttempts: 1 })
                             : (() => { setShowResults(false); setCurrentQuestionIndex(0); setAnswers([]); })()
                         }
                         activeOpacity={0.88}
                     >
-                        <Text style={[styles.continueBtnText, { fontFamily: fonts.display }]}>{passed ? 'Continue' : 'Try Again'}</Text>
-                        <Ionicons name="arrow-forward" size={20} color="#fff" />
+                        <Text style={[styles.continueBtnText, { fontFamily: fonts.labelBold, color: colors.white }]}>
+                            {passed ? 'Continue' : 'Try Again'}
+                        </Text>
+                        <Ionicons name="arrow-forward" size={18} color={colors.white} />
                     </TouchableOpacity>
-                </View>
+                </BlurView>
             </View>
         );
     }
 
-    // ─────────────────────────────────────────────────────────
-    // QUESTION SCREEN
-    // ─────────────────────────────────────────────────────────
     const question = questions[currentQuestionIndex];
 
     return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
-            <ScrollView contentContainerStyle={styles.questionScroll} showsVerticalScrollIndicator={false}>
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+            <PetalBackground />
 
-                {/* Header */}
+            <ScrollView contentContainerStyle={styles.questionScroll} showsVerticalScrollIndicator={false}>
                 <View style={styles.questionHeader}>
-                    <Text style={[styles.quizLabel, { color: colors.primary, fontFamily: fonts.display, textTransform: 'uppercase', letterSpacing: 1.5 }]}>Wellness Quiz</Text>
-                    <Text style={[styles.questionCounter, { color: colors.textMuted, fontFamily: fonts.label }]}>
-                        {currentQuestionIndex + 1} / {questions.length}
-                    </Text>
+                    <Text style={[styles.quizLabel, { color: colors.textMuted, fontFamily: fonts.labelBold }]}>KNOWLEDGE CHECK</Text>
+                    <View style={[styles.counterPill, { backgroundColor: colors.primaryContainer }]}>
+                        <Text style={[styles.questionCounter, { color: colors.white, fontFamily: fonts.labelBold }]}>
+                            {currentQuestionIndex + 1} / {questions.length}
+                        </Text>
+                    </View>
                 </View>
 
-                {/* Segmented pill progress */}
                 <View style={styles.pillRow}>
                     {questions.map((_, i) => (
                         <View
@@ -301,14 +332,12 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                     ))}
                 </View>
 
-                {/* Question card */}
-                <View style={[styles.questionCard, { backgroundColor: colors.surfaceContainerLow }]}>
-                    <Text style={[styles.questionText, { color: colors.text, fontFamily: fonts.display }]}>
+                <View style={styles.questionSection}>
+                    <Text style={[styles.questionText, { color: colors.primary, fontFamily: fonts.displayBold }]}>
                         {question.question}
                     </Text>
                 </View>
 
-                {/* Options */}
                 <View style={styles.optionsList}>
                     {question.options.map((option, index) => {
                         const isSelected = selected === index;
@@ -329,12 +358,12 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                                 <View style={[
                                     styles.letterBadge,
                                     {
-                                        backgroundColor: isSelected ? (isDark ? colors.background : colors.white) : colors.surfaceContainerHigh,
+                                        backgroundColor: isSelected ? colors.white : colors.surfaceContainerHigh,
                                     },
                                 ]}>
                                     <Text style={[
                                         styles.letterText,
-                                        { color: isSelected ? colors.primary : colors.textMuted, fontFamily: fonts.display },
+                                        { color: isSelected ? colors.primary : colors.textMuted, fontFamily: fonts.labelBold },
                                     ]}>
                                         {OPTION_LABELS[index]}
                                     </Text>
@@ -342,9 +371,8 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                                 <Text style={[
                                     styles.optionText,
                                     {
-                                        color: isSelected ? (isDark ? colors.text : colors.background) : colors.text,
+                                        color: isSelected ? colors.white : colors.primary,
                                         fontFamily: fonts.body,
-                                        fontWeight: isSelected ? '700' : '400',
                                     },
                                 ]}>
                                     {option}
@@ -354,232 +382,223 @@ export default function QuizTaskComponent({ task, onComplete }: QuizTaskProps) {
                     })}
                 </View>
 
-                <View style={{ height: 100 }} />
+                <View style={{ height: 120 }} />
             </ScrollView>
 
-            {/* Fixed footer */}
-            <View style={[styles.fixedFooter, { backgroundColor: colors.background }]}>
+            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.footer} pointerEvents="box-none">
                 <TouchableOpacity
                     style={[
                         styles.continueBtn,
                         { 
                             backgroundColor: selected !== undefined ? colors.primary : colors.surfaceContainerHighest,
-                            ...(selected !== undefined ? shadows.ambient : {})
                         },
                     ]}
                     disabled={selected === undefined}
                     onPress={handleNext}
                     activeOpacity={0.88}
                 >
-                    <Text style={[styles.continueBtnText, { fontFamily: fonts.display, color: selected !== undefined ? colors.white : colors.textMuted }]}>
+                    <Text style={[
+                        styles.continueBtnText, 
+                        { 
+                            fontFamily: fonts.labelBold, 
+                            color: selected !== undefined ? colors.white : colors.textMuted 
+                        }
+                    ]}>
                         {currentQuestionIndex === questions.length - 1 ? 'See Results' : 'Continue'}
                     </Text>
-                    <Ionicons name="arrow-forward" size={20} color={selected !== undefined ? colors.white : colors.textMuted} />
+                    <Ionicons name="arrow-forward" size={18} color={selected !== undefined ? colors.white : colors.textMuted} />
                 </TouchableOpacity>
-            </View>
+            </BlurView>
         </View>
     );
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Styles
-// ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
     root: {
         flex: 1,
     },
-
-    // ── Decorative blobs (results only)
-    blob: {
-        position: 'absolute',
-        borderRadius: 999,
-        opacity: 0.1,
+    scrollContent: {
+        flexGrow: 1,
     },
-    blobTR: {
-        width: 256,
-        height: 256,
-        top: -60,
-        right: -60,
+    heroSection: {
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    blobBL: {
-        width: 320,
-        height: 320,
-        bottom: -80,
-        left: -80,
+    heroOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.15)',
     },
-
-    // ── Question screen
+    heroContent: {
+        zIndex: 10,
+    },
+    heroTitle: {
+        fontSize: 48,
+        letterSpacing: -1,
+    },
+    contentArea: {
+        paddingHorizontal: 24,
+        paddingTop: 12,
+        zIndex: 5,
+        minHeight: SCREEN_HEIGHT * 0.65,
+    },
+    dragHandle: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        alignSelf: 'center',
+        marginBottom: 24,
+    },
     questionScroll: {
         paddingHorizontal: 24,
-        paddingTop: 24,
-        paddingBottom: 40,
+        paddingTop: 60,
+        flexGrow: 1,
     },
     questionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
     },
     quizLabel: {
-        fontSize: 14,
+        fontSize: 11,
+        letterSpacing: 1.5,
+    },
+    counterPill: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
     },
     questionCounter: {
-        fontSize: 14,
+        fontSize: 11,
     },
-
-    // Segmented pills
     pillRow: {
         flexDirection: 'row',
         gap: 6,
-        marginBottom: 28,
+        marginBottom: 40,
     },
     pill: {
         flex: 1,
         height: 4,
         borderRadius: 2,
     },
-
-    // Question card
-    questionCard: {
-        borderRadius: 24,
-        padding: 28,
+    questionSection: {
         marginBottom: 32,
     },
     questionText: {
-        fontSize: 22,
-        lineHeight: 32,
+        fontSize: 28,
+        lineHeight: 36,
     },
-
-    // Options
     optionsList: {
         gap: 12,
-        marginBottom: 20,
     },
     optionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderRadius: 20,
+        padding: 16,
+        borderRadius: 16,
     },
     letterBadge: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
+        width: 32,
+        height: 32,
+        borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 14,
-        flexShrink: 0,
+        marginRight: 16,
     },
     letterText: {
-        fontSize: 16,
+        fontSize: 14,
     },
     optionText: {
         flex: 1,
         fontSize: 16,
-        lineHeight: 24,
-    },
-
-    // ── Results screen
-    resultsScroll: {
-        paddingHorizontal: 24,
-        paddingTop: 24,
-        alignItems: 'center',
-    },
-    resultsHeader: {
-        width: '100%',
-        alignItems: 'center',
-        marginBottom: 32,
-    },
-    resultsTitle: {
-        fontSize: 14,
+        lineHeight: 22,
     },
     ringContainer: {
-        width: 288,
-        height: 288,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 32,
+        marginBottom: 40,
+        marginTop: 20,
     },
     ringCenter: {
         position: 'absolute',
         alignItems: 'center',
     },
     ringPct: {
-        fontSize: 64,
-        letterSpacing: -2,
+        fontSize: 48,
+        letterSpacing: -1,
     },
     ringLabel: {
-        fontSize: 12,
+        fontSize: 10,
         letterSpacing: 2,
-        textTransform: 'uppercase',
         marginTop: -4,
     },
     statusBlock: {
         alignItems: 'center',
-        marginBottom: 32,
-        paddingHorizontal: 8,
+        marginBottom: 40,
     },
     statusHeadline: {
-        fontSize: 32,
+        fontSize: 28,
         textAlign: 'center',
-        lineHeight: 40,
-        marginBottom: 12,
+        marginBottom: 8,
     },
     statusBody: {
-        fontSize: 16,
+        fontSize: 15,
         textAlign: 'center',
-        lineHeight: 24,
+        lineHeight: 22,
+        paddingHorizontal: 10,
     },
     insightCard: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        padding: 24,
-        borderRadius: 24,
+        padding: 20,
+        borderRadius: 20,
         gap: 16,
-        width: '100%',
     },
     insightIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 40,
+        height: 40,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        flexShrink: 0,
     },
     insightText: {
         flex: 1,
     },
     insightTitle: {
+        fontSize: 11,
+        letterSpacing: 1,
         marginBottom: 4,
     },
     insightBody: {
         fontSize: 14,
-        lineHeight: 22,
+        lineHeight: 20,
     },
-
-    // ── Shared footer
-    fixedFooter: {
+    footer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        paddingHorizontal: 24,
-        paddingBottom: 24,
-        paddingTop: 16,
+        height: 100,
+        paddingBottom: 20,
+        justifyContent: 'center',
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: 'rgba(0,0,0,0.05)',
     },
     continueBtn: {
-        height: 64,
-        borderRadius: 32,
+        height: 56,
+        borderRadius: 28,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        gap: 10,
+        marginHorizontal: 24,
     },
     continueBtnText: {
-        fontSize: 18,
-        color: '#fff',
+        fontSize: 16,
     },
 });
+
 
 

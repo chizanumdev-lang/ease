@@ -4,6 +4,14 @@ import { Program, DayPlan } from '../types';
 import { mmkvStorage } from './storage.service';
 
 export const programsService = {
+    async initiateProgram(goalDescription: string, category: string): Promise<{ goalId: string, programId: string, dayPlanId: string }> {
+        const response = await api.post<{ goalId: string, programId: string, dayPlanId: string }>(
+            '/programs/initiate', 
+            { goalDescription, category }
+        );
+        return response.data;
+    },
+
     async generateProgram(
         goalId: string,
         duration: number = 30,

@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
 import { EngineService } from '../services/engine.service';
 import { PlannerService } from '../services/planner.service';
+import { OrchestratorService } from '../services/orchestrator.service';
 import { GoalCategory } from '../entities/goal-category.entity';
 import { UserProgram, ProgramStatus } from '../entities/user-program.entity';
 import { PubSub } from 'graphql-subscriptions';
@@ -10,12 +11,14 @@ const pubSub = new PubSub() as any;
 import { TaskDefinition } from '../entities/task-definition.entity';
 import { GoalTemplate } from '../entities/goal-template.entity';
 import { NodeInput, EdgeInput } from '../dto/blueprint-input';
+import { ShardSimulationResult } from '../dto/shard-simulation.dto';
 
 @Resolver()
 export class EngineResolver {
   constructor(
     private readonly engineService: EngineService,
     private readonly plannerService: PlannerService,
+    private readonly orchestratorService: OrchestratorService,
   ) {}
 
   @Query(() => [GoalCategory])
@@ -56,6 +59,11 @@ export class EngineResolver {
   @Subscription(() => UserProgram)
   programCreated() {
     return pubSub.asyncIterator('programCreated');
+  }
+
+  @Query(() => [ShardSimulationResult])
+  async getShardsForPrompt(@Args('prompt') prompt: string) {
+    return this.orchestratorService.simulateBlueprintSelection(prompt);
   }
 
   @Query(() => String)

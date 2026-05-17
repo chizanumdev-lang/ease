@@ -191,6 +191,11 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 """
 scalar JSON
 
+"""
+The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSONObject
+
 type Mutation {
   createCheckin(createCheckinDto: CreateCheckinDto!): Progress!
   createGoal(createGoalDto: CreateGoalDto!): Goal!
@@ -204,6 +209,7 @@ type Mutation {
   generateProgram(generateProgramDto: GenerateProgramDto!): Program!
   saveBlueprint(edges: [EdgeInput!]!, nodes: [NodeInput!]!, templateId: String!): GoalTemplate!
   submitQuizAttempt(id: String!, submitQuizDto: SubmitQuizDto!): QuizAttempt!
+  triggerOrchestration(dayPlanId: String!, goal: String!): Boolean!
   updateTask(id: ID!, updateTaskDto: UpdateTaskDto!): DailyTask!
 }
 
@@ -266,6 +272,7 @@ type Query {
   getProgramPreview(generateProgramDto: GenerateProgramDto!): Program!
   getQuiz(id: String!): Quiz!
   getRituals(date: String!): DailyRitualsResponse!
+  getShardsForPrompt(prompt: String!): [ShardSimulationResult!]!
   getTaskDefinitions: [TaskDefinition!]!
   getTodaysPlan(id: String!): DayPlan!
   getWeeklyAnalytics: WeeklyAnalyticsDto!
@@ -305,6 +312,14 @@ type RitualTrack {
   updatedAt: DateTime!
   url: String
   userId: String!
+}
+
+type ShardSimulationResult {
+  displayName: String!
+  draftContent: JSONObject
+  metadata: JSONObject
+  modality: String!
+  selectedShard: String!
 }
 
 input SubmitQuizDto {

@@ -31,55 +31,52 @@ export class AudioService {
         });
     }
 
-    async generateAudioTrack(script: string, mood: string, filename: string): Promise<string> {
-        this.logger.log(`[v1.0.7-VOLUME-ADJUSTED] Generating audio track for filename: ${filename}`);
+    async generateAudioTrack(script: string, mood: string, filename: string, skipBackground: boolean = false, speed: string = "0%"): Promise<string> {
+        this.logger.log(`[v1.0.8] Generating audio track (speed: ${speed}, skip: ${skipBackground}) for: ${filename}`);
+        
+        // Safety: Prevent empty script generation
+        const cleanScript = (script || "").trim();
+        if (!cleanScript) {
+            this.logger.warn(`Empty script provided for ${filename}. Using safety fallback.`);
+            script = "Please focus and listen carefully to the following exercise.";
+        }
+
         const voicePath = path.join(this.tempDir, `${filename}_voice.mp3`);
         const outputPath = path.join(this.tempDir, `${filename}.mp3`);
 
         try {
-            // 1. TTS using Microsoft Edge TTS (Free, Neural)
-            this.logger.log(`Generating TTS with Microsoft Edge TTS for mood: ${mood}`);
-
-            // Instantiate a new TTS client per request
+            // 1. TTS using Microsoft Edge TTS
             const tts = new MsEdgeTTS();
-
-            // VERCEL FIX: Manually ensure _metadataOptions is initialized to avoid TypeError
-            // The library fails to initialize this in some environments (Vercel Node.js)
-            (tts as any)._metadataOptions = {
-                voiceLocale: 'en-US',
-                sentenceBoundaryEnabled: false,
-                wordBoundaryEnabled: false
-            };
-
+            
             const VOICE_BY_MOOD: Record<string, string> = {
-                meditation: 'en-US-AriaNeural',      // softer, breathy — better for wind-down
-                focus: 'en-US-AvaMultilingualNeural', // clear, confident — keep your current
-                ambient: 'en-US-JennyNeural',     // warm, gentle — better for sleep prep
+                meditation: 'en-US-AriaNeural',
+                focus: 'en-US-AvaMultilingualNeural',
+                ambient: 'en-US-JennyNeural',
+                french: 'fr-FR-DeniseNeural',
             };
 
             const voice = VOICE_BY_MOOD[mood] || 'en-US-AvaMultilingualNeural';
+            const locale = mood === 'french' ? 'fr-FR' : 'en-US';
+            
+            (tts as any)._metadataOptions = { voiceLocale: locale, sentenceBoundaryEnabled: false, wordBoundaryEnabled: false };
+            await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, { voiceLocale: locale });
 
-            // Set voice (Ava is high quality, multilingual)
-            await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, { voiceLocale: 'en-US' });
-
-            // Generate audio to file
             await new Promise((resolve, reject) => {
-                const { audioStream } = tts.toStream(script);
+                // Apply speed/rate to the stream
+                const { audioStream } = tts.toStream(script, { rate: speed });
                 const fileStream = fs.createWriteStream(voicePath);
-
                 audioStream.on('data', (chunk) => fileStream.write(chunk));
-                audioStream.on('end', () => {
-                    fileStream.end();
-                    resolve(undefined);
-                });
-                audioStream.on('error', (err) => {
-                    fileStream.end();
-                    reject(err);
-                });
+                audioStream.on('end', () => { fileStream.end(); resolve(undefined); });
+                audioStream.on('error', (err) => { fileStream.end(); reject(err); });
             });
 
-            // 2. Mix narration with background music (RE-ENABLED per user request)
-            await this.mixAudio(voicePath, mood, outputPath);
+            // 2. Conditional Mixing: Skip background for clear model audio (e.g. Vocal Tests)
+            if (skipBackground) {
+                this.logger.log(`Skipping background music for clean output: ${filename}`);
+                fs.renameSync(voicePath, outputPath);
+            } else {
+                await this.mixAudio(voicePath, mood, outputPath);
+            }
 
             // 3. Upload to Cloudinary
             const cloudinaryUrl = await this.uploadToCloudinary(outputPath, filename);
@@ -189,8 +186,8 @@ export class AudioService {
 
             const filters: any[] = [];
             if (bgSource) {
-                filters.push({ filter: 'volume', options: '0.4', inputs: '0:a', outputs: 'v' });
-                filters.push({ filter: 'volume', options: '1.0', inputs: '1:a', outputs: 'b' });
+                filters.push({ filter: 'volume', options: '1.2', inputs: '0:a', outputs: 'v' });
+                filters.push({ filter: 'volume', options: '0.2', inputs: '1:a', outputs: 'b' });
                 filters.push({ filter: 'amix', options: { inputs: 2, duration: 'first', dropout_transition: 3 }, inputs: ['v', 'b'], outputs: 'mixed' });
             } else {
                 filters.push({ filter: 'volume', options: '1.0', inputs: '0:a', outputs: 'mixed' });

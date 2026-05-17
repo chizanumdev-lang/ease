@@ -1,0 +1,48 @@
+:root {
+  /* Ease Project Theme Tokens */
+  --ease-blue: #4A90E2;
+  --ease-blue-dark: #357ABD;
+  --ease-blue-light: #EBF3FF;
+  --ease-bg: #F8FAFC;
+  --ease-surface: #FFFFFF;
+  --ease-border: #E2E8F0;
+  --ease-text-primary: #1E293B;
+  --ease-text-secondary: #64748B;
+  --ease-success: #10B981;
+
+  /* Spacing & Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --spacing-md: 24px;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  background-color: var(--ease-bg);
+  color: var(--color-ease-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Current Ease Card Style */
+.ease-card {
+  background: var(--ease-surface);
+  border: 1px solid var(--ease-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  padding: var(--spacing-md);
+}
+
+.ease-button-primary {
+  background-color: var(--ease-blue);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.ease-button-primary:hover {
+  background-color: var(--ease-blue-dark);
+}

@@ -361,6 +361,26 @@ export default function SettingsScreen({ navigation }: Props) {
                     </View>
                 </View>
 
+                {/* Developer Tools Section */}
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Developer Tools</Text>
+                    <TouchableOpacity 
+                        style={[styles.settingsGroup, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+                        onPress={() => navigation.navigate('TaskLab')}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                            <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center' }}>
+                                <Ionicons name="flask-outline" size={20} color={colors.primary} />
+                            </View>
+                            <View>
+                                <Text style={[styles.settingLabel, { color: colors.text }]}>Engine Lab</Text>
+                                <Text style={[styles.settingDesc, { color: colors.textMuted }]}>Test all task patterns and UI components.</Text>
+                            </View>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </TouchableOpacity>
+                </View>
+
 
                 {/* Plan Management */}
                 {currentProgram && (

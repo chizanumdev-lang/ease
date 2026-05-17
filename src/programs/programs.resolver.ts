@@ -12,6 +12,8 @@ import { PubSub } from 'graphql-subscriptions';
 
 const pubSub = new PubSub();
 
+import { OrchestratorService } from '../modules/engine/services/orchestrator.service';
+
 @Resolver(() => Program)
 export class ProgramsResolver {
   private readonly logger = new Logger(ProgramsResolver.name);
@@ -19,6 +21,7 @@ export class ProgramsResolver {
   constructor(
     private readonly programsService: ProgramsService,
     private readonly usersService: UsersService,
+    private readonly orchestratorService: OrchestratorService,
   ) {}
 
   @Query(() => Program, { name: 'getActiveProgram' })
@@ -104,6 +107,20 @@ export class ProgramsResolver {
   })
   programStatusChanged(@Args('id') id: string) {
     return pubSub.asyncIterableIterator('programStatusChanged');
+  }
+
+  @Mutation(() => Boolean, { name: 'triggerOrchestration' })
+  @UseGuards(JwtAuthGuard)
+  async triggerOrchestration(
+    @Args('dayPlanId') dayPlanId: string,
+    @Args('goal') goal: string,
+  ): Promise<boolean> {
+    this.logger.log(`Early orchestration triggered for DayPlan ${dayPlanId}`);
+    // Non-blocking call - let it run in background
+    this.orchestratorService.orchestrateDay(dayPlanId, goal).catch(err => 
+      this.logger.error(`Early orchestration failed: ${err.message}`)
+    );
+    return true;
   }
 
   @Mutation(() => Boolean, { name: 'devSkipVerification' })

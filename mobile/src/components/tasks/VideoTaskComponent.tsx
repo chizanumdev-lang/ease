@@ -8,27 +8,27 @@ import {
     Dimensions,
     Animated,
     BackHandler,
+    StatusBar,
 } from 'react-native';
 import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
 import { BlurView } from 'expo-blur';
-import { Ionicons, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
-
 import { useProgramsStore } from '../../store/programsStore';
 import { Task, TaskMetadata } from '../../types';
+import PetalBackground from '../PetalBackground';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const HERO_HEIGHT = SCREEN_HEIGHT * 0.35;
 const VIDEO_PLAYER_HEIGHT = (SCREEN_WIDTH * 9) / 16;
+const CARD_OVERLAP = 24;
 
 interface VideoTaskComponentProps {
     task: Task;
     onComplete: (metadata: TaskMetadata) => void;
 }
 
-// ────────────────────────────────────────────────────────────
-// Helpers
-// ────────────────────────────────────────────────────────────
 function getVideoId(url: string) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
@@ -41,30 +41,27 @@ function formatTime(secs: number) {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function getTakeaways(task: Task, theme: string) {
+function getTakeaways(task: Task) {
     const content = task.content || '';
     const items = content.split('\n').filter(l => l.trim().startsWith('-')).map(l => l.trim().substring(1).trim());
     
     if (items.length > 0) {
         return [
             { title: 'Key Takeaway', body: items[0], icon: 'brain' },
-            { title: 'Key Insights', body: items.length > 1 ? items.slice(1).join('. ') : 'Focus on the "Why" and the practical application of this technique.', icon: 'bulb-outline' },
+            { title: 'Key Insights', body: items.length > 1 ? items.slice(1).join('. ') : 'Focus on the "Why" and the practical application of this technique.', icon: 'lightbulb-outline' },
         ];
     }
 
     return [
-        { title: 'Key Takeaway', body: `Master the core of ${theme.toLowerCase()}.`, icon: 'eye-outline' },
-        { title: 'Key Insights', body: 'Learn the underlying mechanics and how to integrate them into your routine.', icon: 'bulb-outline' },
+        { title: 'Core Intent', body: 'Master the fundamental principles of this practice.', icon: 'eye-outline' },
+        { title: 'Key Insight', body: 'Learn the underlying mechanics and how to integrate them into your routine.', icon: 'lightbulb-outline' },
     ];
 }
 
-// ────────────────────────────────────────────────────────────
-// Main Component
-// ────────────────────────────────────────────────────────────
 export default function VideoTaskComponent({ task, onComplete }: VideoTaskComponentProps) {
-    const { colors, fonts, shadows, isDark } = useTheme();
+    const { colors, fonts, shadows, isDark, borderRadius } = useTheme();
     const navigation = useNavigation<any>();
-    const { todayPlan, updateTask } = useProgramsStore();
+    const { updateTask } = useProgramsStore();
 
     const [playing, setPlaying]           = useState(false);
     const [loading, setLoading]           = useState(true);
@@ -82,22 +79,6 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
     const skipWarningTimeout     = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     const videoId = task.videoUrl ? getVideoId(task.videoUrl) : null;
-
-    // Pulse animation for the timer icon
-    const pulseAnim = useRef(new Animated.Value(1)).current;
-    useEffect(() => {
-        if (playing) {
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(pulseAnim, { toValue: 1.25, duration: 900, useNativeDriver: true }),
-                    Animated.timing(pulseAnim, { toValue: 1,    duration: 900, useNativeDriver: true }),
-                ])
-            ).start();
-        } else {
-            pulseAnim.stopAnimation();
-            pulseAnim.setValue(1);
-        }
-    }, [playing]);
 
     // Progress bar animation
     const progressBarAnim = useRef(new Animated.Value(0)).current;
@@ -128,7 +109,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
             setCurrentTime(time);
 
             if (!isCompleted) {
-                if (time > maxWatched + 2.5) {
+                if (time > maxWatched + 3) {
                     playerRef.current.seekTo(maxWatched, true);
                     clearTimeout(skipWarningTimeout.current);
                     setShowSkipWarning(true);
@@ -142,7 +123,6 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
         return () => clearInterval(interval);
     }, [playing, maxWatched, isCompleted, syncProgress]);
 
-    // Back-button final sync
     useFocusEffect(
         useCallback(() => {
             const onBack = () => {
@@ -163,7 +143,7 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
             if (!completedOnce.current) {
                 completedOnce.current = true;
                 setIsCompleted(true);
-                await updateTask(task.id, { totalDuration: Math.floor(duration) });
+                await updateTask(task.id, { totalDuration: Math.floor(duration), completed: true });
             }
         }
     }, [task.id, duration, updateTask]);
@@ -184,86 +164,130 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
     }, [onComplete, duration]);
 
     const remainingTime = Math.max(0, duration - currentTime);
-    const takeaways     = getTakeaways(task, todayPlan?.theme ?? '');
-    const maxPct        = duration > 0 ? (maxWatched  / duration) * 100 : 0;
+    const takeaways     = getTakeaways(task);
 
     if (!videoId) {
         return (
             <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
                 <Ionicons name="alert-circle" size={64} color={colors.error} />
-                <Text style={[styles.errorText, { color: colors.text, fontFamily: fonts.display }]}>Invalid video URL</Text>
+                <Text style={[styles.errorText, { color: colors.text, fontFamily: fonts.displayBold }]}>Invalid video URL</Text>
             </View>
         );
     }
 
     return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+            <PetalBackground />
+
             {showSkipWarning && (
-                <View style={[styles.skipToast, { backgroundColor: colors.error + 'EE' }]}>
+                <View style={[styles.skipToast, { backgroundColor: colors.error }]}>
                     <Ionicons name="lock-closed" size={16} color="#FFF" />
-                    <Text style={[styles.skipToastText, { fontFamily: fonts.body }]}>Watch in order to continue</Text>
+                    <Text style={[styles.skipToastText, { fontFamily: fonts.labelBold }]}>Watch in sequence to progress</Text>
                 </View>
             )}
 
-            <ScrollView
-                contentContainerStyle={styles.scroll}
-                bounces={false}
-                showsVerticalScrollIndicator={false}
-            >
-                <View style={styles.heroSection}>
+            <ScrollView contentContainerStyle={styles.scroll} bounces={false} showsVerticalScrollIndicator={false}>
+                {/* Hero Section */}
+                <View style={[styles.heroSection, { height: HERO_HEIGHT }]}>
                     {loading && (
                         <View style={styles.loadingOverlay}>
-                            <Ionicons name="videocam-outline" size={40} color="rgba(255,255,255,0.5)" />
-                            <Text style={[styles.loadingText, { fontFamily: fonts.body }]}>Loading video…</Text>
+                            <Ionicons name="videocam-outline" size={40} color="rgba(255,255,255,0.3)" />
                         </View>
                     )}
 
-                    <YoutubePlayer
-                        ref={playerRef}
-                        height={VIDEO_PLAYER_HEIGHT}
-                        play={playing}
-                        videoId={videoId}
-                        onChangeState={onStateChange}
-                        onReady={onReady}
-                        initialPlayerParams={{
-                            controls: 1,
-                            modestbranding: 1,
-                            rel: 0,
-                            iv_load_policy: 3,
-                        }}
-                    />
+                    <View style={styles.playerContainer}>
+                        <YoutubePlayer
+                            ref={playerRef}
+                            height={VIDEO_PLAYER_HEIGHT}
+                            play={playing}
+                            videoId={videoId}
+                            onChangeState={onStateChange}
+                            onReady={onReady}
+                            initialPlayerParams={{
+                                controls: 1,
+                                modestbranding: 1,
+                                rel: 0,
+                                iv_load_policy: 3,
+                            }}
+                        />
+                    </View>
 
                     {showCompletionOverlay && (
-                        <BlurView intensity={100} tint="dark" style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
+                        <BlurView intensity={80} tint="dark" style={[StyleSheet.absoluteFill, styles.completionOverlay]}>
                             <View style={styles.completionContent}>
-                                <View style={[styles.successIconCircle, { backgroundColor: colors.success }]}>
+                                <View style={[styles.successIconCircle, { backgroundColor: colors.primaryLight }]}>
                                     <Ionicons name="checkmark" size={32} color="#FFF" />
                                 </View>
-                                <Text style={[styles.completionTitle, { fontFamily: fonts.display }]}>Lesson Complete</Text>
-                                <Text style={[styles.completionSubtitle, { fontFamily: fonts.body }]}>You've mastered today's core insight.</Text>
+                                <Text style={[styles.completionTitle, { fontFamily: fonts.displayBold, color: colors.white }]}>Session Complete</Text>
+                                <Text style={[styles.completionSubtitle, { fontFamily: fonts.body, color: 'rgba(255,255,255,0.7)' }]}>You've integrated this insight.</Text>
                                 <TouchableOpacity 
-                                    style={[styles.completionBtn, { backgroundColor: colors.white, ...shadows.premium }]}
+                                    style={[styles.completionBtn, { backgroundColor: colors.white }]}
                                     onPress={handleNextSession}
                                 >
-                                    <Text style={[styles.completionBtnText, { color: colors.primary, fontFamily: fonts.display }]}>Continue Circuit</Text>
-                                    <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+                                    <Text style={[styles.completionBtnText, { color: colors.primary, fontFamily: fonts.labelBold }]}>Continue Journey</Text>
                                 </TouchableOpacity>
                             </View>
                         </BlurView>
                     )}
+                </View>
 
-                    {!showCompletionOverlay && (
-                        <View style={styles.progressWrapper}>
-                            <View style={styles.progressTrack}>
+                {/* Overlapping Content Card */}
+                <View style={[
+                    styles.contentArea, 
+                    { 
+                        backgroundColor: colors.surfaceContainerLowest,
+                        borderTopLeftRadius: borderRadius.xxxl,
+                        borderTopRightRadius: borderRadius.xxxl,
+                        marginTop: -CARD_OVERLAP,
+                    }
+                ]}>
+                    <View style={styles.dragHandle} />
+
+                    <View style={styles.headerBlock}>
+                        <Text style={[styles.label, { color: colors.textMuted, fontFamily: fonts.labelBold }]}>CORE LESSON</Text>
+                        <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.displayBold }]}>{task.title}</Text>
+                        <View style={[styles.divider, { backgroundColor: colors.primaryContainer }]} />
+                    </View>
+
+                    <View style={styles.section}>
+                        <View style={styles.insightsList}>
+                            {takeaways.map((item, idx) => (
                                 <View
+                                    key={idx}
                                     style={[
-                                        styles.progressMaxZone,
-                                        { width: `${maxPct}%`, backgroundColor: 'rgba(255,255,255,0.15)' },
+                                        styles.insightCard,
+                                        {
+                                            backgroundColor: colors.surfaceContainerLow,
+                                            borderRadius: borderRadius.xl,
+                                        },
                                     ]}
-                                />
+                                >
+                                    <View style={styles.cardHeader}>
+                                        <View style={[
+                                            styles.cardIcon,
+                                            { backgroundColor: colors.primaryContainer },
+                                        ]}>
+                                            <MaterialCommunityIcons
+                                                name={item.icon as any}
+                                                size={20}
+                                                color={colors.white}
+                                            />
+                                        </View>
+                                        <Text style={[styles.cardTitle, { color: colors.primary, fontFamily: fonts.labelBold }]}>{item.title}</Text>
+                                    </View>
+                                    <Text style={[styles.cardBody, { color: colors.textMuted, fontFamily: fonts.body }]}>{item.body}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+
+                    {!showCompletionOverlay && duration > 0 && (
+                        <View style={styles.subtleProgress}>
+                            <View style={[styles.track, { backgroundColor: colors.outlineVariant }]}>
                                 <Animated.View
                                     style={[
-                                        styles.progressFill,
+                                        styles.fill,
                                         {
                                             width: progressBarAnim.interpolate({
                                                 inputRange: [0, 1],
@@ -274,98 +298,47 @@ export default function VideoTaskComponent({ task, onComplete }: VideoTaskCompon
                                     ]}
                                 />
                             </View>
-                            <View style={styles.timeRow}>
-                                <Text style={[styles.timeLabel, { fontFamily: fonts.label }]}>{formatTime(currentTime)}</Text>
-                                <Text style={[styles.timeLabel, { fontFamily: fonts.label }]}>{formatTime(duration)}</Text>
+                            <View style={styles.timeLabels}>
+                                <Text style={[styles.timeText, { fontFamily: fonts.label, color: colors.textMuted }]}>{formatTime(currentTime)}</Text>
+                                <Text style={[styles.timeText, { fontFamily: fonts.label, color: colors.textMuted }]}>{formatTime(duration)}</Text>
                             </View>
                         </View>
                     )}
-                </View>
 
-                <View style={[styles.contentArea, { backgroundColor: colors.background }]}>
-                    <View style={styles.titleBlock}>
-                        <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>{task.title}</Text>
-                    </View>
-
-                    <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Ionicons name="sparkles" size={20} color={colors.primary} />
-                            <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.display }]}>Key Insights</Text>
-                        </View>
-
-                        <View style={styles.cardsGrid}>
-                            {takeaways.map((item, idx) => (
-                                <View
-                                    key={idx}
-                                    style={[
-                                        styles.takeawayCard,
-                                        {
-                                            backgroundColor: colors.surfaceContainerLow,
-                                        },
-                                    ]}
-                                >
-                                    <View style={styles.cardInner}>
-                                        <View style={[
-                                            styles.cardIcon,
-                                            { backgroundColor: colors.primary + '1A' },
-                                        ]}>
-                                            <Ionicons
-                                                name={item.icon === 'brain' ? 'bulb' : (item.icon as any)}
-                                                size={20}
-                                                color={colors.primary}
-                                            />
-                                        </View>
-                                        <Text style={[styles.cardTitle, { color: colors.text, fontFamily: fonts.display }]}>{item.title}</Text>
-                                    </View>
-                                    <Text style={[styles.cardBody, { color: colors.textMuted, fontFamily: fonts.body }]}>{item.body}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                    <View style={{ height: 120 }} />
+                    <View style={{ height: 140 }} />
                 </View>
             </ScrollView>
 
-            <View style={styles.footer} pointerEvents="box-none">
-                <View style={[styles.countdownPill, { backgroundColor: isCompleted ? colors.primary : colors.surfaceContainerHighest, ...shadows.ambient }]}>
-                    <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-                        <Ionicons
-                            name={isCompleted ? 'checkmark-circle' : 'time'}
-                            size={22}
-                            color={isCompleted ? colors.white : colors.primary}
-                        />
-                    </Animated.View>
-                    <View>
-                        <Text style={[styles.countdownLabel, { color: isCompleted ? colors.white + 'CC' : colors.textMuted, fontFamily: fonts.label }]}>{isCompleted ? 'COMPLETE' : 'REMAINING'}</Text>
-                        <Text style={[styles.countdownValue, { color: isCompleted ? colors.white : colors.text, fontFamily: fonts.display }]}>
-                            {isCompleted ? 'Finished' : formatTime(remainingTime)}
+            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.footer} pointerEvents="box-none">
+                <View style={styles.footerContent}>
+                    <View style={[styles.stepIndicator, { backgroundColor: colors.primaryContainer }]}>
+                        <Ionicons name="close" size={24} color={colors.white} />
+                        <Text style={[styles.stepText, { color: colors.white, fontFamily: fonts.labelBold }]}>
+                            {isCompleted ? 'STEP COMPLETE' : `REMAINING: ${formatTime(remainingTime)}`}
                         </Text>
                     </View>
+ 
+                    <TouchableOpacity
+                        style={[
+                            styles.nextBtn,
+                            {
+                                backgroundColor: isCompleted || task.completed ? colors.primary : colors.surfaceContainerHighest,
+                            },
+                        ]}
+                        disabled={!isCompleted && !task.completed}
+                        onPress={handleNextSession}
+                    >
+                        <Text style={[styles.nextBtnText, { color: isCompleted || task.completed ? colors.white : colors.textMuted, fontFamily: fonts.labelBold }]}>
+                            Next
+                        </Text>
+                        <Ionicons
+                            name="arrow-forward"
+                            size={18}
+                            color={isCompleted || task.completed ? colors.white : colors.textMuted}
+                        />
+                    </TouchableOpacity>
                 </View>
-
-                <TouchableOpacity
-                    style={[
-                        styles.nextBtn,
-                        {
-                            backgroundColor: isCompleted ? colors.primary : colors.surfaceContainerHighest,
-                            ...(isCompleted ? shadows.ambient : {})
-                        },
-                    ]}
-                    disabled={!isCompleted}
-                    onPress={handleNextSession}
-                >
-                    <Text style={[styles.nextBtnText, { color: isCompleted ? colors.white : colors.textMuted, fontFamily: fonts.display }]}>
-                        {todayPlan?.tasks?.findIndex(t => t.id === task.id) === (todayPlan?.tasks?.length || 0) - 1 
-                            ? 'Finish' 
-                            : 'Next'}
-                    </Text>
-                    <Ionicons
-                        name="arrow-forward"
-                        size={20}
-                        color={isCompleted ? colors.white : colors.textMuted}
-                    />
-                </TouchableOpacity>
-            </View>
+            </BlurView>
         </View>
     );
 }
@@ -385,7 +358,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        paddingHorizontal: 16,
+        paddingHorizontal: 20,
         paddingVertical: 12,
         borderRadius: 24,
     },
@@ -395,155 +368,137 @@ const styles = StyleSheet.create({
     },
     heroSection: {
         width: '100%',
-        backgroundColor: '#000',
+        backgroundColor: '#171d18',
+        justifyContent: 'center',
+    },
+    playerContainer: {
+        width: '100%',
+        aspectRatio: 16 / 9,
     },
     loadingOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: VIDEO_PLAYER_HEIGHT,
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: '#171d18',
         zIndex: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 12,
-    },
-    loadingText: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 14,
-    },
-    progressWrapper: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: 24,
-        paddingBottom: 28,
-        gap: 6,
-    },
-    progressTrack: {
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    progressMaxZone: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        bottom: 0,
-        zIndex: 1,
-    },
-    progressFill: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        bottom: 0,
-        zIndex: 2,
-    },
-    timeRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    timeLabel: {
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 11,
     },
     contentArea: {
-        marginTop: -24,
-        borderTopLeftRadius: 48,
-        borderTopRightRadius: 48,
         paddingHorizontal: 24,
-        paddingTop: 32,
+        paddingTop: 12,
         zIndex: 5,
+        minHeight: SCREEN_HEIGHT * 0.6,
     },
-    titleBlock: {
+    dragHandle: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        alignSelf: 'center',
+        marginBottom: 24,
+    },
+    headerBlock: {
+        alignItems: 'center',
         marginBottom: 32,
     },
+    label: {
+        fontSize: 11,
+        letterSpacing: 2,
+        marginBottom: 12,
+    },
     title: {
-        fontSize: 32,
-        lineHeight: 40,
-        letterSpacing: -0.5,
+        fontSize: 28,
+        lineHeight: 36,
+        textAlign: 'center',
+        marginBottom: 16,
+    },
+    divider: {
+        width: 48,
+        height: 4,
+        borderRadius: 2,
     },
     section: {
-        gap: 20,
+        gap: 24,
     },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
+    insightsList: {
+        gap: 16,
     },
-    sectionTitle: {
-        fontSize: 20,
-    },
-    cardsGrid: {
-        gap: 12,
-    },
-    takeawayCard: {
-        borderRadius: 24,
+    insightCard: {
         padding: 24,
-        gap: 12,
     },
-    cardInner: {
+    cardHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 14,
+        gap: 12,
+        marginBottom: 12,
     },
     cardIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
-        flexShrink: 0,
     },
     cardTitle: {
         fontSize: 16,
-        flexShrink: 1,
     },
     cardBody: {
-        fontSize: 14,
-        lineHeight: 22,
+        fontSize: 15,
+        lineHeight: 24,
+    },
+    subtleProgress: {
+        marginTop: 40,
+        gap: 8,
+    },
+    track: {
+        height: 4,
+        borderRadius: 2,
+        overflow: 'hidden',
+    },
+    fill: {
+        height: '100%',
+    },
+    timeLabels: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    timeText: {
+        fontSize: 11,
     },
     footer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 50,
+        height: 100,
+        paddingBottom: 20,
+        justifyContent: 'center',
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: 'rgba(0,0,0,0.05)',
+    },
+    footerContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 24,
-        paddingBottom: 24,
-        paddingTop: 16,
     },
-    countdownPill: {
+    stepIndicator: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-        borderRadius: 32,
-        gap: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 16,
+        gap: 8,
     },
-    countdownLabel: {
-        fontSize: 10,
-        letterSpacing: 1.5,
-        textTransform: 'uppercase',
-        marginBottom: 2,
-    },
-    countdownValue: {
-        fontSize: 17,
+    stepText: {
+        fontSize: 12,
     },
     nextBtn: {
-        height: 64,
-        paddingHorizontal: 28,
-        borderRadius: 32,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        paddingHorizontal: 28,
+        paddingVertical: 14,
+        borderRadius: 32,
+        gap: 8,
     },
     nextBtnText: {
         fontSize: 16,
@@ -559,11 +514,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     completionOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: VIDEO_PLAYER_HEIGHT,
+        ...StyleSheet.absoluteFillObject,
         zIndex: 100,
         justifyContent: 'center',
         alignItems: 'center',
@@ -573,35 +524,31 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     successIconCircle: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 20,
     },
     completionTitle: {
-        fontSize: 26,
-        color: '#FFF',
+        fontSize: 24,
         textAlign: 'center',
         marginBottom: 8,
     },
     completionSubtitle: {
         fontSize: 16,
-        color: 'rgba(255,255,255,0.8)',
         textAlign: 'center',
         marginBottom: 28,
-        lineHeight: 22,
     },
     completionBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
         paddingHorizontal: 28,
         paddingVertical: 16,
         borderRadius: 32,
-        gap: 10,
     },
     completionBtnText: {
-        fontSize: 17,
+        fontSize: 16,
     },
 });
+
+

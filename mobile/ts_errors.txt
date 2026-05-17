@@ -1,0 +1,37 @@
+src/components/tasks/patterns/DebatePattern.tsx(20,10): error TS2305: Module '"../../../constants/config"' has no exported member 'API_URL'.
+src/components/tasks/patterns/GuidedSessionPattern.tsx(285,12): error TS2304: Cannot find name 'shadows'.
+src/components/tasks/patterns/ProblemSolvingPattern.tsx(6,28): error TS2614: Module '"react-native-reanimated"' has no exported member 'SlideInBottom'. Did you mean to use 'import SlideInBottom from "react-native-reanimated"' instead?
+src/components/tasks/patterns/ProblemSolvingPattern.tsx(58,127): error TS2339: Property 'border' does not exist on type '{ primary: string; primaryLight: string; primaryContainer: string; secondary: string; secondaryContainer: string; background: string; surface: string; text: string; textMuted: string; onSurface: string; ... 13 more ...; gradients: { ...; }; }'.
+src/components/tasks/patterns/ProblemSolvingPattern.tsx(105,53): error TS2353: Object literal may only specify known properties, and 'selection' does not exist in type 'TaskMetadata'.
+src/components/tasks/patterns/SpacedRecallPattern.tsx(69,26): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type 'TaskMetadata'.
+src/components/tasks/patterns/SpacedRecallPattern.tsx(91,67): error TS2339: Property 'md' does not exist on type '{ soft: { shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; }; ambient: { shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; }; premium: { ...; }; }'.
+src/components/tasks/patterns/SpacedRecallPattern.tsx(105,76): error TS2339: Property 'md' does not exist on type '{ soft: { shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; }; ambient: { shadowColor: string; shadowOffset: { width: number; height: number; }; shadowOpacity: number; shadowRadius: number; elevation: number; }; premium: { ...; }; }'.
+src/components/tasks/VideoTaskComponent.tsx(261,89): error TS2339: Property 'light' does not exist on type 'string'.
+src/components/TimelineTaskCard.tsx(76,84): error TS2551: Property 'surfaceVariant' does not exist on type '{ primary: string; primaryLight: string; primaryContainer: string; secondary: string; secondaryContainer: string; background: string; surface: string; text: string; textMuted: string; onSurface: string; ... 13 more ...; gradients: { ...; }; }'. Did you mean 'onSurfaceVariant'?
+src/screens/auth/OnboardingScreen.tsx(30,21): error TS2322: Type '({ fontSize: number; fontWeight: "700"; } | { color: string; })[]' is not assignable to type 'TextStyle'.
+  Types of property 'filter' are incompatible.
+    Type '{ <S extends { fontSize: number; fontWeight: "700"; } | { color: string; }>(predicate: (value: { fontSize: number; fontWeight: "700"; } | { color: string; }, index: number, array: ({ fontSize: number; fontWeight: "700"; } | { ...; })[]) => value is S, thisArg?: any): S[]; (predicate: (value: { ...; } | { ...; }, ind...' is not assignable to type 'string | readonly FilterFunction[] | undefined'.
+src/screens/auth/OnboardingScreen.tsx(62,25): error TS2322: Type '({ borderWidth: number; } | { backgroundColor: string; borderColor: string; })[]' is not assignable to type 'ViewStyle'.
+  Types of property 'filter' are incompatible.
+    Type '{ <S extends { borderWidth: number; } | { backgroundColor: string; borderColor: string; }>(predicate: (value: { borderWidth: number; } | { backgroundColor: string; borderColor: string; }, index: number, array: ({ ...; } | { ...; })[]) => value is S, thisArg?: any): S[]; (predicate: (value: { ...; } | { ...; }, index...' is not assignable to type 'string | readonly FilterFunction[] | undefined'.
+src/screens/auth/VerifyEmailScreen.tsx(177,17): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextInputProps): TextInput', gave the following error.
+    Type '(ref: TextInput | null) => TextInput | null' is not assignable to type 'Ref<TextInput> | undefined'.
+      Type '(ref: TextInput | null) => TextInput | null' is not assignable to type '(instance: TextInput | null) => void | (() => VoidOrUndefinedOnly)'.
+        Type 'TextInput | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+          Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+  Overload 2 of 2, '(props: TextInputProps, context: any): TextInput', gave the following error.
+    Type '(ref: TextInput | null) => TextInput | null' is not assignable to type 'Ref<TextInput> | undefined'.
+      Type '(ref: TextInput | null) => TextInput | null' is not assignable to type '(instance: TextInput | null) => void | (() => VoidOrUndefinedOnly)'.
+        Type 'TextInput | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+          Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/screens/auth/VerifyEmailScreen.tsx(181,45): error TS2551: Property 'surfaceContainer' does not exist on type '{ primary: string; primaryLight: string; primaryContainer: string; secondary: string; secondaryContainer: string; background: string; surface: string; text: string; textMuted: string; onSurface: string; ... 13 more ...; gradients: { ...; }; }'. Did you mean 'surfaceContainerLow'?
+src/services/audio.service.ts(172,27): error TS2339: Property 'destroy' does not exist on type 'typeof import("/Users/chizanumidemili/Projects/ease/mobile/node_modules/react-native-track-player/lib/src/trackPlayer")'.
+src/services/journalService.ts(2,22): error TS7016: Could not find a declaration file for module 'crypto-js'. '/Users/chizanumidemili/Projects/ease/mobile/node_modules/crypto-js/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/crypto-js` if it exists or add a new declaration (.d.ts) file containing `declare module 'crypto-js';`
+src/services/journalService.ts(22,63): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/journalService.ts(24,9): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/playbackService.ts(6,70): error TS2339: Property 'destroy' does not exist on type 'typeof import("/Users/chizanumidemili/Projects/ease/mobile/node_modules/react-native-track-player/lib/src/trackPlayer")'.
+src/store/audioStore.ts(69,72): error TS2367: This comparison appears to be unintentional because the types 'State.None | State.Ready | State.Paused | State.Stopped | State.Loading | State.Buffering | State.Error | State.Ended' and '"playing"' have no overlap.

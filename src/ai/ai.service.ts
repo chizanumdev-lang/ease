@@ -198,6 +198,11 @@ export class AiService implements OnModuleInit {
         this.usageCounts.set(key, (this.usageCounts.get(key) ?? 0) + 1);
     }
 
+    async generate(prompt: string, metadata?: any): Promise<string> {
+        const result = await this.callWithFallback(prompt, metadata);
+        return result || '';
+    }
+
     async generateCustomJson<T>(prompt: string, fallback: T, metadata?: any): Promise<T> {
         try {
             const result = await this.callWithFallback(prompt, metadata);
@@ -295,6 +300,58 @@ export class AiService implements OnModuleInit {
         return result.response.text();
     }
 
+    async gradeVocalPerformance(audioBuffer: Buffer, targetScript: string, locale: string = 'fr-FR', mimeType: string = 'audio/mp3'): Promise<any> {
+        if (!this.genAI) throw new Error('Gemini not configured for audio grading');
+        if (!audioBuffer) throw new Error('Audio buffer is empty');
+        
+        this.logger.log(`Grading vocal performance: ${locale}, ${mimeType}, ${audioBuffer.length} bytes`);
+        
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+
+        const prompt = `
+        You are an expert language coach. Analyze the attached audio recording of a student attempting to say: "${targetScript}" in ${locale}.
+        
+        TASKS:
+        1. Compare the audio to the target script.
+        2. Evaluate Pronunciation, Pace, and Tone (0-100).
+        3. Identify specific words that were mispronounced.
+        
+        OUTPUT SCHEMA (Strict JSON):
+        {
+            "score": number (overall 0-100),
+            "metrics": {
+                "pronunciation": number,
+                "pace": number,
+                "tone": number
+            },
+            "mistakes": [
+                { "word": string, "correctionLabel": "Pronunciation"|"Phonetic", "feedback": "Short encouraging tip" }
+            ],
+            "feedback": "Overall encouraging summary"
+        }
+        
+        Return ONLY the raw JSON.`;
+
+        try {
+            const result = await model.generateContent([
+                prompt,
+                {
+                    inlineData: {
+                        data: audioBuffer.toString('base64'),
+                        mimeType: (mimeType === 'audio/m4a' || mimeType === 'audio/x-m4a') ? 'audio/aac' : mimeType
+                    }
+                }
+            ]);
+
+            const responseText = result.response.text();
+            this.logger.debug(`Gemini response: ${responseText}`);
+            return this.extractJson(responseText);
+        } catch (error) {
+            this.logger.error(`Gemini grading failed: ${error.message}`, error.stack);
+            throw error;
+        }
+    }
+
     private async callGroq(prompt: string): Promise<string> {
         const apiKey = this.configService.get<string>('GROQ_API_KEY');
         if (!apiKey) throw new Error('GROQ_API_KEY not configured');
@@ -370,10 +427,15 @@ export class AiService implements OnModuleInit {
     private async callOllama(prompt: string): Promise<string> {
         const url = this.configService.get<string>('OLLAMA_URL') || 'http://localhost:11434';
         const model = this.configService.get<string>('OLLAMA_MODEL') || 'llama3.2:3b';
+        
+        this.logger.debug(`Ollama call started: ${model}`);
 
-        // Add timeout for local Ollama to prevent infinite hang
+        // Add generous timeout for local Ollama to prevent aborts on slow hardware
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 45000); // 45s timeout
+        const timeout = setTimeout(() => {
+            this.logger.error(`Ollama timeout reached (120s) for model ${model}`);
+            controller.abort();
+        }, 120000); // 120s timeout
 
         try {
             const res = await fetch(`${url}/api/generate`, {
@@ -383,7 +445,10 @@ export class AiService implements OnModuleInit {
                     model,
                     prompt,
                     stream: false,
-                    options: { temperature: 0.6 },
+                    options: { 
+                        temperature: 0.6,
+                        num_predict: 512, // Limit response length to speed up generation
+                    },
                 }),
                 signal: controller.signal,
             });
@@ -679,18 +744,13 @@ Return ONLY the raw JSON object.
                 theme: data.theme || dayTheme
             };
         } catch (error) {
-            this.logger.error('Failed to generate audio script', error);
-            // Fallback
+            this.logger.error('Failed to generate audio script, using safe fallback', error);
             return {
                 sessionType: type === 'night' ? 'sleep' : 'relaxation',
                 binauralFrequency: type === 'night' ? 2 : 10,
                 carrierFrequency: 200,
-                affirmations: [
-                    "I am absorbing today's lessons with ease",
-                    "My mind is calm and ready to integrate new skills",
-                    "I am growing more capable every day"
-                ],
-                backgroundNarration: "As you settle into this moment, allow your mind to drift back through what you want to achieve. Feel the progress you've made, and let it settle deep within your foundation.",
+                affirmations: ["I am growing every day", "I am centered and focused"],
+                backgroundNarration: "Take a deep breath and settle into focus as we prepare for this session...",
                 theme: dayTheme
             };
         }

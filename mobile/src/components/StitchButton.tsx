@@ -6,7 +6,8 @@ import {
     StyleSheet,
     ViewStyle,
     View,
-    Text
+    Text,
+    StyleProp
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../hooks/useTheme';
@@ -20,8 +21,8 @@ interface StitchButtonProps {
     size?: 'sm' | 'md' | 'lg';
     isLoading?: boolean;
     disabled?: boolean;
-    style?: ViewStyle;
-    textStyle?: TextStyle;
+    style?: StyleProp<ViewStyle>;
+    textStyle?: StyleProp<TextStyle>;
     showArrow?: boolean;
     leftIcon?: React.ReactNode;
     rightIcon?: React.ReactNode;
@@ -60,7 +61,7 @@ export default function StitchButton({
     };
 
     const getButtonStyle = () => {
-        const baseStyle: ViewStyle[] = [styles.button];
+        const baseStyle: StyleProp<ViewStyle>[] = [styles.button];
         
         // Dynamic borderRadius
         baseStyle.push({ borderRadius: borderRadius.xxxl });
@@ -90,7 +91,7 @@ export default function StitchButton({
     };
 
     const getTextStyle = () => {
-        const baseStyle: TextStyle[] = [
+        const baseStyle: StyleProp<TextStyle>[] = [
             styles.text,
             { fontFamily: fonts.display }
         ];

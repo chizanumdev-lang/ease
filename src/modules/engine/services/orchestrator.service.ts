@@ -5,22 +5,35 @@ import { TaskShard } from '../entities/task-shard.entity';
 import { AiService } from '../../../ai/ai.service';
 import { YoutubeService } from '../../../video/youtube/youtube.service';
 import { AudioService } from '../../../audio/audio.service';
-import { Program } from '../../../programs/entities/program.entity';
 import { DayPlan } from '../../../programs/entities/day-plan.entity';
+import { Program } from '../../../programs/entities/program.entity';
 import { Task } from '../../../tasks/entities/task.entity';
-
-const SHARD_TO_MOBILE_TYPE: Record<string, string> = {
-  'watch-tutorial': 'video',
-  'quick-quiz': 'quiz',
-  'binaural-session': 'audio',
-  'journal-entry': 'journal',
-  'daily-reflection': 'reflection',
-  'commitment-check': 'consistency',
-};
 
 @Injectable()
 export class OrchestratorService {
   private readonly logger = new Logger(OrchestratorService.name);
+  
+  private readonly SHARD_TO_MOBILE_TYPE: Record<string, string> = {
+    'tutorial-watch-template': 'video',
+    'guided-session-template': 'video',
+    'lecture-analysis-template': 'video',
+    'observational-skill-template': 'video',
+    'technique-demo-template': 'video',
+    'audio-immersion-template': 'audio',
+    'guided-audio-template': 'audio',
+    'vocal-practice-template': 'audio',
+    'recall-quiz-template': 'quiz',
+    'knowledge-check-template': 'quiz',
+    'problem-solving-template': 'quiz',
+    'speaking-assessment-template': 'quiz',
+    'reflective-journal-template': 'journal',
+    'deep-work-journal-template': 'journal',
+    'action-planning-template': 'journal',
+    'creative-practice-template': 'journal',
+    'habit-tracker-template': 'consistency',
+    'daily-ritual-template': 'consistency',
+    'micro-practice-template': 'consistency',
+  };
 
   constructor(
     private aiService: AiService,
@@ -30,19 +43,45 @@ export class OrchestratorService {
     private taskRepository: Repository<Task>,
     @InjectRepository(DayPlan)
     private dayPlanRepository: Repository<DayPlan>,
+    @InjectRepository(Program)
+    private programRepository: Repository<Program>,
     private youtubeService: YoutubeService,
     private audioService: AudioService,
   ) {}
 
   /**
-   * The core engine loop. 
-   * Instead of hardcoded tasks, this picks shards based on:
-   * 1. User Goal Domain
-   * 2. Current Progress (Day #)
-   * 3. Cognitive Profile (Energy/Attention - Future)
+   * DEBUG/ADMIN: Simulate which shards would be selected for a goal
+   */
+  async simulateBlueprintSelection(goal: string): Promise<any> {
+    const blueprint = await this.generateDayBlueprint(1, goal);
+    const shards = await this.shardRepository.find();
+    
+    return blueprint.map(draft => {
+      // Robust Matching: Exact -> Case-Insensitive -> Modality-Based Fallback
+      let shard = shards.find(s => s.name === draft.shardName);
+      if (!shard) shard = shards.find(s => s.name.toLowerCase() === (draft.shardName || '').toLowerCase());
+      
+      if (!shard) {
+          const intendedModality = (draft.modality || '').toLowerCase();
+          shard = shards.find(s => s.modality.toLowerCase() === intendedModality) || shards[0];
+      }
+
+      return {
+        selectedShard: shard.name,
+        // Use AI's generated title if available, otherwise fallback to DB displayName
+        displayName: draft.title || shard.displayName,
+        modality: shard.modality,
+        draftContent: draft
+      };
+    });
+  }
+
+  /**
+   * STAGE 1: Early Orchestration
+   * This should be called as soon as the user enters their goal in the wizard.
    */
   async orchestrateDay(dayPlanId: string, goal: string, context: any = {}): Promise<void> {
-    this.logger.log(`Orchestrating Day for Plan ${dayPlanId} (Goal: ${goal})`);
+    this.logger.log(`Starting Pipeline Orchestration for DayPlan ${dayPlanId}`);
     
     const dayPlan = await this.dayPlanRepository.findOne({ 
       where: { id: dayPlanId },
@@ -50,169 +89,305 @@ export class OrchestratorService {
     });
     if (!dayPlan) throw new Error('DayPlan not found');
 
-    // 0. Clean up existing tasks for this day to prevent duplicates on retries
+    // 0. Clean up existing tasks
     await this.taskRepository.delete({ dayPlanId });
-    this.logger.log(`Cleaned up existing tasks for DayPlan ${dayPlanId}`);
 
-    // 1. Get candidate shards
-    const shards = await this.shardRepository.find();
+    // 1. PHASE: BLUEPRINTING (Thinking)
+    const blueprint = await this.generateDayBlueprint(dayPlan.dayNumber, goal);
     
-    // 2. Use AI to select the best 4-6 shards
-    const selectionPrompt = `
-      You are the Cognitive Coordinator for Ease.
-      USER GOAL: "${goal}"
-      DAY NUMBER: ${dayPlan.dayNumber}
-      
-      Select exactly 5 task types from the list that best fit this goal and day.
-      Choose a mix of: Awareness (Learning), Action (Practice), and Reflection.
-      
-      AVAILABLE SHARDS:
-      ${shards.map(s => `- ${s.name}: ${s.description}`).join('\n')}
-      
-      Return a JSON array of strings containing the EXACT shard names.
-      Format: ["name-1", "name-2", "name-3", "name-4", "name-5"]
-    `;
+    // 2. PHASE: SHELL CREATION (Instant)
+    const shards = await this.shardRepository.find();
+    const tasks: Task[] = [];
 
-    const selectedNamesRaw = await this.aiService.generateCustomJson<string[]>(selectionPrompt, []);
-    const normalize = (s: string) => s.toLowerCase().trim().replace(/[-_]/g, ' ');
-    const selectedNormalized = (selectedNamesRaw || []).map(normalize);
+    for (let i = 0; i < blueprint.length; i++) {
+        const draft = blueprint[i];
+        
+        // Robust Matching: Exact -> Case-Insensitive -> Modality-Based Fallback
+        let shard = shards.find(s => s.name === draft.shardName);
+        if (!shard) shard = shards.find(s => s.name.toLowerCase() === (draft.shardName || '').toLowerCase());
+        
+        // Modality fallback: If AI hallucinated a name, find a real shard that matches the intended modality
+        if (!shard) {
+            const intendedModality = (draft.modality || '').toLowerCase();
+            shard = shards.find(s => s.modality.toLowerCase() === intendedModality) || shards[0];
+        }
 
-    let selectedShards = shards.filter(s => {
-      const shardNameNorm = normalize(s.name);
-      return selectedNormalized.some(sel => sel === shardNameNorm || sel.includes(shardNameNorm) || shardNameNorm.includes(sel));
-    });
+        const { mobileType, pattern } = this.detectPattern(shard);
 
-    if (selectedShards.length === 0 && shards.length > 0) {
-        const shuffled = [...shards].sort(() => 0.5 - Math.random());
-        selectedShards = shuffled.slice(0, 5);
+        const task = this.taskRepository.create({
+            dayPlanId: dayPlan.id,
+            type: mobileType,
+            title: draft.title || shard.displayName,
+            description: draft.description || shard.description,
+            duration: shard.typicalDurationMinutes || 10,
+            order: i,
+            metadata: {
+                ...draft,
+                pattern,
+                shardId: shard.id,
+                status: 'hydrating' // Mark as processing
+            }
+        });
+        tasks.push(await this.taskRepository.save(task));
     }
 
-    // 2.5 Sort shards by logical progression (Video -> Practice -> Reflection/Review)
-    // This ensures Awareness/Learning happens first and Review/Reflection happens last.
-    const getModalityPriority = (modality: string = '', name: string = ''): number => {
-      const m = modality.toLowerCase();
-      const n = name.toLowerCase();
-      
-      // Awareness/Learning (Lowest numbers = First)
-      if (m.includes('watch') || m.includes('video') || n.includes('tutorial')) return 1;
-      if (m.includes('listen') || m.includes('audio')) return 2;
-      
-      // Verification (Middle)
-      if (m.includes('quiz') || m.includes('test') || n.includes('recall')) return 5;
-      
-      // Application/Action (High numbers)
-      if (m.includes('practice') || m.includes('app') || m.includes('action') || m.includes('practical') || m.includes('speaking')) return 10;
-      if (m.includes('habit') || m.includes('consistency')) return 11;
-      if (m.includes('social')) return 12;
+    // 3. PHASE: HYDRATION (Resource Fetching with Retries)
+    // We do this in the background, but prioritize the first few tasks
+    this.hydrateDayResources(tasks, shards, goal, dayPlan.id)
+        .catch(err => this.logger.error(`Background Hydration Failed for DayPlan ${dayPlan.id}: ${err.message}`))
+        .finally(async () => {
+            // Ensure Program is marked as ready once initial hydration attempt is done
+            const program = await this.programRepository.findOne({ where: { id: dayPlan.programId } });
+            if (program && program.status === 'generating') {
+                program.status = 'ready';
+                await this.programRepository.save(program);
+                this.logger.log(`Program ${program.id} marked as READY after hydration attempt.`);
+            }
+        });
 
-      // Reflection/Review (Highest numbers = Last)
-      if (m.includes('write') || m.includes('journal') || m.includes('reflect') || n.includes('review') || n.includes('journal')) return 100;
-      
-      return 50; // Default for unknown
+    this.logger.log(`Blueprint created for ${dayPlan.id}. Hydration running in background.`);
+  }
+
+  private async generateDayBlueprint(dayNumber: number, goal: string): Promise<any[]> {
+    /**
+     * SEMANTIC MAPPING LOGIC:
+     * 1. Calculate target intensity based on program progression (e.g., lower for Day 1).
+     * 2. Categorize all shards into 5 core pools (video, audio, quiz, journal, consistency).
+     * 3. Filter each pool for shards that match the target intensity range (+/- 2).
+     * 4. Rank candidates by keyword relevance to the user's specific goal (with concept expansion).
+     * 5. Provide the top 4 candidates from EACH category to the AI (20 total).
+     * This creates a "Map" that ensures the AI always sees the most relevant tasks.
+     */
+    const targetIntensity = Math.min(10, Math.max(1, 3 + Math.floor(dayNumber / 5)));
+    const categories = ['video', 'audio', 'quiz', 'journal', 'consistency'];
+    const finalShards: any[] = [];
+
+    // Concept Expansion Map to help rank related but non-literal shards
+    const expansionMap: Record<string, string[]> = {
+        fitness: ['workout', 'gym', 'health', 'nutrition', 'protein', 'meal', 'physical', 'body', 'muscle', 'exercise', 'fit'],
+        physical: ['fitness', 'workout', 'body', 'health', 'exercise', 'fit'],
+        fit: ['fitness', 'workout', 'body', 'health', 'exercise', 'physical'],
+        language: ['vocab', 'speak', 'listen', 'grammar', 'read', 'write', 'fluency', 'french', 'spanish', 'japanese'],
+        french: ['language', 'vocab', 'speak', 'grammar'],
+        coding: ['programming', 'software', 'dev', 'code', 'technical', 'logic', 'project', 'script'],
+        business: ['entrepreneur', 'startup', 'finance', 'market', 'sales', 'growth', 'strategy', 'budget', 'spending']
     };
 
-    selectedShards.sort((a, b) => getModalityPriority(a.modality, a.name) - getModalityPriority(b.modality, b.name));
-    this.logger.log(`Sorted shards into logical order: ${selectedShards.map(s => s.name).join(' -> ')}`);
-
-    // 3. Generate content SEQUENTIALLY to allow context grounding
-    // This ensures that a Quiz can reference the specific Video content generated just before it.
-    const plannedContext: Array<{ type: string; title: string; output: any }> = [];
+    const lowercaseGoal = goal.toLowerCase();
+    const goalTerms = lowercaseGoal.split(/\s+/).filter(t => t.length > 2);
     
-    for (let i = 0; i < selectedShards.length; i++) {
-      const shard = selectedShards[i];
-      
-      const contextPrompt = plannedContext.length > 0
-        ? `PREVIOUS TASKS IN THIS RITUAL:
-           ${plannedContext.map(p => `- ${p.type} ("${p.title}"): ${JSON.stringify(p.output)}`).join('\n')}`
-        : '';
+    // Identify active themes for penalty logic
+    const activeThemes = Object.keys(expansionMap).filter(theme => lowercaseGoal.includes(theme));
 
-      const contentPrompt = `
-        Create specific content for the task shard "${shard.name}" for the goal: "${goal}".
-        Day ${dayPlan.dayNumber} of the journey.
-        
-        SHARD DESCRIPTION: ${shard.description}
-        
-        ${contextPrompt}
-        
-        INSTRUCTION:
-        Generate the specific JSON content for this task.
-        CRITICAL: If this task (e.g. Quiz or Reflection) depends on previous tasks (e.g. Video), base the content DIRECTLY on the details provided in the PREVIOUS TASKS context. 
-        Avoid abstract questions. Ground everything in the specific output of preceding tasks.
-        
-        IF generating a "searchQuery" for a video task:
-        - Keep it under 5 words.
-        - Make it highly searchable on YouTube (e.g., "how to build consistency habit" instead of "I want to build a habit of consistency in my daily life").
-        
-        Return JSON: { "title": "...", "description": "...", "searchQuery": "...", "questions": [...], "prompt": "..." }
-      `;
-
-      const content = await this.aiService.generateCustomJson<any>(contentPrompt, {});
-      
-      // Determine mobile type
-      let mobileType: string = 'video';
-      const modality = shard.modality?.toLowerCase() || '';
-      if (modality.includes('watch') || modality.includes('video')) mobileType = 'video';
-      else if (modality.includes('write') || modality.includes('journal')) mobileType = 'journal';
-      else if (modality.includes('listen') || modality.includes('audio')) mobileType = 'audio';
-      else if (modality.includes('reflect')) mobileType = 'reflection';
-      else if (modality.includes('quiz') || modality.includes('test')) mobileType = 'quiz';
-      else if (modality.includes('practice') || modality.includes('app')) mobileType = 'micro-app';
-      else if (modality.includes('habit') || modality.includes('consistency')) mobileType = 'consistency';
-      else mobileType = SHARD_TO_MOBILE_TYPE[shard.name] || 'video';
-
-      let videoUrl: string | undefined;
-      let audioUrl: string | undefined;
-
-      if (mobileType === 'video' && content.searchQuery) {
-        try {
-          const video = await this.youtubeService.getRecommendedVideo(goal, content.searchQuery);
-          videoUrl = video?.url || 'https://www.youtube.com/watch?v=inpok4MKVLM';
-        } catch {
-          videoUrl = 'https://www.youtube.com/watch?v=inpok4MKVLM';
-        }
-      }
-
-      if (mobileType === 'audio') {
-        try {
-          const script = content.script || content.description || `A guided ${content.title || shard.displayName} session for the goal: ${goal}.`;
-          const mood = content.mood || 'focus';
-          const filename = `task_${dayPlan.id}_${i}`;
-          this.logger.log(`Generating audio for task ${i}: "${content.title}"`);
-          audioUrl = await this.audioService.generateAudioTrack(script, mood, filename);
-          this.logger.log(`Audio generated: ${audioUrl}`);
-        } catch (err) {
-          this.logger.error(`Failed to generate audio for task ${i}:`, err);
-          // Fallback to ambient background
-          audioUrl = 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
-        }
-      }
-
-      const task = this.taskRepository.create({
-        dayPlanId: dayPlan.id,
-        type: mobileType,
-        title: content.title || shard.displayName,
-        description: content.description || shard.description,
-        duration: shard.typicalDurationMinutes || 10,
-        order: i,
-        videoUrl: videoUrl,
-        metadata: {
-          ...content,
-          shardId: shard.id,
-          audioUrl: audioUrl,
-        }
-      });
-      
-      await this.taskRepository.save(task);
-      
-      // Add to context for next tasks in the loop
-      plannedContext.push({
-        type: mobileType,
-        title: task.title,
-        output: content
-      });
+    // Expand terms based on common themes
+    const expandedTerms = [...goalTerms];
+    for (const theme of activeThemes) {
+        expandedTerms.push(...expansionMap[theme]);
     }
 
-    await this.dayPlanRepository.update(dayPlan.id, { status: 'ready' });
-    this.logger.log(`DayPlan ${dayPlanId} orchestrated with ${plannedContext.length} grounded tasks.`);
+    for (const category of categories) {
+        const candidates = await this.shardRepository.find({ where: { category: category as any } });
+        
+        // Intensity filtering (prefer shards within +/- 2 of target)
+        const intensityMatched = candidates.filter(s => Math.abs((s as any).intensity - targetIntensity) <= 2);
+        const pool = intensityMatched.length >= 4 ? intensityMatched : candidates;
+
+        // Semantic ranking
+        const ranked = pool.sort((a, b) => {
+            const getScore = (shard: any) => {
+                let s = 0;
+                const name = shard.name.toLowerCase();
+                const desc = shard.description.toLowerCase();
+                const uses = (shard.metadata?.uses || []).map((u: string) => u.toLowerCase());
+                
+                // Positive Match
+                for (const term of expandedTerms) {
+                    if (name.includes(term)) s += 5; // Boosted name match
+                    if (desc.includes(term)) s += 2;
+                    if (uses.some((u: string) => u.includes(term))) s += 3;
+                }
+
+                // Negative Penalty: If shard matches a DIFFERENT theme strongly, penalize it
+                for (const [theme, themeTerms] of Object.entries(expansionMap)) {
+                    if (activeThemes.includes(theme)) continue; // Skip active themes
+                    
+                    // If shard contains terms from an UNRELATED theme, penalize heavily
+                    const hasOtherThemeMatch = themeTerms.some(t => name.includes(t) || uses.some((u: string) => u.includes(t)));
+                    if (hasOtherThemeMatch) s -= 10;
+                }
+
+                // Generic Shard Bonus: If no matches, prefer generic templates over specific irrelevant ones
+                const isGeneric = name === 'watch-tutorial' || name === 'audio-listening' || name === 'check-in' || name === 'daily-journal' || name === 'generic-quiz';
+                if (isGeneric) s += 1;
+
+                return s;
+            };
+            return getScore(b) - getScore(a) || (0.5 - Math.random());
+        });
+
+        // Take top 4 from each category to give AI enough options but high relevance
+        finalShards.push(...ranked.slice(0, 4));
+    }
+
+    // 2. PHASE: Blueprinting
+    const prompt = `
+      You are the Cognitive Architect for Ease. 
+      USER GOAL: "${goal}"
+      DAY NUMBER: ${dayNumber} (Target Intensity: ${targetIntensity}/10)
+
+      TASK: Create a 5-task "Daily Shard Chain" using EXACTLY 5 templates from the list below.
+      Each template represents a core functional behavior. Use the "metadata.uses" mapping to determine which template best fits the user's specific progress for today.
+      
+      SELECTED TEMPLATES FOR MAPPING:
+      ${finalShards.map(s => `- [${(s as any).category.toUpperCase()}] ${s.name}: ${s.description}. Common Uses: ${(s as any).metadata?.uses?.join(', ') || 'General'}`).join('\n')}
+
+      WORDING STYLE:
+      - 5th-grade level English.
+      - NO AI jargon (comprehensive, embark, vital, journey, tailored, personalized).
+      - Punchy, goal-specific coaching.
+      - Act like a high-performance coach who knows the user's specific goal deeply.
+
+      OUTPUT SCHEMA:
+      Return ONLY a raw JSON array of EXACTLY 5 objects.
+      
+      {
+        "shardName": "exact-template-name-from-list",
+        "title": "Action Title (Goal-specific)",
+        "description": "Short summary (Goal-specific)",
+        "searchQuery": "Specific YouTube search query (if video template)",
+        "questions": ["Q1?", "Q2?"], (if quiz template)
+        "narrationScript": "At least 300 words of specific coaching. NO generic intros. Focus on 'How' and 'Why' this specific task helps with ${goal}."
+      }
+
+      STRICT REQUIREMENTS:
+      1. Exactly 5 Tasks: No more, no less.
+      2. Modality Diversity: You MUST pick exactly 1 Video, 1 Audio, 1 Quiz, 1 Journal, and 1 Consistency template from the provided list.
+      3. No Repeats: Do not use the same template twice.
+      4. Intensity Alignment: Prioritize tasks that match the day's intensity (${targetIntensity}).
+    `;
+
+    const result = await this.aiService.generateCustomJson<any>(prompt, []);
+    
+    // Handle cases where AI wraps the array in an object like { "tasks": [...] }
+    if (result && !Array.isArray(result)) {
+      if (result.tasks && Array.isArray(result.tasks)) {
+        return result.tasks;
+      }
+      if (result.blueprint && Array.isArray(result.blueprint)) {
+        return result.blueprint;
+      }
+      // If it's an object but not a known wrapper, wrap it ourselves if it looks like a single task
+      if (result.shardName) {
+        return [result];
+      }
+      return [];
+    }
+
+    return Array.isArray(result) ? result : [];
+  }
+
+  private async hydrateDayResources(tasks: Task[], shards: TaskShard[], goal: string, dayPlanId: string) {
+    // Sort tasks by priority for hydration (Video first)
+    const priority = (t: Task) => t.type === 'video' ? 0 : (t.type === 'audio' ? 1 : 2);
+    const sortedTasks = [...tasks].sort((a, b) => priority(a) - priority(b));
+
+    for (const task of sortedTasks) {
+        try {
+            const shard = shards.find(s => s.id === task.metadata.shardId);
+            await this.hydrateSingleTask(task, shard, goal, dayPlanId);
+            
+            // Mark task as ready
+            task.metadata.status = 'ready';
+            await this.taskRepository.save(task);
+        } catch (err) {
+            this.logger.error(`Failed to hydrate task ${task.id}: ${err.message}`);
+            task.metadata.status = 'error';
+            await this.taskRepository.save(task);
+        }
+    }
+
+    // Mark DayPlan as ready when all critical tasks are done
+    await this.dayPlanRepository.update(dayPlanId, { status: 'ready' });
+  }
+
+  private async hydrateSingleTask(task: Task, shard: any, goal: string, dayPlanId: string) {
+    const metadata = task.metadata;
+
+    // 1. Handle VIDEO Hydration (with Retry Loop)
+    if (task.type === 'video' && metadata.searchQuery) {
+        let videoUrl = await this.fetchVideoWithRetry(goal, metadata.searchQuery);
+        task.videoUrl = videoUrl;
+    }
+
+    // 2. Handle VOCAL TEST Hydration
+    if (metadata.pattern === 'vocal-test') {
+        const ttsScript = metadata.targetScript || `Practice speaking about ${goal}`;
+        const filename = `vocal_model_${dayPlanId}_${task.id}`;
+        metadata.audioUrl = await this.audioService.generateAudioTrack(ttsScript, 'calm', filename, true);
+    }
+
+    // 3. Handle AUDIO Hydration
+    if (task.type === 'audio' && !metadata.audioUrl) {
+        const script = metadata.narrationScript || metadata.description || `Session for ${goal}`;
+        const filename = `audio_task_${dayPlanId}_${task.id}`;
+        metadata.audioUrl = await this.audioService.generateAudioTrack(script, 'focus', filename);
+    }
+  }
+
+  private async fetchVideoWithRetry(goal: string, query: string): Promise<string> {
+    try {
+        const video = await this.youtubeService.getRecommendedVideo(goal, query);
+        if (video?.url) return video.url;
+        throw new Error('No video found');
+    } catch (err) {
+        this.logger.warn(`Initial video search failed for "${query}". Retrying with goal: "${goal}"`);
+        // Retry with broader goal
+        const fallback = await this.youtubeService.getRecommendedVideo(goal, goal);
+        return fallback?.url || 'https://www.youtube.com/watch?v=inpok4MKVLM';
+    }
+  }
+
+  private detectPattern(shard: TaskShard): { mobileType: string; pattern: string } {
+    const name = shard.name.toLowerCase();
+    
+    // Explicit Template Mapping
+    const patternMap: Record<string, { type: string; pattern: string }> = {
+        'tutorial-watch-template': { type: 'video', pattern: 'standard' },
+        'lecture-analysis-template': { type: 'video', pattern: 'analysis' },
+        'observational-skill-template': { type: 'video', pattern: 'observation' },
+        'technique-demo-template': { type: 'video', pattern: 'technique' },
+        'vocal-practice-template': { type: 'audio', pattern: 'vocal-test' },
+        'recall-quiz-template': { type: 'quiz', pattern: 'spaced-recall' },
+        'problem-solving-template': { type: 'quiz', pattern: 'problem-solving' },
+        'speaking-assessment-template': { type: 'quiz', pattern: 'vocal-test' },
+        'deep-work-journal-template': { type: 'journal', pattern: 'deep-work' },
+        'action-planning-template': { type: 'journal', pattern: 'planning' },
+        'daily-ritual-template': { type: 'consistency', pattern: 'ritual' }
+    };
+
+    if (patternMap[name]) {
+        return { mobileType: patternMap[name].type, pattern: patternMap[name].pattern };
+    }
+
+    const modality = shard.modality?.toLowerCase() || '';
+    let mobileType = 'video';
+    let pattern = 'standard';
+
+    if (name.includes('vocal') || name.includes('speak') || name.includes('pronunciation')) {
+        pattern = 'vocal-test';
+        mobileType = 'quiz';
+    } else if (modality.includes('watch') || modality.includes('video')) {
+        mobileType = 'video';
+    } else if (modality.includes('write') || modality.includes('journal')) {
+        mobileType = 'journal';
+    } else if (modality.includes('listen') || modality.includes('audio')) {
+        mobileType = 'audio';
+    } else if (modality.includes('quiz') || modality.includes('test')) {
+        mobileType = 'quiz';
+    } else {
+        mobileType = this.SHARD_TO_MOBILE_TYPE[name] || 'video';
+    }
+
+    return { mobileType, pattern };
   }
 }

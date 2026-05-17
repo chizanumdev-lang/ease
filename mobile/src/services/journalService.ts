@@ -15,13 +15,13 @@ export const journalService = {
      * Initializes the encryption key if it doesn't exist
      */
     async initializeKey(): Promise<string> {
-        let key = await SecureStore.getItemAsync(ENCRYPTION_KEY_ID);
-        if (!key) {
-            // Generate a random 32-character key for AES-256
-            key = CryptoJS.lib.WordArray.random(32).toString();
-            await SecureStore.setItemAsync(ENCRYPTION_KEY_ID, key);
-        }
-        return key;
+        const existingKey = await SecureStore.getItemAsync(ENCRYPTION_KEY_ID);
+        if (existingKey) return existingKey;
+
+        // Generate a random 32-character key for AES-256
+        const newKey = CryptoJS.lib.WordArray.random(32).toString();
+        await SecureStore.setItemAsync(ENCRYPTION_KEY_ID, newKey);
+        return newKey;
     },
 
     /**

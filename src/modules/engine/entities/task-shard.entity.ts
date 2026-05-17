@@ -26,6 +26,12 @@ export class TaskShard {
   @Column({ name: 'difficulty_base', default: 3 })
   difficultyBase: number; // 1-10
 
+  @Column({ default: 'journal' })
+  category: string; // 'video', 'audio', 'quiz', 'journal', 'consistency'
+
+  @Column({ type: 'int', default: 5 })
+  intensity: number; // 1-10 based on complexity and energy
+
   @Column({ name: 'xp_reward', default: 20 })
   xpReward: number;
 
