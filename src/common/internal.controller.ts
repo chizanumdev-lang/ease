@@ -42,10 +42,9 @@ export class InternalController {
     this.validateKey(key);
     this.logger.log(`Received internal audio generation request for Track ${body.audioTrackId}`);
     
-    // We should probably have a dedicated method for this, 
-    // but for now we'll just log that we received it.
-    // In the future, we can call AudioService or RitualsService.
-    return { success: true };
+    // Call the programsService method to perform the actual background generation
+    const result = await this.programsService.generateAudioTrack(body.audioTrackId, body.theme, body.audioFilename);
+    return result;
   }
   
   @Post('users/skip-verification')

@@ -96,7 +96,15 @@ async function fixAllSchemas() {
     await client.query(`ALTER TABLE reward_events ADD COLUMN IF NOT EXISTS user_id UUID;`);
     await client.query(`ALTER TABLE reward_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now();`);
     await client.query(`ALTER TABLE reward_events ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();`);
-    await client.query(`ALTER TABLE reward_events ALTER COLUMN type DROP NOT NULL;`);
+
+    const typeColCheck = await client.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name='reward_events' AND column_name='type';
+    `);
+    if (typeColCheck.rows.length > 0) {
+      await client.query(`ALTER TABLE reward_events ALTER COLUMN type DROP NOT NULL;`);
+    }
 
     // --- TABLE: adaptation_logs ---
     console.log('Checking adaptation_logs...');

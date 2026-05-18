@@ -4,7 +4,7 @@ require('dotenv').config();
 async function fixSchema() {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1') || process.env.DATABASE_URL.includes('54322') ? false : { rejectUnauthorized: false }
   });
 
   try {
@@ -38,16 +38,26 @@ async function fixSchema() {
       ADD COLUMN IF NOT EXISTS event_type TEXT,
       ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0,
       ADD COLUMN IF NOT EXISTS description TEXT,
-      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW(),
-      ALTER COLUMN type DROP NOT NULL;
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
     `);
 
-    // Migrate old data if any (from type/amount to event_type/points)
-    await client.query(`
-      UPDATE reward_events 
-      SET event_type = type, points = amount 
-      WHERE event_type IS NULL AND type IS NOT NULL;
+    const typeColCheck = await client.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name='reward_events' AND column_name='type';
     `);
+    if (typeColCheck.rows.length > 0) {
+      await client.query(`
+        ALTER TABLE reward_events ALTER COLUMN type DROP NOT NULL;
+      `);
+
+      // Migrate old data if any (from type/amount to event_type/points)
+      await client.query(`
+        UPDATE reward_events 
+        SET event_type = type, points = amount 
+        WHERE event_type IS NULL AND type IS NOT NULL;
+      `);
+    }
 
     console.log('Schema fixes applied successfully!');
     await client.end();

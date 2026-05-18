@@ -1,15 +1,42 @@
 import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
 import { exec } from 'child_process';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class StartupService implements OnApplicationBootstrap {
   private readonly logger = new Logger(StartupService.name);
 
-  onApplicationBootstrap() {
+  constructor(private dataSource: DataSource) {}
+
+  async onApplicationBootstrap() {
+    // Run schema fixes globally
+    await this.runDynamicSchemaFixes();
+
     // Only run in development
     if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.NODE_ENV === 'local') {
       this.startTriggerDev();
       this.startOllamaCheck();
+    }
+  }
+
+  private async runDynamicSchemaFixes() {
+    this.logger.log('🛠️ Running dynamic database schema fixes...');
+    try {
+      await this.dataSource.query(`
+        DO $$ 
+        BEGIN 
+            IF EXISTS (
+                SELECT 1 
+                FROM information_schema.columns 
+                WHERE table_name='reward_events' AND column_name='type'
+            ) THEN 
+                ALTER TABLE reward_events ALTER COLUMN type DROP NOT NULL;
+            END IF;
+        END $$;
+      `);
+      this.logger.log('✅ Dynamic schema fixes completed successfully.');
+    } catch (err: any) {
+      this.logger.error(`❌ Dynamic schema fix failed: ${err.message}`);
     }
   }
 

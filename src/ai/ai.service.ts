@@ -845,22 +845,24 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             task: `an immersive focus session reinforcing a lesson about "${dayTheme}"`
         };
 
-        const wordCount = duration * 150; // Targeting ~150 words per minute
+        const wordCount = Math.max(750, duration * 150); // Targeting at least 750 words for 5-minute sessions to ensure valuable content
         const prompt = `
 You are creating ${typeContext[type]} for a ${duration}-minute session.
 
 **Goal/Theme**: "${dayTheme}"
 
 **Session Structure**:
-1. **Introduction (1 min)**: Set the space, focus on breathing, and introduce today's theme: "${dayTheme}".
-2. **Core Lesson & Affirmations (Remaining time)**: 
-   - Weave affirmations specific to the goal (I am..., I have...) into a continuous, flowing narrative.
-   - Deeply explore the implications of mastering "${dayTheme}".
-3. **Closing (1 min)**: Gently bring the focus back while grounding the new subconscious patterns.
+1. **Introduction (1 min)**: Set the space, guide the user to take a deep breath, ground themselves, and introduce today's masterclass theme: "${dayTheme}".
+2. **Core Masterclass & Actionable Steps (Remaining time)**:
+   - Provide high-impact, direct, and non-generic actionable advice that the user can apply immediately.
+   - You MUST include a concrete, real-world live example or a short story/scenario that beautifully illustrates this concept in action.
+   - Weave 10-15 powerful, positive subliminal affirmations specific to the goal (e.g., "I am...," "I possess...") naturally into the continuous narrative.
+   - Explore the deep psychological shifts and cognitive rewards of mastering "${dayTheme}".
+3. **Closing (1 min)**: Gently bring the focus back while grounding the new habits, concluding with a clear, positive next step.
 
 **Requirements**:
-1. **Word Count**: You MUST generate at least ${wordCount} words for the "backgroundNarration" to fill the ${duration}-minute duration properly.
-2. **Pacing**: Use descriptive, evocative language.
+1. **Word Count**: You MUST generate at least ${wordCount} words for the "backgroundNarration" to fill the ${duration}-minute duration. Do NOT summarize or use lazy filler text; write a high-value, highly engaging, and fully realized voiceover script.
+2. **Pacing & Tone**: Friendly, encouraging, clear, and steady.
 3. **Affirmations**: Provide 10-15 powerful statements in the "affirmations" array.
 4. **Binaural Frequency**: Specify the optimal frequency for this session type:
    ${type === 'morning' ? '- Recommended: 10-14 Hz (Alpha/Beta for alertness)' : ''}
@@ -876,12 +878,11 @@ You are creating ${typeContext[type]} for a ${duration}-minute session.
     "I am mastering...",
     "My mind is..."
   ],
-  "backgroundNarration": "...", // Long, continuous script of at least ${wordCount} words
+  "backgroundNarration": "...", // Rich, complete masterclass voiceover script of at least ${wordCount} words containing live examples and actionable advice
   "theme": "${dayTheme}"
 }
 
-Return ONLY the raw JSON object.
-`;
+Return ONLY the raw JSON object starting with { and ending with }.`;
 
         try {
             const response = await this.callWithFallback(prompt);
@@ -901,12 +902,28 @@ Return ONLY the raw JSON object.
             };
         } catch (error) {
             this.logger.error('Failed to generate audio script, using safe fallback', error);
+            const cleanTheme = dayTheme.replace(/^(Day \d+:?\s*)/i, '').trim();
+            
+            const intro = `Welcome to this dedicated session. Take a deep, centering breath. Allow your shoulders to drop, and let go of any tension as you ground yourself in this very moment. Today, we are diving deep into the masterclass of ${cleanTheme}. This is not just an abstract concept; it is a highly practical skill and state of mind that will radically transform your progress. In this ${duration}-minute immersion, we will unlock the core principles of ${cleanTheme} so you can integrate them seamlessly into your daily life.`;
+
+            const core = `To truly master ${cleanTheme}, you must move beyond passive understanding and take active, deliberate steps. Let's look at a concrete, real-world example: imagine a high-performance professional facing a sudden, high-stress deadline. Instead of panicking or rushing, they pause, realign their focus, and apply the exact principles of ${cleanTheme} by breaking down the challenge into micro-actions and focusing solely on the next immediate step. By doing this, they enter a state of effortless flow, reducing cognitive load and accelerating their results. You can do the exact same thing starting today. Begin by identifying one small area in your routine where you can apply this concept. Protect your focus, eliminate distractions, and commit to executing it with absolute presence and high-value intent.`;
+
+            const integration = `As you let these insights settle deep into your awareness, let these powerful affirmations sink into your subconscious. You are fully capable of embodying ${cleanTheme} every single day. With each breath, you are becoming more focused, more resilient, and more aligned with your ultimate goal. You have the discipline, the clarity, and the drive to excel. Trust in your ability to grow, adapt, and succeed. Now, gently bring your focus back to the physical space around you, carrying this high-performance energy forward into your next task. You are ready.`;
+
+            const backgroundNarration = `${intro}\n\n${core}\n\n${integration}`;
+
             return {
                 sessionType: type === 'night' ? 'sleep' : 'relaxation',
                 binauralFrequency: type === 'night' ? 2 : 10,
                 carrierFrequency: 200,
-                affirmations: ["I am growing every day", "I am centered and focused"],
-                backgroundNarration: "Take a deep breath and settle into focus as we prepare for this session...",
+                affirmations: [
+                    `I am fully aligned with the power of ${cleanTheme}`,
+                    `I easily integrate ${cleanTheme} into my daily actions`,
+                    `My mind is focused, clear, and perfectly centered`,
+                    `I am growing, learning, and progressing every single day`,
+                    `I choose to act with clarity and absolute presence`
+                ],
+                backgroundNarration,
                 theme: dayTheme
             };
         }

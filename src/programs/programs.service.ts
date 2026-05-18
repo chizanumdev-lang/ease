@@ -363,13 +363,15 @@ export class ProgramsService {
                 audioTrack.duration = dur.audio;
                 audioTrack.type = mood;
 
+                // Save first to obtain database ID
+                const savedTrack = await this.audioTrackRepository.save(audioTrack);
+
                 try {
-                    await triggerGenerateAudio({ audioTrackId: audioTrack.id, theme: content.audioTask.theme || content.theme, audioFilename });
+                    await triggerGenerateAudio({ audioTrackId: savedTrack.id, theme: content.audioTask.theme || content.theme, audioFilename });
                 } catch (queueErr) {
-                    this.logger.warn(`Audio trigger unavailable, track ${audioTrack.id} will use static URL: ${queueErr.message}`);
+                    this.logger.warn(`Audio trigger unavailable, track ${savedTrack.id} will use static URL: ${queueErr.message}`);
                 }
 
-                await this.audioTrackRepository.save(audioTrack);
                 await this.upsertTask({
                     type: 'audio', dayPlanId: day.id, order: 2,
                     title: content.audioTask.title || 'Focus Audio',
@@ -916,5 +918,79 @@ export class ProgramsService {
         }
 
         return streak;
+    }
+
+    async generateAudioTrack(audioTrackId: string, theme: string, audioFilename: string): Promise<any> {
+        this.logger.log(`Generating audio for track ${audioTrackId} (theme: ${theme})`);
+        try {
+            const track = await this.audioTrackRepository.findOne({ where: { id: audioTrackId } });
+            if (!track) {
+                this.logger.warn(`AudioTrack ${audioTrackId} not found in DB`);
+                return { success: false, reason: 'not_found' };
+            }
+
+            // Check if already generated (sync path)
+            if (
+                track.url &&
+                track.url !== 'generating...' &&
+                track.url !== '' &&
+                !track.url.includes('pixabay.com') &&
+                !track.url.includes('static_binaural')
+            ) {
+                this.logger.log(`Audio track ${audioTrackId} already generated, skipping`);
+                return { success: true, url: track.url };
+            }
+
+            // Set state to generating
+            track.url = 'generating...';
+            await this.audioTrackRepository.save(track);
+
+            // 1. Generate script with AI
+            // We want it to be a task audio session, so type = 'task'
+            const scriptData = await this.aiService.generateAudioScript(theme, 5, 'task');
+
+            // 2. Create mixed audio file via AudioMixerService
+            const tempDir = path.join(os.tmpdir(), 'ease-audio-binaural');
+            const audioPath = await this.audioMixerService.createBinauralSubliminalTrack(
+                scriptData,
+                tempDir
+            );
+
+            // 3. Upload to storage (Cloudinary)
+            const publicUrl = await this.audioService.uploadToCloudinary(audioPath, audioFilename);
+
+            // 4. Update DB record
+            track.url = publicUrl;
+            track.type = scriptData.sessionType;
+            track.metadata = {
+                sessionType: scriptData.sessionType,
+                frequency: scriptData.binauralFrequency,
+                affirmations: scriptData.affirmations,
+            };
+            await this.audioTrackRepository.save(track);
+            this.logger.log(`Successfully generated and saved binaural track ${audioTrackId}`);
+
+            // 5. Cleanup temp file
+            try {
+                if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
+            } catch (err) {
+                this.logger.warn(`Failed to cleanup temp file: ${audioPath}`, err);
+            }
+
+            return { success: true, url: publicUrl };
+        } catch (error) {
+            this.logger.error(`Failed to generate audio track ${audioTrackId}: ${error.message}`);
+            // Restore static placeholder on error so that it at least plays *something*
+            const track = await this.audioTrackRepository.findOne({ where: { id: audioTrackId } });
+            if (track) {
+                const mood = track.type || 'meditation';
+                const dayNumber = track.dayPlanId ? 
+                    (await this.dayPlanRepository.findOne({ where: { id: track.dayPlanId } }))?.dayNumber || 1 
+                    : 1;
+                track.url = pickAudioUrl(mood, dayNumber);
+                await this.audioTrackRepository.save(track);
+            }
+            throw error;
+        }
     }
 }
