@@ -574,21 +574,22 @@ export class ProgramsService {
         };
 
         if (day1 && day1.status !== 'ready') {
-            // Trigger or Re-trigger if not ready via background queue
-            const handle = await triggerHydrateDay({
-                dayPlanId: day1.id,
-                goalText: generationParams.goalText,
-                params: generationParams,
-            });
-            if (!handle) {
-                this.logger.warn(`Trigger.dev unavailable, hydrating Day 1 locally`);
-                this.orchestratorService.orchestrateDay(day1.id, generationParams.goalText, generationParams).catch(err => 
-                    this.logger.error(`Background hydration failed: ${err.message}`)
+            this.logger.log(`Hydrating Day 1 synchronously for instant first-run availability`);
+            try {
+                await this.orchestratorService.orchestrateDay(day1.id, generationParams.goalText, generationParams);
+                program.status = 'ready';
+                await this.programRepository.save(program);
+            } catch (err) {
+                this.logger.error(`Synchronous hydration for Day 1 failed: ${err.message}. Retrying locally in background...`);
+                this.orchestratorService.orchestrateDay(day1.id, generationParams.goalText, generationParams).catch(bgErr => 
+                    this.logger.error(`Fallback background hydration failed: ${bgErr.message}`)
                 );
+                program.status = 'generating';
+                await this.programRepository.save(program);
             }
-            program.status = 'generating';
         } else {
             program.status = 'ready';
+            await this.programRepository.save(program);
         }
 
         // ─── PHASE 3: Dispatch Day 2 to background queue ─────────────────────
