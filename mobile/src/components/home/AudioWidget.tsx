@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,8 +13,20 @@ const isCurrentlyMorning = () => new Date().getHours() < 12;
 
 const AudioWidget = () => {
     const { colors, spacing, borderRadius, fonts, isDark } = useTheme();
-    const { morningRitualTime, nightRitualTime, proximityStatus, ritualTracks, loadTrack, play, checkProximity, fetchRituals } = useAudioStore();
+    const { 
+        morningRitualTime, 
+        nightRitualTime, 
+        proximityStatus, 
+        ritualTracks, 
+        loadTrack, 
+        play, 
+        checkProximity, 
+        fetchRituals,
+        isPlaying,
+        autoPlayEnabled
+    } = useAudioStore();
     const [timeLeft, setTimeLeft] = useState<string>('');
+    const lastAutoplayedRef = useRef<{ date: string, type: 'morning' | 'night' } | null>(null);
 
     // Fetch rituals and start proximity checks on mount
     useEffect(() => {
@@ -24,6 +36,39 @@ const AudioWidget = () => {
         const interval = setInterval(checkProximity, 60000);
         return () => clearInterval(interval);
     }, []);
+
+    // Unified label — single source of truth used by both title and button
+    const morning = isCurrentlyMorning();
+    const nextRitualLabel = morning ? 'Morning Affirmations' : 'Nightly Subliminals';
+    const activeTrack = morning ? ritualTracks.morning : ritualTracks.night;
+    const trackReady = !!activeTrack;
+    const canPlay = proximityStatus === 'READY' && trackReady;
+
+    // Autoplay when proximity becomes READY and autoplay is enabled
+    useEffect(() => {
+        if (canPlay && autoPlayEnabled && !isPlaying) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const currentType = morning ? 'morning' : 'night';
+            
+            if (!lastAutoplayedRef.current || 
+                lastAutoplayedRef.current.date !== todayStr || 
+                lastAutoplayedRef.current.type !== currentType) {
+                
+                console.log(`[AudioWidget] Autoplay triggered for ${currentType} ritual`);
+                lastAutoplayedRef.current = { date: todayStr, type: currentType };
+                
+                const startAutoplay = async () => {
+                    try {
+                        await loadTrack(activeTrack!);
+                        await play();
+                    } catch (e) {
+                        console.error('[AudioWidget] Autoplay failed:', e);
+                    }
+                };
+                startAutoplay();
+            }
+        }
+    }, [canPlay, autoPlayEnabled, isPlaying, activeTrack, morning]);
 
     useEffect(() => {
         const updateTimer = () => {
@@ -76,12 +121,7 @@ const AudioWidget = () => {
         }
     };
 
-    // Unified label — single source of truth used by both title and button
-    const morning = isCurrentlyMorning();
-    const nextRitualLabel = morning ? 'Morning Affirmations' : 'Nightly Subliminals';
-    const activeTrack = morning ? ritualTracks.morning : ritualTracks.night;
-    const trackReady = !!activeTrack;
-    const canPlay = proximityStatus === 'READY' && trackReady;
+
 
     const getStatusColor = () => {
         if (proximityStatus === 'READY' && trackReady) return '#10B981';

@@ -51,8 +51,6 @@ export default function RootNavigator() {
             }
         }, 5000);
 
-        return () => clearTimeout(timer);
-
         // Register and sync push notifications
         notificationService.syncPushToken();
 
@@ -103,6 +101,7 @@ export default function RootNavigator() {
         });
 
         return () => {
+            clearTimeout(timer);
             notificationService.removeListeners();
         };
     }, []);

@@ -38,7 +38,7 @@ export default function SettingsScreen({ navigation }: Props) {
     const { user, logout, updateSettings } = useAuthStore();
     const { currentProgram, deleteProgram } = useProgramsStore();
     const { analytics, fetchAnalytics } = useAnalyticsStore();
-    const { loadTrack, play, stop, isPlaying, currentTrack } = useAudioStore();
+    const { loadTrack, play, stop, isPlaying, currentTrack, autoPlayEnabled, toggleAutoPlay } = useAudioStore();
     const { colors, spacing, borderRadius, isDark, shadows } = useTheme();
     const { showModal } = useModalStore();
 
@@ -347,6 +347,18 @@ export default function SettingsScreen({ navigation }: Props) {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>App Preferences</Text>
                     <View style={[styles.settingsGroup, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                        <View style={styles.settingRow}>
+                            <View style={styles.settingInfo}>
+                                <Text style={[styles.settingLabel, { color: colors.text }]}>Autoplay Rituals</Text>
+                                <Text style={[styles.settingDesc, { color: colors.textMuted }]}>Play morning and evening audios automatically when ready.</Text>
+                            </View>
+                            <Switch
+                                value={autoPlayEnabled}
+                                onValueChange={toggleAutoPlay}
+                                trackColor={{ false: isDark ? colors.outline : colors.surfaceContainerHighest, true: colors.primary }}
+                            />
+                        </View>
+                        <View style={[styles.divider, { backgroundColor: colors.outlineVariant }]} />
                         <View style={styles.settingRow}>
                             <View style={styles.settingInfo}>
                                 <Text style={[styles.settingLabel, { color: colors.text }]}>Floating Companion</Text>
