@@ -1,0 +1,70 @@
+{
+  "data": {
+    "getShardsForPrompt": [
+      {
+        "selectedShard": "watch-front-end-tutorial",
+        "displayName": "Frontend Tutorial Watch",
+        "modality": "watching",
+        "draftContent": {
+          "shardName": "watch-front-end-tutorial",
+          "title": "Learn French Basics through Video",
+          "description": "Watch a tutorial on French basics",
+          "searchQuery": "French language basics for beginners",
+          "narrationScript": "Let's start with the basics of French. In this video, you'll learn the French alphabet, basic phrases, and pronunciation. Pay attention to the instructor's mouth and lips movements to get a feel for how to form the sounds. Repeat after the instructor to practice your pronunciation. Take notes on any phrases or words that you find difficult to pronounce. Remember, the key to learning a new language is to practice consistently, so make sure to review what you've learned today and practice speaking and listening every day."
+        }
+      },
+      {
+        "selectedShard": "audio-listening",
+        "displayName": "French Audio Listening",
+        "modality": "listening",
+        "draftContent": {
+          "shardName": "audio-listening",
+          "title": "Improve French Listening Skills",
+          "description": "Listen to a French podcast or audio lecture",
+          "searchQuery": "French podcast for beginners",
+          "narrationScript": "Now it's time to practice your listening skills. Listen to a French podcast or audio lecture for 15 minutes. Try to focus on the sounds, intonation, and rhythm of the language. Don't worry if you don't understand everything - just let the sounds sink in. Take note of any words or phrases that you recognize from your previous lessons. Repeat what you've heard to practice your pronunciation. Remember, listening is a crucial part of learning a new language, so make sure to listen to French audio every day, even if it's just for a few minutes."
+        }
+      },
+      {
+        "selectedShard": "ielts-vocab-list",
+        "displayName": "IELTS Vocab List Review",
+        "modality": "reading",
+        "draftContent": {
+          "shardName": "ielts-vocab-list",
+          "title": "French Vocabulary Quiz",
+          "description": "Review a list of French vocabulary words",
+          "searchQuery": "",
+          "questions": [
+            "What does 'bonjour' mean?",
+            "What is the French word for 'water'?"
+          ],
+          "narrationScript": "Let's test your knowledge of French vocabulary. Look at the list of words and see how many you can recall. Check the meanings of any words you're not sure about. Make flashcards to help you remember new words. Try to use the words in sentences to practice your grammar and pronunciation. Remember, learning vocabulary is an ongoing process, so make sure to review and practice every day."
+        }
+      },
+      {
+        "selectedShard": "write-sentence-out-loud",
+        "displayName": "Practice writing out loud",
+        "modality": "writing",
+        "draftContent": {
+          "shardName": "write-sentence-out-loud",
+          "title": "Practice French Writing and Speaking",
+          "description": "Write and speak a sentence in French",
+          "searchQuery": "",
+          "narrationScript": "Now it's time to practice writing and speaking in French. Write a sentence in French, such as 'Je m'appelle...' (My name is...). Then, read it out loud to practice your pronunciation. Pay attention to your intonation, rhythm, and accent. Record yourself and listen to the recording to identify areas for improvement. Write another sentence and repeat the process. Remember, the more you practice writing and speaking, the more confident you'll become in your language skills."
+        }
+      },
+      {
+        "selectedShard": "weekly-planning-sheet",
+        "displayName": "Weekly Planning Sheet",
+        "modality": "writing",
+        "draftContent": {
+          "shardName": "weekly-planning-sheet",
+          "title": "Plan Your French Learning",
+          "description": "Fill out a weekly planning sheet to prioritize French learning tasks",
+          "searchQuery": "",
+          "narrationScript": "Let's plan your French learning for the week. Fill out a weekly planning sheet to prioritize your tasks and allocate time for practice. Set specific, achievable goals, such as practicing listening for 15 minutes a day or reviewing vocabulary for 30 minutes a day. Break down larger tasks into smaller, manageable chunks. Schedule time for speaking, writing, and reviewing grammar rules. Remember, consistency is key, so make sure to stick to your plan and review your progress regularly. Don't be too hard on yourself if you miss a day or two - just get back on track and keep moving forward."
+        }
+      }
+    ]
+  }
+}

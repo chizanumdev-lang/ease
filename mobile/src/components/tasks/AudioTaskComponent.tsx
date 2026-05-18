@@ -1,11 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Animated, Easing } from 'react-native';
+import { 
+    View, 
+    StyleSheet, 
+    Text, 
+    TouchableOpacity, 
+    Animated, 
+    Easing, 
+    Dimensions, 
+    Image, 
+    StatusBar,
+    ScrollView
+} from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Task, TaskMetadata, AudioTrack } from '../../types';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { useProgramsStore } from '../../store/programsStore';
 import { useAudioStore } from '../../store/audioStore';
+import { useAuthStore } from '../../store/authStore';
+import { canAutoPlayAudio } from '../../utils/sleepWindow.util';
+import { BlurView } from 'expo-blur';
+import PetalBackground from '../PetalBackground';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const HERO_HEIGHT = SCREEN_HEIGHT * 0.35;
+const CARD_OVERLAP = 24;
 
 interface AudioTaskProps {
     task: Task;
@@ -13,15 +32,16 @@ interface AudioTaskProps {
 }
 
 export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps) {
-    const { colors, fonts, shadows, isDark } = useTheme();
+    const { colors, fonts, shadows, isDark, borderRadius } = useTheme();
     const { todayPlan, fetchTodayPlan, currentProgram } = useProgramsStore();
+    const { user } = useAuthStore();
     const audioStore = useAudioStore();
+    const { isPlaying, position, duration, isLoading, autoPlayEnabled } = audioStore;
     
     const [gaveUp, setGaveUp] = useState(false);
     const [isCompleted, setIsCompleted] = useState(task.completed || false);
     const [playError, setPlayError] = useState<string | null>(null);
     
-    // Resolve audio URL — prefer the task's own audio first, then fall back to ritual tracks
     const taskAudioUrl: string | null = 
         task.metadata?.audioUrl
         ?? task.metadata?.externalLink
@@ -31,7 +51,6 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
         todayPlan?.audioTracks?.find(t => t.dayPlanId === task.dayPlanId)
         ?? todayPlan?.audioTracks?.[0];
 
-    // Build the AudioTrack object we'll actually play
     const audioTrack: AudioTrack | undefined = taskAudioUrl
         ? {
             id: task.id,
@@ -43,12 +62,10 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
         : ritualAudioTrack;
 
     const audioUrl = audioTrack?.url ?? null;
-
-    console.log('[AudioTask] Resolved audioUrl:', audioUrl, '| task.metadata:', task.metadata);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const pulseAnim = useRef(new Animated.Value(0.4)).current;
 
-    const isStillGenerating = (audioUrl?.includes('static_binaural') ?? false) && !gaveUp;
+    const isStillGenerating = (!audioUrl || audioUrl === '' || audioUrl.includes('static_binaural')) && !gaveUp;
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -83,11 +100,22 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
         return () => clearInterval(interval);
     }, [isStillGenerating, currentProgram?.id, gaveUp]);
 
-    // Sync with audio store on mount/unmount
     useEffect(() => {
-        if (audioTrack && !isStillGenerating) {
-            audioStore.loadTrack(audioTrack);
-        }
+        const prepareTrack = async () => {
+            if (audioTrack && !isStillGenerating) {
+                try {
+                    await audioStore.loadTrack(audioTrack);
+                    // Trigger auto-play if permitted
+                    if (canAutoPlayAudio(user, autoPlayEnabled)) {
+                        await audioStore.play();
+                    }
+                } catch (err) {
+                    console.error('[AudioTask] Preparation failed:', err);
+                    setPlayError('Failed to prepare audio session.');
+                }
+            }
+        };
+        prepareTrack();
     }, [audioUrl, isStillGenerating]);
 
     const formatTime = (seconds: number) => {
@@ -99,7 +127,7 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     const handlePlayPause = async () => {
         setPlayError(null);
         try {
-            if (audioStore.isPlaying) {
+            if (isPlaying) {
                 await audioStore.pause();
             } else {
                 await audioStore.play();
@@ -111,120 +139,157 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     };
 
     const handleComplete = () => {
-        onComplete({ audioPosition: audioStore.position * 1000 });
+        onComplete({ audioPosition: position * 1000 });
     };
 
-    const progress = audioStore.duration > 0 ? audioStore.position / audioStore.duration : 0;
+    const progress = duration > 0 ? position / duration : 0;
     if (progress >= 0.85 && !isCompleted) {
         setIsCompleted(true);
     }
 
     return (
-        <Animated.View style={[styles.root, { opacity: fadeAnim, backgroundColor: colors.background }]}>
-            <View style={styles.content}>
-                <View style={styles.artworkSection}>
-                    <Animated.View style={[
-                        styles.artworkContainer, 
-                        { 
-                            backgroundColor: colors.surfaceContainerLow,
-                            opacity: isStillGenerating ? pulseAnim : 1,
-                            ...(isDark ? {} : shadows.ambient)
-                        }
-                    ]}>
+        <View style={[styles.root, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+            <PetalBackground />
+
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces={false}>
+                {/* Hero Header */}
+                <View style={[styles.heroSection, { height: HERO_HEIGHT }]}>
+                    <Image 
+                        source={{ uri: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=2560&auto=format&fit=crop' }} 
+                        style={StyleSheet.absoluteFill}
+                        resizeMode="cover"
+                    />
+                    <View style={styles.heroOverlay} />
+                    <View style={styles.heroContent}>
                         <Ionicons 
-                            name={isStillGenerating ? "sparkles" : "musical-notes"} 
-                            size={72} 
-                            color={colors.primary} 
-                            style={{ opacity: 0.85 }} 
+                            name={isStillGenerating ? "sparkles" : "pulse"} 
+                            size={48} 
+                            color={colors.white} 
                         />
-                    </Animated.View>
-                    
-                    <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>
-                        {isStillGenerating ? "Preparing Your Session" : (audioTrack?.title || task.title)}
-                    </Text>
-                    
-                    <Text style={[styles.subtitle, { color: colors.primary, fontFamily: fonts.label }]}>
-                        {isStillGenerating 
-                            ? "CRAFTING PERSONALIZED FREQUENCIES" 
-                            : `${(audioTrack?.type || 'Guided Ritual').toUpperCase()} • ${Math.round(audioStore.duration / 60) || task.duration || 10} MIN`}
-                    </Text>
+                    </View>
+                </View>
+
+                {/* Content Card */}
+                <View style={[
+                    styles.contentArea, 
+                    { 
+                        backgroundColor: colors.surfaceContainerLowest,
+                        borderTopLeftRadius: borderRadius.xxxl,
+                        borderTopRightRadius: borderRadius.xxxl,
+                        marginTop: -CARD_OVERLAP,
+                    }
+                ]}>
+                    <View style={styles.dragHandle} />
+
+                    <View style={styles.headerSection}>
+                        <Text style={[styles.ritualType, { color: colors.textMuted, fontFamily: fonts.labelBold }]}>
+                            {(audioTrack?.type || 'Guided Ritual').toUpperCase()}
+                        </Text>
+                        <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.displayBold }]}>
+                            {isStillGenerating ? "Preparing Your Session" : (audioTrack?.title || task.title)}
+                        </Text>
+                        <Text style={[styles.duration, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                            {Math.round(duration / 60) || task.duration || 10} MIN SESSION
+                        </Text>
+                    </View>
 
                     {isStillGenerating && (
-                        <Text style={[styles.statusNote, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                            This usually takes about 30 seconds. Feel free to stay here or come back later.
-                        </Text>
+                        <View style={styles.generationNotice}>
+                            <Text style={[styles.statusNote, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                                {gaveUp ? "PREPARATION HALTED" : "CRAFTING PERSONALIZED FREQUENCIES..."}
+                            </Text>
+                            {gaveUp ? (
+                                <TouchableOpacity 
+                                    onPress={() => setGaveUp(false)}
+                                    style={styles.retryButton}
+                                >
+                                    <Text style={{ color: colors.primary, fontFamily: fonts.displayBold }}>RETRY GENERATION</Text>
+                                </TouchableOpacity>
+                            ) : (
+                                <Animated.View style={[styles.loadingBar, { opacity: pulseAnim, backgroundColor: colors.primary }]} />
+                            )}
+                        </View>
                     )}
-                </View>
 
-                <View style={[styles.playerCard, { backgroundColor: colors.surfaceContainerLow, ...(isDark ? {} : shadows.ambient) }]}>
-                    <Slider
-                        style={styles.slider}
-                        minimumValue={0}
-                        maximumValue={audioStore.duration || 1}
-                        value={audioStore.position}
-                        minimumTrackTintColor={colors.primary}
-                        maximumTrackTintColor={colors.surfaceContainerHighest}
-                        thumbTintColor={isStillGenerating ? colors.outlineVariant : colors.primary}
-                        disabled={isStillGenerating || !audioUrl}
-                        onSlidingComplete={(value) => {
-                            audioStore.setPosition(value);
-                        }}
-                    />
-                    <View style={styles.timeRow}>
-                        <Text style={[styles.timeText, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                            {formatTime(audioStore.position)}
-                        </Text>
-                        <Text style={[styles.timeText, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                            {formatTime(audioStore.duration)}
-                        </Text>
+                    {playError && (
+                        <View style={styles.errorBox}>
+                            <Ionicons name="alert-circle-outline" size={20} color={colors.error} />
+                            <Text style={[styles.errorText, { color: colors.error, fontFamily: fonts.body }]}>{playError}</Text>
+                        </View>
+                    )}
+
+                    <View style={[styles.playerCard, { backgroundColor: colors.surfaceContainerLow }]}>
+                        <Slider
+                            style={styles.slider}
+                            minimumValue={0}
+                            maximumValue={duration || 1}
+                            value={position}
+                            minimumTrackTintColor={colors.primary}
+                            maximumTrackTintColor={colors.surfaceContainerHigh}
+                            thumbTintColor={isStillGenerating ? colors.outlineVariant : colors.primary}
+                            disabled={isStillGenerating || !audioUrl}
+                            onSlidingComplete={(value) => {
+                                audioStore.setPosition(value);
+                            }}
+                        />
+                        <View style={styles.timeRow}>
+                            <Text style={[styles.timeText, { color: colors.textMuted, fontFamily: fonts.label }]}>
+                                {formatTime(position)}
+                            </Text>
+                            <Text style={[styles.timeText, { color: colors.textMuted, fontFamily: fonts.label }]}>
+                                {formatTime(duration)}
+                            </Text>
+                        </View>
+
+                        <View style={styles.controls}>
+                            <TouchableOpacity 
+                                onPress={() => audioStore.setPosition(Math.max(0, position - 15))}
+                                style={styles.controlBtn}
+                                disabled={isStillGenerating || !audioUrl}
+                            >
+                                <Ionicons name="refresh" size={24} color={colors.primary} style={{ transform: [{ scaleX: -1 }] }} />
+                                <Text style={[styles.skipIndicator, { color: colors.primary, fontFamily: fonts.labelBold }]}>15</Text>
+                            </TouchableOpacity>
+ 
+                            <TouchableOpacity 
+                                style={[
+                                    styles.playBtn, 
+                                    { backgroundColor: (isStillGenerating || !audioUrl) ? colors.surfaceContainerHigh : colors.primary }
+                                ]}
+                                onPress={handlePlayPause}
+                                disabled={isStillGenerating || !audioUrl}
+                                activeOpacity={0.9}
+                            >
+                                <Ionicons 
+                                    name={isPlaying ? "pause" : "play"} 
+                                    size={32} 
+                                    color={colors.white} 
+                                    style={{ marginLeft: isPlaying ? 0 : 4 }} 
+                                />
+                            </TouchableOpacity>
+ 
+                            <TouchableOpacity 
+                                onPress={() => audioStore.setPosition(Math.min(duration, position + 15))}
+                                style={styles.controlBtn}
+                                disabled={isStillGenerating || !audioUrl}
+                            >
+                                <Ionicons name="refresh" size={24} color={colors.primary} />
+                                <Text style={[styles.skipIndicator, { color: colors.primary, fontFamily: fonts.labelBold }]}>15</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
-                    <View style={styles.controls}>
-                        <TouchableOpacity 
-                            onPress={() => audioStore.setPosition(Math.max(0, audioStore.position - 15))}
-                            style={styles.controlBtn}
-                            disabled={isStillGenerating || !audioUrl}
-                        >
-                            <Ionicons name="refresh" size={28} color={colors.text} style={{ transform: [{ scaleX: -1 }] }} />
-                            <Text style={[styles.skipIndicator, { color: colors.text, fontFamily: fonts.label }]}>15</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity 
-                            style={[
-                                styles.playBtn, 
-                                { backgroundColor: (isStillGenerating || !audioUrl) ? colors.surfaceContainerHighest : colors.primary }
-                            ]}
-                            onPress={handlePlayPause}
-                            disabled={isStillGenerating || !audioUrl}
-                            activeOpacity={0.9}
-                        >
-                            <Ionicons 
-                                name={audioStore.isPlaying ? "pause" : "play"} 
-                                size={40} 
-                                color={colors.white} 
-                                style={{ marginLeft: audioStore.isPlaying ? 0 : 4 }} 
-                            />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity 
-                            onPress={() => audioStore.setPosition(Math.min(audioStore.duration, audioStore.position + 15))}
-                            style={styles.controlBtn}
-                            disabled={isStillGenerating || !audioUrl}
-                        >
-                            <Ionicons name="refresh" size={28} color={colors.text} />
-                            <Text style={[styles.skipIndicator, { color: colors.text, fontFamily: fonts.label }]}>15</Text>
-                        </TouchableOpacity>
-                    </View>
+                    <View style={{ height: 140 }} />
                 </View>
-            </View>
+            </ScrollView>
 
-            <View style={[styles.footer, { backgroundColor: colors.background }]}>
+            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.footer} pointerEvents="box-none">
                 <TouchableOpacity
                     style={[
                         styles.completeBtn,
                         { 
                             backgroundColor: isCompleted ? colors.primary : colors.surfaceContainerHighest,
-                            ...(isCompleted ? shadows.ambient : {})
                         }
                     ]}
                     onPress={handleComplete}
@@ -234,7 +299,7 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                     <Text style={[
                         styles.completeBtnText, 
                         { 
-                            fontFamily: fonts.display,
+                            fontFamily: fonts.labelBold,
                             color: isCompleted ? colors.white : colors.textMuted
                         }
                     ]}>
@@ -242,12 +307,12 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                     </Text>
                     <Ionicons 
                         name={isCompleted ? "checkmark-circle" : "lock-closed"} 
-                        size={22} 
+                        size={20} 
                         color={isCompleted ? colors.white : colors.textMuted} 
                     />
                 </TouchableOpacity>
-            </View>
-        </Animated.View>
+            </BlurView>
+        </View>
     );
 }
 
@@ -255,48 +320,72 @@ const styles = StyleSheet.create({
     root: {
         flex: 1,
     },
-    content: {
-        flex: 1,
-        paddingHorizontal: 28,
-        paddingTop: 40,
+    scrollContent: {
+        flexGrow: 1,
     },
-    artworkSection: {
-        alignItems: 'center',
-        marginTop: 20,
-        marginBottom: 40,
-    },
-    artworkContainer: {
-        width: 240,
-        height: 240,
-        borderRadius: 48,
+    heroSection: {
+        width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 36,
     },
-    title: {
-        fontSize: 28,
-        lineHeight: 34,
-        textAlign: 'center',
+    heroOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.15)',
+    },
+    heroContent: {
+        zIndex: 10,
+    },
+    contentArea: {
+        paddingHorizontal: 24,
+        paddingTop: 12,
+        zIndex: 5,
+        minHeight: SCREEN_HEIGHT * 0.65,
+    },
+    dragHandle: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        alignSelf: 'center',
+        marginBottom: 32,
+    },
+    headerSection: {
+        alignItems: 'center',
+        marginBottom: 40,
+    },
+    ritualType: {
+        fontSize: 11,
+        letterSpacing: 2,
         marginBottom: 12,
     },
-    subtitle: {
-        fontSize: 12,
-        letterSpacing: 2,
+    title: {
+        fontSize: 32,
+        lineHeight: 38,
         textAlign: 'center',
+        marginBottom: 8,
+    },
+    duration: {
+        fontSize: 13,
+        letterSpacing: 1,
+        opacity: 0.8,
+    },
+    generationNotice: {
+        alignItems: 'center',
+        marginBottom: 40,
     },
     statusNote: {
-        fontSize: 14,
-        textAlign: 'center',
-        marginTop: 20,
-        lineHeight: 22,
-        paddingHorizontal: 20,
-        opacity: 0.7,
+        fontSize: 12,
+        letterSpacing: 1,
+        marginBottom: 16,
+    },
+    loadingBar: {
+        width: 60,
+        height: 2,
+        borderRadius: 1,
     },
     playerCard: {
-        borderRadius: 32,
+        borderRadius: 24,
         padding: 24,
-        marginTop: 'auto',
-        marginBottom: 90,
     },
     slider: {
         width: '100%',
@@ -310,7 +399,6 @@ const styles = StyleSheet.create({
     },
     timeText: {
         fontSize: 12,
-        opacity: 0.6,
     },
     controls: {
         flexDirection: 'row',
@@ -320,9 +408,9 @@ const styles = StyleSheet.create({
         marginTop: 24,
     },
     playBtn: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -335,26 +423,57 @@ const styles = StyleSheet.create({
     skipIndicator: {
         fontSize: 9,
         position: 'absolute',
-        top: 18,
+        top: 20,
+    },
+    retryButton: {
+        marginTop: 12,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.1)',
+    },
+    errorBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginTop: 20,
+        padding: 12,
+        backgroundColor: 'rgba(255,0,0,0.05)',
+        borderRadius: 12,
+    },
+    errorText: {
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    patternBox: {
+        marginTop: 40,
+        padding: 20,
+        borderRadius: 24,
     },
     footer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        paddingHorizontal: 24,
-        paddingBottom: 24,
-        paddingTop: 16,
+        height: 100,
+        paddingBottom: 20,
+        justifyContent: 'center',
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: 'rgba(0,0,0,0.05)',
     },
     completeBtn: {
-        height: 64,
-        borderRadius: 32,
+        height: 56,
+        borderRadius: 28,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 12,
+        gap: 10,
+        marginHorizontal: 24,
     },
     completeBtnText: {
-        fontSize: 18,
+        fontSize: 16,
     },
 });
+

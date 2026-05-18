@@ -73,7 +73,7 @@ export default function TimelineTaskCard({ task, onPress, onAction }: Props) {
                         borderRadius: borderRadius.xl
                     },
                     isActive && { borderColor: colors.primary, borderWidth: 2 },
-                    isUpcoming && { borderStyle: 'dashed', backgroundColor: colors.surfaceVariant + '20' }
+                    isUpcoming && { borderStyle: 'dashed', backgroundColor: colors.surfaceContainerHigh + '20' }
                 ]}
                 onPress={() => onPress(task)}
                 onLongPress={() => onAction(task.id)}

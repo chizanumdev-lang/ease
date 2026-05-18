@@ -1,92 +1,105 @@
 export const Theme = {
     colors: {
-        // Premium Palette
+        // Quiet Premium Palette (Sage & Clay)
         primary: {
-            main: '#0284c7', // Calm Ocean Blue
-            light: '#38bdf8',
-            dark: '#0369a1', 
+            main: '#334537', // Deep Sage
+            light: '#4a5d4e', // Primary Sage
+            dark: '#171d18',
         },
         primaryContainer: {
-            light: '#e0f2fe',
-            dark: '#0c4a6e',
+            light: '#d3e8d5',
+            dark: '#394b3d',
         },
         secondary: {
-            main: '#10b981', // Serene Mint Green
-            light: '#6ee7b7',
-            dark: '#065f46',
+            main: '#5c5f5a', // Earthy Gray
+            light: '#e1e3dc',
+            dark: '#191c18',
         },
         secondaryContainer: {
-            light: '#d1fae5',
-            dark: '#064e3b',
+            light: '#dee0da',
+            dark: '#444843',
+        },
+        tertiary: {
+            main: '#5c3913', // Warm Clay
+            light: '#f0bd8b',
+            dark: '#2c1600',
+        },
+        tertiaryContainer: {
+            light: '#ffdcbd',
+            dark: '#765028',
         },
         
         background: {
-            light: '#ffffff',
-            dark: '#020617', // Rich Black-Blue
+            light: '#f5fbf3', // Soft Mint Tint
+            dark: '#171d18', 
         },
         surface: {
-            light: '#f8fafc',
-            dark: '#0f172a', 
+            light: '#f5fbf3',
+            dark: '#171d18', 
         },
         
         text: {
-            light: '#0f172a',
+            light: '#171d18',
             dark: '#f1f5f9',
-            muted: '#64748b',
+            muted: '#434843',
         },
 
+        surfaceContainerLowest: {
+            light: '#f5fbf3',
+            dark: '#171d18',
+        },
         surfaceContainerLow: {
-            light: '#f1f5f9',
-            dark: '#334155',
+            light: '#eff5ed',
+            dark: '#2c322d',
         },
         surfaceContainer: {
-            light: '#e2e8f0',
-            dark: '#1e293b',
+            light: '#eaefe8',
+            dark: '#2c322d',
         },
         surfaceContainerHigh: {
-            light: '#cbd5e1',
-            dark: '#475569',
+            light: '#e4eae2',
+            dark: '#434843',
         },
         surfaceContainerHighest: {
-            light: '#94a3b8',
-            dark: '#64748b',
+            light: '#dee4dd',
+            dark: '#737872',
         },
         
         onSurface: {
-            light: '#0f172a',
-            dark: '#f8fafc',
+            light: '#171d18',
+            dark: '#f1f5f9',
         },
         onSurfaceVariant: {
-            light: '#475569',
-            dark: '#94a3b8',
+            light: '#434843',
+            dark: '#c3c8c1',
         },
         
         outline: {
-            light: '#cbd5e1',
-            dark: '#475569',
+            light: '#737872',
+            dark: '#c3c8c1',
         },
         outlineVariant: {
-            light: '#e2e8f0',
-            dark: '#334155',
+            light: '#c3c8c1',
+            dark: '#434843',
         },
         
-        error: '#ef4444',
-        success: '#10b981',
-        warning: '#f59e0b',
-        info: '#3b82f6',
+        error: '#ba1a1a',
+        success: '#4a5d4e',
+        warning: '#765028',
+        info: '#334537',
 
-        // Premium Gradients
+        // Quiet Gradients
         gradients: {
-            primary: ['#0284c7', '#10b981'], // Blue to Green
-            secondary: ['#10b981', '#34d399'], // Green to Mint
-            surface: ['#ffffff', '#f8fafc'],
-            dark: ['#020617', '#0f172a'],
+            primary: ['#4a5d4e', '#334537'],
+            surface: ['#f5fbf3', '#ffffff'],
+            dark: ['#171d18', '#2c322d'],
+            clay: ['#f0bd8b', '#5c3913'],
         },
 
         // Glassmorphism
         glass: {
             light: 'rgba(255, 255, 255, 0.7)',
-            dark: 'rgba(15, 23, 42, 0.7)',
+            dark: 'rgba(23, 29, 24, 0.7)',
             border: 'rgba(255, 255, 255, 0.2)',
         },
 
@@ -94,10 +107,12 @@ export const Theme = {
         transparent: 'transparent',
     },
     fonts: {
-        display: 'Outfit_700Bold', // High-end rounded geometric
-        label: 'Outfit_500Medium',
-        body: 'Inter_400Regular',
-        bodyMedium: 'Inter_500Medium',
+        display: 'Newsreader_400Regular', // High-end literary serif
+        displayBold: 'Newsreader_700Bold',
+        label: 'DMSans_500Medium', // Functional modern sans
+        labelBold: 'DMSans_700Bold',
+        body: 'DMSans_400Regular',
+        bodyMedium: 'DMSans_500Medium',
         mono: 'SpaceMono_400Regular',
     },
     spacing: {
@@ -116,31 +131,32 @@ export const Theme = {
         lg: 16,
         xl: 24,
         xxl: 32,
-        xxxl: 48,
+        xxxl: 48, // Signature rounded corners
         full: 9999,
     },
     shadows: {
         soft: {
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.05,
+            shadowOpacity: 0.04,
             shadowRadius: 12,
             elevation: 2,
         },
         ambient: {
-            shadowColor: '#0284c7',
+            shadowColor: '#000',
             shadowOffset: { width: 0, height: 12 },
-            shadowOpacity: 0.12,
-            shadowRadius: 24,
+            shadowOpacity: 0.08,
+            shadowRadius: 32,
             elevation: 8,
         },
         premium: {
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 20 },
-            shadowOpacity: 0.15,
-            shadowRadius: 30,
-            elevation: 12,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.04,
+            shadowRadius: 20,
+            elevation: 10,
         }
     }
 };
+
 

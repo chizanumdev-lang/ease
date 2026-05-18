@@ -138,6 +138,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
     const { showModal } = useModalStore();
     const [previewData, setPreviewData] = useState<any>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [draftIds, setDraftIds] = useState<{ goalId: string, programId: string } | null>(null);
 
     const animateStepChange = (newStep: Step) => {
         Animated.parallel([
@@ -181,6 +182,18 @@ export default function GoalWizardScreen({ navigation }: Props) {
                 showModal({ type: 'info', title: 'Define Your Path', description: 'Tell us a bit about your goal.' });
                 return;
             }
+
+            // EARLY TRIGGER: Start AI orchestration in background
+            const { initiateDraft: triggerInitiateDraft } = useProgramsStore.getState();
+            triggerInitiateDraft(formData.goalDescription, formData.category)
+                .then(ids => {
+                    setDraftIds(ids);
+                    console.log('[WIZARD] Background orchestration initiated:', ids);
+                })
+                .catch(err => {
+                    console.warn('[WIZARD] Early initiation failed:', err);
+                });
+
             animateStepChange('COMMITMENT');
         } else if (step === 'COMMITMENT') {
             setIsLoadingPreview(true);
@@ -252,15 +265,16 @@ export default function GoalWizardScreen({ navigation }: Props) {
         try {
             const title = data.goalDescription.split('.')[0].substring(0, 50) + (data.goalDescription.length > 50 ? '...' : '');
 
-            const goal = await createGoal({
+            // Use the draft goal if it exists, otherwise create it
+            const goalId = draftIds?.goalId || (await createGoal({
                 title,
                 description: data.goalDescription,
                 category: data.category,
                 targetDate: data.targetDate || format(addDays(new Date(), data.timeframe), 'yyyy-MM-dd'),
-            });
+            })).id;
 
             const program = await generateProgram(
-                goal.id,
+                goalId,
                 data.timeframe,
                 { 
                     minutesPerDay: data.dailyMinutes, 

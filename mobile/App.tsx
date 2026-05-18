@@ -4,15 +4,21 @@ import { View, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 import { 
-    Manrope_400Regular, 
-    Manrope_500Medium, 
-    Manrope_700Bold 
-} from '@expo-google-fonts/manrope';
-import { 
     Inter_400Regular, 
     Inter_500Medium, 
     Inter_600SemiBold 
 } from '@expo-google-fonts/inter';
+import {
+    Newsreader_400Regular,
+    Newsreader_500Medium,
+    Newsreader_600SemiBold,
+    Newsreader_700Bold,
+} from '@expo-google-fonts/newsreader';
+import {
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_700Bold,
+} from '@expo-google-fonts/dm-sans';
 
 import RootNavigator from './src/navigation/RootNavigator';
 import { Theme } from './src/constants/theme';
@@ -32,6 +38,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -54,12 +62,16 @@ function App() {
             try {
                 console.log('[APP] Loading fonts...');
                 await Font.loadAsync({
-                    Manrope_400Regular,
-                    Manrope_500Medium,
-                    Manrope_700Bold,
                     Inter_400Regular,
                     Inter_500Medium,
                     Inter_600SemiBold,
+                    Newsreader_400Regular,
+                    Newsreader_500Medium,
+                    Newsreader_600SemiBold,
+                    Newsreader_700Bold,
+                    DMSans_400Regular,
+                    DMSans_500Medium,
+                    DMSans_700Bold,
                 });
                 console.log('[APP] Fonts loaded');
             } catch (e) {

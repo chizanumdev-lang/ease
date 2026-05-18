@@ -11,6 +11,8 @@ import QuizScreen from '../screens/tasks/QuizScreen';
 import AudioPlayerScreen from '../screens/audio/AudioPlayerScreen';
 import AudioPreviewScreen from '../screens/audio/AudioPreviewScreen';
 import SettingsScreen from '../screens/settings/SettingsScreen';
+import TaskLabScreen from '../screens/settings/TaskLabScreen';
+import TaskPreviewScreen from '../screens/settings/TaskPreviewScreen';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -77,6 +79,21 @@ export default function MainStack() {
                 component={SettingsScreen}
                 options={{
                     title: 'Settings',
+                }}
+            />
+            <Stack.Screen
+                name="TaskLab"
+                component={TaskLabScreen}
+                options={{
+                    title: 'Engine Lab',
+                }}
+            />
+            <Stack.Screen
+                name="TaskPreview"
+                component={TaskPreviewScreen}
+                options={{
+                    presentation: 'fullScreenModal',
+                    title: 'Task Preview',
                 }}
             />
         </Stack.Navigator>

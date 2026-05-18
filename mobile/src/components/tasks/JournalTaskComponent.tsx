@@ -1,10 +1,26 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { 
+    View, 
+    StyleSheet, 
+    Text, 
+    TextInput, 
+    ScrollView, 
+    KeyboardAvoidingView, 
+    Platform, 
+    TouchableOpacity, 
+    Image, 
+    Dimensions,
+    StatusBar
+} from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { Task, TaskMetadata, TaskStatus } from '../../types';
-import { Ionicons } from '@expo/vector-icons';
-import StitchButton from '../StitchButton';
-import StitchCard from '../stitch/StitchCard';
+import { Task, TaskMetadata } from '../../types';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import PetalBackground from '../PetalBackground';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const HERO_HEIGHT = SCREEN_HEIGHT * 0.35;
+const CARD_OVERLAP = 24;
 
 interface JournalTaskProps {
     task: Task;
@@ -12,15 +28,9 @@ interface JournalTaskProps {
 }
 
 export default function JournalTaskComponent({ task, onComplete }: JournalTaskProps) {
-    const { colors, fonts, shadows, isDark } = useTheme();
+    const { colors, fonts, shadows, isDark, borderRadius } = useTheme();
     const [entry, setEntry] = useState("");
     const [isSaving, setIsSaving] = useState(false);
-
-    const prompts = [
-        "What's one thing that went better than expected today?",
-        "How did you handle a moment of stress or resistance?",
-        "What's your focus for tomorrow to maintain your routine?"
-    ];
 
     const handleSave = () => {
         setIsSaving(true);
@@ -34,62 +44,101 @@ export default function JournalTaskComponent({ task, onComplete }: JournalTaskPr
         <KeyboardAvoidingView 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
             style={[styles.root, { backgroundColor: colors.background }]}
-            keyboardVerticalOffset={100}
+            keyboardVerticalOffset={0}
         >
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+            <PetalBackground />
+
             <ScrollView 
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                bounces={false}
             >
-                <View style={styles.promptHeader}>
-                    <View style={[styles.iconBox, { backgroundColor: colors.primaryContainer }]}>
-                        <Ionicons name="journal" size={28} color={colors.primary} />
-                    </View>
-                    <View style={styles.promptMeta}>
-                        <Text style={[styles.promptTitle, { color: colors.text, fontFamily: fonts.display }]}>Daily Reflection</Text>
-                        <Text style={[styles.promptSubtitle, { color: colors.primary, fontFamily: fonts.label }]}>SECURE • END-TO-END ENCRYPTED</Text>
+                {/* Hero Header */}
+                <View style={[styles.heroSection, { height: HERO_HEIGHT }]}>
+                    <Image 
+                        source={{ uri: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=2560&auto=format&fit=crop' }} 
+                        style={StyleSheet.absoluteFill}
+                        resizeMode="cover"
+                    />
+                    <View style={styles.heroOverlay} />
+                    <View style={styles.heroContent}>
+                        <Text style={[styles.heroTitle, { color: colors.white, fontFamily: fonts.displayBold }]}>Journal</Text>
                     </View>
                 </View>
 
-                <View style={styles.promptsContainer}>
-                    {prompts.map((p, i) => (
-                        <View key={i} style={[styles.promptItem, { backgroundColor: colors.surfaceContainerLow }]}>
-                            <Text style={[styles.promptText, { color: colors.text, fontFamily: fonts.body }]}>{p}</Text>
-                        </View>
-                    ))}
-                </View>
-
+                {/* Content Card */}
                 <View style={[
-                    styles.inputContainer, 
+                    styles.contentArea, 
                     { 
-                        backgroundColor: colors.surfaceContainerLow,
-                        ...(isDark ? {} : shadows.ambient)
+                        backgroundColor: colors.surfaceContainerLowest,
+                        borderTopLeftRadius: borderRadius.xxxl,
+                        borderTopRightRadius: borderRadius.xxxl,
+                        marginTop: -CARD_OVERLAP,
                     }
                 ]}>
-                    <TextInput
-                        style={[styles.input, { color: colors.text, fontFamily: fonts.body }]}
-                        placeholder="Start typing your thoughts here..."
-                        placeholderTextColor={colors.textMuted}
-                        multiline
-                        value={entry}
-                        onChangeText={setEntry}
-                        autoFocus
-                    />
-                    
-                    <View style={styles.encryptionIndicator}>
-                        <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
-                        <Text style={[styles.encryptionText, { color: colors.primary, fontFamily: fonts.label }]}>
-                            AES-256 Protected
-                        </Text>
-                    </View>
-                </View>
+                    <View style={styles.dragHandle} />
 
-                <View style={styles.footer}>
+                    <View style={styles.headerBlock}>
+                        <Text style={[styles.label, { color: colors.textMuted, fontFamily: fonts.label }]}>EVENING REFLECTION</Text>
+                        <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.displayBold }]}>Evening Journal</Text>
+                        <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.label }]}>Capture the essence of your day before resting.</Text>
+                    </View>
+
+                    <View style={styles.inputWrapper}>
+                        <Text style={[styles.inputLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>THOUGHTS & REFLECTIONS</Text>
+                        <View style={[styles.inputContainer, { backgroundColor: colors.surfaceContainerLow }]}>
+                            <TextInput
+                                style={[styles.input, { color: colors.primary, fontFamily: fonts.body }]}
+                                placeholder="What made you feel grounded today?"
+                                placeholderTextColor={colors.textMuted}
+                                multiline
+                                value={entry}
+                                onChangeText={setEntry}
+                                textAlignVertical="top"
+                            />
+                        </View>
+                    </View>
+
+                    <View style={styles.statsRow}>
+                        <View style={[styles.statItem, { backgroundColor: colors.surfaceContainerLow }]}>
+                            <MaterialCommunityIcons name="spa" size={20} color={colors.primary} />
+                            <View>
+                                <Text style={[styles.statLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>INTENTION</Text>
+                                <Text style={[styles.statValue, { color: colors.primary, fontFamily: fonts.labelBold }]}>Clarity</Text>
+                            </View>
+                        </View>
+                        <View style={[styles.statItem, { backgroundColor: colors.surfaceContainerLow }]}>
+                            <MaterialCommunityIcons name="moon-waning-crescent" size={20} color={colors.primary} />
+                            <View>
+                                <Text style={[styles.statLabel, { color: colors.textMuted, fontFamily: fonts.label }]}>PHASE</Text>
+                                <Text style={[styles.statValue, { color: colors.primary, fontFamily: fonts.labelBold }]}>Waning Moon</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={{ height: 140 }} />
+                </View>
+            </ScrollView>
+
+            {/* Floating Footer */}
+            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.footer} pointerEvents="box-none">
+                <View style={styles.footerContent}>
+                    <View style={styles.statusPill}>
+                        <View style={[styles.stepIndicator, { backgroundColor: colors.primaryContainer }]}>
+                            <MaterialCommunityIcons name="book-edit" size={16} color={colors.white} />
+                        </View>
+                        <View style={styles.statusTextContainer}>
+                            <Text style={[styles.statusSub, { color: colors.textMuted, fontFamily: fonts.labelBold }]}>MOOD</Text>
+                            <Text style={[styles.statusMain, { color: colors.primary, fontFamily: fonts.labelBold }]}>Peaceful</Text>
+                        </View>
+                    </View>
+
                     <TouchableOpacity
                         style={[
                             styles.saveBtn,
                             { 
                                 backgroundColor: (entry.length >= 10 && !isSaving) ? colors.primary : colors.surfaceContainerHighest,
-                                ...((entry.length >= 10 && !isSaving) ? shadows.ambient : {})
                             }
                         ]}
                         onPress={handleSave}
@@ -99,22 +148,15 @@ export default function JournalTaskComponent({ task, onComplete }: JournalTaskPr
                         <Text style={[
                             styles.saveBtnText, 
                             { 
-                                fontFamily: fonts.display,
+                                fontFamily: fonts.labelBold,
                                 color: (entry.length >= 10 && !isSaving) ? colors.white : colors.textMuted
                             }
                         ]}>
-                            {isSaving ? "Encrypting..." : "Save Reflection"}
+                            {isSaving ? "Saving..." : "Save"}
                         </Text>
-                        {!isSaving && <Ionicons name="lock-closed" size={18} color={(entry.length >= 10) ? colors.white : colors.textMuted} />}
                     </TouchableOpacity>
-
-                    <View style={styles.minCharContainer}>
-                        <Text style={[styles.minCharText, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                            {entry.length < 10 ? `Need ${10 - entry.length} more characters` : "Entry secured"}
-                        </Text>
-                    </View>
                 </View>
-            </ScrollView>
+            </BlurView>
         </KeyboardAvoidingView>
     );
 }
@@ -124,91 +166,143 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingHorizontal: 24,
-        paddingTop: 32,
-        paddingBottom: 24,
+        flexGrow: 1,
     },
-    promptHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-        marginBottom: 32,
-    },
-    iconBox: {
-        width: 64,
-        height: 64,
-        borderRadius: 22,
+    heroSection: {
+        width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    promptMeta: {
-        flex: 1,
+    heroOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.15)',
     },
-    promptTitle: {
-        fontSize: 24,
-        lineHeight: 30,
-        marginBottom: 4,
+    heroContent: {
+        zIndex: 10,
     },
-    promptSubtitle: {
-        fontSize: 10,
-        letterSpacing: 1.2,
+    heroTitle: {
+        fontSize: 48,
+        letterSpacing: -1,
     },
-    promptsContainer: {
-        gap: 12,
+    contentArea: {
+        paddingHorizontal: 24,
+        paddingTop: 12,
+        zIndex: 5,
+        minHeight: SCREEN_HEIGHT * 0.65,
+    },
+    dragHandle: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        alignSelf: 'center',
         marginBottom: 24,
     },
-    promptItem: {
-        padding: 16,
-        borderRadius: 16,
+    headerBlock: {
+        marginBottom: 32,
     },
-    promptText: {
-        fontSize: 15,
-        lineHeight: 22,
-        opacity: 0.9,
+    label: {
+        fontSize: 12,
+        letterSpacing: 2,
+        marginBottom: 8,
+    },
+    title: {
+        fontSize: 28,
+        lineHeight: 36,
+        marginBottom: 8,
+    },
+    subtitle: {
+        fontSize: 14,
+        lineHeight: 20,
+    },
+    inputWrapper: {
+        marginBottom: 24,
+    },
+    inputLabel: {
+        fontSize: 11,
+        letterSpacing: 1.5,
+        marginBottom: 12,
+        paddingHorizontal: 8,
     },
     inputContainer: {
-        borderRadius: 32,
-        minHeight: 280,
-        padding: 24,
+        borderRadius: 16,
+        minHeight: 240,
+        padding: 20,
     },
     input: {
         flex: 1,
         fontSize: 16,
         lineHeight: 24,
-        textAlignVertical: 'top',
     },
-    encryptionIndicator: {
+    statsRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginTop: 16,
-        paddingTop: 16,
-        opacity: 0.8,
-    },
-    encryptionText: {
-        fontSize: 11,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
-    footer: {
-        marginTop: 32,
-    },
-    saveBtn: {
-        height: 64,
-        borderRadius: 32,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
         gap: 12,
     },
-    saveBtnText: {
-        fontSize: 18,
+    statItem: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 16,
+        gap: 12,
     },
-    minCharContainer: {
-        marginTop: 14,
+    statLabel: {
+        fontSize: 10,
+        letterSpacing: 0.5,
+    },
+    statValue: {
+        fontSize: 13,
+    },
+    footer: {
+        position: 'absolute',
+        bottom: 24,
+        left: 24,
+        right: 24,
+        height: 72,
+        borderRadius: 36,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+    },
+    footerContent: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        justifyContent: 'space-between',
+    },
+    statusPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingLeft: 12,
+        gap: 12,
+    },
+    statusTextContainer: {
+        justifyContent: 'center',
+    },
+    statusSub: {
+        fontSize: 9,
+        opacity: 0.6,
+    },
+    statusMain: {
+        fontSize: 13,
+    },
+    stepIndicator: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    minCharText: {
-        fontSize: 12,
-    }
+    saveBtn: {
+        paddingHorizontal: 32,
+        paddingVertical: 12,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    saveBtnText: {
+        fontSize: 15,
+    },
 });
+

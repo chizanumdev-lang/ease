@@ -4,13 +4,26 @@ import { GenerateProgramDto } from './dto/generate-program.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
+import { OrchestratorService } from '../modules/engine/services/orchestrator.service';
 
 @Controller('programs')
 @UseGuards(JwtAuthGuard)
 export class ProgramsController {
     private readonly logger = new Logger(ProgramsController.name);
 
-    constructor(private readonly programsService: ProgramsService) { }
+    constructor(
+        private readonly programsService: ProgramsService,
+        private readonly orchestratorService: OrchestratorService,
+    ) { }
+
+    @Post('initiate')
+    async initiateProgram(
+        @Body() body: { goalDescription: string, category: string },
+        @GetUser() user: User,
+    ) {
+        this.logger.log(`Initiating early program generation for user ${user.id}`);
+        return this.programsService.initiateDraft(user.id, body.goalDescription, body.category);
+    }
 
     @Get('active')
     async getActiveProgram(@GetUser() user: User) {

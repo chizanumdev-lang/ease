@@ -174,11 +174,11 @@ export default function VerifyEmailScreen({ navigation, route }: Props) {
             {code.map((digit, index) => (
               <TextInput
                 key={index}
-                ref={(ref) => (inputs.current[index] = ref)}
+                ref={(ref) => { inputs.current[index] = ref; }}
                 style={[
                   styles.codeInput,
                   {
-                    backgroundColor: colors.surfaceContainer,
+                    backgroundColor: colors.surfaceContainerLow,
                     color: colors.onSurface,
                     borderColor: digit ? colors.primary : colors.surfaceContainerHighest,
                     fontFamily: fonts.display,

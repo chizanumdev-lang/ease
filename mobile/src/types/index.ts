@@ -91,11 +91,37 @@ export interface TaskMetadata {
     consistencyConfirmed?: boolean;
     timerDuration?: number;
     externalLink?: string;
+    
+    // Orchestration Fields
+    pattern?: string;      // 'vocal-test', 'spaced-recall', etc.
+    targetScript?: string; // Script for vocal tests
+    translation?: string;  // Translation for vocal tests
+    cards?: { front: string; back: string }[]; // For spaced-recall
+    
     // Audio task fields
     audioUrl?: string;    // URL to the generated TTS audio file
     subtype?: string;     // e.g. 'guided', 'binaural', 'ambient'
     script?: string;      // TTS script used to generate the audio
     mood?: string;        // Audio mood: 'focus' | 'meditation' | 'ambient'
+    
+    // Vocal Test specific
+    vocalScore?: number;
+    locale?: string;
+    feedback?: string;
+    mistakes?: {
+        word: string;
+        correctionLabel?: string;
+        feedback: string;
+    }[];
+    
+    // Pattern Specific
+    stepsCompleted?: number;
+    messagesCount?: number;
+    durationSeconds?: number;
+    persona?: string;
+    selection?: string;
+    correct?: boolean;
+
 }
 
 export interface Task {
@@ -200,6 +226,12 @@ export type MainStackParamList = {
     AudioPlayer: { track: AudioTrack };
     AudioPreview: undefined;
     Settings: undefined;
+    TaskLab: undefined;
+    TaskPreview: { 
+        pattern: string; 
+        mobileType: string;
+        title: string;
+    };
 };
 
 export type TabParamList = {

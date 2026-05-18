@@ -28,6 +28,7 @@ interface ProgramsState {
             metadata?: any;
         }
     ) => Promise<Program>;
+    initiateDraft: (goalDescription: string, category: string) => Promise<{ goalId: string, programId: string }>;
     fetchActiveProgram: (skipPlanFetch?: boolean) => Promise<Program | void>;
     fetchProgram: (id: string) => Promise<void>;
     fetchTodayPlan: (programId: string) => Promise<void>;
@@ -94,6 +95,16 @@ export const useProgramsStore = create<ProgramsState>()(
                         error: error.response?.data?.message || 'Failed to generate program',
                         isLoading: false,
                     });
+                    throw error;
+                }
+            },
+
+            initiateDraft: async (goalDescription, category) => {
+                try {
+                    const result = await programsService.initiateProgram(goalDescription, category);
+                    return { goalId: result.goalId, programId: result.programId };
+                } catch (error: any) {
+                    console.error('[Store] Early initiation failed:', error.message);
                     throw error;
                 }
             },

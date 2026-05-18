@@ -13,41 +13,41 @@ export default function PetalBackground() {
     const { colors, isDark } = useTheme();
 
     return (
-        <View style={StyleSheet.absoluteFill}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
             {/* The Blobs */}
             <View style={styles.blobsContainer}>
-                {/* Petal 1 - Top Left */}
+                {/* Petal 1 - Top Left (Sage) */}
                 <View 
                     style={[
                         styles.petal,
                         styles.petal1,
                         { 
-                            backgroundColor: colors.primary,
-                            opacity: isDark ? 0.3 : 0.15
+                            backgroundColor: colors.primaryLight || '#4a5d4e',
+                            opacity: 0.08
                         }
                     ]} 
                 />
                 
-                {/* Petal 2 - Top Right */}
+                {/* Petal 2 - Bottom Right (Clay) */}
                 <View 
                     style={[
                         styles.petal,
                         styles.petal2,
                         { 
-                            backgroundColor: colors.primaryContainer,
-                            opacity: isDark ? 0.4 : 0.25
+                            backgroundColor: '#5c3913',
+                            opacity: 0.04
                         }
                     ]} 
                 />
 
-                {/* Petal 3 - Mid Right */}
+                {/* Petal 3 - Center (Mint/Sage) */}
                 <View 
                     style={[
                         styles.petal,
                         styles.petal3,
                         { 
-                            backgroundColor: colors.secondaryContainer,
-                            opacity: isDark ? 0.5 : 0.35
+                            backgroundColor: '#b7ccb9',
+                            opacity: 0.1
                         }
                     ]} 
                 />
@@ -55,7 +55,7 @@ export default function PetalBackground() {
 
             {/* The Blur Effect Overlay */}
             <BlurView 
-                intensity={Platform.OS === 'ios' ? 80 : 100} 
+                intensity={Platform.OS === 'ios' ? 40 : 60} 
                 tint={isDark ? 'dark' : 'light'} 
                 style={StyleSheet.absoluteFill} 
             />
@@ -70,27 +70,25 @@ const styles = StyleSheet.create({
     },
     petal: {
         position: 'absolute',
-        borderRadius: 140, // Highly rounded for organic look
+        borderRadius: 200,
     },
     petal1: {
-        width: 300,
-        height: 300,
-        top: -60,
-        left: -60,
-        transform: [{ rotate: '-15deg' }],
+        width: 400,
+        height: 400,
+        top: -100,
+        left: -100,
     },
     petal2: {
-        width: 350,
-        height: 350,
-        top: -140,
-        right: -80,
-        transform: [{ rotate: '45deg' }],
+        width: 500,
+        height: 500,
+        bottom: -150,
+        right: -100,
     },
     petal3: {
-        width: 280,
-        height: 280,
-        top: 40,
-        right: -40,
-        transform: [{ rotate: '120deg' }],
+        width: 600,
+        height: 600,
+        top: '20%',
+        left: '10%',
     },
 });
+

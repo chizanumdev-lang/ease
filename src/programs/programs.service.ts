@@ -423,6 +423,51 @@ export class ProgramsService {
 
     // ── generateProgram ──────────────────────────────────────────────────────
 
+    async initiateDraft(userId: string, goalDescription: string, category: string): Promise<any> {
+        this.logger.log(`Initiating draft program for user ${userId}: "${goalDescription}"`);
+        
+        // 1. Create the Goal first
+        const goalTitle = goalDescription.split('.')[0].substring(0, 50);
+        const goal = this.goalRepository.create({
+            userId,
+            title: goalTitle,
+            description: goalDescription,
+            category,
+        });
+        const savedGoal = await this.goalRepository.save(goal);
+
+        // 2. Create the Program shell
+        const program = this.programRepository.create({
+            userId,
+            goalId: savedGoal.id,
+            title: goalTitle,
+            description: `Journey into ${goalTitle}`,
+            status: 'generating',
+            duration: 30, // Default, will be updated in generateProgram
+        });
+        const savedProgram = await this.programRepository.save(program);
+
+        // 3. Create Day 1 shell
+        const day1 = this.dayPlanRepository.create({
+            programId: savedProgram.id,
+            dayNumber: 1,
+            theme: 'Day 1: Initiation',
+            status: 'pending'
+        });
+        const savedDay1 = await this.dayPlanRepository.save(day1);
+
+        // 4. Trigger Orchestration in background (NON-BLOCKING)
+        this.orchestratorService.orchestrateDay(savedDay1.id, goalDescription).catch(err => 
+            this.logger.error(`Early orchestration failed for Day 1: ${err.message}`)
+        );
+
+        return {
+            goalId: savedGoal.id,
+            programId: savedProgram.id,
+            dayPlanId: savedDay1.id
+        };
+    }
+
     async getProgramPreview(userId: string, dto: GenerateProgramDto): Promise<any> {
         let goalText = dto.goalDescription || '';
         if (dto.goalId) {
@@ -463,10 +508,10 @@ export class ProgramsService {
         const sleepStart = user.settings?.sleepWindow?.start || '23:00';
         const wakeStart = user.settings?.sleepWindow?.end || '07:00';
 
-        // ─── PHASE 1: Create skeleton (~150ms) — return immediately ───────────
+        // ─── PHASE 1: Re-use Draft or Create skeleton ───────────────────────────
         let program = await this.programRepository.findOne({ where: { goalId, userId } });
         const programTitle = generateProgramDto.metadata?.title || goal.title;
-        const programDesc = generateProgramDto.metadata?.description || `A $${duration}-day $${learningStyle} program for $${goal.title}. Daily commitment: $${minutesPerDay} min.`;
+        const programDesc = `A ${duration}-day ${learningStyle} program for ${goal.title}. Daily commitment: ${minutesPerDay} min.`;
 
         if (!program) {
             program = this.programRepository.create({
@@ -476,19 +521,20 @@ export class ProgramsService {
                 goalId,
                 userId,
                 status: 'generating',
-                metadata: generateProgramDto.metadata,
+                metadata: { ...generateProgramDto.metadata, minutesPerDay, learningStyle, constraints },
             });
             await this.programRepository.save(program);
         } else {
-            // Re-hydrate existing program
+            // Convert Draft to Active Program
             program.status = 'generating';
             program.title = programTitle;
             program.description = programDesc;
-            program.metadata = generateProgramDto.metadata;
+            program.duration = duration;
+            program.metadata = { ...program.metadata, ...generateProgramDto.metadata, minutesPerDay, learningStyle, constraints };
             await this.programRepository.save(program);
         }
 
-        // Create empty day shells instantly — no AI needed
+        // Create empty day shells for the full duration
         const existingDays = await this.dayPlanRepository.find({ where: { programId: program.id } });
         const existingDayNumbers = new Set(existingDays.map(d => d.dayNumber));
         const newDayShells = Array.from({ length: duration }, (_, i) => i + 1)
@@ -503,7 +549,7 @@ export class ProgramsService {
             await this.dayPlanRepository.save(newDayShells);
         }
 
-        // ─── PHASE 2: Synchronous Day 1 Hydration ─────────────────────────────
+        // ─── PHASE 2: Ensure Day 1 is Hydrating/Ready ─────────────────────────────
         const day1 = await this.dayPlanRepository.findOne({ 
             where: { programId: program.id, dayNumber: 1 } 
         });
@@ -520,41 +566,27 @@ export class ProgramsService {
         };
 
         if (day1 && day1.status !== 'ready') {
-            const handle = await triggerHydrateDay({
-                dayPlanId: day1.id,
-                goalText: generationParams.goalText,
-                params: generationParams,
-            });
-            if (handle) {
-                this.logger.log(`Day 1 hydration queued via Trigger.dev: ${handle.id}`);
-                program.status = 'generating';
-            } else {
-                this.logger.warn('Trigger.dev unavailable for Day 1 hydration, processing in background');
-                // Don't await here — return immediately so the client can start polling
-                this.hydrateDay(day1.id, generationParams.goalText, generationParams).catch(err => 
-                    this.logger.error(`Background hydration failed: ${err.message}`)
-                );
-                program.status = 'generating';
-            }
+            // Trigger or Re-trigger if not ready
+            this.orchestratorService.orchestrateDay(day1.id, generationParams.goalText, generationParams).catch(err => 
+                this.logger.error(`Background hydration failed: ${err.message}`)
+            );
+            program.status = 'generating';
         } else {
             program.status = 'ready';
         }
 
-        // ─── PHASE 3: Dispatch Day 2 to background queue (JIT) ─────────────
+        // ─── PHASE 3: Dispatch Day 2 to background queue ─────────────────────
         const day2 = await this.dayPlanRepository.findOne({ 
             where: { programId: program.id, dayNumber: 2 } 
         });
 
         if (day2 && day2.status === 'pending') {
-            await triggerHydrateDay({
-                dayPlanId: day2.id,
-                goalText: generationParams.goalText,
-                params: generationParams,
-            });
+            this.orchestratorService.orchestrateDay(day2.id, generationParams.goalText, generationParams).catch(e => 
+                this.logger.error(`Day 2 Background hydration failed: ${e.message}`)
+            );
         }
 
         await this.programRepository.save(program);
-
         return program;
     }
 

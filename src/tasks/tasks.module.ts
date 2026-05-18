@@ -10,12 +10,14 @@ import { TasksResolver } from './tasks.resolver';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { ProgressModule } from '../progress/progress.module';
 import { RewardsModule } from '../rewards/rewards.module';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Task, DayPlan, TaskTemplate]),
         ProgressModule,
         RewardsModule,
+        AiModule,
     ],
     controllers: [TasksController],
     providers: [TasksService, TasksResolver],

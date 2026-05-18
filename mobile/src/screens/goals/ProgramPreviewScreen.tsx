@@ -21,9 +21,27 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
     const { currentProgram, fetchProgram, isLoading } = useProgramsStore();
 
     React.useEffect(() => {
+        let pollInterval: NodeJS.Timeout;
+
         if (programId) {
             fetchProgram(programId);
+
+            // Poll every 3 seconds if generating
+            pollInterval = setInterval(() => {
+                const { currentProgram: latestProgram } = useProgramsStore.getState();
+                if (latestProgram?.status === 'generating') {
+                    console.log('[PREVIEW] Polling for program status...');
+                    fetchProgram(programId);
+                } else if (latestProgram?.status === 'ready') {
+                    console.log('[PREVIEW] Program ready, stopping polling.');
+                    clearInterval(pollInterval);
+                }
+            }, 3000);
         }
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+        };
     }, [programId]);
 
     if (isLoading || !currentProgram || currentProgram.status === 'generating') {

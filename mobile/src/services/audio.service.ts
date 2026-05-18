@@ -169,7 +169,7 @@ class AudioService {
 
     // Cleanup
     async cleanup() {
-        await TrackPlayer.destroy();
+        await TrackPlayer.reset();
     }
 }
 

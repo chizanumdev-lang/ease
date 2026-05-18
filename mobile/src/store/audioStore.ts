@@ -66,7 +66,7 @@ export const useAudioStore = create<AudioState>()(
                 if (isInitialized) return;
 
                 TrackPlayer.addEventListener(Event.PlaybackState, (event) => {
-                    const isPlaying = event.state === State.Playing || event.state === 'playing';
+                    const isPlaying = (event.state as any) === 'playing';
                     set({ isPlaying });
                 });
 

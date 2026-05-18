@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, Animated, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, Animated, TouchableOpacity, ScrollView, Dimensions, StatusBar } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
-import { Task, TaskMetadata, TaskStatus } from '../../types';
-import { Ionicons } from '@expo/vector-icons';
-import StitchButton from '../StitchButton';
-import StitchCard from '../stitch/StitchCard';
+import { Task, TaskMetadata } from '../../types';
+import PetalBackground from '../PetalBackground';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const HERO_HEIGHT = SCREEN_HEIGHT * 0.35;
+const CARD_OVERLAP = 24;
 
 interface ConsistencyTaskProps {
     task: Task;
@@ -12,7 +16,7 @@ interface ConsistencyTaskProps {
 }
 
 export default function ConsistencyTaskComponent({ task, onComplete }: ConsistencyTaskProps) {
-    const { colors, fonts, shadows, isDark } = useTheme();
+    const { colors, fonts, borderRadius, isDark } = useTheme();
     const [confirmed, setConfirmed] = useState(false);
 
     const handleComplete = () => {
@@ -21,81 +25,101 @@ export default function ConsistencyTaskComponent({ task, onComplete }: Consisten
 
     return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
-            <View style={styles.mainContent}>
-                <View style={[styles.halo, { backgroundColor: colors.primaryContainer }]}>
-                    <View style={[
-                        styles.innerHalo, 
-                        { 
-                            backgroundColor: colors.primary,
-                            ...(isDark ? {} : shadows.ambient)
-                        }
-                    ]}>
-                        <Ionicons name="flame" size={64} color={colors.white} />
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+            <PetalBackground />
+
+            <ScrollView contentContainerStyle={styles.scroll} bounces={false} showsVerticalScrollIndicator={false}>
+                {/* Hero Section */}
+                <View style={[styles.heroSection, { height: HERO_HEIGHT }]}>
+                    <View style={styles.heroContent}>
+                        <View style={[styles.halo, { backgroundColor: colors.primaryContainer + '40' }]}>
+                            <View style={[styles.innerHalo, { backgroundColor: colors.primary }]}>
+                                <Ionicons name="flame" size={56} color={colors.white} />
+                            </View>
+                        </View>
                     </View>
                 </View>
 
-                <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>Commit to Growth</Text>
-                <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
-                    Consistency is the bridge between goals and achievement. Your journey continues tomorrow.
-                </Text>
-
+                {/* Overlapping Content Card */}
                 <View style={[
-                    styles.commitmentCard, 
+                    styles.contentArea, 
                     { 
-                        backgroundColor: colors.surfaceContainerLow,
-                        ...(isDark ? {} : shadows.ambient)
+                        backgroundColor: colors.surfaceContainerLowest,
+                        borderTopLeftRadius: borderRadius.xxxl,
+                        borderTopRightRadius: borderRadius.xxxl,
+                        marginTop: -CARD_OVERLAP,
                     }
                 ]}>
-                    <Text style={[styles.commitmentTitle, { color: colors.primary, fontFamily: fonts.display, textTransform: 'uppercase', letterSpacing: 1.5 }]}>Daily Commitment</Text>
-                    
-                    <View style={styles.commitmentItem}>
-                        <View style={[styles.iconDot, { backgroundColor: colors.primaryContainer }]}>
-                            <Ionicons name="time" size={18} color={colors.primary} />
-                        </View>
-                        <Text style={[styles.commitmentText, { color: colors.text, fontFamily: fonts.body }]}>
-                            I will honor my scheduled routine tomorrow.
-                        </Text>
-                    </View>
-                    
-                    <View style={styles.commitmentItem}>
-                        <View style={[styles.iconDot, { backgroundColor: colors.primaryContainer }]}>
-                            <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
-                        </View>
-                        <Text style={[styles.commitmentText, { color: colors.text, fontFamily: fonts.body }]}>
-                            I will prioritize my focus over distractions.
-                        </Text>
-                    </View>
-                </View>
-            </View>
+                    <View style={styles.dragHandle} />
 
-            <View style={[styles.footer, { backgroundColor: colors.background }]}>
-                {!confirmed ? (
-                    <TouchableOpacity
-                        style={[styles.actionBtn, { backgroundColor: colors.primary, ...shadows.ambient }]}
-                        onPress={() => setConfirmed(true)}
-                        activeOpacity={0.88}
-                    >
-                        <Text style={[styles.actionBtnText, { color: colors.white, fontFamily: fonts.display }]}>Register Commitment</Text>
-                        <Ionicons name="hand-left" size={20} color={colors.white} />
-                    </TouchableOpacity>
-                ) : (
-                    <View style={styles.successSection}>
-                        <View style={[styles.successBadge, { backgroundColor: colors.primaryContainer }]}>
-                            <Ionicons name="sparkles" size={22} color={colors.primary} />
-                            <Text style={[styles.successText, { color: colors.primary, fontFamily: fonts.display }]}>COMMITMENT ACTIVE</Text>
-                        </View>
-                        
-                        <TouchableOpacity
-                            style={[styles.actionBtn, { backgroundColor: colors.primary, ...shadows.ambient }]}
-                            onPress={handleComplete}
-                            activeOpacity={0.88}
-                        >
-                            <Text style={[styles.actionBtnText, { color: colors.white, fontFamily: fonts.display }]}>Finish Session</Text>
-                            <Ionicons name="trophy" size={20} color={colors.white} />
-                        </TouchableOpacity>
+                    <View style={styles.headerBlock}>
+                        <Text style={[styles.label, { color: colors.textMuted, fontFamily: fonts.labelBold }]}>COMMITMENT</Text>
+                        <Text style={[styles.title, { color: colors.primary, fontFamily: fonts.displayBold }]}>Commit to Growth</Text>
+                        <View style={[styles.divider, { backgroundColor: colors.primaryContainer }]} />
+                        <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                            Consistency is the bridge between goals and achievement. Your journey continues tomorrow.
+                        </Text>
                     </View>
-                )}
-            </View>
+
+                    <View style={styles.section}>
+                        <View style={[
+                            styles.commitmentCard, 
+                            { backgroundColor: colors.surfaceContainerLow }
+                        ]}>
+                            <Text style={[styles.commitmentTitle, { color: colors.primary, fontFamily: fonts.labelBold, textTransform: 'uppercase', letterSpacing: 1.5 }]}>Daily Commitment</Text>
+                            
+                            <View style={styles.commitmentItem}>
+                                <View style={[styles.iconDot, { backgroundColor: colors.primaryContainer }]}>
+                                    <Ionicons name="time" size={18} color={colors.white} />
+                                </View>
+                                <Text style={[styles.commitmentText, { color: colors.text, fontFamily: fonts.body }]}>
+                                    I will honor my scheduled routine tomorrow.
+                                </Text>
+                            </View>
+                            
+                            <View style={styles.commitmentItem}>
+                                <View style={[styles.iconDot, { backgroundColor: colors.primaryContainer }]}>
+                                    <Ionicons name="shield-checkmark" size={18} color={colors.white} />
+                                </View>
+                                <Text style={[styles.commitmentText, { color: colors.text, fontFamily: fonts.body }]}>
+                                    I will prioritize my focus over distractions.
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={{ height: 140 }} />
+                </View>
+            </ScrollView>
+
+            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.footer} pointerEvents="box-none">
+                <View style={styles.footerContent}>
+                    {!confirmed ? (
+                        <TouchableOpacity
+                            style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+                            onPress={() => setConfirmed(true)}
+                        >
+                            <Text style={[styles.primaryBtnText, { color: colors.white, fontFamily: fonts.labelBold }]}>Register Commitment</Text>
+                            <Ionicons name="hand-left" size={20} color={colors.white} />
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={styles.successSection}>
+                            <View style={[styles.statusIndicator, { backgroundColor: colors.primaryContainer }]}>
+                                <Ionicons name="sparkles" size={14} color={colors.white} />
+                                <Text style={[styles.statusText, { color: colors.white, fontFamily: fonts.labelBold }]}>COMMITMENT ACTIVE</Text>
+                            </View>
+                            
+                            <TouchableOpacity
+                                style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+                                onPress={handleComplete}
+                            >
+                                <Text style={[styles.primaryBtnText, { color: colors.white, fontFamily: fonts.labelBold }]}>Finish Session</Text>
+                                <Ionicons name="arrow-forward" size={20} color={colors.white} />
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+            </BlurView>
         </View>
     );
 }
@@ -104,55 +128,91 @@ const styles = StyleSheet.create({
     root: {
         flex: 1,
     },
-    mainContent: {
-        flex: 1,
+    scroll: {
+        flexGrow: 1,
+    },
+    heroSection: {
+        width: '100%',
+        justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: 60,
-        paddingHorizontal: 28,
+    },
+    heroContent: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: 40,
     },
     halo: {
-        width: 180,
-        height: 180,
-        borderRadius: 90,
+        width: 140,
+        height: 140,
+        borderRadius: 70,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 40,
     },
     innerHalo: {
-        width: 130,
-        height: 130,
-        borderRadius: 65,
+        width: 100,
+        height: 100,
+        borderRadius: 50,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    contentArea: {
+        paddingHorizontal: 24,
+        paddingTop: 12,
+        zIndex: 5,
+        minHeight: SCREEN_HEIGHT * 0.6,
+    },
+    dragHandle: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        alignSelf: 'center',
+        marginBottom: 24,
+    },
+    headerBlock: {
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+    label: {
+        fontSize: 11,
+        letterSpacing: 2,
+        marginBottom: 12,
+    },
     title: {
-        fontSize: 32,
-        lineHeight: 40,
+        fontSize: 28,
+        lineHeight: 36,
         textAlign: 'center',
         marginBottom: 16,
     },
+    divider: {
+        width: 48,
+        height: 4,
+        borderRadius: 2,
+        marginBottom: 16,
+    },
     subtitle: {
-        fontSize: 16,
-        textAlign: 'center',
+        fontSize: 15,
         lineHeight: 24,
-        paddingHorizontal: 12,
-        marginBottom: 48,
+        textAlign: 'center',
         opacity: 0.8,
+        paddingHorizontal: 16,
+    },
+    section: {
+        gap: 24,
     },
     commitmentCard: {
-        padding: 28,
-        width: '100%',
-        borderRadius: 32,
+        padding: 24,
+        borderRadius: 24,
     },
     commitmentTitle: {
-        fontSize: 13,
-        marginBottom: 24,
+        fontSize: 12,
+        marginBottom: 20,
     },
     commitmentItem: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 16,
-        marginBottom: 20,
+        marginBottom: 16,
     },
     iconDot: {
         width: 36,
@@ -167,34 +227,42 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     footer: {
-        paddingHorizontal: 24,
-        paddingBottom: 24,
-        paddingTop: 16,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 120,
+        paddingBottom: 20,
+        justifyContent: 'center',
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: 'rgba(0,0,0,0.05)',
     },
-    actionBtn: {
-        height: 64,
-        borderRadius: 32,
+    footerContent: {
+        paddingHorizontal: 24,
+    },
+    primaryBtn: {
+        height: 56,
+        borderRadius: 28,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
     },
-    actionBtnText: {
-        fontSize: 18,
+    primaryBtnText: {
+        fontSize: 16,
     },
     successSection: {
-        gap: 20,
+        gap: 12,
     },
-    successBadge: {
+    statusIndicator: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 10,
-        padding: 16,
-        borderRadius: 20,
+        gap: 8,
+        paddingVertical: 8,
+        borderRadius: 12,
     },
-    successText: {
-        fontSize: 14,
-        letterSpacing: 1,
+    statusText: {
+        fontSize: 12,
     }
 });
