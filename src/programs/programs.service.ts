@@ -457,9 +457,17 @@ export class ProgramsService {
         const savedDay1 = await this.dayPlanRepository.save(day1);
 
         // 4. Trigger Orchestration in background (NON-BLOCKING)
-        this.orchestratorService.orchestrateDay(savedDay1.id, goalDescription).catch(err => 
-            this.logger.error(`Early orchestration failed for Day 1: ${err.message}`)
-        );
+        const handle = await triggerHydrateDay({
+            dayPlanId: savedDay1.id,
+            goalText: goalDescription,
+            params: {}
+        });
+        if (!handle) {
+            this.logger.warn(`Trigger.dev unavailable, hydrating early Day 1 locally`);
+            this.orchestratorService.orchestrateDay(savedDay1.id, goalDescription).catch(err => 
+                this.logger.error(`Early orchestration failed for Day 1: ${err.message}`)
+            );
+        }
 
         return {
             goalId: savedGoal.id,
@@ -566,10 +574,18 @@ export class ProgramsService {
         };
 
         if (day1 && day1.status !== 'ready') {
-            // Trigger or Re-trigger if not ready
-            this.orchestratorService.orchestrateDay(day1.id, generationParams.goalText, generationParams).catch(err => 
-                this.logger.error(`Background hydration failed: ${err.message}`)
-            );
+            // Trigger or Re-trigger if not ready via background queue
+            const handle = await triggerHydrateDay({
+                dayPlanId: day1.id,
+                goalText: generationParams.goalText,
+                params: generationParams,
+            });
+            if (!handle) {
+                this.logger.warn(`Trigger.dev unavailable, hydrating Day 1 locally`);
+                this.orchestratorService.orchestrateDay(day1.id, generationParams.goalText, generationParams).catch(err => 
+                    this.logger.error(`Background hydration failed: ${err.message}`)
+                );
+            }
             program.status = 'generating';
         } else {
             program.status = 'ready';
@@ -581,9 +597,17 @@ export class ProgramsService {
         });
 
         if (day2 && day2.status === 'pending') {
-            this.orchestratorService.orchestrateDay(day2.id, generationParams.goalText, generationParams).catch(e => 
-                this.logger.error(`Day 2 Background hydration failed: ${e.message}`)
-            );
+            const handle = await triggerHydrateDay({
+                dayPlanId: day2.id,
+                goalText: generationParams.goalText,
+                params: generationParams,
+            });
+            if (!handle) {
+                this.logger.warn(`Trigger.dev unavailable, hydrating Day 2 locally`);
+                this.orchestratorService.orchestrateDay(day2.id, generationParams.goalText, generationParams).catch(e => 
+                    this.logger.error(`Day 2 Background hydration failed: ${e.message}`)
+                );
+            }
         }
 
         await this.programRepository.save(program);
