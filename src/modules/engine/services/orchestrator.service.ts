@@ -143,7 +143,7 @@ export class OrchestratorService {
 
       // 3. PHASE: HYDRATION (Resource Fetching with Retries)
       // We do this in the background, but prioritize the first few tasks
-      this.hydrateDayResources(tasks, shards, goal, dayPlan.id)
+      await this.hydrateDayResources(tasks, shards, goal, dayPlan.id)
           .catch(async (err) => {
               this.logger.error(`Background Hydration Failed for DayPlan ${dayPlan.id}: ${err.message}`);
               await this.dayPlanRepository.update(dayPlanId, { status: 'failed' });
@@ -158,7 +158,7 @@ export class OrchestratorService {
               }
           });
 
-      this.logger.log(`Blueprint created for ${dayPlan.id}. Hydration running in background.`);
+      this.logger.log(`Blueprint created for ${dayPlan.id}. Hydration completed.`);
     } catch (err) {
       this.logger.error(`Orchestration failed for DayPlan ${dayPlanId}: ${err.message}`);
       await this.dayPlanRepository.update(dayPlanId, { status: 'failed' });

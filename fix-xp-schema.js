@@ -38,7 +38,8 @@ async function fixSchema() {
       ADD COLUMN IF NOT EXISTS event_type TEXT,
       ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0,
       ADD COLUMN IF NOT EXISTS description TEXT,
-      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW(),
+      ALTER COLUMN type DROP NOT NULL;
     `);
 
     // Migrate old data if any (from type/amount to event_type/points)
