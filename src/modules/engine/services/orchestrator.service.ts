@@ -89,63 +89,89 @@ export class OrchestratorService {
     });
     if (!dayPlan) throw new Error('DayPlan not found');
 
-    // 0. Clean up existing tasks
-    await this.taskRepository.delete({ dayPlanId });
-
-    // 1. PHASE: BLUEPRINTING (Thinking)
-    const blueprint = await this.generateDayBlueprint(dayPlan.dayNumber, goal);
-    
-    // 2. PHASE: SHELL CREATION (Instant)
-    const shards = await this.shardRepository.find();
-    const tasks: Task[] = [];
-
-    for (let i = 0; i < blueprint.length; i++) {
-        const draft = blueprint[i];
-        
-        // Robust Matching: Exact -> Case-Insensitive -> Modality-Based Fallback
-        let shard = shards.find(s => s.name === draft.shardName);
-        if (!shard) shard = shards.find(s => s.name.toLowerCase() === (draft.shardName || '').toLowerCase());
-        
-        // Modality fallback: If AI hallucinated a name, find a real shard that matches the intended modality
-        if (!shard) {
-            const intendedModality = (draft.modality || '').toLowerCase();
-            shard = shards.find(s => s.modality.toLowerCase() === intendedModality) || shards[0];
-        }
-
-        const { mobileType, pattern } = this.detectPattern(shard);
-
-        const task = this.taskRepository.create({
-            dayPlanId: dayPlan.id,
-            type: mobileType,
-            title: draft.title || shard.displayName,
-            description: draft.description || shard.description,
-            duration: shard.typicalDurationMinutes || 10,
-            order: i,
-            metadata: {
-                ...draft,
-                pattern,
-                shardId: shard.id,
-                status: 'hydrating' // Mark as processing
-            }
-        });
-        tasks.push(await this.taskRepository.save(task));
+    if (dayPlan.status === 'generating') {
+      this.logger.warn(`DayPlan ${dayPlanId} is already generating/hydrating. Skipping duplicate orchestration call.`);
+      return;
     }
 
-    // 3. PHASE: HYDRATION (Resource Fetching with Retries)
-    // We do this in the background, but prioritize the first few tasks
-    this.hydrateDayResources(tasks, shards, goal, dayPlan.id)
-        .catch(err => this.logger.error(`Background Hydration Failed for DayPlan ${dayPlan.id}: ${err.message}`))
-        .finally(async () => {
-            // Ensure Program is marked as ready once initial hydration attempt is done
-            const program = await this.programRepository.findOne({ where: { id: dayPlan.programId } });
-            if (program && program.status === 'generating') {
-                program.status = 'ready';
-                await this.programRepository.save(program);
-                this.logger.log(`Program ${program.id} marked as READY after hydration attempt.`);
-            }
-        });
+    // Lock the day plan by setting status to generating
+    dayPlan.status = 'generating';
+    await this.dayPlanRepository.save(dayPlan);
 
-    this.logger.log(`Blueprint created for ${dayPlan.id}. Hydration running in background.`);
+    try {
+      // 0. Clean up existing tasks
+      await this.taskRepository.delete({ dayPlanId });
+
+      // 1. PHASE: BLUEPRINTING (Thinking)
+      const blueprint = await this.generateDayBlueprint(dayPlan.dayNumber, goal);
+      
+      // 2. PHASE: SHELL CREATION (Instant)
+      const shards = await this.shardRepository.find();
+      const tasks: Task[] = [];
+
+      for (let i = 0; i < blueprint.length; i++) {
+          const draft = blueprint[i];
+          
+          // Robust Matching: Exact -> Case-Insensitive -> Modality-Based Fallback
+          let shard = shards.find(s => s.name === draft.shardName);
+          if (!shard) shard = shards.find(s => s.name.toLowerCase() === (draft.shardName || '').toLowerCase());
+          
+          // Modality fallback: If AI hallucinated a name, find a real shard that matches the intended modality
+          if (!shard) {
+              const intendedModality = (draft.modality || '').toLowerCase();
+              shard = shards.find(s => s.modality.toLowerCase() === intendedModality) || shards[0];
+          }
+
+          const { mobileType, pattern } = this.detectPattern(shard);
+
+          const task = this.taskRepository.create({
+              dayPlanId: dayPlan.id,
+              type: mobileType,
+              title: draft.title || shard.displayName,
+              description: draft.description || shard.description,
+              duration: shard.typicalDurationMinutes || 10,
+              order: i,
+              metadata: {
+                  ...draft,
+                  pattern,
+                  shardId: shard.id,
+                  status: 'hydrating' // Mark as processing
+              }
+          });
+          tasks.push(await this.taskRepository.save(task));
+      }
+
+      // 3. PHASE: HYDRATION (Resource Fetching with Retries)
+      // We do this in the background, but prioritize the first few tasks
+      this.hydrateDayResources(tasks, shards, goal, dayPlan.id)
+          .catch(async (err) => {
+              this.logger.error(`Background Hydration Failed for DayPlan ${dayPlan.id}: ${err.message}`);
+              await this.dayPlanRepository.update(dayPlanId, { status: 'failed' });
+          })
+          .finally(async () => {
+              // Ensure Program is marked as ready once initial hydration attempt is done
+              const program = await this.programRepository.findOne({ where: { id: dayPlan.programId } });
+              if (program && program.status === 'generating') {
+                  program.status = 'ready';
+                  await this.programRepository.save(program);
+                  this.logger.log(`Program ${program.id} marked as READY after hydration attempt.`);
+              }
+          });
+
+      this.logger.log(`Blueprint created for ${dayPlan.id}. Hydration running in background.`);
+    } catch (err) {
+      this.logger.error(`Orchestration failed for DayPlan ${dayPlanId}: ${err.message}`);
+      await this.dayPlanRepository.update(dayPlanId, { status: 'failed' });
+      
+      // Also ensure program is marked ready if failed so user isn't stuck
+      const program = await this.programRepository.findOne({ where: { id: dayPlan.programId } });
+      if (program && program.status === 'generating') {
+          program.status = 'ready';
+          await this.programRepository.save(program);
+      }
+      
+      throw err;
+    }
   }
 
   private async generateDayBlueprint(dayNumber: number, goal: string): Promise<any[]> {

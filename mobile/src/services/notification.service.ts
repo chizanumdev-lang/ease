@@ -72,13 +72,16 @@ class NotificationService {
     async scheduleForDay(dayPlan: DayPlan, ritualSettings?: { morning: string; night: string }) {
         // Cancel existing to avoid duplicates/overflow
         await this.cancelAll();
+        
+        // Notifications are explicitly disabled/turned off for now as requested
+        console.log('[NotificationService] Notifications are disabled, cancelling all scheduled.');
+        return;
 
         const rawNotifications: Array<{ title: string; body: string; date: Date; type: string; data: any; category?: string; priority: number }> = [];
         const now = new Date();
 
         // 1. Task Reminders (Priority 1)
-        if (dayPlan.tasks) {
-            dayPlan.tasks.forEach(task => {
+        dayPlan.tasks?.forEach(task => {
                 if (task.scheduledAt && !task.completed) {
                     const scheduledDate = new Date(task.scheduledAt);
                     if (scheduledDate > now) {
@@ -93,7 +96,6 @@ class NotificationService {
                     }
                 }
             });
-        }
 
         // 2. Rituals (Priority 2 - Higher)
         const morningTime = ritualSettings?.morning || '07:00';

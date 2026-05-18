@@ -150,13 +150,29 @@ export const useAudioStore = create<AudioState>()(
             fetchRituals: async (date: string) => {
                 try {
                     const data = await audioService.getRituals(date);
-                    if (data.status === 'ready') {
-                        set({
-                            ritualTracks: {
-                                morning: data.morning,
-                                night: data.night
-                            }
-                        });
+                    
+                    // Always update the tracks we have, even if one is still null/generating
+                    set({
+                        ritualTracks: {
+                            morning: data.morning,
+                            night: data.night
+                        }
+                    });
+
+                    // If status is generating, retry in 10 seconds to fetch completed URLs
+                    if (data.status === 'generating') {
+                        console.log('[AUDIO_STORE] Daily rituals still generating. Retrying in 10s...');
+                        if ((global as any).ritualsPollTimeout) {
+                            clearTimeout((global as any).ritualsPollTimeout);
+                        }
+                        (global as any).ritualsPollTimeout = setTimeout(() => {
+                            get().fetchRituals(date);
+                        }, 10000);
+                    } else {
+                        if ((global as any).ritualsPollTimeout) {
+                            clearTimeout((global as any).ritualsPollTimeout);
+                            (global as any).ritualsPollTimeout = null;
+                        }
                     }
                 } catch (error) {
                     console.error('[AUDIO_STORE] Failed to fetch rituals:', error);

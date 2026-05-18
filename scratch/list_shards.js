@@ -7,8 +7,8 @@ async function run() {
 
     try {
         await client.connect();
-        const res = await client.query('SELECT name, modality, display_name FROM task_shards');
-        console.log('Task Shards:', res.rows);
+        const res = await client.query('SELECT name, category, modality, display_name FROM task_shards');
+        console.log('Task Shards:', res.rows.slice(0, 15));
     } catch (err) {
         console.error(err);
     } finally {
