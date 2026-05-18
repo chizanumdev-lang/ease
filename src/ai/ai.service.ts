@@ -301,55 +301,208 @@ export class AiService implements OnModuleInit {
     }
 
     async gradeVocalPerformance(audioBuffer: Buffer, targetScript: string, locale: string = 'fr-FR', mimeType: string = 'audio/mp3'): Promise<any> {
-        if (!this.genAI) throw new Error('Gemini not configured for audio grading');
         if (!audioBuffer) throw new Error('Audio buffer is empty');
         
         this.logger.log(`Grading vocal performance: ${locale}, ${mimeType}, ${audioBuffer.length} bytes`);
         
-        const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+        let geminiError: Error | null = null;
 
-        const prompt = `
-        You are an expert language coach. Analyze the attached audio recording of a student attempting to say: "${targetScript}" in ${locale}.
-        
-        TASKS:
-        1. Compare the audio to the target script.
-        2. Evaluate Pronunciation, Pace, and Tone (0-100).
-        3. Identify specific words that were mispronounced.
-        
-        OUTPUT SCHEMA (Strict JSON):
-        {
-            "score": number (overall 0-100),
-            "metrics": {
-                "pronunciation": number,
-                "pace": number,
-                "tone": number
-            },
-            "mistakes": [
-                { "word": string, "correctionLabel": "Pronunciation"|"Phonetic", "feedback": "Short encouraging tip" }
-            ],
-            "feedback": "Overall encouraging summary"
-        }
-        
-        Return ONLY the raw JSON.`;
+        if (this.genAI) {
+            try {
+                const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
 
-        try {
-            const result = await model.generateContent([
-                prompt,
+                const prompt = `
+                You are an expert language coach. Analyze the attached audio recording of a student attempting to say: "${targetScript}" in ${locale}.
+                
+                TASKS:
+                1. Compare the audio to the target script.
+                2. Evaluate Pronunciation, Pace, and Tone (0-100).
+                3. Identify specific words that were mispronounced.
+                
+                OUTPUT SCHEMA (Strict JSON):
                 {
-                    inlineData: {
-                        data: audioBuffer.toString('base64'),
-                        mimeType: (mimeType === 'audio/m4a' || mimeType === 'audio/x-m4a') ? 'audio/aac' : mimeType
-                    }
+                    "score": number (overall 0-100),
+                    "metrics": {
+                        "pronunciation": number,
+                        "pace": number,
+                        "tone": number
+                    },
+                    "mistakes": [
+                        { "word": string, "correctionLabel": "Pronunciation"|"Phonetic", "feedback": "Short encouraging tip" }
+                    ],
+                    "feedback": "Overall encouraging summary"
                 }
-            ]);
+                
+                Return ONLY the raw JSON.`;
 
-            const responseText = result.response.text();
-            this.logger.debug(`Gemini response: ${responseText}`);
-            return this.extractJson(responseText);
-        } catch (error) {
-            this.logger.error(`Gemini grading failed: ${error.message}`, error.stack);
-            throw error;
+                const result = await model.generateContent([
+                    prompt,
+                    {
+                        inlineData: {
+                            data: audioBuffer.toString('base64'),
+                            mimeType: (mimeType === 'audio/m4a' || mimeType === 'audio/x-m4a') ? 'audio/aac' : mimeType
+                        }
+                    }
+                ]);
+
+                const responseText = result.response.text();
+                this.logger.debug(`Gemini response: ${responseText}`);
+                return this.extractJson(responseText);
+            } catch (error) {
+                geminiError = error;
+                this.logger.warn(`Primary Gemini grading failed: ${error.message}. Trying Whisper + text LLM fallback...`);
+            }
+        } else {
+            this.logger.warn('Gemini not configured for audio grading. Proceeding to Whisper + text LLM fallback.');
         }
+
+        // --- Fallback logic ---
+        try {
+            const cleanMime = mimeType.toLowerCase();
+            const isGroqSupported = 
+                cleanMime.includes('mpeg') || 
+                cleanMime.includes('mp3') || 
+                cleanMime.includes('wav') || 
+                cleanMime.includes('m4a') || 
+                cleanMime.includes('ogg') || 
+                cleanMime.includes('opus') || 
+                cleanMime.includes('flac') || 
+                cleanMime.includes('webm');
+
+            let normalizedBuffer = audioBuffer;
+            let filename = 'audio.wav';
+            let typeForBlob = 'audio/wav';
+
+            if (isGroqSupported) {
+                if (cleanMime.includes('mp3')) {
+                    filename = 'audio.mp3';
+                    typeForBlob = 'audio/mp3';
+                } else if (cleanMime.includes('m4a')) {
+                    filename = 'audio.m4a';
+                    typeForBlob = 'audio/m4a';
+                } else if (cleanMime.includes('wav')) {
+                    filename = 'audio.wav';
+                    typeForBlob = 'audio/wav';
+                } else {
+                    filename = `audio.${cleanMime.split('/')[1] || 'wav'}`;
+                    typeForBlob = cleanMime;
+                }
+            } else {
+                this.logger.log(`Audio format ${mimeType} not natively supported by Groq Whisper. Converting to WAV...`);
+                normalizedBuffer = await this.convertAudioToWav(audioBuffer);
+                filename = 'audio.wav';
+                typeForBlob = 'audio/wav';
+            }
+
+            const transcriptionText = await this.transcribeWithGroq(normalizedBuffer, filename, typeForBlob, locale);
+            this.logger.log(`Whisper transcription successful: "${transcriptionText}"`);
+
+            const fallbackPrompt = `
+            You are an expert language coach. Analyze a student's attempt to say: "${targetScript}" in ${locale}.
+            The student actually said (transcribed): "${transcriptionText}".
+            
+            TASKS:
+            1. Compare the student's transcription to the target script.
+            2. Evaluate Pronunciation, Pace, and Tone (0-100). Since you only have the text transcription, estimate the Pace and Tone based on natural pauses or word completeness.
+            3. Identify specific words that were mispronounced, missed, or added by comparing the target to the transcription.
+            
+            OUTPUT SCHEMA (Strict JSON):
+            {
+                "score": number (overall 0-100),
+                "metrics": {
+                    "pronunciation": number,
+                    "pace": number,
+                    "tone": number
+                },
+                "mistakes": [
+                    { "word": string, "correctionLabel": "Pronunciation"|"Phonetic"|"Missing", "feedback": "Short encouraging tip" }
+                ],
+                "feedback": "Overall encouraging summary"
+            }
+            
+            Return ONLY the raw JSON.`;
+
+            const responseText = await this.generate(fallbackPrompt, { type: 'vocal_grading_fallback', locale });
+            if (!responseText) throw new Error('Text LLM fallback generated empty response');
+
+            const resultJson = this.extractJson(responseText);
+            if (!resultJson) throw new Error('Could not parse text LLM fallback response as JSON');
+
+            return resultJson;
+        } catch (fallbackError) {
+            this.logger.error(`Vocal grading fallback failed: ${fallbackError.message}`, fallbackError.stack);
+            throw geminiError || fallbackError;
+        }
+    }
+
+    private async convertAudioToWav(inputBuffer: Buffer): Promise<Buffer> {
+        const { writeFileSync, readFileSync, unlinkSync } = require('fs');
+        const { join } = require('path');
+        const os = require('os');
+        const ffmpeg = require('fluent-ffmpeg');
+        const ffmpegStatic = require('ffmpeg-static');
+        
+        ffmpeg.setFfmpegPath(ffmpegStatic);
+        
+        const tempInputPath = join(os.tmpdir(), `vocal_input_${Date.now()}.bin`);
+        const tempOutputPath = join(os.tmpdir(), `vocal_output_${Date.now()}.wav`);
+        
+        writeFileSync(tempInputPath, inputBuffer);
+        
+        return new Promise<Buffer>((resolve, reject) => {
+            ffmpeg(tempInputPath)
+                .toFormat('wav')
+                .on('end', () => {
+                    try {
+                        const outputBuffer = readFileSync(tempOutputPath);
+                        unlinkSync(tempInputPath);
+                        unlinkSync(tempOutputPath);
+                        resolve(outputBuffer);
+                    } catch (e) {
+                        reject(e);
+                    }
+                })
+                .on('error', (err) => {
+                    try {
+                        unlinkSync(tempInputPath);
+                        unlinkSync(tempOutputPath);
+                    } catch (e) {}
+                    reject(err);
+                })
+                .save(tempOutputPath);
+        });
+    }
+
+    private async transcribeWithGroq(audioBuffer: Buffer, filename: string, mimeType: string, locale?: string): Promise<string> {
+        const apiKey = this.configService.get<string>('GROQ_API_KEY');
+        if (!apiKey) throw new Error('GROQ_API_KEY not configured');
+
+        const formData = new FormData();
+        const blob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType });
+        formData.append('file', blob, filename);
+        formData.append('model', 'whisper-large-v3');
+        
+        if (locale) {
+            const lang = locale.split('-')[0];
+            formData.append('language', lang);
+        }
+
+        const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${apiKey}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Groq Whisper transcription failed (${response.status}): ${errText}`);
+        }
+
+        const data = await response.json();
+        if (!data.text) throw new Error('Empty transcription text returned from Groq');
+        return data.text;
     }
 
     private async callGroq(prompt: string): Promise<string> {
@@ -397,7 +550,7 @@ export class AiService implements OnModuleInit {
                 'X-Title': 'Ease App',
             },
             body: JSON.stringify({
-                model: 'meta-llama/llama-3.1-8b-instruct:free', // Free tier model on OpenRouter
+                model: 'meta-llama/llama-3.1-8b-instruct', // Highly stable Llama-3.1-8B model on OpenRouter
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
             }),
