@@ -10,7 +10,8 @@ import {
     Animated, 
     ScrollView,
     Dimensions,
-    Image
+    Image,
+    Easing
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -71,6 +72,28 @@ export default function HomeScreen({ navigation }: Props) {
     const [isTutorialVisible, setIsTutorialVisible] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const { analytics, fetchAnalytics } = useAnalyticsStore();
+
+    const spinValue = React.useRef(new Animated.Value(0)).current;
+
+    React.useEffect(() => {
+        if (currentProgram?.status === 'generating') {
+            Animated.loop(
+                Animated.timing(spinValue, {
+                    toValue: 1,
+                    duration: 3000,
+                    easing: Easing.linear,
+                    useNativeDriver: true,
+                })
+            ).start();
+        } else {
+            spinValue.setValue(0);
+        }
+    }, [currentProgram?.status]);
+
+    const spin = spinValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg'],
+    });
 
     // Trigger tutorial if not completed
     React.useEffect(() => {
@@ -172,43 +195,6 @@ export default function HomeScreen({ navigation }: Props) {
                             ))}
                         </View>
                     </View>
-                </View>
-            </SafeAreaView>
-        );
-    }
-
-    if (currentProgram?.status === 'generating' && !todayPlan) {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-                <View style={styles.topNavWrapper}>
-                    <View style={styles.topNav}>
-                        <View style={styles.navButton} />
-                        <Logo size={32} />
-                        <TouchableOpacity 
-                            style={[styles.profileButton, { backgroundColor: colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' }]}
-                            onPress={() => navigation.navigate('Settings')}
-                        >
-                            <Ionicons name="settings-outline" size={24} color={colors.text} />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
-                    <Animated.View style={{ opacity: 0.8 }}>
-                        <Ionicons name="sparkles-outline" size={80} color={colors.primary} />
-                    </Animated.View>
-                    <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, textAlign: 'center', marginTop: 24, fontFamily: fonts.display }}>
-                        Building your path...
-                    </Text>
-                    <Text style={{ fontSize: 16, color: colors.textMuted, textAlign: 'center', marginTop: 12, lineHeight: 24, fontFamily: fonts.body }}>
-                        We're selecting the best shards for your goal. This usually takes less than 30 seconds.
-                    </Text>
-                    <TouchableOpacity 
-                        style={{ marginTop: 40, padding: 16 }}
-                        onPress={() => useProgramsStore.getState().fetchActiveProgram()}
-                    >
-                        <Text style={{ color: colors.primary, fontWeight: '700' }}>Check Status</Text>
-                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
@@ -359,7 +345,32 @@ export default function HomeScreen({ navigation }: Props) {
         </View>
     );
 
-    const sortedTasks = todayPlan?.tasks
+    const renderEmptyOrLoading = () => {
+        if (currentProgram?.status === 'generating') {
+            return (
+                <View style={[styles.generatingContainer, { backgroundColor: colors.surfaceContainerLow, borderRadius: borderRadius.lg || 24 }]}>
+                    <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                        <Ionicons name="sparkles-outline" size={48} color={colors.primary} />
+                    </Animated.View>
+                    <Text style={[styles.generatingTitle, { color: colors.text, fontFamily: fonts.display }]}>
+                        Whispering to the stars...
+                    </Text>
+                    <Text style={[styles.generatingSubtitle, { color: colors.textMuted, fontFamily: fonts.body }]}>
+                        We are tailoring your personalized task chain to fit your goal.
+                    </Text>
+                    <View style={[styles.notificationBox, { backgroundColor: colors.surfaceContainerHigh }]}>
+                        <Ionicons name="notifications-outline" size={20} color={colors.primary} style={{ marginRight: 10 }} />
+                        <Text style={[styles.notificationText, { color: colors.text, fontFamily: fonts.label }]}>
+                            We'll send you a notification when your journey is ready.
+                        </Text>
+                    </View>
+                </View>
+            );
+        }
+        return null;
+    };
+
+    const sortedTasks = (todayPlan?.tasks && currentProgram?.status !== 'generating')
         ? [...todayPlan.tasks].sort((a, b) => (a.order || 0) - (b.order || 0))
         : [] as Task[];
 
@@ -386,6 +397,7 @@ export default function HomeScreen({ navigation }: Props) {
                             />
                         )}
                         ListHeaderComponent={renderHeader}
+                        ListEmptyComponent={renderEmptyOrLoading}
                         contentContainerStyle={styles.listContent}
                         showsVerticalScrollIndicator={false}
                     />
@@ -588,5 +600,46 @@ const styles = StyleSheet.create({
     },
     skeletonBanner: {
         opacity: 0.6,
+    },
+    generatingContainer: {
+        marginHorizontal: 20,
+        padding: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.05)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.1,
+        shadowRadius: 24,
+        elevation: 8,
+    },
+    generatingTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        textAlign: 'center',
+        marginTop: 20,
+        marginBottom: 8,
+    },
+    generatingSubtitle: {
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 24,
+        paddingHorizontal: 16,
+    },
+    notificationBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.03)',
+    },
+    notificationText: {
+        flex: 1,
+        fontSize: 12,
+        lineHeight: 16,
     }
 });

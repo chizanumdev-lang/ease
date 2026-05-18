@@ -33,7 +33,7 @@ interface AudioTaskProps {
 
 export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps) {
     const { colors, fonts, shadows, isDark, borderRadius } = useTheme();
-    const { todayPlan, fetchTodayPlan, currentProgram } = useProgramsStore();
+    const { todayPlan, fetchTodayPlan, currentProgram, startTask, completeTask } = useProgramsStore();
     const { user } = useAuthStore();
     const audioStore = useAudioStore();
     const { isPlaying, position, duration, isLoading, autoPlayEnabled } = audioStore;
@@ -65,7 +65,7 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const pulseAnim = useRef(new Animated.Value(0.4)).current;
 
-    const isStillGenerating = (!audioUrl || audioUrl === '' || audioUrl.includes('static_binaural')) && !gaveUp;
+    const isStillGenerating = (!audioUrl || audioUrl === '') && !gaveUp;
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
@@ -108,6 +108,9 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                     // Trigger auto-play if permitted
                     if (canAutoPlayAudio(user, autoPlayEnabled)) {
                         await audioStore.play();
+                        if (task.status === 'pending') {
+                            await startTask(task.id);
+                        }
                     }
                 } catch (err) {
                     console.error('[AudioTask] Preparation failed:', err);
@@ -131,6 +134,10 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                 await audioStore.pause();
             } else {
                 await audioStore.play();
+                // Mark task as in progress when played manually
+                if (task.status === 'pending') {
+                    await startTask(task.id);
+                }
             }
         } catch (err: any) {
             console.error('[AudioTask] Play error:', err);
@@ -143,9 +150,14 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     };
 
     const progress = duration > 0 ? position / duration : 0;
-    if (progress >= 0.85 && !isCompleted) {
-        setIsCompleted(true);
-    }
+    
+    // Automatically mark the task as complete once user completes 95% of the duration
+    useEffect(() => {
+        if (progress >= 0.95 && !isCompleted) {
+            setIsCompleted(true);
+            completeTask(task.id, { audioPosition: position * 1000 });
+        }
+    }, [progress, isCompleted]);
 
     return (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -220,19 +232,17 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                     )}
 
                     <View style={[styles.playerCard, { backgroundColor: colors.surfaceContainerLow }]}>
-                        <Slider
-                            style={styles.slider}
-                            minimumValue={0}
-                            maximumValue={duration || 1}
-                            value={position}
-                            minimumTrackTintColor={colors.primary}
-                            maximumTrackTintColor={colors.surfaceContainerHigh}
-                            thumbTintColor={isStillGenerating ? colors.outlineVariant : colors.primary}
-                            disabled={isStillGenerating || !audioUrl}
-                            onSlidingComplete={(value) => {
-                                audioStore.setPosition(value);
-                            }}
-                        />
+                        <View style={[styles.progressTrack, { backgroundColor: colors.surfaceContainerHigh }]}>
+                            <View 
+                                style={[
+                                    styles.progressFill, 
+                                    { 
+                                        width: `${progress * 100}%`, 
+                                        backgroundColor: colors.primary 
+                                    }
+                                ]} 
+                            />
+                        </View>
                         <View style={styles.timeRow}>
                             <Text style={[styles.timeText, { color: colors.textMuted, fontFamily: fonts.label }]}>
                                 {formatTime(position)}
@@ -241,7 +251,7 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                                 {formatTime(duration)}
                             </Text>
                         </View>
-
+ 
                         <View style={styles.controls}>
                             <TouchableOpacity 
                                 onPress={() => audioStore.setPosition(Math.max(0, position - 15))}
@@ -251,7 +261,7 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                                 <Ionicons name="refresh" size={24} color={colors.primary} style={{ transform: [{ scaleX: -1 }] }} />
                                 <Text style={[styles.skipIndicator, { color: colors.primary, fontFamily: fonts.labelBold }]}>15</Text>
                             </TouchableOpacity>
- 
+  
                             <TouchableOpacity 
                                 style={[
                                     styles.playBtn, 
@@ -268,15 +278,9 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                                     style={{ marginLeft: isPlaying ? 0 : 4 }} 
                                 />
                             </TouchableOpacity>
- 
-                            <TouchableOpacity 
-                                onPress={() => audioStore.setPosition(Math.min(duration, position + 15))}
-                                style={styles.controlBtn}
-                                disabled={isStillGenerating || !audioUrl}
-                            >
-                                <Ionicons name="refresh" size={24} color={colors.primary} />
-                                <Text style={[styles.skipIndicator, { color: colors.primary, fontFamily: fonts.labelBold }]}>15</Text>
-                            </TouchableOpacity>
+  
+                            {/* Symmetric empty placeholder to balance controls since skip forward is disabled */}
+                            <View style={styles.controlBtn} />
                         </View>
                     </View>
 
@@ -387,15 +391,23 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         padding: 24,
     },
-    slider: {
+    progressTrack: {
         width: '100%',
-        height: 40,
+        height: 6,
+        borderRadius: 3,
+        overflow: 'hidden',
+        marginBottom: 12,
+        marginTop: 8,
+    },
+    progressFill: {
+        height: '100%',
+        borderRadius: 3,
     },
     timeRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         paddingHorizontal: 4,
-        marginTop: -4,
+        marginTop: 0,
     },
     timeText: {
         fontSize: 12,

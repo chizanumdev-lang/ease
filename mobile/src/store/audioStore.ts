@@ -87,7 +87,9 @@ export const useAudioStore = create<AudioState>()(
                 });
 
                 TrackPlayer.addEventListener(Event.PlaybackQueueEnded, () => {
-                    get().stop();
+                    const duration = get().duration;
+                    set({ isPlaying: false, position: duration });
+                    get().pause().catch(err => console.error('[AUDIO_STORE] Pause failed on queue end:', err));
                 });
 
                 isInitialized = true;
