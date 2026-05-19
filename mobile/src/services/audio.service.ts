@@ -42,8 +42,9 @@ class AudioService {
             console.log('[AUDIO_SERVICE] Initialized TrackPlayer with Dynamic Island support');
         } catch (error) {
             console.error('[AUDIO_SERVICE] Failed to initialize:', error);
+            const msg = (error as any).message || '';
             // If already initialized, we can ignore
-            if ((error as any).message?.includes('already initialized')) {
+            if (msg.includes('already initialized') || msg.includes('already been initialized')) {
                 this.isInitialized = true;
                 return;
             }
