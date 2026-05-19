@@ -57,14 +57,7 @@ export class OrchestratorService {
     const shards = await this.shardRepository.find();
     
     return blueprint.map(draft => {
-      // Robust Matching: Exact -> Case-Insensitive -> Modality-Based Fallback
-      let shard = shards.find(s => s.name === draft.shardName);
-      if (!shard) shard = shards.find(s => s.name.toLowerCase() === (draft.shardName || '').toLowerCase());
-      
-      if (!shard) {
-          const intendedModality = (draft.modality || '').toLowerCase();
-          shard = shards.find(s => s.modality.toLowerCase() === intendedModality) || shards[0];
-      }
+      const shard = this.resolveShard(draft, shards);
 
       return {
         selectedShard: shard.name,
@@ -112,15 +105,7 @@ export class OrchestratorService {
       for (let i = 0; i < blueprint.length; i++) {
           const draft = blueprint[i];
           
-          // Robust Matching: Exact -> Case-Insensitive -> Modality-Based Fallback
-          let shard = shards.find(s => s.name === draft.shardName);
-          if (!shard) shard = shards.find(s => s.name.toLowerCase() === (draft.shardName || '').toLowerCase());
-          
-          // Modality fallback: If AI hallucinated a name, find a real shard that matches the intended modality
-          if (!shard) {
-              const intendedModality = (draft.modality || '').toLowerCase();
-              shard = shards.find(s => s.modality.toLowerCase() === intendedModality) || shards[0];
-          }
+          const shard = this.resolveShard(draft, shards);
 
           const { mobileType, pattern } = this.detectPattern(shard);
 
@@ -278,6 +263,8 @@ export class OrchestratorService {
       
       {
         "shardName": "exact-template-name-from-list",
+        "category": "exact category from the list (video, audio, quiz, journal, consistency)",
+        "modality": "exact modality of the selected template",
         "title": "Action Title (Goal-specific)",
         "description": "Short summary (Goal-specific)",
         "searchQuery": "Specific YouTube search query (if video template)",
@@ -371,6 +358,53 @@ export class OrchestratorService {
         const fallback = await this.youtubeService.getRecommendedVideo(goal, goal);
         return fallback?.url || 'https://www.youtube.com/watch?v=inpok4MKVLM';
     }
+  }
+
+  private resolveShard(draft: any, shards: TaskShard[]): TaskShard {
+    const draftName = draft.shardName || '';
+    
+    // 1. Exact or Case-Insensitive matching
+    let shard = shards.find(s => s.name === draftName);
+    if (!shard) shard = shards.find(s => s.name.toLowerCase() === draftName.toLowerCase());
+
+    // 2. Clean prefix matching (e.g., "video-observational-skill-template" -> "observational-skill-template")
+    if (!shard) {
+        const prefixes = ['video-', 'audio-', 'quiz-', 'journal-', 'consistency-'];
+        let cleanName = draftName.toLowerCase();
+        for (const prefix of prefixes) {
+            if (cleanName.startsWith(prefix)) {
+                cleanName = cleanName.substring(prefix.length);
+                break;
+            }
+        }
+        shard = shards.find(s => s.name.toLowerCase() === cleanName);
+    }
+
+    // 3. Intended Category Fallback (from draft.category, draft.modality, or extracted from shardName prefix)
+    if (!shard) {
+        let category = (draft.category || '').toLowerCase();
+        if (!category) {
+            const prefixes = ['video', 'audio', 'quiz', 'journal', 'consistency'];
+            for (const prefix of prefixes) {
+                if (draftName.toLowerCase().startsWith(prefix + '-')) {
+                    category = prefix;
+                    break;
+                }
+            }
+        }
+        if (category) {
+            shard = shards.find(s => s.category.toLowerCase() === category);
+        }
+    }
+
+    // 4. Modality fallback
+    if (!shard) {
+        const intendedModality = (draft.modality || '').toLowerCase();
+        shard = shards.find(s => s.modality.toLowerCase() === intendedModality);
+    }
+
+    // 5. Ultimate fallback
+    return shard || shards[0];
   }
 
   private detectPattern(shard: TaskShard): { mobileType: string; pattern: string } {
