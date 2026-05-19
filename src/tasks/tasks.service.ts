@@ -137,7 +137,7 @@ export class TasksService {
 
         if (metadata.pattern === 'vocal-test') {
             this.logger.log(`Regenerating vocal-test task ${task.id}`);
-            const ttsScript = metadata.targetScript || `Practice speaking about ${goal}`;
+            const ttsScript = metadata.narrationScript || metadata.targetScript || metadata.description || `Practice speaking about ${goal}`;
             const filename = `vocal_model_${dayPlanId}_${task.id}_retry_${Date.now()}`;
             metadata.audioUrl = await this.audioService.generateAudioTrack(ttsScript, 'calm', filename, true);
             metadata.status = 'ready';
