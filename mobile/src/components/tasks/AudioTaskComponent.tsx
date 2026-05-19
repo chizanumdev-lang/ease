@@ -9,7 +9,8 @@ import {
     Dimensions, 
     Image, 
     StatusBar,
-    ScrollView
+    ScrollView,
+    ActivityIndicator
 } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Task, TaskMetadata, AudioTrack } from '../../types';
@@ -34,13 +35,13 @@ interface AudioTaskProps {
 
 export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps) {
     const { colors, fonts, shadows, isDark, borderRadius } = useTheme();
-    const { todayPlan, fetchTodayPlan, currentProgram, startTask, completeTask } = useProgramsStore();
+    const { todayPlan, fetchTodayPlan, currentProgram, startTask, completeTask, regenerateTaskAsset } = useProgramsStore();
     const { user } = useAuthStore();
     const audioStore = useAudioStore();
     const { isPlaying, isLoading, autoPlayEnabled } = audioStore;
     const { position, duration } = useProgress(500); // 500ms intervals for smooth UI
 
-    
+    const [isRegenerating, setIsRegenerating] = useState(false);
     const [gaveUp, setGaveUp] = useState(false);
     const [isCompleted, setIsCompleted] = useState(task.completed || false);
     const [playError, setPlayError] = useState<string | null>(null);
@@ -147,7 +148,48 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
             setPlayError('Could not play audio. Please try again.');
         }
     };
+    const handleRegenerate = async () => {
+        setIsRegenerating(true);
+        setPlayError(null);
+        try {
+            const isRitual = audioTrack?.type === 'morning' || audioTrack?.type === 'night';
+            let updatedTrack: AudioTrack;
+            if (isRitual && audioTrack) {
+                updatedTrack = await audioStore.regenerateRitualAsset(audioTrack.id);
+            } else {
+                const refreshedTask = await regenerateTaskAsset(task.id);
+                const taskAudioUrl = refreshedTask.metadata?.audioUrl;
+                if (taskAudioUrl) {
+                    updatedTrack = {
+                        id: refreshedTask.id,
+                        url: taskAudioUrl,
+                        title: refreshedTask.title,
+                        type: refreshedTask.metadata?.subtype || 'guided',
+                        dayPlanId: refreshedTask.dayPlanId,
+                        artwork: audioTrack?.artwork,
+                    };
+                } else {
+                    updatedTrack = {
+                        ...audioTrack,
+                        id: refreshedTask.id,
+                        title: refreshedTask.title,
+                    } as AudioTrack;
+                }
+            }
 
+            // Load the updated track in the player store
+            await audioStore.loadTrack(updatedTrack);
+            // If the user was playing, resume playing
+            if (isPlaying) {
+                await audioStore.play();
+            }
+        } catch (error) {
+            console.error('[AudioTaskComponent] Failed to regenerate track:', error);
+            setPlayError('Failed to regenerate audio. Please try again.');
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
     const handleComplete = () => {
         onComplete({ audioPosition: position * 1000 });
     };
@@ -207,6 +249,30 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                         <Text style={[styles.duration, { color: colors.textMuted, fontFamily: fonts.body }]}>
                             {Math.round(duration / 60) || task.duration || 10} MIN SESSION
                         </Text>
+
+                        {!isStillGenerating && (
+                            <TouchableOpacity
+                                onPress={handleRegenerate}
+                                disabled={isRegenerating}
+                                style={[
+                                    styles.regenerateHeaderBtn,
+                                    {
+                                        borderColor: colors.primary,
+                                        backgroundColor: isRegenerating ? colors.surfaceContainerLow : 'transparent',
+                                    }
+                                ]}
+                                activeOpacity={0.7}
+                            >
+                                {isRegenerating ? (
+                                    <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 6 }} />
+                                ) : (
+                                    <Ionicons name="refresh" size={14} color={colors.primary} style={{ marginRight: 6 }} />
+                                )}
+                                <Text style={[styles.regenerateText, { color: colors.primary, fontFamily: fonts.labelBold }]}>
+                                    {isRegenerating ? "REGENERATING..." : "REGENERATE AUDIO"}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                     {isStillGenerating && (
@@ -489,6 +555,20 @@ const styles = StyleSheet.create({
     },
     completeBtnText: {
         fontSize: 16,
+    },
+    regenerateHeaderBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 14,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        borderWidth: 1,
+    },
+    regenerateText: {
+        fontSize: 11,
+        letterSpacing: 1,
     },
 });
 
