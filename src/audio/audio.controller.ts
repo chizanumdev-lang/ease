@@ -133,6 +133,13 @@ export class AudioController {
         };
     }
 
+    @Post('rituals/:id/regenerate')
+    @UseGuards(JwtAuthGuard)
+    async regenerateRitual(@Param('id') id: string) {
+        this.logger.log(`Received request to regenerate ritual track: ${id}`);
+        return this.ritualsService.regenerateRitualById(id);
+    }
+
     private async generateSingleTestTrack(goal: string, type: 'morning' | 'night' | 'task', duration: number): Promise<string> {
         try {
             const scriptData = await this.aiService.generateAudioScript(goal, duration, type);

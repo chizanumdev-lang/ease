@@ -168,6 +168,17 @@ class AudioService {
         }
     }
 
+    // Regenerate a ritual by ID
+    async regenerateRitual(id: string) {
+        try {
+            const response = await api.post(`/audio/rituals/${id}/regenerate`);
+            return response.data;
+        } catch (error) {
+            console.error('[AUDIO_SERVICE] Failed to regenerate ritual:', error);
+            throw error;
+        }
+    }
+
     // Cleanup
     async cleanup() {
         await TrackPlayer.reset();

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Task } from './entities/task.entity';
@@ -7,9 +7,13 @@ import { DayPlan } from '../programs/entities/day-plan.entity';
 import { ProgressService } from '../progress/progress.service';
 import { RewardsService } from '../rewards/rewards.service';
 import { triggerHydrateDay } from '../trigger/tasks';
+import { YoutubeService } from '../video/youtube/youtube.service';
+import { AudioService } from '../audio/audio.service';
 
 @Injectable()
 export class TasksService {
+    private readonly logger = new Logger(TasksService.name);
+
     constructor(
         @InjectRepository(Task)
         private taskRepository: Repository<Task>,
@@ -17,6 +21,8 @@ export class TasksService {
         private dayPlanRepository: Repository<DayPlan>,
         private progressService: ProgressService,
         private rewardsService: RewardsService,
+        private youtubeService: YoutubeService,
+        private audioService: AudioService,
     ) { }
 
     async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
@@ -96,5 +102,54 @@ export class TasksService {
             order: { completedAt: 'DESC' },
             take: 10
         });
+    }
+
+    async regenerateMedia(id: string): Promise<Task> {
+        const task = await this.taskRepository.findOne({
+            where: { id },
+            relations: ['dayPlan', 'dayPlan.program', 'dayPlan.program.goal']
+        });
+
+        if (!task) {
+            throw new NotFoundException('Task not found');
+        }
+
+        const goal = task.dayPlan?.program?.goal?.description || task.dayPlan?.program?.title || 'Goal';
+        const dayPlanId = task.dayPlanId;
+        const metadata = task.metadata || {};
+
+        if (task.type === 'video' && metadata.searchQuery) {
+            this.logger.log(`Regenerating video task ${task.id} with query: ${metadata.searchQuery}`);
+            let videoUrl: string;
+            try {
+                const video = await this.youtubeService.getRecommendedVideo(goal, metadata.searchQuery);
+                videoUrl = video?.url || `https://www.youtube.com/results?search_query=${encodeURIComponent(metadata.searchQuery)}`;
+            } catch (err) {
+                // Fallback search
+                const fallback = await this.youtubeService.getRecommendedVideo(goal, goal);
+                videoUrl = fallback?.url || 'https://www.youtube.com/watch?v=inpok4MKVLM';
+            }
+            task.videoUrl = videoUrl;
+            if (metadata.status) {
+                metadata.status = 'ready';
+            }
+        }
+
+        if (metadata.pattern === 'vocal-test') {
+            this.logger.log(`Regenerating vocal-test task ${task.id}`);
+            const ttsScript = metadata.targetScript || `Practice speaking about ${goal}`;
+            const filename = `vocal_model_${dayPlanId}_${task.id}_retry_${Date.now()}`;
+            metadata.audioUrl = await this.audioService.generateAudioTrack(ttsScript, 'calm', filename, true);
+            metadata.status = 'ready';
+        } else if (task.type === 'audio') {
+            this.logger.log(`Regenerating audio task ${task.id}`);
+            const script = metadata.narrationScript || metadata.description || `Session for ${goal}`;
+            const filename = `audio_task_${dayPlanId}_${task.id}_retry_${Date.now()}`;
+            metadata.audioUrl = await this.audioService.generateAudioTrack(script, 'focus', filename);
+            metadata.status = 'ready';
+        }
+
+        task.metadata = metadata;
+        return this.taskRepository.save(task);
     }
 }

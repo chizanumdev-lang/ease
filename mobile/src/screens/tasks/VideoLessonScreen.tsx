@@ -10,6 +10,7 @@ import {
     ImageBackground,
     Animated,
     BackHandler,
+    ActivityIndicator,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,10 +31,27 @@ const VIDEO_PLAYER_HEIGHT = (width * 9) / 16;
 
 export default function VideoLessonScreen({ route, navigation }: Props) {
     const { colors, spacing, borderRadius } = useTheme();
-    const { todayPlan, completeTask, updateTask } = useProgramsStore();
+    const { todayPlan, completeTask, updateTask, regenerateTaskAsset } = useProgramsStore();
     const { task } = route.params;
 
+    const [isRegenerating, setIsRegenerating] = useState(false);
     const [playing, setPlaying] = useState(false);
+
+    const handleRegenerate = async () => {
+        setIsRegenerating(true);
+        try {
+            const updatedTask = await regenerateTaskAsset(task.id);
+            navigation.setParams({ task: updatedTask });
+            setLoading(true);
+            setPlaying(false);
+            setCurrentTime(0);
+            setMaxWatched(0);
+        } catch (error) {
+            console.error('[VIDEO_LESSON] Failed to regenerate task video:', error);
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
     const [loading, setLoading] = useState(true);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(task.totalDuration || 0);
@@ -255,7 +273,20 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
             <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
                 <Ionicons name="alert-circle" size={64} color={colors.error} />
                 <Text style={[styles.errorText, { color: colors.text }]}>Invalid video URL</Text>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, { backgroundColor: colors.surfaceContainerLow }]}>
+                
+                <TouchableOpacity 
+                    onPress={handleRegenerate} 
+                    style={[styles.backBtn, { backgroundColor: colors.primary, marginBottom: 12, minWidth: 180, alignItems: 'center', justifyContent: 'center' }]}
+                    disabled={isRegenerating}
+                >
+                    {isRegenerating ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                        <Text style={[styles.backBtnText, { color: '#FFF' }]}>Regenerate Video</Text>
+                    )}
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, { backgroundColor: colors.surfaceContainerLow, minWidth: 180, alignItems: 'center', justifyContent: 'center' }]}>
                     <Text style={[styles.backBtnText, { color: colors.primary }]}>Go Back</Text>
                 </TouchableOpacity>
             </View>
@@ -328,9 +359,22 @@ export default function VideoLessonScreen({ route, navigation }: Props) {
 
             {/* Immersive Header overlay */}
             <BlurView intensity={20} style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-                    <Ionicons name="chevron-back" size={28} color="#FFF" />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
+                        <Ionicons name="chevron-back" size={28} color="#FFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        onPress={handleRegenerate} 
+                        style={[styles.headerButton, { marginLeft: 16 }]}
+                        disabled={isRegenerating}
+                    >
+                        {isRegenerating ? (
+                            <ActivityIndicator size="small" color="#FFF" />
+                        ) : (
+                            <Ionicons name="refresh" size={24} color="#FFF" />
+                        )}
+                    </TouchableOpacity>
+                </View>
                 <View style={styles.headerTitles}>
                     <Text style={styles.headerTitle}>Day {todayPlan?.dayNumber || 1}: Mastery</Text>
                 </View>

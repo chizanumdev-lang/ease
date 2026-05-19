@@ -34,6 +34,7 @@ interface ProgramsState {
     fetchTodayPlan: (programId: string) => Promise<void>;
     updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
     fetchPreviewMetadata: (goalId?: string, duration?: number, options?: any) => Promise<any>;
+    regenerateTaskAsset: (taskId: string) => Promise<Task>;
     
     // Task Chain Actions
     startTask: (taskId: string) => Promise<void>;
@@ -278,6 +279,28 @@ export const useProgramsStore = create<ProgramsState>()(
                             syncQueue: [...state.syncQueue, { id: taskId, type: 'UPDATE', payload: apiPayload }]
                         }));
                     }
+                }
+            },
+
+            regenerateTaskAsset: async (taskId) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const updatedTask = await tasksService.regenerate(taskId);
+                    const { todayPlan } = get();
+                    if (todayPlan && todayPlan.tasks) {
+                        const updatedTasks = todayPlan.tasks.map(t =>
+                            t.id === taskId ? { ...t, ...updatedTask } : t
+                        );
+                        set({ todayPlan: { ...todayPlan, tasks: updatedTasks } });
+                    }
+                    set({ isLoading: false });
+                    return updatedTask;
+                } catch (error: any) {
+                    set({
+                        error: error.response?.data?.message || 'Failed to regenerate task asset',
+                        isLoading: false,
+                    });
+                    throw error;
                 }
             },
 

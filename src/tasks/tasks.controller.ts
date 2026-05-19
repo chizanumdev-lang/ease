@@ -58,4 +58,11 @@ export class TasksController {
             throw error;
         }
     }
+
+    @Post(':id/regenerate')
+    @UseGuards(JwtAuthGuard)
+    async regenerate(@Param('id') id: string) {
+        this.logger.log(`Received task regeneration request for task: ${id}`);
+        return this.tasksService.regenerateMedia(id);
+    }
 }

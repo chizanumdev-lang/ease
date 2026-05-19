@@ -8,13 +8,15 @@ import {
     Animated,
     Dimensions,
     StatusBar,
+    ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { useProgress } from 'react-native-track-player';
-import { MainStackParamList } from '../../types';
+import { MainStackParamList, AudioTrack } from '../../types';
 import { useAudioStore } from '../../store/audioStore';
+import { useProgramsStore } from '../../store/programsStore';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useModalStore } from '../../store/modalStore';
@@ -30,6 +32,7 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
     const { showModal } = useModalStore();
     const { track } = route.params;
     const { user } = useAuthStore();
+    const { regenerateTaskAsset } = useProgramsStore();
     const {
         currentTrack,
         isPlaying,
@@ -42,7 +45,53 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
         pause,
         setVolume,
         setStopTimer,
+        regenerateRitualAsset,
     } = useAudioStore();
+
+    const [isRegenerating, setIsRegenerating] = useState(false);
+
+    const handleRegenerate = async () => {
+        setIsRegenerating(true);
+        try {
+            const isRitual = track.type === 'morning' || track.type === 'night';
+            let updatedTrack: AudioTrack;
+            if (isRitual) {
+                updatedTrack = await regenerateRitualAsset(track.id);
+            } else {
+                const refreshedTask = await regenerateTaskAsset(track.id);
+                const taskAudioUrl = refreshedTask.metadata?.audioUrl;
+                if (taskAudioUrl) {
+                    updatedTrack = {
+                        id: refreshedTask.id,
+                        url: taskAudioUrl,
+                        title: refreshedTask.title,
+                        type: refreshedTask.metadata?.subtype || 'guided',
+                        dayPlanId: refreshedTask.dayPlanId,
+                        artwork: track.artwork,
+                    };
+                } else {
+                    updatedTrack = {
+                        ...track,
+                        id: refreshedTask.id,
+                        title: refreshedTask.title,
+                    };
+                }
+            }
+            
+            navigation.setParams({ track: updatedTrack });
+            await loadTrack(updatedTrack);
+            await play();
+        } catch (error) {
+            console.error('[AUDIO_PLAYER] Failed to regenerate track:', error);
+            showModal({
+                type: 'error',
+                title: 'Regeneration Failed',
+                description: 'Failed to regenerate audio. Please try again.'
+            });
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
 
     const { position, duration } = useProgress(500); // 500ms intervals for smooth UI
 
@@ -118,6 +167,33 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
         { label: 'Off', value: null },
     ];
 
+    if (!track || !track.url) {
+        return (
+            <View style={[styles.container, { backgroundColor: isDark ? '#0a0812' : colors.background, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+                <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+                <Ionicons name="alert-circle" size={64} color={colors.error} />
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Audio track is missing</Text>
+                <Text style={{ color: colors.textMuted, textAlign: 'center', marginBottom: 24 }}>The audio generation is not completed or the URL is invalid.</Text>
+                
+                <TouchableOpacity 
+                    onPress={handleRegenerate} 
+                    style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, marginBottom: 12, minWidth: 180, alignItems: 'center', justifyContent: 'center' }}
+                    disabled={isRegenerating}
+                >
+                    {isRegenerating ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                        <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>Regenerate Audio</Text>
+                    )}
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigation.goBack()} style={{ backgroundColor: colors.surfaceContainerLow, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, minWidth: 180, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 16 }}>Go Back</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
     return (
         <View style={[styles.container, { backgroundColor: isDark ? '#0a0812' : colors.background }]}>
             <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
@@ -129,12 +205,27 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
-                    <Ionicons name="chevron-down" size={28} color={colors.textMuted} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
+                        <Ionicons name="chevron-down" size={28} color={colors.textMuted} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        onPress={handleRegenerate} 
+                        style={[styles.headerBtn, { marginLeft: 16 }]}
+                        disabled={isRegenerating}
+                    >
+                        {isRegenerating ? (
+                            <ActivityIndicator size="small" color={colors.primary} />
+                        ) : (
+                            <Ionicons name="refresh" size={24} color={colors.textMuted} />
+                        )}
+                    </TouchableOpacity>
+                </View>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={[styles.headerLabel, { color: colors.textMuted }]}>NIGHTLY RITUAL</Text>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Deep Sleep Ambient</Text>
+                    <Text style={[styles.headerLabel, { color: colors.textMuted }]}>
+                        {track.type?.toUpperCase() || 'AUDIO'}
+                    </Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>{track.title}</Text>
                 </View>
                 <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Settings')}>
                     <Ionicons name="settings-outline" size={24} color={colors.textMuted} />

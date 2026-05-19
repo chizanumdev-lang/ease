@@ -5,4 +5,8 @@ export const tasksService = {
         const response = await api.patch(`/tasks/${id}`, updates);
         return response.data;
     },
+    regenerate: async (id: string) => {
+        const response = await api.post(`/tasks/${id}/regenerate`);
+        return response.data;
+    },
 };
