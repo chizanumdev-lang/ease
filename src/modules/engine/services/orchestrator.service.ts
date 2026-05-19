@@ -334,7 +334,7 @@ export class OrchestratorService {
 
     // 2. Handle VOCAL TEST Hydration
     if (metadata.pattern === 'vocal-test') {
-        const ttsScript = metadata.targetScript || `Practice speaking about ${goal}`;
+        const ttsScript = metadata.narrationScript || metadata.targetScript || metadata.description || `Practice speaking about ${goal}`;
         const filename = `vocal_model_${dayPlanId}_${task.id}`;
         metadata.audioUrl = await this.audioService.generateAudioTrack(ttsScript, 'calm', filename, true);
     }
