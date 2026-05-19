@@ -58,7 +58,7 @@ async function checkRecentProgram() {
                     console.log('No tasks found for Day 1.');
                 } else {
                     taskRes.rows.forEach(t => {
-                        console.log(`Task ID: ${t.id} | Title: "${t.title}" | Type: ${t.type} | Metadata Status: ${t.metadata?.status}`);
+                        console.log(`Task ID: ${t.id} | Title: "${t.title}" | Type: ${t.type} | Metadata:`, JSON.stringify(t.metadata, null, 2));
                     });
                 }
             }
