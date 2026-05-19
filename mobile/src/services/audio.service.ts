@@ -41,13 +41,25 @@ class AudioService {
             this.isInitialized = true;
             console.log('[AUDIO_SERVICE] Initialized TrackPlayer with Dynamic Island support');
         } catch (error) {
-            console.error('[AUDIO_SERVICE] Failed to initialize:', error);
             const msg = (error as any).message || '';
             // If already initialized, we can ignore
             if (msg.includes('already initialized') || msg.includes('already been initialized')) {
                 this.isInitialized = true;
                 return;
             }
+            console.error('[AUDIO_SERVICE] Failed to initialize:', error);
+            throw error;
+        }
+    }
+
+    // Seek to a specific position in seconds
+    async seekTo(seconds: number) {
+        await this.initialize();
+        try {
+            await TrackPlayer.seekTo(seconds);
+            console.log(`[AUDIO_SERVICE] Seeked to ${seconds}s`);
+        } catch (error) {
+            console.error('[AUDIO_SERVICE] Failed to seek:', error);
             throw error;
         }
     }

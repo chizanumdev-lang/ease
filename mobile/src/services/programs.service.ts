@@ -8,7 +8,7 @@ export const programsService = {
         const response = await api.post<{ goalId: string, programId: string, dayPlanId: string }>(
             '/programs/initiate', 
             { goalDescription, category },
-            { timeout: 90000 }
+            { timeout: 180000 }
         );
         return response.data;
     },
@@ -27,7 +27,7 @@ export const programsService = {
             goalId,
             duration,
             ...options
-        }, { timeout: 90000 });
+        }, { timeout: 180000 });
         mmkvStorage.setCurrentProgram(response.data);
         return response.data;
     },
@@ -41,7 +41,7 @@ export const programsService = {
             goalId,
             duration,
             ...options
-        }, { timeout: 90000 });
+        }, { timeout: 180000 });
         return response.data;
     },
 
@@ -70,14 +70,14 @@ export const programsService = {
         const response = await api.post<{ url: string }>(API_ENDPOINTS.AUDIO_PREVIEW, {
             theme,
             mood
-        }, { timeout: 90000 });
+        }, { timeout: 180000 });
         return response.data;
     },
 
     async generateBinauralPreview(frequency: number): Promise<{ url: string }> {
         const response = await api.post<{ url: string }>(API_ENDPOINTS.AUDIO_BINAURAL_PREVIEW, {
             frequency
-        }, { timeout: 90000 });
+        }, { timeout: 180000 });
         return response.data;
     },
     
@@ -85,7 +85,7 @@ export const programsService = {
         const response = await api.post<{ morningUrl: string; nightUrl: string; taskUrl: string }>(
             API_ENDPOINTS.AUDIO_IMMERSIVE_TEST,
             { goal },
-            { timeout: 90000 }
+            { timeout: 180000 }
         );
         return response.data;
     },

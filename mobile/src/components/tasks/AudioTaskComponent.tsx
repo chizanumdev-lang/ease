@@ -35,7 +35,7 @@ interface AudioTaskProps {
 
 export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps) {
     const { colors, fonts, shadows, isDark, borderRadius } = useTheme();
-    const { todayPlan, fetchTodayPlan, currentProgram, startTask, completeTask, regenerateTaskAsset } = useProgramsStore();
+    const { todayPlan, fetchTodayPlan, currentProgram, startTask, completeTask, regenerateTaskAsset, updateTask } = useProgramsStore();
     const { user } = useAuthStore();
     const audioStore = useAudioStore();
     const { isPlaying, isLoading, autoPlayEnabled } = audioStore;
@@ -109,6 +109,13 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
             if (audioTrack && !isStillGenerating) {
                 try {
                     await audioStore.loadTrack(audioTrack);
+                    
+                    // Resume from where the user stopped
+                    if ((task.watchedSeconds ?? 0) > 5 && !task.completed) {
+                        console.log(`[AudioTask] Resuming from saved position: ${task.watchedSeconds}s`);
+                        await audioStore.seekTo(task.watchedSeconds!);
+                    }
+
                     // Trigger auto-play if permitted
                     if (canAutoPlayAudio(user, autoPlayEnabled)) {
                         await audioStore.play();
@@ -124,6 +131,20 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
         };
         prepareTrack();
     }, [audioUrl, isStillGenerating]);
+
+    // Save position periodically to resume later
+    useEffect(() => {
+        if (!isPlaying || isCompleted) return;
+
+        const interval = setInterval(async () => {
+            if (position > 5) {
+                console.log(`[AudioTask] Saving watched progress: ${Math.floor(position)}s`);
+                await updateTask(task.id, { watchedSeconds: Math.floor(position) });
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [isPlaying, position, isCompleted]);
 
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -320,10 +341,9 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
                                 {formatTime(duration)}
                             </Text>
                         </View>
- 
                         <View style={styles.controls}>
                             <TouchableOpacity 
-                                onPress={() => audioStore.setPosition(Math.max(0, position - 15))}
+                                onPress={() => audioStore.seekTo(Math.max(0, position - 15))}
                                 style={styles.controlBtn}
                                 disabled={isStillGenerating || !audioUrl}
                             >
