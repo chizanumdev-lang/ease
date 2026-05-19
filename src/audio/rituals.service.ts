@@ -192,4 +192,19 @@ export class RitualsService {
             where: { userId, date }
         });
     }
+
+    async regenerateRitualById(id: string): Promise<RitualTrack> {
+        const ritual = await this.ritualTrackRepository.findOne({ where: { id } });
+        if (!ritual) {
+            throw new Error('Ritual not found');
+        }
+
+        this.logger.log(`Forced regeneration of ritual track: ${id} (${ritual.ritualType} / ${ritual.date})`);
+        
+        // Reset URL so generateRitual is forced to run AI/YouTube mixing pipeline
+        ritual.url = '';
+        await this.ritualTrackRepository.save(ritual);
+
+        return this.generateRitual(ritual.userId, ritual.ritualType as 'morning' | 'night', ritual.date);
+    }
 }

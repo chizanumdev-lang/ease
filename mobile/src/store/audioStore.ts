@@ -50,6 +50,7 @@ interface AudioState {
     setEbbFactor: (factor: number) => void;
     checkProximity: () => void;
     fetchRituals: (date: string) => Promise<void>;
+    regenerateRitualAsset: (trackId: string) => Promise<AudioTrack>;
     toggleAutoPlay: () => void;
     downloadTrack: (track: AudioTrack) => Promise<void>;
     setIsPlaying: (isPlaying: boolean) => void;
@@ -178,6 +179,39 @@ export const useAudioStore = create<AudioState>()(
                     }
                 } catch (error) {
                     console.error('[AUDIO_STORE] Failed to fetch rituals:', error);
+                }
+            },
+
+            regenerateRitualAsset: async (trackId) => {
+                set({ isLoading: true });
+                try {
+                    const updatedTrack = await audioService.regenerateRitual(trackId);
+                    
+                    // Update state locally
+                    const current = get().currentTrack;
+                    const tracks = get().ritualTracks;
+                    const newRitualTracks = { ...tracks };
+                    
+                    if (tracks.morning && tracks.morning.id === trackId) {
+                        newRitualTracks.morning = updatedTrack;
+                    }
+                    if (tracks.night && tracks.night.id === trackId) {
+                        newRitualTracks.night = updatedTrack;
+                    }
+                    
+                    set({ ritualTracks: newRitualTracks, isLoading: false });
+                    
+                    // Reload the updated track if it's currently loaded
+                    if (current && current.id === trackId) {
+                        set({ currentTrack: updatedTrack });
+                        await get().loadTrack(updatedTrack);
+                    }
+                    
+                    return updatedTrack;
+                } catch (error) {
+                    console.error('[AUDIO_STORE] Failed to regenerate ritual track:', error);
+                    set({ isLoading: false });
+                    throw error;
                 }
             },
 

@@ -6,11 +6,12 @@ import { Task } from './entities/task.entity';
 import { TaskTemplate } from './entities/task-template.entity';
 import { TasksResolver } from './tasks.resolver';
 
-
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { ProgressModule } from '../progress/progress.module';
 import { RewardsModule } from '../rewards/rewards.module';
 import { AiModule } from '../ai/ai.module';
+import { VideoModule } from '../video/video.module';
+import { AudioModule } from '../audio/audio.module';
 
 @Module({
     imports: [
@@ -18,6 +19,8 @@ import { AiModule } from '../ai/ai.module';
         ProgressModule,
         RewardsModule,
         AiModule,
+        VideoModule,
+        AudioModule,
     ],
     controllers: [TasksController],
     providers: [TasksService, TasksResolver],
