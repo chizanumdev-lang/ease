@@ -43,6 +43,7 @@ interface AudioState {
     stop: () => Promise<void>;
     setVolume: (volume: number) => Promise<void>;
     setPosition: (position: number) => void;
+    seekTo: (position: number) => Promise<void>;
     setDuration: (duration: number) => void;
     setStopTimer: (minutes: number | null) => void;
     setRitualTimes: (morning: string, night: string) => void;
@@ -289,6 +290,17 @@ export const useAudioStore = create<AudioState>()(
 
             // Update position (called by service)
             setPosition: (position: number) => set({ position }),
+
+            // Seek to a specific position
+            seekTo: async (position: number) => {
+                try {
+                    await audioService.seekTo(position);
+                    set({ position });
+                } catch (error) {
+                    console.error('[AUDIO_STORE] Failed to seek:', error);
+                    throw error;
+                }
+            },
 
             // Update duration (called by service)
             setDuration: (duration: number) => set({ duration }),

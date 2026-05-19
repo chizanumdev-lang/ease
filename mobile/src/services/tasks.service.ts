@@ -6,7 +6,7 @@ export const tasksService = {
         return response.data;
     },
     regenerate: async (id: string) => {
-        const response = await api.post(`/tasks/${id}/regenerate`);
+        const response = await api.post(`/tasks/${id}/regenerate`, {}, { timeout: 180000 });
         return response.data;
     },
 };
