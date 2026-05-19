@@ -12,6 +12,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
+import { useProgress } from 'react-native-track-player';
 import { MainStackParamList } from '../../types';
 import { useAudioStore } from '../../store/audioStore';
 import { useAuthStore } from '../../store/authStore';
@@ -33,8 +34,6 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
         currentTrack,
         isPlaying,
         isLoading,
-        position,
-        duration,
         volume,
         stopTimer,
         autoPlayEnabled,
@@ -44,6 +43,9 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
         setVolume,
         setStopTimer,
     } = useAudioStore();
+
+    const { position, duration } = useProgress(500); // 500ms intervals for smooth UI
+
 
     // Pulse Animation
     const pulseAnim = useRef(new Animated.Value(0)).current;

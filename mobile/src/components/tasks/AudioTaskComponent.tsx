@@ -21,6 +21,7 @@ import { useAuthStore } from '../../store/authStore';
 import { canAutoPlayAudio } from '../../utils/sleepWindow.util';
 import { BlurView } from 'expo-blur';
 import PetalBackground from '../PetalBackground';
+import { useProgress } from 'react-native-track-player';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HERO_HEIGHT = SCREEN_HEIGHT * 0.35;
@@ -36,7 +37,9 @@ export default function AudioTaskComponent({ task, onComplete }: AudioTaskProps)
     const { todayPlan, fetchTodayPlan, currentProgram, startTask, completeTask } = useProgramsStore();
     const { user } = useAuthStore();
     const audioStore = useAudioStore();
-    const { isPlaying, position, duration, isLoading, autoPlayEnabled } = audioStore;
+    const { isPlaying, isLoading, autoPlayEnabled } = audioStore;
+    const { position, duration } = useProgress(500); // 500ms intervals for smooth UI
+
     
     const [gaveUp, setGaveUp] = useState(false);
     const [isCompleted, setIsCompleted] = useState(task.completed || false);

@@ -269,7 +269,7 @@ export class OrchestratorService {
         "description": "Short summary (Goal-specific)",
         "searchQuery": "Specific YouTube search query (if video template)",
         "questions": ["Q1?", "Q2?"], (if quiz template)
-        "narrationScript": "At least 300 words of specific coaching. NO generic intros. Focus on 'How' and 'Why' this specific task helps with ${goal}."
+        "narrationScript": "At least 600 words of highly detailed and specific coaching. NO generic intros. Focus on 'How' and 'Why' this specific task helps with ${goal}. This must be long and comprehensive to ensure a spoken length of at least 4-5 minutes."
       }
 
       STRICT REQUIREMENTS:
