@@ -332,6 +332,38 @@ export class OrchestratorService {
         task.videoUrl = videoUrl;
     }
 
+    // Auto-expand short scripts to ensure full 4-5 mins length
+    if (metadata.pattern === 'vocal-test' || task.type === 'audio') {
+        const currentScript = metadata.narrationScript || metadata.targetScript || metadata.description || `Session for ${goal}`;
+        const wordCount = currentScript.split(/\s+/).filter(Boolean).length;
+        if (wordCount < 180) {
+            this.logger.log(`Initial script is too short (${wordCount} words). Expanding via AI to ensure 4-5 mins of duration.`);
+            const expansionPrompt = `
+                You are the cognitive elite voice coach for Ease.
+                We have an audio lesson for the user's goal: "${goal}".
+                The task title is: "${task.title}".
+                The current script outline is: "${currentScript}".
+                
+                Your task is to expand this into a highly detailed, comprehensive, goal-specific voice coaching script of AT LEAST 600 words.
+                The voice coach is instructing the student. 
+                
+                CRITICAL: 
+                - The length must be at least 600 words so that the spoken track is 4-5 minutes long.
+                - Style: Simple 5th-grade English. NO AI jargon (vital, journey, tailored, embark, comprehensive).
+                - Write ONLY the raw text script of the narration. DO NOT include any formatting like "Narrator:", "Host:", bracketed audio cues, asterisks, or markdown formatting. Just write the exact spoken words, paragraphs, and guidance so it can be converted to speech.
+            `;
+            try {
+                const expandedScript = await this.aiService.generate(expansionPrompt);
+                if (expandedScript && expandedScript.trim().length > 100) {
+                    metadata.narrationScript = expandedScript.trim();
+                    this.logger.log(`Successfully expanded initial script to ${metadata.narrationScript.split(/\s+/).length} words.`);
+                }
+            } catch (err) {
+                this.logger.error(`Failed to expand initial script: ${err.message}`);
+            }
+        }
+    }
+
     // 2. Handle VOCAL TEST Hydration
     if (metadata.pattern === 'vocal-test') {
         const ttsScript = metadata.narrationScript || metadata.targetScript || metadata.description || `Practice speaking about ${goal}`;
