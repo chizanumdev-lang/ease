@@ -25,6 +25,7 @@ class AudioService {
                 android: {
                     appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
                 },
+                progressUpdateEventInterval: 1,
                 capabilities: [
                     Capability.Play,
                     Capability.Pause,
