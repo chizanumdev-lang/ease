@@ -12,18 +12,20 @@ import { RewardsModule } from '../rewards/rewards.module';
 import { AiModule } from '../ai/ai.module';
 import { VideoModule } from '../video/video.module';
 import { AudioModule } from '../audio/audio.module';
+import { EngineModule } from '../modules/engine/engine.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Task, DayPlan, TaskTemplate]),
-        ProgressModule,
-        RewardsModule,
-        AiModule,
-        VideoModule,
-        AudioModule,
-    ],
-    controllers: [TasksController],
-    providers: [TasksService, TasksResolver],
-    exports: [TasksService],
+  imports: [
+    TypeOrmModule.forFeature([Task, DayPlan, TaskTemplate]),
+    ProgressModule,
+    RewardsModule,
+    AiModule,
+    VideoModule,
+    AudioModule,
+    EngineModule,
+  ],
+  controllers: [TasksController],
+  providers: [TasksService, TasksResolver],
+  exports: [TasksService],
 })
-export class TasksModule { }
+export class TasksModule {}

@@ -6,8 +6,9 @@ import { RitualsService } from '../audio/rituals.service';
 import { INestApplicationContext } from '@nestjs/common';
 
 async function test() {
-  const app: INestApplicationContext = await NestFactory.createApplicationContext(AppModule);
-  
+  const app: INestApplicationContext =
+    await NestFactory.createApplicationContext(AppModule);
+
   const programsService = app.get(ProgramsService);
   const analyticsService = app.get(AnalyticsService);
   const ritualsService = app.get(RitualsService);
@@ -40,7 +41,6 @@ async function test() {
     } catch (e) {
       console.log('Result: Caught error:', e.constructor.name, e.message);
     }
-
   } catch (error) {
     console.error('Fatal Test Error:', error);
   } finally {

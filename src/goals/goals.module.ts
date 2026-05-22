@@ -7,9 +7,9 @@ import { Goal } from './entities/goal.entity';
 import { GoalsController } from './goals.controller';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Goal])],
-    controllers: [GoalsController],
-    providers: [GoalsService, GoalsResolver],
-    exports: [GoalsService],
+  imports: [TypeOrmModule.forFeature([Goal])],
+  controllers: [GoalsController],
+  providers: [GoalsService, GoalsResolver],
+  exports: [GoalsService],
 })
-export class GoalsModule { }
+export class GoalsModule {}

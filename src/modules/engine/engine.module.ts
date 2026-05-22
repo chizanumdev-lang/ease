@@ -42,7 +42,12 @@ import { AudioAsset } from './entities/audio-asset.entity';
       EngineTask,
     ]),
   ],
-  providers: [EngineService, PlannerService, OrchestratorService, EngineResolver],
+  providers: [
+    EngineService,
+    PlannerService,
+    OrchestratorService,
+    EngineResolver,
+  ],
   exports: [EngineService, PlannerService, OrchestratorService],
 })
 export class EngineModule {}

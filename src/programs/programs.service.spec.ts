@@ -19,76 +19,82 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { NotFoundException } from '@nestjs/common';
 
 describe('ProgramsService', () => {
-    let service: ProgramsService;
-    let programRepository: any;
+  let service: ProgramsService;
+  let programRepository: any;
 
-    const mockRepository = () => ({
-        findOne: jest.fn(),
-        remove: jest.fn(),
-        create: jest.fn(),
-        save: jest.fn(),
-        find: jest.fn(),
-        update: jest.fn(),
+  const mockRepository = () => ({
+    findOne: jest.fn(),
+    remove: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+    update: jest.fn(),
+  });
+
+  const mockQueue = () => ({
+    add: jest.fn(),
+  });
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ProgramsService,
+        { provide: getRepositoryToken(Program), useFactory: mockRepository },
+        { provide: getRepositoryToken(DayPlan), useFactory: mockRepository },
+        { provide: getRepositoryToken(Task), useFactory: mockRepository },
+        { provide: getRepositoryToken(AudioTrack), useFactory: mockRepository },
+        { provide: getRepositoryToken(Quiz), useFactory: mockRepository },
+        {
+          provide: getRepositoryToken(QuizAttempt),
+          useFactory: mockRepository,
+        },
+        { provide: getRepositoryToken(Goal), useFactory: mockRepository },
+        {
+          provide: getRepositoryToken(AdaptationLog),
+          useFactory: mockRepository,
+        },
+        { provide: getRepositoryToken(Progress), useFactory: mockRepository },
+        { provide: getQueueToken('audio-generation'), useFactory: mockQueue },
+        { provide: getQueueToken('program-generation'), useFactory: mockQueue },
+        { provide: UsersService, useValue: {} },
+        { provide: AiService, useValue: {} },
+        { provide: YoutubeService, useValue: {} },
+        { provide: AudioService, useValue: {} },
+        { provide: AudioMixerService, useValue: {} },
+      ],
+    }).compile();
+
+    service = module.get<ProgramsService>(ProgramsService);
+    programRepository = module.get(getRepositoryToken(Program));
+  });
+
+  describe('deleteProgram', () => {
+    it('should successfully delete a program if it exists and belongs to the user', async () => {
+      const userId = 'user-123';
+      const programId = 'program-456';
+      const mockProgram = { id: programId, userId };
+
+      programRepository.findOne.mockResolvedValue(mockProgram);
+      programRepository.remove.mockResolvedValue(mockProgram);
+
+      await service.deleteProgram(programId, userId);
+
+      expect(programRepository.findOne).toHaveBeenCalledWith({
+        where: { id: programId, userId },
+      });
+      expect(programRepository.remove).toHaveBeenCalledWith(mockProgram);
     });
 
-    const mockQueue = () => ({
-        add: jest.fn(),
+    it('should throw NotFoundException if the program does not exist', async () => {
+      const userId = 'user-123';
+      const programId = 'non-existent';
+
+      programRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.deleteProgram(programId, userId)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(programRepository.remove).not.toHaveBeenCalled();
     });
-
-    beforeEach(async () => {
-        const module: TestingModule = await Test.createTestingModule({
-            providers: [
-                ProgramsService,
-                { provide: getRepositoryToken(Program), useFactory: mockRepository },
-                { provide: getRepositoryToken(DayPlan), useFactory: mockRepository },
-                { provide: getRepositoryToken(Task), useFactory: mockRepository },
-                { provide: getRepositoryToken(AudioTrack), useFactory: mockRepository },
-                { provide: getRepositoryToken(Quiz), useFactory: mockRepository },
-                { provide: getRepositoryToken(QuizAttempt), useFactory: mockRepository },
-                { provide: getRepositoryToken(Goal), useFactory: mockRepository },
-                { provide: getRepositoryToken(AdaptationLog), useFactory: mockRepository },
-                { provide: getRepositoryToken(Progress), useFactory: mockRepository },
-                { provide: getQueueToken('audio-generation'), useFactory: mockQueue },
-                { provide: getQueueToken('program-generation'), useFactory: mockQueue },
-                { provide: UsersService, useValue: {} },
-                { provide: AiService, useValue: {} },
-                { provide: YoutubeService, useValue: {} },
-                { provide: AudioService, useValue: {} },
-                { provide: AudioMixerService, useValue: {} },
-            ],
-        }).compile();
-
-        service = module.get<ProgramsService>(ProgramsService);
-        programRepository = module.get(getRepositoryToken(Program));
-    });
-
-    describe('deleteProgram', () => {
-        it('should successfully delete a program if it exists and belongs to the user', async () => {
-            const userId = 'user-123';
-            const programId = 'program-456';
-            const mockProgram = { id: programId, userId };
-
-            programRepository.findOne.mockResolvedValue(mockProgram);
-            programRepository.remove.mockResolvedValue(mockProgram);
-
-            await service.deleteProgram(programId, userId);
-
-            expect(programRepository.findOne).toHaveBeenCalledWith({
-                where: { id: programId, userId },
-            });
-            expect(programRepository.remove).toHaveBeenCalledWith(mockProgram);
-        });
-
-        it('should throw NotFoundException if the program does not exist', async () => {
-            const userId = 'user-123';
-            const programId = 'non-existent';
-
-            programRepository.findOne.mockResolvedValue(null);
-
-            await expect(service.deleteProgram(programId, userId)).rejects.toThrow(
-                NotFoundException,
-            );
-            expect(programRepository.remove).not.toHaveBeenCalled();
-        });
-    });
+  });
 });

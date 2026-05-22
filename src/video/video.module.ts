@@ -6,13 +6,9 @@ import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
-  imports: [
-    AiModule,
-    ConfigModule,
-    CacheModule.register(),
-  ],
+  imports: [AiModule, ConfigModule, CacheModule.register()],
   providers: [YoutubeService],
   controllers: [VideoController],
-  exports: [YoutubeService]
+  exports: [YoutubeService],
 })
-export class VideoModule { }
+export class VideoModule {}

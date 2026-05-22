@@ -5,10 +5,7 @@ import { EngineTask } from '../engine/entities/task.entity';
 import { UserProgram } from '../engine/entities/user-program.entity';
 
 @Module({
-  imports: [
-    EngineModule,
-    TypeOrmModule.forFeature([EngineTask, UserProgram]),
-  ],
+  imports: [EngineModule, TypeOrmModule.forFeature([EngineTask, UserProgram])],
   providers: [],
   exports: [],
 })

@@ -22,26 +22,26 @@ import { ProgramsController } from './programs.controller';
 import { InternalController } from '../common/internal.controller';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            Program,
-            DayPlan,
-            Task,
-            AudioTrack,
-            Quiz,
-            QuizAttempt,
-            Goal,
-            AdaptationLog,
-            Progress
-        ]),
-        UsersModule,
-        AiModule,
-        VideoModule,
-        AudioModule,
-        EngineModule,
-    ],
-    controllers: [ProgramsController, InternalController],
-    providers: [ProgramsService, ProgressionService, ProgramsResolver],
-    exports: [ProgramsService, ProgressionService],
+  imports: [
+    TypeOrmModule.forFeature([
+      Program,
+      DayPlan,
+      Task,
+      AudioTrack,
+      Quiz,
+      QuizAttempt,
+      Goal,
+      AdaptationLog,
+      Progress,
+    ]),
+    UsersModule,
+    AiModule,
+    VideoModule,
+    AudioModule,
+    EngineModule,
+  ],
+  controllers: [ProgramsController, InternalController],
+  providers: [ProgramsService, ProgressionService, ProgramsResolver],
+  exports: [ProgramsService, ProgressionService],
 })
-export class ProgramsModule { }
+export class ProgramsModule {}

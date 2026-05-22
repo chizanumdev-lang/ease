@@ -7,7 +7,9 @@ async function checkRewardEvents() {
   const connectionString = process.env.DATABASE_URL || '';
   const client = new Client({
     connectionString,
-    ssl: connectionString.includes('supabase') ? { rejectUnauthorized: false } : false,
+    ssl: connectionString.includes('supabase')
+      ? { rejectUnauthorized: false }
+      : false,
   });
 
   try {
@@ -20,7 +22,7 @@ async function checkRewardEvents() {
       WHERE table_name = 'reward_events'
       ORDER BY table_schema, column_name
     `);
-    
+
     console.log('Columns:');
     console.log(JSON.stringify(res.rows, null, 2));
 
@@ -45,7 +47,6 @@ async function checkRewardEvents() {
     `);
     console.log('\nConstraints:');
     console.log(JSON.stringify(constraints.rows, null, 2));
-
   } catch (err) {
     console.error('Error:', err);
   } finally {

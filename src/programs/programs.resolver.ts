@@ -65,7 +65,9 @@ export class ProgramsResolver {
       pubSub.publish('programStatusChanged', { programStatusChanged: program });
       return program;
     } catch (error) {
-      this.logger.error(`Failed to generate program for user ${user.id}: ${error.message}`);
+      this.logger.error(
+        `Failed to generate program for user ${user.id}: ${error.message}`,
+      );
       throw error;
     }
   }
@@ -103,7 +105,8 @@ export class ProgramsResolver {
 
   @Subscription(() => Program, {
     name: 'programStatusChanged',
-    filter: (payload, variables) => payload.programStatusChanged.id === variables.id,
+    filter: (payload, variables) =>
+      payload.programStatusChanged.id === variables.id,
   })
   programStatusChanged(@Args('id') id: string) {
     return pubSub.asyncIterableIterator('programStatusChanged');
@@ -117,9 +120,11 @@ export class ProgramsResolver {
   ): Promise<boolean> {
     this.logger.log(`Early orchestration triggered for DayPlan ${dayPlanId}`);
     // Non-blocking call - let it run in background
-    this.orchestratorService.orchestrateDay(dayPlanId, goal).catch(err => 
-      this.logger.error(`Early orchestration failed: ${err.message}`)
-    );
+    this.orchestratorService
+      .orchestrateDay(dayPlanId, goal)
+      .catch((err) =>
+        this.logger.error(`Early orchestration failed: ${err.message}`),
+      );
     return true;
   }
 

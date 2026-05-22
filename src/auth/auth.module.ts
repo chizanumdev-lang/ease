@@ -10,14 +10,14 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { User } from '../users/entities/user.entity';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([User]),
-        PassportModule,
-        JwtModule.register({}),
-        ConfigModule,
-    ],
-    controllers: [AuthController],
-    providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
-    exports: [AuthService],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    PassportModule,
+    JwtModule.register({}),
+    ConfigModule,
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
+  exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

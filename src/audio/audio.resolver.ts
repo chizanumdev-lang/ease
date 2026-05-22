@@ -3,7 +3,11 @@ import { UseGuards } from '@nestjs/common';
 import { RitualsService } from './rituals.service';
 import { AudioService } from './audio.service';
 import { AudioMixerService } from './audio-mixer.service';
-import { DailyRitualsResponse, AudioUrlResponse, ImmersiveTestResponse } from './dto/audio-response.dto';
+import {
+  DailyRitualsResponse,
+  AudioUrlResponse,
+  ImmersiveTestResponse,
+} from './dto/audio-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -32,10 +36,10 @@ export class AudioResolver {
       return { status: 'generating' };
     }
 
-    const allReady = rituals.every(r => r.url && r.url.length > 0);
+    const allReady = rituals.every((r) => r.url && r.url.length > 0);
     return {
-      morning: rituals.find(r => r.ritualType === 'morning'),
-      night: rituals.find(r => r.ritualType === 'night'),
+      morning: rituals.find((r) => r.ritualType === 'morning'),
+      night: rituals.find((r) => r.ritualType === 'night'),
       status: allReady ? 'ready' : 'generating',
     };
   }
@@ -55,14 +59,16 @@ export class AudioResolver {
       fadeOut: 5,
     });
 
-
     const fs = require('fs');
     const path = require('path');
     const os = require('os');
     const tempPath = path.join(os.tmpdir(), `${filename}.wav`);
     fs.writeFileSync(tempPath, buffer);
 
-    const audioUrl = await this.audioService.uploadToCloudinary(tempPath, filename);
+    const audioUrl = await this.audioService.uploadToCloudinary(
+      tempPath,
+      filename,
+    );
     if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
 
     return { url: audioUrl };

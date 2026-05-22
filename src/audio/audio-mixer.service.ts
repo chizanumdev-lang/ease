@@ -2,17 +2,31 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { WaveFile } from 'wavefile';
-import { Readable } from 'stream';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import axios from 'axios';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
+import * as os from 'os';
+import * as crypto from 'crypto';
+import * as fsCore from 'fs';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegPath from 'ffmpeg-static';
+import * as ffprobeStatic from 'ffprobe-static';
+
+if (ffmpegPath) {
+  ffmpeg.setFfmpegPath(ffmpegPath);
+}
+const ffprobeStaticPath = (ffprobeStatic as unknown as { path?: string }).path;
+if (ffprobeStaticPath) {
+  ffmpeg.setFfprobePath(ffprobeStaticPath);
+}
 
 interface BinauralConfig {
-  frequency: number;      // Target brainwave (e.g., 14.5 Hz)
-  carrierFreq: number;    // Base tone (e.g., 200 Hz)
-  duration: number;       // Minutes
-  fadeIn: number;         // Seconds
-  fadeOut: number;        // Seconds
+  frequency: number; // Target brainwave (e.g., 14.5 Hz)
+  carrierFreq: number; // Base tone (e.g., 200 Hz)
+  duration: number; // Minutes
+  fadeIn: number; // Seconds
+  fadeOut: number; // Seconds
 }
 
 const STATIC_BINAURAL_MAP: Record<number, string> = {
@@ -23,25 +37,42 @@ const STATIC_BINAURAL_MAP: Record<number, string> = {
   20: 'https://res.cloudinary.com/duooultxc/video/upload/v1774269382/ease/audio/static_binaural_20hz.mp3',
 };
 
+export interface SubliminalScript {
+  theme: string;
+  affirmations: string[];
+  backgroundNarration: string;
+  binauralFrequency: number;
+}
+
 @Injectable()
 export class AudioMixerService {
   private readonly logger = new Logger(AudioMixerService.name);
   private ttsClient: TextToSpeechClient | null = null;
 
   constructor(private configService: ConfigService) {
-    const googleCredentialsJson = this.configService.get<string>('GOOGLE_SERVICE_ACCOUNT_JSON');
+    const googleCredentialsJson = this.configService.get<string>(
+      'GOOGLE_SERVICE_ACCOUNT_JSON',
+    );
     const googleApiKey = this.configService.get<string>('GOOGLE_API_KEY');
-    
+
     if (googleCredentialsJson || googleApiKey) {
       try {
-        const config = googleCredentialsJson 
-          ? { credentials: JSON.parse(googleCredentialsJson) }
+        const config = googleCredentialsJson
+          ? {
+              credentials: JSON.parse(googleCredentialsJson) as Record<
+                string,
+                unknown
+              >,
+            }
           : { apiKey: googleApiKey };
-          
+
         this.ttsClient = new TextToSpeechClient(config);
         this.logger.log('Google TTS Client initialized');
       } catch (err) {
-        this.logger.error('Failed to initialize Google TTS, will use Edge TTS fallback', err);
+        this.logger.error(
+          'Failed to initialize Google TTS, will use Edge TTS fallback',
+          err,
+        );
       }
     }
   }
@@ -50,6 +81,7 @@ export class AudioMixerService {
    * Generate binaural beat audio buffer
    */
   async generateBinauralBeat(config: BinauralConfig): Promise<Buffer> {
+    await Promise.resolve();
     const durationSeconds = config.duration * 60;
     const sampleRate = 44100;
     const totalSamples = sampleRate * durationSeconds;
@@ -65,14 +97,14 @@ export class AudioMixerService {
 
     for (let i = 0; i < totalSamples; i++) {
       const t = i / sampleRate;
-      
+
       // Generate sine waves
       const leftSample = Math.sin(2 * Math.PI * leftFreq * t);
       const rightSample = Math.sin(2 * Math.PI * rightFreq * t);
 
       // Apply fade in/out envelopes
       let amplitude = 0.3; // Base volume (30%)
-      
+
       if (t < config.fadeIn) {
         amplitude *= t / config.fadeIn; // Fade in
       } else if (t > durationSeconds - config.fadeOut) {
@@ -95,8 +127,7 @@ export class AudioMixerService {
   async generateSubliminalVoice(
     affirmations: string[],
     narration: string,
-    duration: number
-  ): Promise<Buffer> {
+  ): Promise<{ buffer: Buffer; isGoogleTts: boolean }> {
     const affirmationScript = affirmations.join('... ... ... ');
     const fullScript = `${narration} ... ${affirmationScript}`;
 
@@ -117,7 +148,10 @@ export class AudioMixerService {
             volumeGainDb: -12.0,
           },
         });
-        return Buffer.from(response.audioContent as Uint8Array);
+        return {
+          buffer: Buffer.from(response.audioContent as Uint8Array),
+          isGoogleTts: true,
+        };
       } catch (err) {
         this.logger.warn('Google TTS failed, falling back to Edge TTS', err);
       }
@@ -125,55 +159,52 @@ export class AudioMixerService {
 
     // Edge TTS Fallback (Zero Config)
     this.logger.log('Generating voiceover using Edge TTS (Zero Config)...');
-    
+
     // Create local instance to prevent concurrency issues with shared WebSocket state
-    const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts');
     const edgeTts = new MsEdgeTTS();
 
     // Use temporary files to avoid stream closure issues with fluent-ffmpeg
-    const os = require('os');
-    const crypto = require('crypto');
     const tempId = crypto.randomBytes(8).toString('hex');
     const tempMp3Path = path.join(os.tmpdir(), `ease-tts-${tempId}.mp3`);
     const tempWavPath = path.join(os.tmpdir(), `ease-tts-${tempId}.wav`);
 
     try {
-    let attempts = 0;
-    const maxAttempts = 3;
-    while (attempts < maxAttempts) {
-      try {
-        // Pass empty metadataOptions to prevent "Cannot read properties of undefined (reading 'voiceLocale')"
-        await edgeTts.setMetadata('en-US-GuyNeural', OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3, {});
-        
-        const { audioStream } = edgeTts.toStream(fullScript);
-        const fsCore = require('fs');
-        const writeStream = fsCore.createWriteStream(tempMp3Path);
-        
-        await new Promise<void>((resolve, reject) => {
-          audioStream.pipe(writeStream);
-          writeStream.on('finish', resolve);
-          writeStream.on('error', reject);
-          audioStream.on('error', reject);
-        });
-        break; // Success!
-      } catch (err) {
-        attempts++;
-        this.logger.warn(`Edge TTS attempt ${attempts} failed: ${err.message}`);
-        if (attempts >= maxAttempts) throw err;
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s
+      let attempts = 0;
+      const maxAttempts = 3;
+      while (attempts < maxAttempts) {
+        try {
+          // Pass empty metadataOptions to prevent "Cannot read properties of undefined (reading 'voiceLocale')"
+          await edgeTts.setMetadata(
+            'en-US-GuyNeural',
+            OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3,
+            {},
+          );
+
+          const { audioStream } = edgeTts.toStream(fullScript);
+          const writeStream = fsCore.createWriteStream(tempMp3Path);
+
+          await new Promise<void>((resolve, reject) => {
+            audioStream.pipe(writeStream);
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+            audioStream.on('error', reject);
+          });
+          break; // Success!
+        } catch (err: unknown) {
+          attempts++;
+          const errMsg = err instanceof Error ? err.message : String(err);
+          this.logger.warn(`Edge TTS attempt ${attempts} failed: ${errMsg}`);
+          if (attempts >= maxAttempts) throw err;
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2s
+        }
       }
-    }
-      
-      const ffmpeg = require('fluent-ffmpeg');
-      const ffmpegPath = require('ffmpeg-static');
-      ffmpeg.setFfmpegPath(ffmpegPath);
-      
+
       await new Promise<void>((resolve, reject) => {
         ffmpeg(tempMp3Path)
           .toFormat('wav')
           .audioFrequency(44100)
           .audioChannels(1)
-          .on('error', (err: any) => {
+          .on('error', (err: Error) => {
             this.logger.error('ffmpeg processing error', err);
             reject(err);
           })
@@ -182,20 +213,20 @@ export class AudioMixerService {
       });
 
       const finalBuffer = await fs.readFile(tempWavPath);
-      
+
       // Cleanup
       await Promise.all([
         fs.unlink(tempMp3Path).catch(() => {}),
-        fs.unlink(tempWavPath).catch(() => {})
+        fs.unlink(tempWavPath).catch(() => {}),
       ]);
 
-      return finalBuffer;
+      return { buffer: finalBuffer, isGoogleTts: false };
     } catch (err) {
       this.logger.error('Edge TTS or conversion failed', err);
       // Cleanup on error
       await Promise.all([
         fs.unlink(tempMp3Path).catch(() => {}),
-        fs.unlink(tempWavPath).catch(() => {})
+        fs.unlink(tempWavPath).catch(() => {}),
       ]);
       throw err;
     }
@@ -207,35 +238,39 @@ export class AudioMixerService {
   async mixAudioLayers(
     binauralBuffer: Buffer,
     voiceBuffer: Buffer,
-    outputPath: string
+    outputPath: string,
   ): Promise<string> {
     // Load audio buffers
     const binauralWav = new WaveFile(binauralBuffer);
     const voiceWav = new WaveFile(voiceBuffer);
 
     // Ensure both are same sample rate (standardize to 44.1kHz)
-    if ((voiceWav.fmt as any).sampleRate !== 44100) {
+    if ((voiceWav.fmt as { sampleRate: number }).sampleRate !== 44100) {
       voiceWav.toSampleRate(44100);
     }
-    
-    // Get samples (non-interleaved)
-    const binauralSamplesRaw = binauralWav.getSamples(false, Float32Array);
-    const voiceSamplesRaw = voiceWav.getSamples(false, Float32Array);
-    
-    // Robustly handle both array-of-channels and flat-array (mono) returns
-    const binauralChannels = Array.isArray(binauralSamplesRaw) && (binauralSamplesRaw[0] as any).length !== undefined
-      ? binauralSamplesRaw as Float32Array[]
-      : [binauralSamplesRaw as unknown as Float32Array];
 
-    const voiceChannels = Array.isArray(voiceSamplesRaw) && (voiceSamplesRaw[0] as any).length !== undefined
-      ? voiceSamplesRaw as Float32Array[]
-      : [voiceSamplesRaw as unknown as Float32Array];
+    // Get samples (non-interleaved)
+    const binauralSamplesRaw = binauralWav.getSamples(
+      false,
+      Float32Array,
+    ) as unknown as Float32Array[] | Float32Array;
+    const voiceSamplesRaw = voiceWav.getSamples(
+      false,
+      Float32Array,
+    ) as unknown as Float32Array[] | Float32Array;
+
+    // Robustly handle both array-of-channels and flat-array (mono) returns
+    const binauralChannels = Array.isArray(binauralSamplesRaw)
+      ? binauralSamplesRaw
+      : [binauralSamplesRaw];
+
+    const voiceChannels = Array.isArray(voiceSamplesRaw)
+      ? voiceSamplesRaw
+      : [voiceSamplesRaw];
 
     // Mix: binaural (main) + voice (subliminal layer)
     const binauralLen = binauralChannels[0].length;
-    const voiceChannel0 = voiceChannels[0];
-    const voiceChannel1 = voiceChannels[1] || voiceChannel0; // Fallback to mono if needed
-    
+
     const mixedLeft = new Float32Array(binauralLen);
     const mixedRight = new Float32Array(binauralLen);
 
@@ -247,12 +282,12 @@ export class AudioMixerService {
     const vLen = vCh0.length;
 
     for (let i = 0; i < binauralLen; i++) {
-        // Subliminal voiceover should loop or stop if shorter
-        // Typically it matches or is shorter than the background
-        const vIdx = i < vLen ? i : vLen - 1;
-        
-        mixedLeft[i] = bCh0[i] * 0.8 + (vCh0[vIdx] || 0) * 0.2;
-        mixedRight[i] = bCh1[i] * 0.8 + (vCh1[vIdx] || 0) * 0.2;
+      // Subliminal voiceover should loop or stop if shorter
+      // Typically it matches or is shorter than the background
+      const vIdx = i < vLen ? i : vLen - 1;
+
+      mixedLeft[i] = bCh0[i] * 0.8 + (vCh0[vIdx] || 0) * 0.2;
+      mixedRight[i] = bCh1[i] * 0.8 + (vCh1[vIdx] || 0) * 0.2;
     }
 
     // Create final WAV
@@ -268,10 +303,13 @@ export class AudioMixerService {
   /**
    * Helper to download a file to local temp storage
    */
-  private async downloadToTemp(url: string, outputDir: string): Promise<string> {
+  private async downloadToTemp(
+    url: string,
+    outputDir: string,
+  ): Promise<string> {
     const filename = `temp_bg_${Date.now()}_${path.basename(url)}`;
     const outputPath = path.join(outputDir, filename);
-    
+
     this.logger.log(`Downloading background audio from URL: ${url}`);
     const response = await axios({
       url,
@@ -288,46 +326,88 @@ export class AudioMixerService {
    * Master pipeline: Generate complete binaural + subliminal track
    */
   async createBinauralSubliminalTrack(
-    scriptData: any,
+    scriptData: SubliminalScript,
     outputDir: string,
-    duration: number = 5
+    duration: number = 5,
   ): Promise<string> {
     const filename = `audio_${Date.now()}.mp3`;
     const outputPath = path.join(outputDir, filename);
 
-    this.logger.log(`Creating binaural track for theme: ${scriptData.theme} (MP3)`);
+    this.logger.log(
+      `Creating binaural track for theme: ${scriptData.theme} (MP3)`,
+    );
 
     // 1. Generate Voiceover (Local File)
-    const voiceBuffer = await this.generateSubliminalVoice(
-      scriptData.affirmations,
-      scriptData.backgroundNarration,
-      duration
-    );
-    
+    const { buffer: voiceBuffer, isGoogleTts } =
+      await this.generateSubliminalVoice(
+        scriptData.affirmations,
+        scriptData.backgroundNarration,
+      );
+
     const tempVoicePath = path.join(outputDir, `temp_voice_${Date.now()}.wav`);
     await fs.writeFile(tempVoicePath, voiceBuffer);
 
     // 2. Mix with Binaural (Static from URL)
     const availableFrequencies = Object.keys(STATIC_BINAURAL_MAP).map(Number);
     const targetFreq = scriptData.binauralFrequency;
-    
+
     // Find closest frequency
     const closestFreq = availableFrequencies.reduce((prev, curr) => {
-      return (Math.abs(curr - targetFreq) < Math.abs(prev - targetFreq) ? curr : prev);
+      return Math.abs(curr - targetFreq) < Math.abs(prev - targetFreq)
+        ? curr
+        : prev;
     });
 
     const staticUrl = STATIC_BINAURAL_MAP[closestFreq];
-    const tempStaticPath = staticUrl ? await this.downloadToTemp(staticUrl, outputDir) : null;
+    const tempStaticPath = staticUrl
+      ? await this.downloadToTemp(staticUrl, outputDir)
+      : null;
 
-    const ffmpeg = require('fluent-ffmpeg');
-    const ffmpegPath = require('ffmpeg-static');
-    ffmpeg.setFfmpegPath(ffmpegPath);
+    // Probe voice duration dynamically
+
+    // Probe voice duration dynamically
+    let voiceDuration = 0;
+    try {
+      voiceDuration = await new Promise<number>((resolve, reject) => {
+        ffmpeg.ffprobe(
+          tempVoicePath,
+          (err: Error | null, metadata: unknown) => {
+            if (err) {
+              reject(err);
+            } else {
+              const ffprobeData = metadata as {
+                format?: { duration?: string | number };
+              };
+              const parsed = parseFloat(String(ffprobeData?.format?.duration));
+              resolve(isNaN(parsed) ? 0 : parsed);
+            }
+          },
+        );
+      });
+      this.logger.log(`Probed voiceover duration: ${voiceDuration} seconds`);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `ffprobe failed for voiceover: ${errMsg}. Falling back to default duration.`,
+      );
+    }
+
+    const finalDuration =
+      voiceDuration > 0 ? voiceDuration + 10 : duration * 60;
+    this.logger.log(
+      `Setting final mixed track duration to: ${finalDuration} seconds`,
+    );
+
+    const voiceVolume = isGoogleTts ? 0.8 : 0.15;
+    const backgroundVolume = 0.8;
 
     return new Promise<string>((resolve, reject) => {
-      let command = ffmpeg();
+      const command = ffmpeg();
 
       if (tempStaticPath) {
-        this.logger.log(`Using static binaural beat for ${closestFreq}Hz (requested ${targetFreq}Hz)`);
+        this.logger.log(
+          `Using static binaural beat for ${closestFreq}Hz (requested ${targetFreq}Hz)`,
+        );
         command.input(tempStaticPath).input(tempVoicePath);
       } else {
         // Fallback (though reduce ensures we get one)
@@ -337,25 +417,51 @@ export class AudioMixerService {
 
       command
         .complexFilter([
-          '[0:a]volume=0.3,aloop=loop=-1:size=2e9[bg]', // Reduced background volume to 30%
-          '[1:a]volume=1.0[voice]', // Increased voice volume to 100%
-          '[bg][voice]amix=inputs=2:duration=first[out]'
+          `[0:a]volume=${backgroundVolume},aloop=loop=-1:size=2e9[bg]`,
+          `[1:a]volume=${voiceVolume}[voice]`,
+          '[bg][voice]amix=inputs=2:duration=first[out]',
         ])
-        .setDuration(duration * 60)
+        .setDuration(finalDuration)
         .map('[out]')
         .audioCodec('libmp3lame')
         .audioBitrate('64k')
-        .on('error', (err: any) => {
+        .on('error', (err: Error) => {
           this.logger.error('FFMPEG Mixing Error', err);
-          reject(err);
+          const cleanup = async () => {
+            await Promise.all([
+              fs.unlink(tempVoicePath).catch(() => {}),
+              tempStaticPath
+                ? fs.unlink(tempStaticPath).catch(() => {})
+                : Promise.resolve(),
+            ]);
+          };
+          cleanup()
+            .then(() => {
+              reject(err);
+            })
+            .catch((cleanupErr) => {
+              this.logger.error('FFMPEG Mixing cleanup failed', cleanupErr);
+              reject(err);
+            });
         })
-        .on('end', async () => {
+        .on('end', () => {
           this.logger.log(`Mixed audio saved to ${outputPath}`);
-          await Promise.all([
-            fs.unlink(tempVoicePath).catch(() => {}),
-            tempStaticPath ? fs.unlink(tempStaticPath).catch(() => {}) : Promise.resolve()
-          ]);
-          resolve(outputPath);
+          const cleanup = async () => {
+            await Promise.all([
+              fs.unlink(tempVoicePath).catch(() => {}),
+              tempStaticPath
+                ? fs.unlink(tempStaticPath).catch(() => {})
+                : Promise.resolve(),
+            ]);
+          };
+          cleanup()
+            .then(() => {
+              resolve(outputPath);
+            })
+            .catch((cleanupErr) => {
+              this.logger.error('FFMPEG Mixing cleanup failed', cleanupErr);
+              resolve(outputPath);
+            });
         })
         .save(outputPath);
     });

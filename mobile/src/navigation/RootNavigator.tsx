@@ -12,6 +12,7 @@ import GlobalModal from '../components/stitch/GlobalModal';
 import LoadingState from '../components/LoadingState';
 import { useAudioStore } from '../store/audioStore';
 import AudioParticle from '../components/audio/AudioParticle';
+import { notifeeService } from '../services/notifee.service';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -109,6 +110,14 @@ export default function RootNavigator() {
     React.useEffect(() => {
         console.log('[NAV] State changed - isAuth:', isAuthenticated, 'isLoading:', isLoading, 'user:', !!user, 'onboardingCompleted:', user?.settings?.onboardingCompleted);
     }, [isAuthenticated, isLoading, user]);
+
+    React.useEffect(() => {
+        if (user?.settings?.sleepWindow?.start && user?.settings?.notifications?.nightAudio !== false) {
+            notifeeService.scheduleNightlySubliminals(user.settings.sleepWindow.start);
+        } else {
+            notifeeService.cancelNightlySubliminals();
+        }
+    }, [user?.settings?.sleepWindow?.start, user?.settings?.notifications?.nightAudio]);
 
     if (isLoading) {
         return (

@@ -13,9 +13,7 @@ console.log('--- STARTING VERCEL BOOTSTRAP (v1.0.8-OPTIMIZED) ---');
 // Initialize Sentry before everything else
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  integrations: [
-    nodeProfilingIntegration(),
-  ],
+  integrations: [nodeProfilingIntegration()],
   tracesSampleRate: 1.0,
 });
 
@@ -25,7 +23,7 @@ async function bootstrap(): Promise<INestApplication> {
   if (!cachedApp) {
     console.log('Initializing Nest application (v1.0.8-OPTIMIZED)...');
     cachedApp = await NestFactory.create(AppModule);
-    
+
     // Enable CORS
     cachedApp.enableCors();
 

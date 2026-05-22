@@ -6,11 +6,8 @@ import { RewardsService } from './rewards.service';
 import { ProgramsModule } from '../programs/programs.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([RewardEvent, User]),
-        ProgramsModule,
-    ],
-    providers: [RewardsService],
-    exports: [RewardsService],
+  imports: [TypeOrmModule.forFeature([RewardEvent, User]), ProgramsModule],
+  providers: [RewardsService],
+  exports: [RewardsService],
 })
-export class RewardsModule { }
+export class RewardsModule {}

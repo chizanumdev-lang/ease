@@ -16,6 +16,6 @@ import { ConfigModule } from '@nestjs/config';
     ProgressModule,
   ],
   controllers: [CoachController],
-  providers: [CoachService]
+  providers: [CoachService],
 })
-export class CoachModule { }
+export class CoachModule {}

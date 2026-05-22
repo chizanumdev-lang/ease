@@ -16,14 +16,25 @@ import { Program } from '../programs/entities/program.entity';
 import { RitualsService } from './rituals.service';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([AudioTrack, RitualTrack, Program]),
-        AiModule,
-        VideoModule,
-        UsersModule,
-    ],
-    controllers: [AudioController],
-    providers: [AudioService, AudioMixerService, RitualsService, YoutubeAudioService, AudioResolver],
-    exports: [AudioService, AudioMixerService, RitualsService, YoutubeAudioService],
+  imports: [
+    TypeOrmModule.forFeature([AudioTrack, RitualTrack, Program]),
+    AiModule,
+    VideoModule,
+    UsersModule,
+  ],
+  controllers: [AudioController],
+  providers: [
+    AudioService,
+    AudioMixerService,
+    RitualsService,
+    YoutubeAudioService,
+    AudioResolver,
+  ],
+  exports: [
+    AudioService,
+    AudioMixerService,
+    RitualsService,
+    YoutubeAudioService,
+  ],
 })
-export class AudioModule { }
+export class AudioModule {}

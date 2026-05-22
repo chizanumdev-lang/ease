@@ -17,7 +17,9 @@ export class ProgressResolver {
     @GetUser() user: User,
     @Args('createCheckinDto') createCheckinDto: CreateCheckinDto,
   ): Promise<Progress> {
-    return this.progressService.createMoodCheckin(user.id, createCheckinDto) as any;
+    return this.progressService.createMoodCheckin(
+      user.id,
+      createCheckinDto,
+    ) as any;
   }
 }
-

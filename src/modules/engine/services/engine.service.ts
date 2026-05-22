@@ -33,7 +33,11 @@ export class EngineService {
     return this.taskDefRepo.find();
   }
 
-  async createProgram(userId: string, templateId: string, userGoal: string): Promise<UserProgram> {
+  async createProgram(
+    userId: string,
+    templateId: string,
+    userGoal: string,
+  ): Promise<UserProgram> {
     const program = this.programRepo.create({
       userId,
       templateId,
@@ -47,15 +51,26 @@ export class EngineService {
   async findProgramById(id: string): Promise<UserProgram> {
     const program = await this.programRepo.findOne({
       where: { id },
-      relations: ['template', 'tasks', 'tasks.node', 'tasks.node.taskDefinition'],
+      relations: [
+        'template',
+        'tasks',
+        'tasks.node',
+        'tasks.node.taskDefinition',
+      ],
     });
 
     if (!program) throw new Error(`Program ${id} not found`);
     return program;
   }
 
-  async saveBlueprint(templateId: string, nodes: any[], edges: any[]): Promise<GoalTemplate> {
-    const template = await this.templateRepo.findOne({ where: { id: templateId } });
+  async saveBlueprint(
+    templateId: string,
+    nodes: any[],
+    edges: any[],
+  ): Promise<GoalTemplate> {
+    const template = await this.templateRepo.findOne({
+      where: { id: templateId },
+    });
     if (!template) throw new Error(`Template ${templateId} not found`);
 
     // Clear existing nodes and edges for this template

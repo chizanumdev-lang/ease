@@ -7,7 +7,7 @@ import * as path from 'path';
 async function testIntegratedGrading() {
   console.log('Bootstrapping NestJS application context...');
   const app = await NestFactory.createApplicationContext(AppModule);
-  
+
   console.log('Retrieving AiService...');
   const aiService = app.get(AiService);
 
@@ -26,8 +26,8 @@ async function testIntegratedGrading() {
     const result = await aiService.gradeVocalPerformance(
       audioBuffer,
       "Bonjour, c'est un test de la commande de l'audio génération.",
-      "fr-FR",
-      "audio/x-aiff"
+      'fr-FR',
+      'audio/x-aiff',
     );
     console.log('\n--- INTEGRATED FALLBACK GRADING SUCCESS ---');
     console.log(JSON.stringify(result, null, 2));
@@ -38,7 +38,7 @@ async function testIntegratedGrading() {
   }
 }
 
-testIntegratedGrading().catch(err => {
+testIntegratedGrading().catch((err) => {
   console.error('Integrated test setup failed:', err);
   process.exit(1);
 });

@@ -4,23 +4,41 @@ import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import * as fs from 'fs/promises';
 import { WaveFile } from 'wavefile';
 
+import { ConfigService } from '@nestjs/config';
+
 jest.mock('@google-cloud/text-to-speech');
 jest.mock('fs/promises');
 
 describe('AudioMixerService', () => {
   let service: AudioMixerService;
-  let ttsClientMock: any;
+  let ttsClientMock: { synthesizeSpeech: jest.Mock };
 
   beforeEach(async () => {
     ttsClientMock = {
-      synthesizeSpeech: jest.fn().mockResolvedValue([{
-        audioContent: Buffer.from('mock audio content'),
-      }]),
+      synthesizeSpeech: jest.fn().mockResolvedValue([
+        {
+          audioContent: Buffer.from('mock audio content'),
+        },
+      ]),
     };
-    (TextToSpeechClient as any).mockImplementation(() => ttsClientMock);
+    (TextToSpeechClient as unknown as jest.Mock).mockImplementation(
+      () => ttsClientMock,
+    );
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AudioMixerService],
+      providers: [
+        AudioMixerService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key: string) => {
+              if (key === 'GOOGLE_SERVICE_ACCOUNT_JSON')
+                return '{"type": "service_account"}';
+              return null;
+            }),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<AudioMixerService>(AudioMixerService);
@@ -45,14 +63,17 @@ describe('AudioMixerService', () => {
       expect(buffer.length).toBeGreaterThan(0);
 
       const wav = new WaveFile(buffer);
-      const samples = wav.getSamples(false, Float32Array);
-      
+      const samples = wav.getSamples(
+        false,
+        Float32Array,
+      ) as unknown as Float32Array[];
+
       // Stereo (2 channels)
       expect(samples.length).toBe(2);
-      
+
       // Expected sample count: 0.1 min * 60 sec * 44100 Hz = 264600
       const expectedSamples = 6 * 44100;
-      expect((samples[0] as any).length).toBe(expectedSamples);
+      expect(samples[0].length).toBe(expectedSamples);
     });
   });
 
@@ -61,17 +82,17 @@ describe('AudioMixerService', () => {
       // Create 1 second mock buffers
       const sampleRate = 44100;
       const samples = sampleRate;
-      
+
       const binauralWav = new WaveFile();
       binauralWav.fromScratch(2, sampleRate, '32f', [
-        new Float32Array(samples).fill(1.0), 
-        new Float32Array(samples).fill(1.0)
+        new Float32Array(samples).fill(1.0),
+        new Float32Array(samples).fill(1.0),
       ]);
       const binauralBuffer = Buffer.from(binauralWav.toBuffer());
 
       const voiceWav = new WaveFile();
       voiceWav.fromScratch(1, sampleRate, '32f', [
-        new Float32Array(samples).fill(0.5)
+        new Float32Array(samples).fill(0.5),
       ]);
       const voiceBuffer = Buffer.from(voiceWav.toBuffer());
 
@@ -80,18 +101,34 @@ describe('AudioMixerService', () => {
       (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
 
       // Spy on WaveFile if needed, or just check the output again.
-      const resultPath = await service.mixAudioLayers(binauralBuffer, voiceBuffer, outputPath);
+      const resultPath = await service.mixAudioLayers(
+        binauralBuffer,
+        voiceBuffer,
+        outputPath,
+      );
 
       expect(resultPath).toBe(outputPath);
-      const writtenBuffer = (fs.writeFile as jest.Mock).mock.calls[0][1];
+      const writeFileMock = fs.writeFile as unknown as jest.Mock<
+        Promise<void>,
+        [string, Buffer]
+      >;
+      const writtenBuffer = writeFileMock.mock.calls[0][1];
       const resultWav = new WaveFile(writtenBuffer);
-      const resultSamples = resultWav.getSamples(false, Float32Array);
-      
-      const leftSample = (resultSamples[0] as any)[0];
-      const rightSample = (resultSamples[1] as any)[0];
-      
-      console.log('Test mixing result - left:', leftSample, 'right:', rightSample);
-      
+      const resultSamples = resultWav.getSamples(
+        false,
+        Float32Array,
+      ) as unknown as Float32Array[];
+
+      const leftSample = resultSamples[0][0];
+      const rightSample = resultSamples[1][0];
+
+      console.log(
+        'Test mixing result - left:',
+        leftSample,
+        'right:',
+        rightSample,
+      );
+
       expect(leftSample).toBeCloseTo(0.9, 5);
       expect(rightSample).toBeCloseTo(0.9, 5);
     });

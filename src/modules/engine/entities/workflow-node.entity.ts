@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { ObjectType, Field, ID, Float } from '@nestjs/graphql';
 import { GoalTemplate } from './goal-template.entity';
 import { TaskDefinition } from './task-definition.entity';

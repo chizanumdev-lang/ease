@@ -1,5 +1,20 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
-import { ObjectType, Field, ID, Float, registerEnumType } from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
+import {
+  ObjectType,
+  Field,
+  ID,
+  Float,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { GoalTemplate } from './goal-template.entity';
 import { EngineTask } from './task.entity';
 

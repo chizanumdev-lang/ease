@@ -4,8 +4,8 @@ import { BrevoService } from './brevo.service';
 
 @Global()
 @Module({
-    imports: [ConfigModule],
-    providers: [BrevoService],
-    exports: [BrevoService],
+  imports: [ConfigModule],
+  providers: [BrevoService],
+  exports: [BrevoService],
 })
-export class MailModule { }
+export class MailModule {}

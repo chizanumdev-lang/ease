@@ -28,17 +28,23 @@ export class QuizzesResolver {
     @Args('submitQuizDto') submitQuizDto: SubmitQuizDto,
     @GetUser() user: User,
   ): Promise<QuizAttempt> {
-    this.logger.log(`Submitting quiz attempt for quiz ${id} by user ${user.id}`);
+    this.logger.log(
+      `Submitting quiz attempt for quiz ${id} by user ${user.id}`,
+    );
     try {
       const attempt = await this.quizzesService.submitAttempt(
         id,
         user.id,
         submitQuizDto,
       );
-      this.logger.log(`Quiz attempt submitted successfully: ${attempt.id}. Score: ${attempt.score}`);
+      this.logger.log(
+        `Quiz attempt submitted successfully: ${attempt.id}. Score: ${attempt.score}`,
+      );
       return attempt;
     } catch (error) {
-      this.logger.error(`Failed to submit quiz attempt for quiz ${id}: ${error.message}`);
+      this.logger.error(
+        `Failed to submit quiz attempt for quiz ${id}: ${error.message}`,
+      );
       throw error;
     }
   }

@@ -36,13 +36,17 @@ export class GoalsResolver {
     @Args('createGoalDto') createGoalDto: CreateGoalDto,
     @GetUser() user: User,
   ): Promise<Goal> {
-    this.logger.log(`Creating goal for user ${user.id}: ${createGoalDto.title}`);
+    this.logger.log(
+      `Creating goal for user ${user.id}: ${createGoalDto.title}`,
+    );
     try {
       const goal = await this.goalsService.create(user.id, createGoalDto);
       this.logger.log(`Goal created successfully: ${goal.id}`);
       return goal;
     } catch (error) {
-      this.logger.error(`Failed to create goal for user ${user.id}: ${error.message}`);
+      this.logger.error(
+        `Failed to create goal for user ${user.id}: ${error.message}`,
+      );
       throw error;
     }
   }

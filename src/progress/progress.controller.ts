@@ -8,13 +8,13 @@ import { CreateCheckinDto } from './dto/create-checkin.dto';
 @Controller('progress')
 @UseGuards(JwtAuthGuard)
 export class ProgressController {
-    constructor(private progressService: ProgressService) { }
+  constructor(private progressService: ProgressService) {}
 
-    @Post('checkin')
-    async createCheckin(
-        @GetUser() user: User,
-        @Body() createCheckinDto: CreateCheckinDto,
-    ) {
-        return this.progressService.createMoodCheckin(user.id, createCheckinDto);
-    }
+  @Post('checkin')
+  async createCheckin(
+    @GetUser() user: User,
+    @Body() createCheckinDto: CreateCheckinDto,
+  ) {
+    return this.progressService.createMoodCheckin(user.id, createCheckinDto);
+  }
 }

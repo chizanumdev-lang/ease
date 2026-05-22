@@ -1,11 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { VideosService } from './videos.service';
 import { CreateVideoDto } from './dto/create-video.dto';
 import { UpdateVideoDto } from './dto/update-video.dto';
 
 @Controller('videos')
 export class VideosController {
-  constructor(private readonly videosService: VideosService) { }
+  constructor(private readonly videosService: VideosService) {}
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))

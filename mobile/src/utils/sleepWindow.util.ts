@@ -33,19 +33,27 @@ export function isWithinSleepWindow(user: User | null): boolean {
 /**
  * Check if audio can auto-play based on settings and sleep window
  */
-export function canAutoPlayAudio(user: User | null, autoPlayEnabled: boolean): boolean {
+export function canAutoPlayAudio(user: User | null, autoPlayEnabled: boolean, track?: any): boolean {
     // Auto-play must be explicitly enabled
     if (!autoPlayEnabled) {
         console.log('[SLEEP_WINDOW] Auto-play disabled');
         return false;
     }
 
-    // Check sleep window
-    if (isWithinSleepWindow(user)) {
-        console.log('[SLEEP_WINDOW] Within sleep window, auto-play blocked');
-        return false;
+    const isSleep = isWithinSleepWindow(user);
+    const isNightTrack = track?.type === 'night' || track?.type === 'subliminal';
+
+    if (isSleep) {
+        if (isNightTrack) {
+            console.log('[SLEEP_WINDOW] Night track within sleep window, auto-play allowed');
+            return true;
+        } else {
+            // Option to still allow or block normal tracks. Let's just allow it for now or block if not a night track.
+            console.log('[SLEEP_WINDOW] Normal track within sleep window, auto-play blocked to prevent startling');
+            return false;
+        }
     }
 
-    console.log('[SLEEP_WINDOW] Auto-play allowed');
+    console.log('[SLEEP_WINDOW] Auto-play allowed outside sleep window');
     return true;
 }
