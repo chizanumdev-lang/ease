@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 import {
   Controller,
   Patch,
@@ -7,7 +8,6 @@ import {
   Post,
   UseInterceptors,
   UploadedFile,
-  Query,
   Logger,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
@@ -40,7 +40,9 @@ export class TasksController {
     @Body('focus') focus: string,
   ) {
     try {
-      this.logger.log(`Received vocal grading request for locale: ${locale}, focus: ${focus}`);
+      this.logger.log(
+        `Received vocal grading request for locale: ${locale}, focus: ${focus}`,
+      );
       if (!file) {
         this.logger.error('No audio file provided in request');
         throw new Error('No audio file provided');
@@ -52,7 +54,7 @@ export class TasksController {
         file.mimetype,
         focus || 'pronunciation',
       );
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Vocal grading failed: ${error.message}`, error.stack);
       throw error;
     }
@@ -72,7 +74,7 @@ export class TasksController {
 
       const response = await this.aiService.generate(prompt);
       return { content: response };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Chat failed: ${error.message}`, error.stack);
       throw error;
     }

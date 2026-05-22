@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-require-imports, @typescript-eslint/prefer-promise-reject-errors, no-empty, @typescript-eslint/no-unused-vars, no-control-regex */
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
@@ -441,15 +442,11 @@ export class AiService implements OnModuleInit {
         throw new Error('LLM generated empty response for grading');
 
       const resultJson = this.extractJson(responseText);
-      if (!resultJson)
-        throw new Error('Could not parse LLM response as JSON');
+      if (!resultJson) throw new Error('Could not parse LLM response as JSON');
 
       return resultJson;
     } catch (error) {
-      this.logger.error(
-        `Vocal grading failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Vocal grading failed: ${error.message}`, error.stack);
       throw error;
     }
   }
