@@ -41,11 +41,13 @@ export class TasksService {
 
     const wasCompleted = task.completed;
 
-    const updateData: any = {};
+    const updateData: Partial<Task> = {};
 
     if (updateTaskDto.completed !== undefined) {
       updateData.completed = updateTaskDto.completed;
-      updateData.completedAt = updateTaskDto.completed ? new Date() : null;
+      updateData.completedAt = updateTaskDto.completed
+        ? new Date()
+        : (null as unknown as undefined);
       task.completed = updateData.completed;
       task.completedAt = updateData.completedAt;
     }
@@ -100,7 +102,10 @@ export class TasksService {
           const handle = await triggerHydrateDay({
             dayPlanId: nextDay.id,
             goalText: program.goal?.description || program.title || 'Goal',
-            params: { ...program.metadata, duration: program.duration },
+            params: {
+              ...(program.metadata as Record<string, unknown>),
+              duration: program.duration,
+            },
           });
 
           if (!handle) {
@@ -115,7 +120,7 @@ export class TasksService {
               )
               .catch((e) =>
                 this.logger.error(
-                  `Local fallback hydration failed for Day ${nextDayNumber}: ${e.message}`,
+                  `Local fallback hydration failed for Day ${nextDayNumber}: ${(e as Error).message}`,
                 ),
               );
           }
@@ -156,7 +161,15 @@ export class TasksService {
       task.dayPlan?.program?.title ||
       'Goal';
     const dayPlanId = task.dayPlanId;
-    const metadata = task.metadata || {};
+    const metadata = (task.metadata || {}) as {
+      searchQuery?: string;
+      status?: string;
+      pattern?: string;
+      narrationScript?: string;
+      targetScript?: string;
+      description?: string;
+      audioUrl?: string;
+    };
 
     if (task.type === 'video' && metadata.searchQuery) {
       this.logger.log(
@@ -164,19 +177,19 @@ export class TasksService {
       );
       let videoUrl: string;
       try {
-        const video = await this.youtubeService.getRecommendedVideo(
+        const video = (await this.youtubeService.getRecommendedVideo(
           goal,
           metadata.searchQuery,
-        );
+        )) as { url?: string } | undefined;
         videoUrl =
           video?.url ||
           `https://www.youtube.com/results?search_query=${encodeURIComponent(metadata.searchQuery)}`;
-      } catch (err) {
+      } catch {
         // Fallback search
-        const fallback = await this.youtubeService.getRecommendedVideo(
+        const fallback = (await this.youtubeService.getRecommendedVideo(
           goal,
           goal,
-        );
+        )) as { url?: string } | undefined;
         videoUrl =
           fallback?.url || 'https://www.youtube.com/watch?v=inpok4MKVLM';
       }
@@ -210,6 +223,7 @@ export class TasksService {
                     - The length must be at least 600 words so that the spoken track is 4-5 minutes long.
                     - Style: Simple 5th-grade English. NO AI jargon (vital, journey, tailored, embark, comprehensive).
                     - Write ONLY the raw text script of the narration. DO NOT include any formatting like "Narrator:", "Host:", bracketed audio cues, asterisks, or markdown formatting. Just write the exact spoken words, paragraphs, and guidance so it can be converted to speech.
+                    - Pacing & Pauses: If the task involves physical movement, stretching, or breathing, you MUST include explicit spoken count-downs or guided timing (e.g., "Hold this stretch for 15 seconds. Let's count. 15... 14... 13...") to give the user actual time to perform the actions in real-time. Do not rush through the instructions without giving them time to execute.
                 `;
         try {
           const expandedScript = await this.aiService.generate(expansionPrompt);
@@ -220,7 +234,9 @@ export class TasksService {
             );
           }
         } catch (err) {
-          this.logger.error(`Failed to expand script: ${err.message}`);
+          this.logger.error(
+            `Failed to expand script: ${(err as Error).message}`,
+          );
         }
       }
     }

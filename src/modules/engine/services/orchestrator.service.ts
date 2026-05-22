@@ -354,7 +354,7 @@ export class OrchestratorService {
         "description": "Short summary (Goal-specific)",
         "searchQuery": "Specific YouTube search query (if video template)",
         "questions": ["Q1?", "Q2?"], (if quiz template)
-        "narrationScript": "At least 600 words of highly detailed and specific coaching. NO generic intros. Focus on 'How' and 'Why' this specific task helps with ${goal}. This must be long and comprehensive to ensure a spoken length of at least 4-5 minutes."
+        "narrationScript": "At least 600 words of highly detailed and specific coaching. NO generic intros. Focus on 'How' and 'Why' this specific task helps with ${goal}. This must be long and comprehensive to ensure a spoken length of at least 4-5 minutes. IMPORTANT PACING: If this is a physical exercise, breathing routine, or meditation, you MUST include explicit count-downs (e.g. 'Hold for 10 seconds. 10... 9... 8...') so the user has actual time to perform the movements. Do not rush through."
       }
 
       STRICT REQUIREMENTS:
@@ -456,6 +456,7 @@ export class OrchestratorService {
                 - The length must be at least 600 words so that the spoken track is 4-5 minutes long.
                 - Style: Simple 5th-grade English. NO AI jargon (vital, journey, tailored, embark, comprehensive).
                 - Write ONLY the raw text script of the narration. DO NOT include any formatting like "Narrator:", "Host:", bracketed audio cues, asterisks, or markdown formatting. Just write the exact spoken words, paragraphs, and guidance so it can be converted to speech.
+                - Pacing & Pauses: If the task involves physical movement, stretching, or breathing, you MUST include explicit spoken count-downs or guided timing (e.g., "Hold this stretch for 15 seconds. Let's count. 15... 14... 13...") to give the user actual time to perform the actions in real-time. Do not rush through the instructions without giving them time to execute.
             `;
         try {
           const expandedScript = await this.aiService.generate(expansionPrompt);
