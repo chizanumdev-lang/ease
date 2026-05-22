@@ -37,9 +37,10 @@ export class TasksController {
     @UploadedFile() file: Express.Multer.File,
     @Body('targetScript') targetScript: string,
     @Body('locale') locale: string,
+    @Body('focus') focus: string,
   ) {
     try {
-      this.logger.log(`Received vocal grading request for locale: ${locale}`);
+      this.logger.log(`Received vocal grading request for locale: ${locale}, focus: ${focus}`);
       if (!file) {
         this.logger.error('No audio file provided in request');
         throw new Error('No audio file provided');
@@ -49,6 +50,7 @@ export class TasksController {
         targetScript,
         locale,
         file.mimetype,
+        focus || 'pronunciation',
       );
     } catch (error) {
       this.logger.error(`Vocal grading failed: ${error.message}`, error.stack);

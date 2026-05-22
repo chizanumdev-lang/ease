@@ -328,74 +328,14 @@ export class AiService implements OnModuleInit {
     targetScript: string,
     locale: string = 'fr-FR',
     mimeType: string = 'audio/mp3',
+    focus: string = 'pronunciation',
   ): Promise<any> {
     if (!audioBuffer) throw new Error('Audio buffer is empty');
 
     this.logger.log(
-      `Grading vocal performance: ${locale}, ${mimeType}, ${audioBuffer.length} bytes`,
+      `Grading vocal performance: ${locale}, focus: ${focus}, ${mimeType}, ${audioBuffer.length} bytes`,
     );
 
-    let geminiError: Error | null = null;
-
-    if (this.genAI) {
-      try {
-        const model = this.genAI.getGenerativeModel({
-          model: 'gemini-1.5-flash-latest',
-        });
-
-        const prompt = `
-                You are an expert language coach. Analyze the attached audio recording of a student attempting to say: "${targetScript}" in ${locale}.
-                
-                TASKS:
-                1. Compare the audio to the target script.
-                2. Evaluate Pronunciation, Pace, and Tone (0-100).
-                3. Identify specific words that were mispronounced.
-                
-                OUTPUT SCHEMA (Strict JSON):
-                {
-                    "score": number (overall 0-100),
-                    "metrics": {
-                        "pronunciation": number,
-                        "pace": number,
-                        "tone": number
-                    },
-                    "mistakes": [
-                        { "word": string, "correctionLabel": "Pronunciation"|"Phonetic", "feedback": "Short encouraging tip" }
-                    ],
-                    "feedback": "Overall encouraging summary"
-                }
-                
-                Return ONLY the raw JSON.`;
-
-        const result = await model.generateContent([
-          prompt,
-          {
-            inlineData: {
-              data: audioBuffer.toString('base64'),
-              mimeType:
-                mimeType === 'audio/m4a' || mimeType === 'audio/x-m4a'
-                  ? 'audio/aac'
-                  : mimeType,
-            },
-          },
-        ]);
-
-        const responseText = result.response.text();
-        this.logger.debug(`Gemini response: ${responseText}`);
-        return this.extractJson(responseText);
-      } catch (error) {
-        geminiError = error;
-        this.logger.warn(
-          `Primary Gemini grading failed: ${error.message}. Trying Whisper + text LLM fallback...`,
-        );
-      }
-    } else {
-      this.logger.warn(
-        'Gemini not configured for audio grading. Proceeding to Whisper + text LLM fallback.',
-      );
-    }
-
-    // --- Fallback logic ---
     try {
       const cleanMime = mimeType.toLowerCase();
       const isGroqSupported =
@@ -445,14 +385,36 @@ export class AiService implements OnModuleInit {
         `Whisper transcription successful: "${transcriptionText}"`,
       );
 
+      let focusInstructions = '';
+      if (
+        focus.toLowerCase().includes('public speaking') ||
+        focus.toLowerCase().includes('presentation')
+      ) {
+        focusInstructions = `
+            FOCUS: Public Speaking & Presentation.
+            - Evaluate Pace and Tone closely. Are they speaking too fast, too slow, or with good emphasis?
+            - Evaluate Pronunciation based on clarity.
+            - Identify filler words, long pauses, or areas where vocal control could be improved.
+            - Correction labels can be "Pace", "Tone", "Filler", or "Clarity".`;
+      } else {
+        focusInstructions = `
+            FOCUS: Pronunciation & Articulation.
+            - Evaluate Pronunciation meticulously. How accurately did they articulate each word compared to the target?
+            - Evaluate Pace and Tone as secondary metrics.
+            - Identify specific words that were mispronounced, skipped, or added.
+            - Correction labels can be "Pronunciation", "Phonetic", or "Missing".`;
+      }
+
       const fallbackPrompt = `
-            You are an expert language coach. Analyze a student's attempt to say: "${targetScript}" in ${locale}.
+            You are an expert language and speech coach. Analyze a student's attempt to say: "${targetScript}" in ${locale}.
             The student actually said (transcribed): "${transcriptionText}".
+            
+            ${focusInstructions}
             
             TASKS:
             1. Compare the student's transcription to the target script.
-            2. Evaluate Pronunciation, Pace, and Tone (0-100). Since you only have the text transcription, estimate the Pace and Tone based on natural pauses or word completeness.
-            3. Identify specific words that were mispronounced, missed, or added by comparing the target to the transcription.
+            2. Evaluate Pronunciation, Pace, and Tone (0-100). Since you only have the text transcription, estimate the Pace and Tone based on natural pauses, word completeness, or omitted words.
+            3. Identify specific mistakes or areas of improvement based on the FOCUS.
             
             OUTPUT SCHEMA (Strict JSON):
             {
@@ -463,31 +425,32 @@ export class AiService implements OnModuleInit {
                     "tone": number
                 },
                 "mistakes": [
-                    { "word": string, "correctionLabel": "Pronunciation"|"Phonetic"|"Missing", "feedback": "Short encouraging tip" }
+                    { "word": string, "correctionLabel": string, "feedback": "Short encouraging tip" }
                 ],
-                "feedback": "Overall encouraging summary"
+                "feedback": "Overall encouraging summary tailored to the focus area"
             }
             
             Return ONLY the raw JSON.`;
 
       const responseText = await this.generate(fallbackPrompt, {
-        type: 'vocal_grading_fallback',
+        type: 'vocal_grading',
         locale,
+        focus,
       });
       if (!responseText)
-        throw new Error('Text LLM fallback generated empty response');
+        throw new Error('LLM generated empty response for grading');
 
       const resultJson = this.extractJson(responseText);
       if (!resultJson)
-        throw new Error('Could not parse text LLM fallback response as JSON');
+        throw new Error('Could not parse LLM response as JSON');
 
       return resultJson;
-    } catch (fallbackError) {
+    } catch (error) {
       this.logger.error(
-        `Vocal grading fallback failed: ${fallbackError.message}`,
-        fallbackError.stack,
+        `Vocal grading failed: ${error.message}`,
+        error.stack,
       );
-      throw geminiError || fallbackError;
+      throw error;
     }
   }
 
