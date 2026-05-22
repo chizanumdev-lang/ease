@@ -23,7 +23,9 @@ export class TaskProcessor extends WorkerHost {
 
   async process(job: Job<{ taskId: string }>): Promise<any> {
     if (this.isVercel) {
-      this.logger.warn(`Skipping engine job ${job.id} on Vercel serverless — needs dedicated worker`);
+      this.logger.warn(
+        `Skipping engine job ${job.id} on Vercel serverless — needs dedicated worker`,
+      );
       return { success: false, reason: 'serverless_skip' };
     }
     const { taskId } = job.data;
@@ -87,15 +89,21 @@ export class TaskProcessor extends WorkerHost {
   private async handleAudioTask(task: EngineTask): Promise<any> {
     // Placeholder for audio/TTS logic
     this.logger.debug(`Handling AUDIO task for ${task.id}`);
-    return { ...task.inputData, status: 'audio_generated', url: 'https://example.com/audio.mp3' };
+    return {
+      ...task.inputData,
+      status: 'audio_generated',
+      url: 'https://example.com/audio.mp3',
+    };
   }
 
   private async updateProgramProgress(programId: string) {
     const [tasks, total] = await this.taskRepo.findAndCount({
       where: { programId },
     });
-    
-    const completed = tasks.filter(t => t.status === ExecutionStatus.COMPLETED).length;
+
+    const completed = tasks.filter(
+      (t) => t.status === ExecutionStatus.COMPLETED,
+    ).length;
     const progress = total > 0 ? (completed / total) * 100 : 0;
 
     await this.programRepo.update(programId, { progress });

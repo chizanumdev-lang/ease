@@ -10,7 +10,7 @@ export class VideosService {
   constructor(
     @InjectRepository(Video)
     private videosRepository: Repository<Video>,
-  ) { }
+  ) {}
 
   async create(createVideoDto: CreateVideoDto): Promise<Video> {
     const video = this.videosRepository.create(createVideoDto);

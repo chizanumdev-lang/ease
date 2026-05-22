@@ -9,4 +9,4 @@ import { Video } from './entities/video.entity';
   controllers: [VideosController],
   providers: [VideosService],
 })
-export class VideosModule { }
+export class VideosModule {}

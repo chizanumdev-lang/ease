@@ -16,28 +16,28 @@ import { DayPlan } from '../programs/entities/day-plan.entity';
 import { TaskTemplate } from '../tasks/entities/task-template.entity';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            AiGenerationLog,
-            ApiCostLog,
-            ErrorLog,
-            ProgramRating,
-            Referral,
-            User,
-            Task,
-            Program,
-            DayPlan,
-            TaskTemplate
-        ]),
-    ],
-    controllers: [AdminController],
-    providers: [
-        AdminService,
-        {
-            provide: APP_FILTER,
-            useClass: AllExceptionsFilter,
-        },
-    ],
-    exports: [AdminService],
+  imports: [
+    TypeOrmModule.forFeature([
+      AiGenerationLog,
+      ApiCostLog,
+      ErrorLog,
+      ProgramRating,
+      Referral,
+      User,
+      Task,
+      Program,
+      DayPlan,
+      TaskTemplate,
+    ]),
+  ],
+  controllers: [AdminController],
+  providers: [
+    AdminService,
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
+  exports: [AdminService],
 })
-export class AdminModule { }
+export class AdminModule {}

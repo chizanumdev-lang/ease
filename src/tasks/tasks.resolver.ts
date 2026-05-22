@@ -7,7 +7,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
 
-
 @Resolver(() => Task)
 export class TasksResolver {
   constructor(private readonly tasksService: TasksService) {}
@@ -16,7 +15,8 @@ export class TasksResolver {
   @UseGuards(JwtAuthGuard)
   async updateTask(
     @Args('id', { type: () => ID }) id: string,
-    @Args('updateTaskDto', { type: () => UpdateTaskDto }) updateTaskDto: UpdateTaskDto,
+    @Args('updateTaskDto', { type: () => UpdateTaskDto })
+    updateTaskDto: UpdateTaskDto,
   ): Promise<Task> {
     return this.tasksService.update(id, updateTaskDto);
   }

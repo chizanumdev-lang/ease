@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Headers, UnauthorizedException, Logger, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Headers,
+  UnauthorizedException,
+  Logger,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { ProgramsService } from '../programs/programs.service';
 import { RitualsService } from '../audio/rituals.service';
 import { UsersService } from '../users/users.service';
@@ -27,26 +36,39 @@ export class InternalController {
     @Body() body: { dayPlanId: string; goalText: string; params: any },
   ) {
     this.validateKey(key);
-    this.logger.log(`Received internal hydration request for Day ${body.dayPlanId}`);
-    
+    this.logger.log(
+      `Received internal hydration request for Day ${body.dayPlanId}`,
+    );
+
     // Process synchronously since this is called from a background worker (Trigger.dev)
-    await this.programsService.hydrateDay(body.dayPlanId, body.goalText, body.params);
+    await this.programsService.hydrateDay(
+      body.dayPlanId,
+      body.goalText,
+      body.params,
+    );
     return { success: true };
   }
 
   @Post('generate-audio')
   async generateAudio(
     @Headers('x-internal-key') key: string,
-    @Body() body: { audioTrackId: string; theme: string; audioFilename: string },
+    @Body()
+    body: { audioTrackId: string; theme: string; audioFilename: string },
   ) {
     this.validateKey(key);
-    this.logger.log(`Received internal audio generation request for Track ${body.audioTrackId}`);
-    
+    this.logger.log(
+      `Received internal audio generation request for Track ${body.audioTrackId}`,
+    );
+
     // Call the programsService method to perform the actual background generation
-    const result = await this.programsService.generateAudioTrack(body.audioTrackId, body.theme, body.audioFilename);
+    const result = await this.programsService.generateAudioTrack(
+      body.audioTrackId,
+      body.theme,
+      body.audioFilename,
+    );
     return result;
   }
-  
+
   @Post('users/skip-verification')
   async skipVerification(
     @Headers('x-internal-key') key: string,

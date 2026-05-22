@@ -7,10 +7,10 @@ import { AnalyticsService } from './analytics.service';
 @Controller('analytics')
 @UseGuards(JwtAuthGuard)
 export class AnalyticsController {
-    constructor(private readonly analyticsService: AnalyticsService) { }
+  constructor(private readonly analyticsService: AnalyticsService) {}
 
-    @Get('weekly')
-    async getWeeklyAnalytics(@GetUser() user: User) {
-        return this.analyticsService.getWeeklyAnalytics(user.id);
-    }
+  @Get('weekly')
+  async getWeeklyAnalytics(@GetUser() user: User) {
+    return this.analyticsService.getWeeklyAnalytics(user.id);
+  }
 }

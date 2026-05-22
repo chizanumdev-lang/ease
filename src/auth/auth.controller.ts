@@ -8,37 +8,37 @@ import type { Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
-    @Post('signup')
-    async signup(@Body() signupDto: SignupDto) {
-        return this.authService.signup(signupDto);
-    }
+  @Post('signup')
+  async signup(@Body() signupDto: SignupDto) {
+    return this.authService.signup(signupDto);
+  }
 
-    @Post('login')
-    async login(@Body() loginDto: LoginDto) {
-        return this.authService.login(loginDto);
-    }
+  @Post('login')
+  async login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
+  }
 
-    @Post('verify')
-    async verify(@Body() verifyEmailDto: VerifyEmailDto) {
-        return this.authService.verifyEmail(verifyEmailDto);
-    }
+  @Post('verify')
+  async verify(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto);
+  }
 
-    @Post('resend-code')
-    async resendCode(@Body('email') email: string) {
-        return this.authService.resendVerificationCode(email);
-    }
+  @Post('resend-code')
+  async resendCode(@Body('email') email: string) {
+    return this.authService.resendVerificationCode(email);
+  }
 
-    @UseGuards(JwtRefreshGuard)
-    @Post('refresh')
-    async refresh(@Req() req: Request) {
-        const user = req.user as any;
-        return this.authService.refreshTokens(user.sub, user.refreshToken);
-    }
+  @UseGuards(JwtRefreshGuard)
+  @Post('refresh')
+  async refresh(@Req() req: Request) {
+    const user = req.user as any;
+    return this.authService.refreshTokens(user.sub, user.refreshToken);
+  }
 
-    @Get('test')
-    test() {
-        return { message: 'Auth controller is reachable' };
-    }
+  @Get('test')
+  test() {
+    return { message: 'Auth controller is reachable' };
+  }
 }

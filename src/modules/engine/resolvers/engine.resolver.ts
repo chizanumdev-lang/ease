@@ -42,7 +42,11 @@ export class EngineResolver {
     @Args('userGoal') userGoal: string,
     @Args('userId') userId: string,
   ) {
-    const program = await this.plannerService.planProgram(userId, templateId, userGoal);
+    const program = await this.plannerService.planProgram(
+      userId,
+      templateId,
+      userGoal,
+    );
     pubSub.publish('programCreated', { programCreated: program });
     return program;
   }

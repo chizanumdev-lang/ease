@@ -1,10 +1,10 @@
 import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    UpdateDateColumn,
-    OneToMany,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { Goal } from '../../goals/entities/goal.entity';
@@ -16,75 +16,75 @@ import { RewardEvent } from '../../rewards/entities/reward-event.entity';
 @ObjectType()
 @Entity('users')
 export class User {
-    @Field(() => ID)
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @Field(() => ID)
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Field()
-    @Column({ unique: true })
-    email: string;
+  @Field()
+  @Column({ unique: true })
+  email: string;
 
-    @Column()
-    password: string;
+  @Column()
+  password: string;
 
-    @Field()
-    @Column()
-    name: string;
+  @Field()
+  @Column()
+  name: string;
 
-    @Column({ type: 'jsonb', nullable: true })
-    settings: Record<string, any> | null;
+  @Column({ type: 'jsonb', nullable: true })
+  settings: Record<string, any> | null;
 
-    @Column({ type: 'varchar', nullable: true, name: 'refresh_token' })
-    refreshToken: string | null;
+  @Column({ type: 'varchar', nullable: true, name: 'refresh_token' })
+  refreshToken: string | null;
 
-    @Field()
-    @Column({ default: false, name: 'is_admin' })
-    isAdmin: boolean;
+  @Field()
+  @Column({ default: false, name: 'is_admin' })
+  isAdmin: boolean;
 
-    @Field()
-    @Column({ default: false, name: 'is_verified' })
-    isVerified: boolean;
+  @Field()
+  @Column({ default: false, name: 'is_verified' })
+  isVerified: boolean;
 
-    @Column({ type: 'varchar', nullable: true, name: 'verification_code' })
-    verificationCode: string | null;
+  @Column({ type: 'varchar', nullable: true, name: 'verification_code' })
+  verificationCode: string | null;
 
-    @Column({ type: 'timestamp', nullable: true, name: 'verification_expires' })
-    verificationExpires: Date | null;
+  @Column({ type: 'timestamp', nullable: true, name: 'verification_expires' })
+  verificationExpires: Date | null;
 
-    @Field()
-    @Column({ default: 0 })
-    streak: number;
+  @Field()
+  @Column({ default: 0 })
+  streak: number;
 
-    @Field()
-    @Column({ default: 1 })
-    level: number;
+  @Field()
+  @Column({ default: 1 })
+  level: number;
 
-    @Field()
-    @Column({ default: 0 })
-    xp: number;
+  @Field()
+  @Column({ default: 0 })
+  xp: number;
 
-    @Field()
-    @CreateDateColumn({ name: 'created_at' })
-    createdAt: Date;
+  @Field()
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-    @Field()
-    @UpdateDateColumn({ name: 'updated_at' })
-    updatedAt: Date;
+  @Field()
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-    @Field(() => [Goal], { nullable: true })
-    @OneToMany(() => Goal, (goal) => goal.user)
-    goals: Goal[];
+  @Field(() => [Goal], { nullable: true })
+  @OneToMany(() => Goal, (goal) => goal.user)
+  goals: Goal[];
 
-    @Field(() => [Program], { nullable: true })
-    @OneToMany(() => Program, (program) => program.user)
-    programs: Program[];
+  @Field(() => [Program], { nullable: true })
+  @OneToMany(() => Program, (program) => program.user)
+  programs: Program[];
 
-    @OneToMany(() => QuizAttempt, (attempt) => attempt.user)
-    quizAttempts: QuizAttempt[];
+  @OneToMany(() => QuizAttempt, (attempt) => attempt.user)
+  quizAttempts: QuizAttempt[];
 
-    @OneToMany(() => Progress, (progress) => progress.user)
-    progress: Progress[];
+  @OneToMany(() => Progress, (progress) => progress.user)
+  progress: Progress[];
 
-    @OneToMany(() => RewardEvent, (reward) => reward.user)
-    rewardEvents: RewardEvent[];
+  @OneToMany(() => RewardEvent, (reward) => reward.user)
+  rewardEvents: RewardEvent[];
 }

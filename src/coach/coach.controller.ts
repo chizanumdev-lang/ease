@@ -8,10 +8,16 @@ import { User } from '../users/entities/user.entity'; // Adjust path
 @Controller('coach')
 @UseGuards(JwtAuthGuard)
 export class CoachController {
-    constructor(private readonly coachService: CoachService) { }
+  constructor(private readonly coachService: CoachService) {}
 
-    @Post('message')
-    async generateMessage(@GetUser() user: User, @Body() coachMessageDto: CoachMessageDto) {
-        return this.coachService.generateCoachMessage(user.id, coachMessageDto.message);
-    }
+  @Post('message')
+  async generateMessage(
+    @GetUser() user: User,
+    @Body() coachMessageDto: CoachMessageDto,
+  ) {
+    return this.coachService.generateCoachMessage(
+      user.id,
+      coachMessageDto.message,
+    );
+  }
 }

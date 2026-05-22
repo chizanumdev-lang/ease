@@ -125,7 +125,7 @@ export default function AudioPlayerScreen({ route, navigation }: Props) {
         const initializeTrack = async () => {
             try {
                 await loadTrack(track);
-                if (canAutoPlayAudio(user, autoPlayEnabled)) {
+                if (canAutoPlayAudio(user, autoPlayEnabled, track)) {
                     await play();
                 }
             } catch (error) {

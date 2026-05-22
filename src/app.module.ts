@@ -53,8 +53,9 @@ import { StartupService } from './common/startup.service';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const url = configService.get<string>('DATABASE_URL');
-        const isLocal = configService.get('DATABASE_HOST') === '127.0.0.1' || 
-                        (url && url.includes('127.0.0.1'));
+        const isLocal =
+          configService.get('DATABASE_HOST') === '127.0.0.1' ||
+          (url && url.includes('127.0.0.1'));
 
         const dbConfig: any = {
           type: 'postgres',
@@ -99,7 +100,9 @@ import { StartupService } from './common/startup.service';
     WorkerModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: process.env.VERCEL ? true : join(process.cwd(), 'src/schema.gql'),
+      autoSchemaFile: process.env.VERCEL
+        ? true
+        : join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
       playground: true,
       resolvers: { JSON: require('graphql-type-json') },
@@ -119,4 +122,4 @@ import { StartupService } from './common/startup.service';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

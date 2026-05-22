@@ -10,7 +10,10 @@ async function bootstrap() {
   const dataSource = app.get(DataSource);
   const shardRepository = dataSource.getRepository(TaskShard);
 
-  const jsonPath = path.join(process.cwd(), 'research/output/task-templates.json');
+  const jsonPath = path.join(
+    process.cwd(),
+    'research/output/task-templates.json',
+  );
   if (!fs.existsSync(jsonPath)) {
     console.error('❌ Templates JSON not found at:', jsonPath);
     await app.close();
@@ -26,20 +29,20 @@ async function bootstrap() {
 
   for (const s of shards) {
     try {
-        await shardRepository.save({
-            name: s.name,
-            displayName: s.displayName,
-            modality: s.modality,
-            description: s.description,
-            typicalDurationMinutes: s.typicalDurationMinutes || 10,
-            energyLevel: s.energy || 'medium',
-            difficultyBase: s.difficulty_base || 5,
-            category: s.category || 'journal',
-            intensity: s.intensity || 5,
-            metadata: s.metadata || {}
-        });
+      await shardRepository.save({
+        name: s.name,
+        displayName: s.displayName,
+        modality: s.modality,
+        description: s.description,
+        typicalDurationMinutes: s.typicalDurationMinutes || 10,
+        energyLevel: s.energy || 'medium',
+        difficultyBase: s.difficulty_base || 5,
+        category: s.category || 'journal',
+        intensity: s.intensity || 5,
+        metadata: s.metadata || {},
+      });
     } catch (e: any) {
-        console.error(`Failed to seed ${s.name}:`, e.message);
+      console.error(`Failed to seed ${s.name}:`, e.message);
     }
   }
 

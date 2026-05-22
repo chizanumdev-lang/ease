@@ -7,7 +7,10 @@ import { GoalTemplate } from '../entities/goal-template.entity';
 import { EngineTask, ExecutionStatus } from '../entities/task.entity';
 import { WorkflowNode } from '../entities/workflow-node.entity';
 import { WorkflowEdge } from '../entities/workflow-edge.entity';
-import { TaskDefinition, CapabilityType } from '../entities/task-definition.entity';
+import {
+  TaskDefinition,
+  CapabilityType,
+} from '../entities/task-definition.entity';
 
 @Injectable()
 export class PlannerService {
@@ -23,8 +26,14 @@ export class PlannerService {
     private aiService: AiService,
   ) {}
 
-  async planProgram(userId: string, templateId: string, userGoal: string): Promise<UserProgram> {
-    this.logger.log(`Planning program for user ${userId} with goal: "${userGoal}"`);
+  async planProgram(
+    userId: string,
+    templateId: string,
+    userGoal: string,
+  ): Promise<UserProgram> {
+    this.logger.log(
+      `Planning program for user ${userId} with goal: "${userGoal}"`,
+    );
 
     // 1. Fetch the blueprint
     const template = await this.templateRepo.findOne({
@@ -53,33 +62,43 @@ export class PlannerService {
 
     // 3. Process nodes in topological order to maintain causal consistency
     // Deduplicate nodes first to prevent processing the same node multiple times if TypeORM relations are duplicated
-    const uniqueNodesMap = new Map(template.nodes.map(n => [n.id, n]));
+    const uniqueNodesMap = new Map(template.nodes.map((n) => [n.id, n]));
     const uniqueNodes = Array.from(uniqueNodesMap.values());
-    
+
     const sortedNodes = this.topologicalSort(uniqueNodes, template.edges);
     const plannedContext = new Map<string, any>();
     const tasks: EngineTask[] = [];
-    
+
     for (const node of sortedNodes) {
-      this.logger.debug(`Generating context-aware plan for node: ${node.label} (${node.taskDefinition.capability})`);
-      
+      this.logger.debug(
+        `Generating context-aware plan for node: ${node.label} (${node.taskDefinition.capability})`,
+      );
+
       // Get results from direct predecessors to provide context
       const predecessorIds = template.edges
-        .filter(e => e.toNodeId === node.id)
-        .map(e => e.fromNodeId);
-      
+        .filter((e) => e.toNodeId === node.id)
+        .map((e) => e.fromNodeId);
+
       const context = predecessorIds
-        .map(id => ({
+        .map((id) => ({
           nodeLabel: uniqueNodesMap.get(id)?.label,
-          output: plannedContext.get(id)
+          output: plannedContext.get(id),
         }))
-        .filter(c => c.output);
+        .filter((c) => c.output);
 
       let inputData = { ...node.config };
-      
+
       // Generate AI-driven input with dependency context
-      if (node.taskDefinition.capability === CapabilityType.TEXT || node.taskDefinition.capability === CapabilityType.AUDIO) {
-        inputData = await this.generateNodeInput(template, node, userGoal, context);
+      if (
+        node.taskDefinition.capability === CapabilityType.TEXT ||
+        node.taskDefinition.capability === CapabilityType.AUDIO
+      ) {
+        inputData = await this.generateNodeInput(
+          template,
+          node,
+          userGoal,
+          context,
+        );
       }
 
       plannedContext.set(node.id, inputData);
@@ -90,7 +109,7 @@ export class PlannerService {
         status: ExecutionStatus.QUEUED,
         inputData,
       });
-      
+
       tasks.push(task);
     }
 
@@ -103,12 +122,17 @@ export class PlannerService {
     return this.findFullProgram(savedProgram.id);
   }
 
-
-  private async generateNodeInput(template: GoalTemplate, node: WorkflowNode, userGoal: string, context: any[]): Promise<any> {
-    const contextPrompt = context.length > 0 
-      ? `PREVIOUS TASK CONTEXT (This task depends on these):
-         ${context.map(c => `Task "${c.nodeLabel}": ${JSON.stringify(c.output)}`).join('\n')}`
-      : '';
+  private async generateNodeInput(
+    template: GoalTemplate,
+    node: WorkflowNode,
+    userGoal: string,
+    context: any[],
+  ): Promise<any> {
+    const contextPrompt =
+      context.length > 0
+        ? `PREVIOUS TASK CONTEXT (This task depends on these):
+         ${context.map((c) => `Task "${c.nodeLabel}": ${JSON.stringify(c.output)}`).join('\n')}`
+        : '';
 
     const prompt = `
       You are the "Adaptive Engine" for Ease. 
@@ -143,7 +167,10 @@ export class PlannerService {
     return this.aiService.generateCustomJson(prompt, node.config);
   }
 
-  private topologicalSort(nodes: WorkflowNode[], edges: WorkflowEdge[]): WorkflowNode[] {
+  private topologicalSort(
+    nodes: WorkflowNode[],
+    edges: WorkflowEdge[],
+  ): WorkflowNode[] {
     const sorted: WorkflowNode[] = [];
     const visited = new Set<string>();
     const temp = new Set<string>();
@@ -152,13 +179,13 @@ export class PlannerService {
       if (temp.has(nodeId)) throw new Error('Cycle detected in workflow');
       if (!visited.has(nodeId)) {
         temp.add(nodeId);
-        const outgoingEdges = edges.filter(e => e.fromNodeId === nodeId);
+        const outgoingEdges = edges.filter((e) => e.fromNodeId === nodeId);
         for (const edge of outgoingEdges) {
           visit(edge.toNodeId);
         }
         temp.delete(nodeId);
         visited.add(nodeId);
-        const node = nodes.find(n => n.id === nodeId);
+        const node = nodes.find((n) => n.id === nodeId);
         if (node) sorted.unshift(node);
       }
     };
@@ -167,16 +194,20 @@ export class PlannerService {
       if (!visited.has(node.id)) visit(node.id);
     }
 
-    // DO NOT REVERSE here. With unshift(node) after recursive visits, 
+    // DO NOT REVERSE here. With unshift(node) after recursive visits,
     // the sources end up at the front of the array.
     return sorted;
   }
 
-
   private async findFullProgram(id: string): Promise<UserProgram> {
     const program = await this.programRepo.findOne({
       where: { id },
-      relations: ['template', 'tasks', 'tasks.node', 'tasks.node.taskDefinition'],
+      relations: [
+        'template',
+        'tasks',
+        'tasks.node',
+        'tasks.node.taskDefinition',
+      ],
     });
 
     if (!program) throw new Error(`Program ${id} not found`);

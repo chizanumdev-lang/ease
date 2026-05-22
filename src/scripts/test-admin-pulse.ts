@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import * as dotenv from 'dotenv';
 
@@ -11,8 +10,8 @@ async function testAdminPulse() {
   try {
     const response = await axios.get(`${baseUrl}/api/admin/dashboard/pulse`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     console.log('Pulse Data:', JSON.stringify(response.data, null, 2));
   } catch (err: any) {
