@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -158,9 +159,9 @@ export class ProgramsService {
           );
           this.ritualsService
             .generateRitual(user.id, 'morning', localDateStr)
-            .catch((err) =>
+            .catch((err: any) =>
               this.logger.error(
-                `Scheduled morning ritual failed for user ${user.id}: ${err.message}`,
+                `Scheduled morning ritual failed for user ${user.id}: ${err instanceof Error ? err.message : String(err)}`,
               ),
             );
         }
@@ -172,9 +173,9 @@ export class ProgramsService {
           );
           this.ritualsService
             .generateRitual(user.id, 'night', localDateStr)
-            .catch((err) =>
+            .catch((err: any) =>
               this.logger.error(
-                `Scheduled night ritual failed for user ${user.id}: ${err.message}`,
+                `Scheduled night ritual failed for user ${user.id}: ${err instanceof Error ? err.message : String(err)}`,
               ),
             );
         }
@@ -215,7 +216,7 @@ export class ProgramsService {
                     { ...program.metadata, duration: program.duration },
                   ).catch((e) =>
                     this.logger.error(
-                      `Sync hydration failed for Day ${tomorrowNum}: ${e.message}`,
+                      `Sync hydration failed for Day ${tomorrowNum}: ${e instanceof Error ? e.message : String(e)}`,
                     ),
                   );
                 }
@@ -223,21 +224,39 @@ export class ProgramsService {
             }
           }
         }
-      } catch (err) {
+
+        // 4. 23:00 (11 PM): Evaluate Performance for Active Program
+        if (localHour === 23) {
+          const program = await this.programRepository.findOne({
+            where: { userId: user.id, status: 'ready' },
+            order: { createdAt: 'DESC' },
+          });
+
+          if (program) {
+            this.logger.log(
+              `Evaluating performance for user ${user.id} at 11 PM local time`,
+            );
+            await this.evaluatePerformance(program.id).catch((err: any) =>
+              this.logger.error(
+                `Performance evaluation failed for program ${program.id}: ${err instanceof Error ? err.message : String(err)}`,
+              ),
+            );
+          }
+        }
+      } catch (err: any) {
         this.logger.error(
-          `Hourly sync failed for user ${user.id}: ${err.message}`,
+          `Hourly sync failed for user ${user.id}: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     }
   }
 
-  private async calculateCurrentDayNumber(program: Program): Promise<number> {
+  private calculateCurrentDayNumber(program: Program): Promise<number> {
     // Simple logic: days since program.createdAt (capped by duration)
     const start = program.createdAt.getTime();
     const diff = Date.now() - start;
-    return Math.min(
-      program.duration,
-      Math.floor(diff / (1000 * 60 * 60 * 24)) + 1,
+    return Promise.resolve(
+      Math.min(program.duration, Math.floor(diff / (1000 * 60 * 60 * 24)) + 1),
     );
   }
 
@@ -324,9 +343,9 @@ export class ProgramsService {
 
         this.ritualsService
           .generateDailyRituals(day.program.userId, localDateStr)
-          .catch((err) =>
+          .catch((err: any) =>
             this.logger.error(
-              `Initial ritual generation failed for user ${day.program.userId} on ${localDateStr}: ${err.message}`,
+              `Initial ritual generation failed for user ${day.program.userId} on ${localDateStr}: ${err instanceof Error ? err.message : String(err)}`,
             ),
           );
         this.logger.log(`Successfully hydrated Day ${dayId}`);
@@ -636,9 +655,9 @@ export class ProgramsService {
       );
       this.orchestratorService
         .orchestrateDay(savedDay1.id, goalDescription)
-        .catch((err) =>
+        .catch((err: any) =>
           this.logger.error(
-            `Early orchestration failed for Day 1: ${err.message}`,
+            `Early orchestration failed for Day 1: ${err instanceof Error ? err.message : String(err)}`,
           ),
         );
     }
@@ -783,9 +802,9 @@ export class ProgramsService {
         );
         program.status = 'ready';
         await this.programRepository.save(program);
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(
-          `Synchronous hydration for Day 1 failed: ${err.message}. Retrying locally in background...`,
+          `Synchronous hydration for Day 1 failed: ${err instanceof Error ? err.message : String(err)}. Retrying locally in background...`,
         );
         this.orchestratorService
           .orchestrateDay(day1.id, generationParams.goalText, generationParams)
@@ -819,7 +838,7 @@ export class ProgramsService {
           .orchestrateDay(day2.id, generationParams.goalText, generationParams)
           .catch((e) =>
             this.logger.error(
-              `Day 2 Background hydration failed: ${e.message}`,
+              `Day 2 Background hydration failed: ${e instanceof Error ? e.message : String(e)}`,
             ),
           );
       }
@@ -906,7 +925,8 @@ export class ProgramsService {
     return themes[(i - 1) % themes.length];
   }
 
-  private getMockQuestions(i: number) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private getMockQuestions(_i: number) {
     return [
       { question: 'Key takeaway?', options: ['A', 'B', 'C'], correctAnswer: 0 },
       {
@@ -1251,7 +1271,7 @@ export class ProgramsService {
       // 5. Cleanup temp file
       try {
         if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
-      } catch (err) {
+      } catch (err: any) {
         this.logger.warn(`Failed to cleanup temp file: ${audioPath}`, err);
       }
 

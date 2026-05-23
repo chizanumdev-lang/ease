@@ -353,7 +353,12 @@ export class OrchestratorService {
         "title": "Action Title (Goal-specific)",
         "description": "Short summary (Goal-specific)",
         "searchQuery": "Specific YouTube search query (if video template)",
-        "questions": ["Q1?", "Q2?"], (if quiz template)
+        "questions": ["Q1?", "Q2?"], // (if generic quiz template)
+        "scenario": "A detailed situational scenario that needs a decision (if problem-solving-template)",
+        "options": [ // (if problem-solving-template)
+          { "id": "1", "text": "Option 1", "feedback": "Why it's right/wrong", "correct": false },
+          { "id": "2", "text": "Option 2", "feedback": "Why it's right/wrong", "correct": true }
+        ],
         "narrationScript": "At least 600 words of highly detailed and specific coaching. NO generic intros. Focus on 'How' and 'Why' this specific task helps with ${goal}. This must be long and comprehensive to ensure a spoken length of at least 4-5 minutes. IMPORTANT PACING: If this is a physical exercise, breathing routine, or meditation, you MUST include explicit count-downs (e.g. 'Hold for 10 seconds. 10... 9... 8...') so the user has actual time to perform the movements. Do not rush through."
       }
 

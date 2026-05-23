@@ -10,18 +10,24 @@ import TrackPlayer from 'react-native-track-player';
 import { PlaybackService } from './src/services/playbackService';
 
 notifee.onBackgroundEvent(async ({ type, detail }) => {
-    if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'play_subliminals') {
-        console.log('[BackgroundEvent] play_subliminals action received');
-        const { ritualTracks, loadTrack, play } = useAudioStore.getState();
-        if (ritualTracks?.night) {
-            try {
-                await loadTrack(ritualTracks.night);
-                await play();
-            } catch (error) {
-                console.error('[BackgroundEvent] Failed to load/play nightly subliminal', error);
-            }
-        }
+  if (
+    type === EventType.ACTION_PRESS &&
+    detail.pressAction?.id === 'play_subliminals'
+  ) {
+    console.log('[BackgroundEvent] play_subliminals action received');
+    const { ritualTracks, loadTrack, play } = useAudioStore.getState();
+    if (ritualTracks?.night) {
+      try {
+        await loadTrack(ritualTracks.night);
+        await play();
+      } catch (error) {
+        console.error(
+          '[BackgroundEvent] Failed to load/play nightly subliminal',
+          error,
+        );
+      }
     }
+  }
 });
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
