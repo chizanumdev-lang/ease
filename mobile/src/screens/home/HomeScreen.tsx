@@ -34,8 +34,6 @@ import StitchModal from '../../components/stitch/StitchModal';
 import HomeEmptyState from '../../components/stitch/HomeEmptyState';
 import AudioWidget from '../../components/home/AudioWidget';
 import { TutorialTour } from '../../components/onboarding/TutorialTour';
-import { CompletionRings } from '../../components/home/CompletionRings';
-import { MasteryCard } from '../../components/home/MasteryCard';
 
 
 type Props = NativeStackScreenProps<MainStackParamList> & {
@@ -299,26 +297,12 @@ export default function HomeScreen({ navigation }: Props) {
                     </View>
                 </View>
             </View>
-            <View style={{ flexDirection: 'row', gap: 16, marginHorizontal: 20, marginBottom: 24, alignItems: 'center' }}>
-                <View style={{ flex: 1 }}>
-                    <MasteryCard program={currentProgram!} />
-                </View>
-                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                    <CompletionRings 
-                        morning={todayPlan?.todayRings?.morning || false}
-                        tasks={todayPlan?.todayRings?.tasks || false}
-                        night={todayPlan?.todayRings?.night || false}
-                        size={100}
-                        strokeWidth={10}
-                    />
-                </View>
-            </View>
 
             <AudioWidget />
 
             {/* Section Header */}
-            <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.display }]}>Your Day</Text>
+            <View style={[styles.sectionHeader, { marginTop: 24, marginHorizontal: 20 }]}>
+                <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.display }]}>Your Tasks</Text>
             </View>
         </View>
     );

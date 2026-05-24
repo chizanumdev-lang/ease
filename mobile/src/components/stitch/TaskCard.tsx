@@ -416,16 +416,8 @@ export default function TaskCard({ task, onPress, isLast, index = 0 }: TaskCardP
                                             isCompleted && { opacity: 0.6 }
                                         ]}
                                     >{getCleanTitle(task.title)}</Text>
-                                    <Text style={[styles.previewSubtitle, { color: colors.textMuted }]}>MASTERCLASS</Text>
-                                </View>
-                                <View style={styles.xpBadgeRight}>
-                                    <LinearGradient
-                                        colors={[colors.primary, colors.secondary]}
-                                        style={styles.xpBadgeSmall}
-                                    >
-                                        <Text style={styles.xpTextSmall}>+100 XP</Text>
-                                    </LinearGradient>
-                                </View>
+                                        <Text style={[styles.previewSubtitle, { color: colors.textMuted }]}>MASTERCLASS</Text>
+                                    </View>
                                 {isCompleted && (
                                     <Ionicons name="checkmark-circle" size={18} color={colors.primary} style={{ marginLeft: 4 }} />
                                 )}
@@ -465,15 +457,6 @@ export default function TaskCard({ task, onPress, isLast, index = 0 }: TaskCardP
                                 >
                                     <Ionicons name="play" size={22} color={colors.text} />
                                 </Pressable>
-
-                                <View style={styles.xpBadgeRight}>
-                                    <LinearGradient
-                                        colors={[colors.secondary, colors.primary]}
-                                        style={styles.xpBadgeSmall}
-                                    >
-                                        <Text style={styles.xpTextSmall}>+75 XP</Text>
-                                    </LinearGradient>
-                                </View>
                             </View>
 
                             {isCompleted && (
@@ -501,15 +484,6 @@ export default function TaskCard({ task, onPress, isLast, index = 0 }: TaskCardP
                                 <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body, fontSize: 12 }]}>
                                     {task.duration || 5} MIN • QUIZ
                                 </Text>
-                            </View>
-
-                            <View style={styles.xpBadgeRight}>
-                                <LinearGradient
-                                    colors={[colors.primary + '20', colors.primary + '10']}
-                                    style={styles.xpBadgeSmall}
-                                >
-                                    <Text style={[styles.xpTextSmall, { color: colors.primary }]}>+50 XP</Text>
-                                </LinearGradient>
                             </View>
 
                             {!isLocked && (
@@ -541,15 +515,6 @@ export default function TaskCard({ task, onPress, isLast, index = 0 }: TaskCardP
                                 </Text>
                             </View>
 
-                            <View style={styles.xpBadgeRight}>
-                                <LinearGradient
-                                    colors={[colors.primary + '15', colors.primary + '05']}
-                                    style={styles.xpBadgeSmall}
-                                >
-                                    <Text style={[styles.xpTextSmall, { color: colors.primary }]}>+50 XP</Text>
-                                </LinearGradient>
-                            </View>
-
                             {isCompleted && (
                                 <Ionicons name="checkmark-circle" size={18} color={colors.success} style={{ marginLeft: 8 }} />
                             )}
@@ -578,15 +543,6 @@ export default function TaskCard({ task, onPress, isLast, index = 0 }: TaskCardP
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <TypingAnimation />
                                 </View>
-                            </View>
-
-                            <View style={styles.xpBadgeRight}>
-                                <LinearGradient
-                                    colors={[colors.primary + '20', colors.primary + '10']}
-                                    style={styles.xpBadgeSmall}
-                                >
-                                    <Text style={[styles.xpTextSmall, { color: colors.primary }]}>+50 XP</Text>
-                                </LinearGradient>
                             </View>
 
                             {isCompleted && (
@@ -623,10 +579,6 @@ export default function TaskCard({ task, onPress, isLast, index = 0 }: TaskCardP
                                     ]}
                                 >{task.title}</Text>
                                 <Text style={[styles.subtitle, { color: colors.textMuted, fontFamily: fonts.body, fontSize: 11 }]}>{task.duration || 5} MIN • {task.type.toUpperCase()}</Text>
-                            </View>
-
-                            <View style={[styles.xpBadgeRight, { marginRight: 8 }]}>
-                                <Text style={[styles.xpTextSmall, { color: colors.primary, fontSize: 9, opacity: 0.7 }]}>+25 XP</Text>
                             </View>
 
                             {!isLocked && (
