@@ -155,6 +155,24 @@ export class TasksService {
     });
   }
 
+  async findUpcomingTasks(userId: string): Promise<Task[]> {
+    return this.taskRepository.find({
+      where: {
+        completed: false,
+        dayPlan: {
+          status: 'active',
+          program: {
+            userId,
+            status: 'active',
+          },
+        },
+      },
+      relations: ['dayPlan', 'dayPlan.program'],
+      order: { order: 'ASC' },
+      take: 5,
+    });
+  }
+
   async regenerateMedia(id: string): Promise<Task> {
     const task = await this.taskRepository.findOne({
       where: { id },
