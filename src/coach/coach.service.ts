@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 import { GoalsService } from '../goals/goals.service';
 import { TasksService } from '../tasks/tasks.service';
@@ -12,7 +12,6 @@ import { Progress } from '../progress/entities/progress.entity';
 
 @Injectable()
 export class CoachService {
-  private genAI: GoogleGenerativeAI;
   private readonly logger = new Logger(CoachService.name);
 
   constructor(
@@ -21,21 +20,13 @@ export class CoachService {
     private tasksService: TasksService,
     private quizzesService: QuizzesService,
     private progressService: ProgressService,
-  ) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    if (!apiKey) {
-      this.logger.error(
-        'GEMINI_API_KEY is not defined in the environment variables.',
-      );
-    } else {
-      this.genAI = new GoogleGenerativeAI(apiKey);
-    }
-  }
+  ) {}
 
   async generateCoachMessage(userId: string, userMessage: string) {
     try {
-      if (!this.genAI) {
-        throw new Error('Gemini API key not configured');
+      const apiKey = this.configService.get<string>('GROQ_API_KEY');
+      if (!apiKey) {
+        throw new Error('Groq API key not configured');
       }
 
       // 1. Gather Context
@@ -49,9 +40,12 @@ export class CoachService {
       User Context:
       ${JSON.stringify(context, null, 2)}
       
+      Pending Tasks (their current upcoming tasks for today):
+      ${context.upcoming_tasks.map((t) => `- [${t.type}] ${t.title}: ${t.description || ''}`).join('\n')}
+      
       Response Contract (JSON):
       {
-        "reply": string (max 2-3 sentences, effectively addressing the user),
+        "reply": string (max 2-3 sentences, effectively addressing the user. you can mention their upcoming tasks if relevant to what they say),
         "tone": "supportive" | "direct" | "analytical",
         "suggested_actions": [
           { "type": "reduce_load" | "increase_difficulty" | "reschedule" | "encourage_review", "details": string }
@@ -66,16 +60,34 @@ export class CoachService {
       - If safety_flag is true, 'reply' must trigger a generic support message fallback in the client or be a safe, non-clinical response.
       `;
 
-      // 3. Call Gemini
-      const model = this.genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
-        systemInstruction: systemInstruction,
-        generationConfig: { responseMimeType: 'application/json' },
-      });
+      // 3. Call Groq
+      const response = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama3-8b-8192',
+            messages: [
+              { role: 'system', content: systemInstruction },
+              { role: 'user', content: userMessage },
+            ],
+            response_format: { type: 'json_object' },
+          }),
+        },
+      );
 
-      const result = await model.generateContent(userMessage);
-      const response = result.response;
-      const text = response.text();
+      if (!response.ok) {
+        throw new Error(
+          `Groq error: ${response.status} ${await response.text()}`,
+        );
+      }
+
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content;
 
       if (!text) throw new Error('Empty AI response');
 
@@ -176,17 +188,25 @@ export class CoachService {
   }
 
   private async gatherContext(userId: string) {
-    const [activeGoal, recentTasks, recentQuizzes, recentProgress] =
-      await Promise.all([
-        this.goalsService.findActive(userId).catch(() => null),
-        this.tasksService.findRecent(userId).catch(() => []) as Promise<Task[]>,
-        this.quizzesService
-          .findRecentAttempts(userId)
-          .catch(() => []) as Promise<QuizAttempt[]>,
-        this.progressService.findRecent(userId).catch(() => []) as Promise<
-          Progress[]
-        >,
-      ]);
+    const [
+      activeGoal,
+      recentTasks,
+      recentQuizzes,
+      recentProgress,
+      upcomingTasks,
+    ] = await Promise.all([
+      this.goalsService.findActive(userId).catch(() => null),
+      this.tasksService.findRecent(userId).catch(() => []) as Promise<Task[]>,
+      this.quizzesService.findRecentAttempts(userId).catch(() => []) as Promise<
+        QuizAttempt[]
+      >,
+      this.progressService.findRecent(userId).catch(() => []) as Promise<
+        Progress[]
+      >,
+      this.tasksService.findUpcomingTasks(userId).catch(() => []) as Promise<
+        Task[]
+      >,
+    ]);
 
     // Calculate basic stats for the prompt
     const completedTasks = recentTasks.filter((t) => t.completed).length;
@@ -205,6 +225,12 @@ export class CoachService {
         checkins_last_7_days: recentProgress.length,
         latest_mood: recentProgress[0]?.mood || 'unknown',
       },
+      upcoming_tasks: upcomingTasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        description: t.description,
+        type: t.type,
+      })),
       raw_progress: recentProgress.map((p) => ({
         date: p.checkinDate,
         mood: p.mood,

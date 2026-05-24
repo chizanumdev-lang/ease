@@ -96,6 +96,7 @@ export default function CoachScreen({ navigation }: any) {
                 <View style={[styles.bubbleWrapper, isUser ? styles.userWrapper : styles.aiWrapper]}>
                     <Text style={[styles.senderName, { color: colors.textMuted, fontFamily: fonts.label }]}>{isUser ? 'You' : 'Ease Bo'}</Text>
                     <View style={[
+                        styles.messageBubble,
                         isUser ? [styles.userBubble, { backgroundColor: colors.primary }] : [styles.aiBubble, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]
                     ]}>
                         <Text style={[
