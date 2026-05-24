@@ -6,10 +6,10 @@ import { Progress } from './entities/progress.entity';
 import { CheckIn } from './entities/check-in.entity';
 import { ProgressResolver } from './progress.resolver';
 
-import { RewardEvent } from '../rewards/entities/reward-event.entity';
+
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Progress, CheckIn, RewardEvent])],
+  imports: [TypeOrmModule.forFeature([Progress, CheckIn])],
   controllers: [ProgressController],
   providers: [ProgressService, ProgressResolver],
   exports: [ProgressService],

@@ -34,6 +34,8 @@ import StitchModal from '../../components/stitch/StitchModal';
 import HomeEmptyState from '../../components/stitch/HomeEmptyState';
 import AudioWidget from '../../components/home/AudioWidget';
 import { TutorialTour } from '../../components/onboarding/TutorialTour';
+import { CompletionRings } from '../../components/home/CompletionRings';
+import { MasteryCard } from '../../components/home/MasteryCard';
 
 
 type Props = NativeStackScreenProps<MainStackParamList> & {
@@ -297,46 +299,22 @@ export default function HomeScreen({ navigation }: Props) {
                     </View>
                 </View>
             </View>
-            <GoalBanner 
-                title={currentProgram?.title || "Your Spirit Tree is flourishing"}
-                subtitle={analytics?.progression?.currentPhase?.subtitle || "Today's progress starts with one small step. You're closer to your goal than yesterday."}
-                progress={(analytics?.progression?.progressPercentage || 0) / 100}
-                phase={analytics?.progression?.currentPhase?.title || "Growing"}
-            />
+            <View style={{ flexDirection: 'row', gap: 16, marginHorizontal: 20, marginBottom: 24, alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                    <MasteryCard program={currentProgram!} />
+                </View>
+                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                    <CompletionRings 
+                        morning={todayPlan?.todayRings?.morning || false}
+                        tasks={todayPlan?.todayRings?.tasks || false}
+                        night={todayPlan?.todayRings?.night || false}
+                        size={100}
+                        strokeWidth={10}
+                    />
+                </View>
+            </View>
 
             <AudioWidget />
-
-            {/* Stats Scroll */}
-            <View style={styles.statsSection}>
-                <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.statsScroll}
-                >
-                    <StatCard 
-                        label="Day Streak" 
-                        value={analytics?.currentStreak?.toString() || "0"} 
-                        unit="days"
-                        icon="flame"
-                        color={colors.secondary}
-                        trend={analytics?.currentStreak && analytics.currentStreak > 0 ? { value: "+1 from yesterday", isPositive: true } : undefined}
-                    />
-                    <StatCard 
-                        label="Completion" 
-                        value={analytics?.todayCompletionRate?.toString() || "0"} 
-                        unit="%"
-                        icon="checkmark-circle"
-                        color={colors.primary}
-                    />
-                    <StatCard 
-                        label="Spirit Level" 
-                        value={analytics?.progression?.level?.toString() || "1"} 
-                        icon="sparkles"
-                        color={colors.success}
-                        trend={{ value: "Steady", isPositive: true }}
-                    />
-                </ScrollView>
-            </View>
 
             {/* Section Header */}
             <View style={styles.sectionHeader}>

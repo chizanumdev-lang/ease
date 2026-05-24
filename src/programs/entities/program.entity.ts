@@ -42,6 +42,14 @@ export class Program {
   duration: number;
 
   @Field()
+  @Column({ type: 'float', default: 0, name: 'mastery_score' })
+  masteryScore: number;
+
+  @Field()
+  @Column({ type: 'varchar', default: 'Novice', name: 'competence_level' })
+  competenceLevel: string;
+
+  @Field()
   @Column({ name: 'goal_id' })
   goalId: string;
 

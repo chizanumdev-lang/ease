@@ -40,6 +40,8 @@ export interface Program {
     userId: string;
     status: string;
     metadata?: any;
+    masteryScore?: number;
+    competenceLevel?: string;
     goal?: Goal;
     dayPlans?: DayPlan[];
     createdAt: string;
@@ -56,6 +58,13 @@ export interface DayPlan {
     tasks?: Task[];
     audioTracks?: AudioTrack[];
     quizzes?: Quiz[];
+    masteryScore?: number;
+    competenceLevel?: string;
+    todayRings?: {
+        morning: boolean;
+        tasks: boolean;
+        night: boolean;
+    };
     createdAt: string;
     updatedAt: string;
 }
@@ -269,25 +278,11 @@ export interface JourneyPhase extends PhaseInfo {
     active: boolean;
 }
 
-export interface ProgressionData {
-    level: number;
-    totalXp: number;
-    currentLevelXp: number;
-    nextLevelXp: number;
-    progressPercentage: number;
-    currentPhase: PhaseInfo;
-    levelEntailment: string;
-    journey: JourneyPhase[];
-}
-
 export interface WeeklyAnalytics {
-    currentStreak: number;
     completionRate: number;
     todayCompletionRate: number;
     weeklyCompletionRate: number;
     quizAverage: number;
-    pointsEarned: number;
     badges: Badge[];
     dailyCompletions: DailyCompletion[];
-    progression: ProgressionData;
 }

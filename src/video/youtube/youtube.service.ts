@@ -30,9 +30,12 @@ export class YoutubeService {
   async getRecommendedVideo(
     topic: string,
     prebuiltQuery?: string,
+    excludeVideoIds: string[] = [],
   ): Promise<any> {
     // 1. Check Cache
-    const cacheKey = `yt_rec_${topic.toLowerCase().replace(/\s+/g, '_')}`;
+    const exclusionSuffix =
+      excludeVideoIds.length > 0 ? `_excl_${excludeVideoIds.join('-')}` : '';
+    const cacheKey = `yt_rec_${topic.toLowerCase().replace(/\s+/g, '_')}${exclusionSuffix}`;
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) {
       this.logger.log(`Using cached video for topic: ${topic}`);
@@ -75,7 +78,16 @@ export class YoutubeService {
       };
     }
 
-    const bestVideo = validVideos[0];
+    const bestVideo =
+      validVideos.find((v) => !excludeVideoIds.includes(v.id as string)) ||
+      validVideos[0];
+
+    if (excludeVideoIds.includes(bestVideo.id as string)) {
+      this.logger.warn(
+        `Could not find any video that wasn't excluded for query: ${query}`,
+      );
+    }
+
     const result = {
       title: bestVideo.snippet?.title || 'Unknown Title',
       videoId: bestVideo.id,

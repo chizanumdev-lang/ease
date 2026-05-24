@@ -5,7 +5,7 @@ import { Task } from './entities/task.entity';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { ProgressService } from '../progress/progress.service';
-import { RewardsService } from '../rewards/rewards.service';
+import { Program } from '../programs/entities/program.entity';
 import { triggerHydrateDay } from '../trigger/tasks';
 import { YoutubeService } from '../video/youtube/youtube.service';
 import { AudioService } from '../audio/audio.service';
@@ -22,7 +22,8 @@ export class TasksService {
     @InjectRepository(DayPlan)
     private dayPlanRepository: Repository<DayPlan>,
     private progressService: ProgressService,
-    private rewardsService: RewardsService,
+    @InjectRepository(Program)
+    private programRepository: Repository<Program>,
     private youtubeService: YoutubeService,
     private audioService: AudioService,
     private aiService: AiService,
@@ -70,7 +71,7 @@ export class TasksService {
     await this.taskRepository.update(id, updateData);
     const savedTask = task;
 
-    // STREAK TRIGGER: If task completed, ensure a daily checkin exists
+    // MASTERY TRIGGER: If task completed, increase mastery score instead of arbitrary XP
     if (
       !wasCompleted &&
       savedTask.completed &&
@@ -79,8 +80,15 @@ export class TasksService {
       const userId = savedTask.dayPlan.program.userId;
       await this.progressService.createCheckin(userId);
 
-      // REWARD XP: Task completion rewards
-      await this.rewardsService.rewardTaskCompletion(userId, savedTask.type);
+      const program = savedTask.dayPlan.program;
+      if (program) {
+        program.masteryScore = Math.min(100, (program.masteryScore || 0) + 5);
+        if (program.masteryScore < 25) program.competenceLevel = 'Novice';
+        else if (program.masteryScore < 50) program.competenceLevel = 'Competent';
+        else if (program.masteryScore < 80) program.competenceLevel = 'Proficient';
+        else program.competenceLevel = 'Master';
+        await this.programRepository.save(program);
+      }
     }
 
     // HYDRATION TRIGGER: If reflection or consistency task just completed, queue next day immediately
@@ -175,11 +183,40 @@ export class TasksService {
       this.logger.log(
         `Regenerating video task ${task.id} with query: ${metadata.searchQuery}`,
       );
+
+      let excludeVideoIds: string[] = [];
+      try {
+        if (task.dayPlan?.program?.id) {
+          const pastVideoTasks = await this.taskRepository
+            .createQueryBuilder('task')
+            .innerJoin('task.dayPlan', 'dayPlan')
+            .where('dayPlan.program_id = :programId', {
+              programId: task.dayPlan.program.id,
+            })
+            .andWhere('task.type = :type', { type: 'video' })
+            .andWhere('task.id != :taskId', { taskId: task.id })
+            .getMany();
+
+          excludeVideoIds = pastVideoTasks
+            .filter((t) => t.videoUrl)
+            .map((t) => {
+              const match = t.videoUrl?.match(/v=([^&]+)/);
+              return match ? match[1] : null;
+            })
+            .filter(Boolean) as string[];
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Could not fetch past videos to exclude: ${err.message}`,
+        );
+      }
+
       let videoUrl: string;
       try {
         const video = (await this.youtubeService.getRecommendedVideo(
           goal,
           metadata.searchQuery,
+          excludeVideoIds,
         )) as { url?: string } | undefined;
         videoUrl =
           video?.url ||

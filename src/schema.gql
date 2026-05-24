@@ -231,12 +231,14 @@ input NodePositionInput {
 }
 
 type Program {
+  competenceLevel: String!
   createdAt: DateTime!
   dayPlans: [DayPlan!]
   description: String
   duration: Int!
   goalId: String!
   id: ID!
+  masteryScore: Float!
   metadata: JSON
   status: String!
   title: String!
