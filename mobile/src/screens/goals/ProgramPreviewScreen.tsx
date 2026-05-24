@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, TouchableOpacity, Animated } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../types';
 import { useProgramsStore } from '../../store/programsStore';
@@ -14,6 +14,73 @@ import { ImageBackground, StatusBar, Platform } from 'react-native';
 const { width } = Dimensions.get('window');
 
 type Props = NativeStackScreenProps<MainStackParamList, 'ProgramPreview'>;
+
+const GeneratingSkeleton = () => {
+    const { colors } = useTheme();
+    const pulseAnim = React.useRef(new Animated.Value(0.4)).current;
+
+    React.useEffect(() => {
+        const pulse = Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+                Animated.timing(pulseAnim, { toValue: 0.4, duration: 1000, useNativeDriver: true })
+            ])
+        );
+        pulse.start();
+        return () => pulse.stop();
+    }, [pulseAnim]);
+
+    const SkeletonBox = ({ width, height, borderRadius = 8, style }: any) => (
+        <Animated.View style={[{ width, height, borderRadius, backgroundColor: colors.surfaceContainerHigh, opacity: pulseAnim }, style]} />
+    );
+
+    return (
+        <ImageBackground 
+            source={require('../../../assets/images/wizard_bg.png')}
+            style={styles.safeArea}
+            imageStyle={{ opacity: 0.3 }}
+        >
+            <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+                <View style={[styles.topNav, { borderBottomColor: colors.outlineVariant, flexDirection: 'row', justifyContent: 'center' }]}>
+                    <Text style={[styles.navTitle, { color: colors.text }]}>Building Journey...</Text>
+                </View>
+
+                <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+                    <View style={styles.header}>
+                        <SkeletonBox width={160} height={28} borderRadius={14} style={{ marginBottom: 16 }} />
+                        <SkeletonBox width={260} height={36} style={{ marginBottom: 12, alignSelf: 'center' }} />
+                        <SkeletonBox width={220} height={20} style={{ marginBottom: 8, alignSelf: 'center' }} />
+                    </View>
+
+                    <View style={styles.section}>
+                        <SkeletonBox width={100} height={24} style={{ marginBottom: 20 }} />
+                        <SkeletonBox width="100%" height={140} borderRadius={32} style={{ marginBottom: 24 }} />
+                    </View>
+
+                    <View style={styles.section}>
+                        <SkeletonBox width={140} height={24} style={{ marginBottom: 20 }} />
+                        <SkeletonBox width="100%" height={120} borderRadius={32} style={{ marginBottom: 24 }} />
+
+                        {[1, 2, 3].map((i) => (
+                            <View key={i} style={[styles.timelineItem, { opacity: 1 - (i * 0.2) }]}>
+                                <View style={styles.timelineLeft}>
+                                    <View style={[styles.timelineDot, { backgroundColor: colors.surfaceContainerHigh }]} />
+                                    <View style={[styles.timelineLine, { backgroundColor: colors.surfaceContainerHigh }]} />
+                                </View>
+                                <View style={styles.timelineRight}>
+                                    <SkeletonBox width={50} height={12} style={{ marginBottom: 8 }} />
+                                    <SkeletonBox width={160} height={20} style={{ marginBottom: 8 }} />
+                                    <SkeletonBox width={220} height={14} />
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        </ImageBackground>
+    );
+};
+
 
 export default function ProgramPreviewScreen({ route, navigation }: Props) {
     const { colors, spacing, borderRadius, fonts } = useTheme();
@@ -45,13 +112,7 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
     }, [programId]);
 
     if (isLoading || !currentProgram || currentProgram.status === 'generating') {
-        return (
-            <LoadingState 
-                title="Getting things ready" 
-                subtitle="We're building your custom plan and setting the right pace for you."
-                variant="full"
-            />
-        );
+        return <GeneratingSkeleton />;
     }
 
     const metadata = currentProgram.metadata || {};
