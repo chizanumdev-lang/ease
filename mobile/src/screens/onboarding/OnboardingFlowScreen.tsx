@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports */
 import React, { useState } from 'react';
 import {
   View,
@@ -14,8 +15,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Localization from 'expo-localization';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useModalStore } from '../../store/modalStore';
@@ -148,7 +147,6 @@ export default function OnboardingFlowScreen() {
                   { backgroundColor: colors.primary + '15' },
                 ]}
               />
-              {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports */}
               <Image
                 source={require('../../../assets/images/3d/onboarding_3d_illustration_1778517402291.png')}
                 style={styles.onboardingImage}
@@ -255,7 +253,6 @@ export default function OnboardingFlowScreen() {
                       },
                     ]}
                   >
-                    {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
                     <Ionicons
                       name={goal.icon as any}
                       size={24}
