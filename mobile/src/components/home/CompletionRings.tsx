@@ -32,9 +32,9 @@ export const CompletionRings: React.FC<CompletionRingsProps> = ({
         <View style={[styles.container, { width: size, height: size }]}>
             <Svg width={size} height={size}>
                 {/* Background Rings */}
-                <Circle cx={center} cy={center} r={r1} stroke={colors.surfaceHighlight} strokeWidth={strokeWidth} fill="none" />
-                <Circle cx={center} cy={center} r={r2} stroke={colors.surfaceHighlight} strokeWidth={strokeWidth} fill="none" />
-                <Circle cx={center} cy={center} r={r3} stroke={colors.surfaceHighlight} strokeWidth={strokeWidth} fill="none" />
+                <Circle cx={center} cy={center} r={r1} stroke={colors.outlineVariant} strokeWidth={strokeWidth} fill="none" />
+                <Circle cx={center} cy={center} r={r2} stroke={colors.outlineVariant} strokeWidth={strokeWidth} fill="none" />
+                <Circle cx={center} cy={center} r={r3} stroke={colors.outlineVariant} strokeWidth={strokeWidth} fill="none" />
 
                 {/* Foreground Rings */}
                 <Circle 
@@ -74,11 +74,7 @@ export const CompletionRings: React.FC<CompletionRingsProps> = ({
                     transform={`rotate(-90 ${center} ${center})`}
                 />
             </Svg>
-            <View style={styles.centerTextContainer}>
-                <Text style={[styles.percentage, { color: colors.text }]}>
-                    {((morning ? 1 : 0) + (tasks ? 1 : 0) + (night ? 1 : 0))}/3
-                </Text>
-            </View>
+
         </View>
     );
 };
@@ -89,13 +85,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         position: 'relative',
     },
-    centerTextContainer: {
-        position: 'absolute',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    percentage: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    }
+
 });

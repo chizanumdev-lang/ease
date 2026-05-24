@@ -8,23 +8,24 @@ interface MasteryCardProps {
 }
 
 export const MasteryCard: React.FC<MasteryCardProps> = ({ program }) => {
-    const { colors } = useTheme();
+    const { colors, fonts } = useTheme();
 
-    const score = program.masteryScore || 0;
-    const level = program.competenceLevel || 'Novice';
+    const score = program?.masteryScore || 0;
+    const level = program?.competenceLevel || 'Novice';
+    const progressPercentage = Math.min(Math.max(score, 0), 100);
 
     return (
         <View style={[styles.container, { backgroundColor: colors.surface }]}>
             <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.textSecondary }]}>MASTERY LEVEL</Text>
-                <Text style={[styles.score, { color: colors.primary }]}>{score}/100</Text>
+                <Text style={[styles.title, { color: colors.text, fontFamily: fonts.display }]}>Mastery Score</Text>
+                <Text style={[styles.subtitle, { color: colors.textMuted }]}>Competence Building</Text>
             </View>
             <View style={styles.content}>
                 <Text style={[styles.level, { color: colors.text }]}>{level}</Text>
             </View>
             <View style={styles.progressBarContainer}>
-                <View style={[styles.progressBarBackground, { backgroundColor: colors.surfaceHighlight }]}>
-                    <View style={[styles.progressBarFill, { backgroundColor: colors.primary, width: `${score}%` }]} />
+                <View style={[styles.progressBarBackground, { backgroundColor: colors.outlineVariant }]}>
+                    <View style={[styles.progressBarFill, { backgroundColor: colors.primary, width: `${progressPercentage}%` }]} />
                 </View>
             </View>
         </View>
@@ -47,6 +48,11 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         letterSpacing: 1,
+    },
+    subtitle: {
+        fontSize: 10,
+        fontWeight: '400',
+        marginTop: 2,
     },
     score: {
         fontSize: 14,

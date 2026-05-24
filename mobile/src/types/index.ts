@@ -285,4 +285,5 @@ export interface WeeklyAnalytics {
     quizAverage: number;
     badges: Badge[];
     dailyCompletions: DailyCompletion[];
+    streak?: { current: number; max: number; };
 }

@@ -187,21 +187,22 @@ export default function SettingsScreen({ navigation }: Props) {
 
                 {/* Progress Tracking Cards */}
                 <View style={styles.progressRow}>
-                    <View style={[styles.progressCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+                    <View style={[styles.progressCard, { backgroundColor: colors.surface }]}>
                         <View style={styles.cardHeader}>
-                            <Ionicons name="leaf" size={16} color={colors.primary} />
-                            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>SPIRIT TREE</Text>
+                            <Ionicons name="trophy-outline" size={16} color={colors.accent} />
+                            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>MASTERY</Text>
                         </View>
-                        <Text style={[styles.cardValue, { color: colors.text }]}>Level {analytics?.progression?.level || 1}</Text>
-                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>{analytics?.progression?.currentPhase?.title || 'Seeding'}</Text>
+                        <Text style={[styles.cardValue, { color: colors.text }]}>{currentProgram?.masteryScore || 0}</Text>
+                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>{currentProgram?.competenceLevel || 'Novice'}</Text>
                     </View>
-                    <View style={[styles.progressCard, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outlineVariant }]}>
+
+                    <View style={[styles.progressCard, { backgroundColor: colors.surface }]}>
                         <View style={styles.cardHeader}>
-                            <Ionicons name="flame" size={16} color={colors.error} />
-                            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>STREAK</Text>
+                            <Ionicons name="flame-outline" size={16} color={colors.primary} />
+                            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>COMPLETION</Text>
                         </View>
-                        <Text style={[styles.cardValue, { color: colors.text }]}>{analytics?.currentStreak || 0} Days</Text>
-                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>Active Flow</Text>
+                        <Text style={[styles.cardValue, { color: colors.text }]}>{analytics?.completionRate || 0}%</Text>
+                        <Text style={[styles.cardSubValue, { color: colors.textMuted }]}>Task Success</Text>
                     </View>
                 </View>
 

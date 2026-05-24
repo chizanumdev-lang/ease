@@ -34,8 +34,6 @@ import StitchModal from '../../components/stitch/StitchModal';
 import HomeEmptyState from '../../components/stitch/HomeEmptyState';
 import AudioWidget from '../../components/home/AudioWidget';
 import { TutorialTour } from '../../components/onboarding/TutorialTour';
-import { CompletionRings } from '../../components/home/CompletionRings';
-import { MasteryCard } from '../../components/home/MasteryCard';
 
 
 type Props = NativeStackScreenProps<MainStackParamList> & {
@@ -245,80 +243,61 @@ export default function HomeScreen({ navigation }: Props) {
                 </TouchableOpacity>
             </View>
 
-            {/* Editorial Illustrative Hero Section */}
-            <View style={styles.editorialHeroContainer}>
-                <View style={[styles.editorialHeroCard, { backgroundColor: 'transparent', height: CARD_HEIGHT }]}>
-                    {/* SVG Background with Dent */}
-                    <View style={StyleSheet.absoluteFill}>
-                        <Svg width={CARD_WIDTH} height={CARD_HEIGHT}>
-                            <Defs>
-                                <SvgGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
-                                    <Stop offset="0" stopColor={colors.primary} stopOpacity="1" />
-                                    <Stop offset="1" stopColor={colors.primary} stopOpacity="0.8" />
-                                </SvgGradient>
-                            </Defs>
-                            <Path d={heroCardPath} fill="url(#heroGrad)" />
-                        </Svg>
-                    </View>
-
-                    {/* Background Structural Text */}
-                    <Text style={styles.heroWatermarkText}>EASE</Text>
-
-                    {/* Floating Decorative Elements */}
-                    <View style={[styles.heroParticle, { top: '20%', left: '40%', width: 12, height: 12 }]} />
-                    <View style={[styles.heroParticle, { bottom: '30%', left: '15%', width: 18, height: 18, opacity: 0.4 }]} />
-                    <View style={[styles.heroParticle, { top: '10%', right: '10%', width: 8, height: 8 }]} />
-
-                    <View style={styles.editorialContent}>
-                        <View style={styles.editorialTextSide}>
-                            <Text style={[styles.editorialGreeting, { color: colors.white, fontFamily: fonts.display }]}>
-                                GOOD{"\n"}MORNING,{"\n"}{user?.name?.split(' ')[0]?.toUpperCase() || 'ALEX'}
-                            </Text>
-                        </View>
-
-                        <View style={styles.editorialImageSide}>
-                            <View style={[styles.heroImagePortal, { width: 300, height: 300, borderRadius: 150, right: -50, top: 40 }]}>
-                                <Image 
-                                    source={require('../../../assets/images/hero_person.jpg')} 
-                                    style={styles.heroImageFull}
-                                    resizeMode="cover"
-                                />
-                                <LinearGradient
-                                    colors={['transparent', 'rgba(0,0,0,0.4)']}
-                                    style={StyleSheet.absoluteFill}
-                                />
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* Subtitle at the bottom */}
-                    <View style={styles.heroBottomTextContainer}>
-                        <Text style={[styles.editorialSubtitle, { color: colors.white, opacity: 0.8, fontFamily: fonts.body }]}>
-                            The next step is the most important.{"\n"}Ready to elevate your state?
+            {/* BENTO BOX GRID LAYOUT */}
+            <View style={styles.bentoContainer}>
+                {/* Top Row: Today's Focus (Large) */}
+                <TouchableOpacity 
+                    style={[styles.bentoBox, styles.bentoFocus, { backgroundColor: colors.primary }]}
+                    onPress={() => sortedTasks.length > 0 && handleTaskPress(sortedTasks[0])}
+                    activeOpacity={0.8}
+                >
+                    <Text style={[styles.bentoLabel, { color: colors.white }]}>TODAY'S FOCUS</Text>
+                    <Text style={[styles.bentoTitle, { color: colors.white, fontFamily: fonts.display }]}>
+                        {sortedTasks.length > 0 ? sortedTasks[0].title : "Rest & Recover"}
+                    </Text>
+                    <View style={styles.bentoBottomRow}>
+                        <Text style={[styles.bentoSubtitle, { color: colors.white, opacity: 0.8 }]}>
+                            {sortedTasks.length > 0 ? `${sortedTasks.length} tasks remaining` : "All clear"}
                         </Text>
+                        <Ionicons name="arrow-forward-circle" size={28} color={colors.white} />
                     </View>
-                </View>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 16, marginHorizontal: 20, marginBottom: 24, alignItems: 'center' }}>
-                <View style={{ flex: 1 }}>
-                    <MasteryCard program={currentProgram!} />
-                </View>
-                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                    <CompletionRings 
-                        morning={todayPlan?.todayRings?.morning || false}
-                        tasks={todayPlan?.todayRings?.tasks || false}
-                        night={todayPlan?.todayRings?.night || false}
-                        size={100}
-                        strokeWidth={10}
-                    />
+                </TouchableOpacity>
+
+                {/* Middle Row: Split 50/50 */}
+                <View style={styles.bentoRow}>
+                    {/* Current Streak */}
+                    <TouchableOpacity 
+                        style={[styles.bentoBox, styles.bentoHalf, { backgroundColor: colors.surfaceContainerLow }]}
+                        onPress={() => navigation.navigate('Progress')}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="flame" size={32} color={colors.secondary || '#a65d50'} />
+                        <Text style={[styles.bentoTitle, { color: colors.text, marginTop: 12, fontSize: 24 }]}>
+                            {analytics?.streak?.current || 0}
+                        </Text>
+                        <Text style={[styles.bentoLabel, { color: colors.textMuted, marginTop: 4 }]}>DAY STREAK</Text>
+                    </TouchableOpacity>
+
+                    {/* Coach Quick Message */}
+                    <TouchableOpacity 
+                        style={[styles.bentoBox, styles.bentoHalf, { backgroundColor: colors.primaryContainer || '#d3e8d5' }]}
+                        onPress={() => navigation.navigate('Coach')}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="chatbubbles" size={32} color={colors.primary} />
+                        <Text style={[styles.bentoTitle, { color: colors.primary, marginTop: 12, fontSize: 16, fontFamily: fonts.display }]} numberOfLines={2}>
+                            Ready to talk?
+                        </Text>
+                        <Text style={[styles.bentoLabel, { color: colors.primary, marginTop: 4, opacity: 0.7 }]}>YOUR COACH</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
 
             <AudioWidget />
 
             {/* Section Header */}
-            <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.display }]}>Your Day</Text>
+            <View style={[styles.sectionHeader, { marginTop: 24, marginHorizontal: 20 }]}>
+                <Text style={[styles.sectionTitle, { color: colors.text, fontFamily: fonts.display }]}>Your Tasks</Text>
             </View>
         </View>
     );
@@ -619,5 +598,50 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 12,
         lineHeight: 16,
+    },
+    bentoContainer: {
+        marginBottom: 24,
+        gap: 12,
+    },
+    bentoRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    bentoBox: {
+        borderRadius: 24,
+        padding: 20,
+        justifyContent: 'space-between',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 12,
+        elevation: 2,
+    },
+    bentoFocus: {
+        height: 160,
+    },
+    bentoHalf: {
+        flex: 1,
+        height: 160,
+    },
+    bentoLabel: {
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1.5,
+    },
+    bentoTitle: {
+        fontSize: 28,
+        fontWeight: '800',
+        marginTop: 8,
+    },
+    bentoSubtitle: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    bentoBottomRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 'auto',
     }
 });

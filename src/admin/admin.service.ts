@@ -195,7 +195,7 @@ export class AdminService {
           ...user,
           completedTasks: parseInt(stats?.completed || '0'),
           lastActive: user.updatedAt.toISOString(),
-          streak: user.streak || 0, // Pulling from user's actual streak column
+          streak: (user as any).streak || 0, // Pulling from user's actual streak column
         };
       }),
     );

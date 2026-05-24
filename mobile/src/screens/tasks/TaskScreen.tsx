@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useProgramsStore } from '../../store/programsStore';
 import { useTheme } from '../../hooks/useTheme';
+import RewardAnimation from '../../components/RewardAnimation';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'Task'>;
 
@@ -12,9 +14,22 @@ export default function TaskScreen({ route, navigation }: Props) {
     const { colors, spacing, borderRadius, isDark } = useTheme();
     const { task } = route.params;
     const { updateTask } = useProgramsStore();
+    const [showReward, setShowReward] = React.useState(false);
 
     const handleToggleComplete = async () => {
-        await updateTask(task.id, { completed: !task.completed });
+        if (!task.completed) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setShowReward(true);
+            await updateTask(task.id, { completed: true });
+        } else {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            await updateTask(task.id, { completed: false });
+            navigation.goBack();
+        }
+    };
+
+    const handleRewardEnd = () => {
+        setShowReward(false);
         navigation.goBack();
     };
 
@@ -78,6 +93,8 @@ export default function TaskScreen({ route, navigation }: Props) {
                     {task.completed ? "Mark as Incomplete" : "Complete Task"}
                 </Text>
             </TouchableOpacity>
+            
+            <RewardAnimation trigger={showReward} onAnimationEnd={handleRewardEnd} />
         </ScrollView>
     );
 }

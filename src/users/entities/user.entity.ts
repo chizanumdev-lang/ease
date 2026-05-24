@@ -11,7 +11,6 @@ import { Goal } from '../../goals/entities/goal.entity';
 import { Program } from '../../programs/entities/program.entity';
 import { QuizAttempt } from '../../quizzes/entities/quiz-attempt.entity';
 import { Progress } from '../../progress/entities/progress.entity';
-import { Progress } from '../../progress/entities/progress.entity';
 
 @ObjectType()
 @Entity('users')
@@ -51,8 +50,6 @@ export class User {
   @Column({ type: 'timestamp', nullable: true, name: 'verification_expires' })
   verificationExpires: Date | null;
 
-
-
   @Field()
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -74,6 +71,4 @@ export class User {
 
   @OneToMany(() => Progress, (progress) => progress.user)
   progress: Progress[];
-
-
 }

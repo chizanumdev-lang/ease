@@ -6,7 +6,6 @@ import { GoalsService } from '../goals/goals.service';
 import { TasksService } from '../tasks/tasks.service';
 import { QuizzesService } from '../quizzes/quizzes.service';
 import { ProgressService } from '../progress/progress.service';
-import { Goal } from '../goals/entities/goal.entity';
 import { Task } from '../tasks/entities/task.entity';
 import { QuizAttempt } from '../quizzes/entities/quiz-attempt.entity';
 import { Progress } from '../progress/entities/progress.entity';
@@ -75,7 +74,7 @@ export class CoachService {
       });
 
       const result = await model.generateContent(userMessage);
-      const response = await result.response;
+      const response = result.response;
       const text = response.text();
 
       if (!text) throw new Error('Empty AI response');
@@ -114,17 +113,64 @@ export class CoachService {
       }
 
       return parsed;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('AI Coach Error', error);
-      // Fallback
+
+      // Smart Fallback when API credits are depleted
+      const lowerMsg = userMessage.toLowerCase();
+      let reply =
+        "I hear you. Let's keep focusing on small wins today. What else is on your mind?";
+      let actions: any[] = [];
+      let tone: 'supportive' | 'direct' | 'analytical' = 'supportive';
+
+      if (
+        lowerMsg.includes('hello') ||
+        lowerMsg.includes('hi ') ||
+        lowerMsg === 'hi'
+      ) {
+        reply =
+          "Hello! I'm your Ease AI Coach. I'm here to help you stick to your goals and build great habits. What's our focus for today?";
+        actions = [{ type: 'encourage_review', details: 'Review daily plan' }];
+      } else if (
+        lowerMsg.includes('tired') ||
+        lowerMsg.includes('exhausted') ||
+        lowerMsg.includes('burnout')
+      ) {
+        reply =
+          "It sounds like you need some rest, and that's perfectly okay. Listening to your body is part of the process. Should we reduce today's load?";
+        tone = 'supportive';
+        actions = [
+          { type: 'reduce_load', details: "Lighten today's schedule" },
+          { type: 'reschedule', details: 'Move tasks to tomorrow' },
+        ];
+      } else if (lowerMsg.includes('meditat') || lowerMsg.includes('breath')) {
+        reply =
+          'Taking time to breathe and center yourself is a wonderful choice. Are you ready to begin your session now?';
+        actions = [{ type: 'encourage_review', details: 'Start session' }];
+      } else if (lowerMsg.includes('focus') || lowerMsg.includes('distract')) {
+        reply =
+          'Distractions happen to the best of us. Try the Pomodoro technique: 25 minutes of deep focus, then a 5-minute break. Ready to try?';
+        tone = 'analytical';
+        actions = [
+          { type: 'increase_difficulty', details: 'Start a focus timer' },
+        ];
+      } else if (lowerMsg.includes('goal') || lowerMsg.includes('plan')) {
+        reply =
+          "Your current trajectory looks good, but consistency is key. Let's break your next milestone into smaller, actionable steps.";
+        tone = 'analytical';
+        actions = [{ type: 'encourage_review', details: 'Review roadmap' }];
+      } else if (lowerMsg.includes('bored') || lowerMsg.includes('easy')) {
+        reply =
+          'If things are feeling a bit too comfortable, it might be time to challenge yourself. Shall we increase the difficulty of your next tasks?';
+        tone = 'direct';
+        actions = [{ type: 'increase_difficulty', details: 'Level up tasks' }];
+      }
+
       return {
-        reply:
-          "I'm having a little trouble connecting to my brain right now. But looking at your progress, keep creating small wins! We can chat more later.",
-        tone: 'supportive',
+        reply,
+        tone,
         safety_flag: false,
-        suggested_actions: [
-          { type: 'encourage_review', details: 'Check back later' },
-        ],
+        suggested_actions: actions,
       };
     }
   }

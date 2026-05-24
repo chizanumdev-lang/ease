@@ -6,8 +6,6 @@ import { Progress } from './entities/progress.entity';
 import { CheckIn } from './entities/check-in.entity';
 import { ProgressResolver } from './progress.resolver';
 
-
-
 @Module({
   imports: [TypeOrmModule.forFeature([Progress, CheckIn])],
   controllers: [ProgressController],

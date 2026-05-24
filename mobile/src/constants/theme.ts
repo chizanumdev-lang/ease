@@ -11,18 +11,18 @@ export const Theme = {
             dark: '#394b3d',
         },
         secondary: {
-            main: '#5c5f5a', // Earthy Gray
-            light: '#e1e3dc',
-            dark: '#191c18',
+            main: '#a65d50', // Warm Terracotta (Complementary to Sage)
+            light: '#d28c80',
+            dark: '#632c21',
         },
         secondaryContainer: {
-            light: '#dee0da',
-            dark: '#444843',
+            light: '#f5d6d1',
+            dark: '#4a1e15',
         },
         tertiary: {
-            main: '#5c3913', // Warm Clay
-            light: '#f0bd8b',
-            dark: '#2c1600',
+            main: '#c89f5d', // Golden Ochre
+            light: '#e8c58b',
+            dark: '#856126',
         },
         tertiaryContainer: {
             light: '#ffdcbd',

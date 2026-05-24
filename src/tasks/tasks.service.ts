@@ -84,8 +84,10 @@ export class TasksService {
       if (program) {
         program.masteryScore = Math.min(100, (program.masteryScore || 0) + 5);
         if (program.masteryScore < 25) program.competenceLevel = 'Novice';
-        else if (program.masteryScore < 50) program.competenceLevel = 'Competent';
-        else if (program.masteryScore < 80) program.competenceLevel = 'Proficient';
+        else if (program.masteryScore < 50)
+          program.competenceLevel = 'Competent';
+        else if (program.masteryScore < 80)
+          program.competenceLevel = 'Proficient';
         else program.competenceLevel = 'Master';
         await this.programRepository.save(program);
       }
@@ -124,7 +126,6 @@ export class TasksService {
               .orchestrateDay(
                 nextDay.id,
                 program.goal?.description || program.title || 'Goal',
-                { ...program.metadata, duration: program.duration },
               )
               .catch((e) =>
                 this.logger.error(
@@ -207,7 +208,7 @@ export class TasksService {
         }
       } catch (err) {
         this.logger.warn(
-          `Could not fetch past videos to exclude: ${err.message}`,
+          `Could not fetch past videos to exclude: ${(err as Error).message}`,
         );
       }
 

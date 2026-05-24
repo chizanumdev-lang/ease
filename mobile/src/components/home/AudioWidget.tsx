@@ -5,6 +5,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioStore } from '../../store/audioStore';
 import { useTheme } from '../../hooks/useTheme';
+import { useProgramsStore } from '../../store/programsStore';
+import { useNavigation } from '@react-navigation/native';
+import { CompletionRings } from './CompletionRings';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -25,6 +28,8 @@ const AudioWidget = () => {
         isPlaying,
         autoPlayEnabled
     } = useAudioStore();
+    const { todayPlan } = useProgramsStore();
+    const navigation = useNavigation<any>();
     const [timeLeft, setTimeLeft] = useState<string>('');
     const lastAutoplayedRef = useRef<{ date: string, type: 'morning' | 'night' } | null>(null);
 
@@ -136,47 +141,66 @@ const AudioWidget = () => {
                     colors={isDark ? ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)'] : ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.4)']}
                     style={styles.gradient}
                 >
-                    <View style={styles.header}>
-                        <View style={styles.titleGroup}>
-                            <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-                            <Text style={[styles.title, { color: colors.text }]}>{nextRitualLabel}</Text>
-                        </View>
-                        <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{timeLeft}</Text>
-                    </View>
+                    <View style={styles.contentRow}>
+                        {/* Left Column: Audio Controls */}
+                        <View style={styles.leftColumn}>
+                            <View style={styles.titleGroup}>
+                                <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
+                                <Text style={[styles.title, { color: colors.text }]}>{nextRitualLabel}</Text>
+                            </View>
+                            <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{timeLeft}</Text>
+                            
+                            <View style={styles.actionRow}>
+                                <View style={styles.ritualInfo}>
+                                    <Ionicons 
+                                        name={morning ? 'sunny-outline' : 'moon-outline'} 
+                                        size={14} 
+                                        color={colors.primary} 
+                                    />
+                                    <Text style={[styles.ritualTime, { color: colors.text }]}>
+                                        {morning ? morningRitualTime : nightRitualTime}
+                                    </Text>
+                                </View>
 
-                    <View style={styles.footer}>
-                        <View style={styles.ritualInfo}>
-                            <Ionicons 
-                                name={morning ? 'sunny-outline' : 'moon-outline'} 
-                                size={16} 
-                                color={colors.primary} 
-                            />
-                            <Text style={[styles.ritualTime, { color: colors.text }]}>
-                                {morning ? morningRitualTime : nightRitualTime}
-                            </Text>
+                                <TouchableOpacity 
+                                    style={[styles.startButton, { 
+                                        backgroundColor: canPlay ? colors.primary : colors.surfaceContainerHigh,
+                                        opacity: canPlay ? 1 : 0.8,
+                                        borderBottomWidth: canPlay ? 4 : 0,
+                                        borderBottomColor: canPlay ? 'rgba(0,0,0,0.2)' : 'transparent'
+                                    }]}
+                                    disabled={!canPlay}
+                                    onPress={handleStartRitual}
+                                >
+                                    <Text style={[styles.buttonText, { 
+                                        color: canPlay ? '#fff' : colors.textMuted,
+                                        fontFamily: fonts.label
+                                    }]}>
+                                        {!trackReady ? 'GENERATING' : proximityStatus === 'READY' ? 'BEGIN' : 'LOCKED'}
+                                    </Text>
+                                    <Ionicons 
+                                        name={canPlay ? 'play-circle' : trackReady ? 'lock-closed' : 'hourglass'} 
+                                        size={14} 
+                                        color={canPlay ? '#fff' : colors.textMuted} 
+                                    />
+                                </TouchableOpacity>
+                            </View>
                         </View>
 
+                        {/* Right Column: Rings */}
                         <TouchableOpacity 
-                            style={[styles.startButton, { 
-                                backgroundColor: canPlay ? colors.primary : colors.surfaceContainerHigh,
-                                opacity: canPlay ? 1 : 0.8,
-                                borderBottomWidth: canPlay ? 4 : 0,
-                                borderBottomColor: canPlay ? 'rgba(0,0,0,0.2)' : 'transparent'
-                            }]}
-                            disabled={!canPlay}
-                            onPress={handleStartRitual}
+                            onPress={() => navigation.navigate('Progress')}
+                            activeOpacity={0.7}
+                            style={styles.ringsContainer}
                         >
-                            <Text style={[styles.buttonText, { 
-                                color: canPlay ? '#fff' : colors.textMuted,
-                                fontFamily: fonts.label
-                            }]}>
-                                {!trackReady ? 'GENERATING' : proximityStatus === 'READY' ? 'BEGIN' : 'LOCKED'}
-                            </Text>
-                            <Ionicons 
-                                name={canPlay ? 'play-circle' : trackReady ? 'lock-closed' : 'hourglass'} 
-                                size={16} 
-                                color={canPlay ? '#fff' : colors.textMuted} 
+                            <CompletionRings 
+                                morning={todayPlan?.todayRings?.morning || false}
+                                tasks={todayPlan?.todayRings?.tasks || false}
+                                night={todayPlan?.todayRings?.night || false}
+                                size={80}
+                                strokeWidth={8}
                             />
+                            <Text style={[styles.ringsLabel, { color: colors.textMuted }]}>Mastery</Text>
                         </TouchableOpacity>
                     </View>
                 </LinearGradient>
@@ -202,11 +226,14 @@ const styles = StyleSheet.create({
     gradient: {
         padding: 16,
     },
-    header: {
+    contentRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
+        justifyContent: 'space-between',
+    },
+    leftColumn: {
+        flex: 1,
+        paddingRight: 16,
     },
     titleGroup: {
         flexDirection: 'row',
@@ -226,34 +253,48 @@ const styles = StyleSheet.create({
     timeLabel: {
         fontSize: 14,
         fontWeight: '600',
+        marginTop: 2,
+        marginBottom: 16,
     },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    ringsContainer: {
         alignItems: 'center',
+        justifyContent: 'center',
+    },
+    ringsLabel: {
+        fontSize: 10,
+        fontWeight: '700',
+        marginTop: 8,
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
+    },
+    actionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 8,
     },
     ritualInfo: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.1)',
-        paddingHorizontal: 10,
+        paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: 12,
+        borderRadius: 8,
     },
     ritualTime: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '700',
-        marginLeft: 6,
+        marginLeft: 4,
     },
     startButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
     },
     buttonText: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '800',
         marginRight: 6,
         letterSpacing: 0.5,
