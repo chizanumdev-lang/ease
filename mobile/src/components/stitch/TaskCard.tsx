@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
     useSharedValue, 
@@ -64,6 +65,7 @@ export default function TaskCard({ task, onPress, isLast, index = 0 }: TaskCardP
 
     const handlePressIn = () => {
         if (!isLocked) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             pressScale.value = withSpring(0.97, { damping: 15, stiffness: 200 });
         }
     };

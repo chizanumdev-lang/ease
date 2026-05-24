@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import LoadingState from './LoadingState';
 
 interface StitchButtonProps {
@@ -45,8 +46,11 @@ export default function StitchButton({
     const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
     const handlePressIn = () => {
+        if (!disabled && !isLoading) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
         Animated.spring(scaleAnim, {
-            toValue: 0.98,
+            toValue: 0.96,
             useNativeDriver: true,
             speed: 50,
         }).start();
