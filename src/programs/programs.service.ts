@@ -890,6 +890,7 @@ export class ProgramsService {
     // Load the program to get its start date and duration
     const program = await this.programRepository.findOne({
       where: { id: programId, userId },
+      relations: ['goal'],
     });
     if (!program) throw new NotFoundException('Program not found');
 
@@ -911,6 +912,21 @@ export class ProgramsService {
 
     if (!plan)
       throw new NotFoundException(`No plan available for day ${dayNumber}`);
+
+    // If the cron job missed this day, trigger lazy hydration
+    if (plan.status === 'pending') {
+      this.logger.log(
+        `Day ${dayNumber} is pending. Triggering lazy hydration.`,
+      );
+      triggerHydrateDay({
+        dayPlanId: plan.id,
+        goalText: program.goal?.description || 'Goal',
+        params: { ...program.metadata, duration: program.duration },
+      }).catch((err) =>
+        this.logger.error(`Lazy hydration failed: ${err.message}`),
+      );
+    }
+
     return plan;
   }
 
