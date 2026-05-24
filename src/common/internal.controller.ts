@@ -41,11 +41,7 @@ export class InternalController {
     );
 
     // Process synchronously since this is called from a background worker (Trigger.dev)
-    await this.programsService.hydrateDay(
-      body.dayPlanId,
-      body.goalText,
-      body.params,
-    );
+    await this.programsService.hydrateDay(body.dayPlanId, body.goalText);
     return { success: true };
   }
 
