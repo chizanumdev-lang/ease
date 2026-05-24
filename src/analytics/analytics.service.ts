@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThan } from 'typeorm';
 import { CheckIn } from '../progress/entities/check-in.entity';
 import { Task } from '../tasks/entities/task.entity';
-import { RewardEvent } from '../rewards/entities/reward-event.entity';
 import { QuizAttempt } from '../quizzes/entities/quiz-attempt.entity';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { Program } from '../programs/entities/program.entity';
@@ -25,8 +24,6 @@ export class AnalyticsService {
     private quizAttemptRepository: Repository<QuizAttempt>,
     @InjectRepository(DayPlan)
     private dayPlanRepository: Repository<DayPlan>,
-    @InjectRepository(RewardEvent)
-    private rewardEventRepository: Repository<RewardEvent>,
     @InjectRepository(Program)
     private programRepository: Repository<Program>,
     private progressionService: ProgressionService,
@@ -259,17 +256,7 @@ export class AnalyticsService {
       .getRawOne();
 
     const taskPoints = parseInt(taskPointsResult?.sum || '0', 10);
-
-    const rewards = await this.rewardEventRepository.find({
-      where: { userId },
-    });
-
-    const rewardPoints = rewards.reduce(
-      (sum, reward) => sum + (reward.points || 0),
-      0,
-    );
-
-    return taskPoints + rewardPoints;
+    return taskPoints;
   }
 
   private async getBadges(
