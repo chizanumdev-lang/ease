@@ -9,7 +9,6 @@ import { Task } from '../tasks/entities/task.entity';
 import { QuizAttempt } from '../quizzes/entities/quiz-attempt.entity';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { Program } from '../programs/entities/program.entity';
-import { RewardEvent } from '../rewards/entities/reward-event.entity';
 import { ProgramsModule } from '../programs/programs.module';
 
 @Module({
@@ -19,7 +18,6 @@ import { ProgramsModule } from '../programs/programs.module';
       Task,
       QuizAttempt,
       DayPlan,
-      RewardEvent,
       Program,
     ]),
     ProgramsModule,
