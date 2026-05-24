@@ -213,7 +213,6 @@ export class ProgramsService {
                   await this.hydrateDay(
                     tomorrow.id,
                     program.goal?.description || 'Goal',
-                    { ...program.metadata, duration: program.duration },
                   ).catch((e) =>
                     this.logger.error(
                       `Sync hydration failed for Day ${tomorrowNum}: ${e instanceof Error ? e.message : String(e)}`,

@@ -50,7 +50,7 @@ export class ProgramProcessor extends WorkerHost {
       );
       return { success: false, reason: 'serverless_skip' };
     }
-    const { dayPlanId, goalText, params } = job.data;
+    const { dayPlanId, goalText } = job.data;
 
     if (job.name === 'hydrate-day') {
       this.logger.log(
@@ -74,7 +74,7 @@ export class ProgramProcessor extends WorkerHost {
 
       try {
         await this.dayPlanRepository.update(dayPlanId, { status: 'hydrating' });
-        await this.programsService.hydrateDay(dayPlanId, goalText, params);
+        await this.programsService.hydrateDay(dayPlanId, goalText);
         this.logger.log(`DayPlan ${dayPlanId} hydrated successfully`);
       } catch (error) {
         this.logger.error(
