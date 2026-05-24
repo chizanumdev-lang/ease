@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Progress } from './entities/progress.entity';
 import { CheckIn } from './entities/check-in.entity';
-import { RewardEvent } from '../rewards/entities/reward-event.entity';
+
 import { CreateCheckinDto } from './dto/create-checkin.dto';
 
 @Injectable()
@@ -13,8 +13,6 @@ export class ProgressService {
     private progressRepository: Repository<Progress>,
     @InjectRepository(CheckIn)
     private checkInRepository: Repository<CheckIn>,
-    @InjectRepository(RewardEvent)
-    private rewardEventRepository: Repository<RewardEvent>,
   ) {}
 
   async createCheckin(
@@ -44,33 +42,6 @@ export class ProgressService {
     });
     const savedCheckIn = await this.checkInRepository.save(checkIn);
 
-    // 3. Check for streak extension (yesterday)
-    const yesterday = new Date(startOfDay);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const startOfYesterday = new Date(yesterday);
-    startOfYesterday.setHours(0, 0, 0, 0);
-    const endOfYesterday = new Date(yesterday);
-    endOfYesterday.setHours(23, 59, 59, 999);
-
-    const checkedInYesterday = await this.checkInRepository.findOne({
-      where: {
-        userId,
-        date: Between(startOfYesterday, endOfYesterday),
-      },
-    });
-
-    if (checkedInYesterday) {
-      // Reward for streak extension
-      await this.rewardEventRepository.save(
-        this.rewardEventRepository.create({
-          userId,
-          eventType: 'STREAK_BONUS',
-          points: 25,
-          description: 'Extended your daily spirit streak!',
-        }),
-      );
-    }
-
     return savedCheckIn;
   }
 
@@ -86,7 +57,7 @@ export class ProgressService {
       userId,
     });
 
-    // Also ensure a base check-in exists for streak purposes
+    // Ensure base check-in exists
     await this.createCheckin(userId, progress.checkinDate);
 
     return this.progressRepository.save(progress);

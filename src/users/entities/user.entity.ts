@@ -11,7 +11,7 @@ import { Goal } from '../../goals/entities/goal.entity';
 import { Program } from '../../programs/entities/program.entity';
 import { QuizAttempt } from '../../quizzes/entities/quiz-attempt.entity';
 import { Progress } from '../../progress/entities/progress.entity';
-import { RewardEvent } from '../../rewards/entities/reward-event.entity';
+import { Progress } from '../../progress/entities/progress.entity';
 
 @ObjectType()
 @Entity('users')
@@ -51,17 +51,7 @@ export class User {
   @Column({ type: 'timestamp', nullable: true, name: 'verification_expires' })
   verificationExpires: Date | null;
 
-  @Field()
-  @Column({ default: 0 })
-  streak: number;
 
-  @Field()
-  @Column({ default: 1 })
-  level: number;
-
-  @Field()
-  @Column({ default: 0 })
-  xp: number;
 
   @Field()
   @CreateDateColumn({ name: 'created_at' })
@@ -85,6 +75,5 @@ export class User {
   @OneToMany(() => Progress, (progress) => progress.user)
   progress: Progress[];
 
-  @OneToMany(() => RewardEvent, (reward) => reward.user)
-  rewardEvents: RewardEvent[];
+
 }

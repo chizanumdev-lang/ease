@@ -927,7 +927,18 @@ export class ProgramsService {
       );
     }
 
-    return plan;
+    const rings = {
+      morning: plan.audioTracks?.some((t) => t.type === 'morning' && t.url && !t.url.includes('generating')) || false,
+      tasks: plan.tasks?.length > 0 && plan.tasks.every((t) => t.completed),
+      night: plan.audioTracks?.some((t) => t.type === 'night' && t.url && !t.url.includes('generating')) || false,
+    };
+
+    return {
+      ...plan,
+      masteryScore: program.masteryScore,
+      competenceLevel: program.competenceLevel,
+      todayRings: rings
+    };
   }
 
   private getTheme(i: number): string {
