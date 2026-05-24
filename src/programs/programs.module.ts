@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProgramsService } from './programs.service';
 import { ProgressionService } from './progression.service';
 import { ProgramsResolver } from './programs.resolver';
+import { ProgramsCronService } from './programs.cron';
 import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
 import { Task } from '../tasks/entities/task.entity';
@@ -41,7 +42,12 @@ import { InternalController } from '../common/internal.controller';
     EngineModule,
   ],
   controllers: [ProgramsController, InternalController],
-  providers: [ProgramsService, ProgressionService, ProgramsResolver],
+  providers: [
+    ProgramsService,
+    ProgressionService,
+    ProgramsResolver,
+    ProgramsCronService,
+  ],
   exports: [ProgramsService, ProgressionService],
 })
 export class ProgramsModule {}

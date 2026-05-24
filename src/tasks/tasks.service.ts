@@ -175,11 +175,40 @@ export class TasksService {
       this.logger.log(
         `Regenerating video task ${task.id} with query: ${metadata.searchQuery}`,
       );
+
+      let excludeVideoIds: string[] = [];
+      try {
+        if (task.dayPlan?.program?.id) {
+          const pastVideoTasks = await this.taskRepository
+            .createQueryBuilder('task')
+            .innerJoin('task.dayPlan', 'dayPlan')
+            .where('dayPlan.program_id = :programId', {
+              programId: task.dayPlan.program.id,
+            })
+            .andWhere('task.type = :type', { type: 'video' })
+            .andWhere('task.id != :taskId', { taskId: task.id })
+            .getMany();
+
+          excludeVideoIds = pastVideoTasks
+            .filter((t) => t.videoUrl)
+            .map((t) => {
+              const match = t.videoUrl?.match(/v=([^&]+)/);
+              return match ? match[1] : null;
+            })
+            .filter(Boolean) as string[];
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Could not fetch past videos to exclude: ${err.message}`,
+        );
+      }
+
       let videoUrl: string;
       try {
         const video = (await this.youtubeService.getRecommendedVideo(
           goal,
           metadata.searchQuery,
+          excludeVideoIds,
         )) as { url?: string } | undefined;
         videoUrl =
           video?.url ||

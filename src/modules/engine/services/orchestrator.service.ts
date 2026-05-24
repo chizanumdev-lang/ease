@@ -9,6 +9,21 @@ import { DayPlan } from '../../../programs/entities/day-plan.entity';
 import { Program } from '../../../programs/entities/program.entity';
 import { Task } from '../../../tasks/entities/task.entity';
 
+export interface AiDraftTask {
+  shardName?: string;
+  category?: string;
+  modality?: string;
+  title?: string;
+  description?: string;
+  searchQuery?: string;
+  questions?: string[];
+  scenario?: string;
+  options?: Record<string, unknown>[];
+  cards?: Record<string, string>[];
+  narrationScript?: string;
+  targetScript?: string;
+}
+
 @Injectable()
 export class OrchestratorService {
   private readonly logger = new Logger(OrchestratorService.name);
@@ -52,7 +67,9 @@ export class OrchestratorService {
   /**
    * DEBUG/ADMIN: Simulate which shards would be selected for a goal
    */
-  async simulateBlueprintSelection(goal: string): Promise<any> {
+  async simulateBlueprintSelection(
+    goal: string,
+  ): Promise<Record<string, unknown>[]> {
     const blueprint = await this.generateDayBlueprint(1, goal);
     const shards = await this.shardRepository.find();
 
@@ -73,11 +90,7 @@ export class OrchestratorService {
    * STAGE 1: Early Orchestration
    * This should be called as soon as the user enters their goal in the wizard.
    */
-  async orchestrateDay(
-    dayPlanId: string,
-    goal: string,
-    context: any = {},
-  ): Promise<void> {
+  async orchestrateDay(dayPlanId: string, goal: string): Promise<void> {
     this.logger.log(`Starting Pipeline Orchestration for DayPlan ${dayPlanId}`);
 
     const dayPlan = await this.dayPlanRepository.findOne({
@@ -105,6 +118,7 @@ export class OrchestratorService {
       const blueprint = await this.generateDayBlueprint(
         dayPlan.dayNumber,
         goal,
+        dayPlan.programId,
       );
 
       // 2. PHASE: SHELL CREATION (Instant)
@@ -161,7 +175,8 @@ export class OrchestratorService {
       this.logger.log(
         `Blueprint created for ${dayPlan.id}. Hydration completed.`,
       );
-    } catch (err) {
+    } catch (e) {
+      const err = e as Error;
       this.logger.error(
         `Orchestration failed for DayPlan ${dayPlanId}: ${err.message}`,
       );
@@ -183,7 +198,8 @@ export class OrchestratorService {
   private async generateDayBlueprint(
     dayNumber: number,
     goal: string,
-  ): Promise<any[]> {
+    programId?: string,
+  ): Promise<AiDraftTask[]> {
     /**
      * SEMANTIC MAPPING LOGIC:
      * 1. Calculate target intensity based on program progression (e.g., lower for Day 1).
@@ -198,7 +214,7 @@ export class OrchestratorService {
       Math.max(1, 3 + Math.floor(dayNumber / 5)),
     );
     const categories = ['video', 'audio', 'quiz', 'journal', 'consistency'];
-    const finalShards: any[] = [];
+    const finalShards: TaskShard[] = [];
 
     // Concept Expansion Map to help rank related but non-literal shards
     const expansionMap: Record<string, string[]> = {
@@ -280,11 +296,12 @@ export class OrchestratorService {
 
       // Semantic ranking
       const ranked = pool.sort((a, b) => {
-        const getScore = (shard: any) => {
+        const getScore = (shard: TaskShard) => {
           let s = 0;
           const name = shard.name.toLowerCase();
           const desc = shard.description.toLowerCase();
-          const uses = (shard.metadata?.uses || []).map((u: string) =>
+          const metadata = shard.metadata;
+          const uses = (metadata?.uses || []).map((u: string) =>
             u.toLowerCase(),
           );
 
@@ -326,10 +343,63 @@ export class OrchestratorService {
     }
 
     // 2. PHASE: Blueprinting
+    let pastQueries: string[] = [];
+    let pastJournals: string[] = [];
+    let completedTasksCount = 0;
+    let missedTasksCount = 0;
+
+    if (programId && dayNumber > 1) {
+      try {
+        const pastTasks = await this.taskRepository
+          .createQueryBuilder('task')
+          .innerJoinAndSelect('task.dayPlan', 'dayPlan')
+          .where('dayPlan.program_id = :programId', { programId })
+          .andWhere('dayPlan.day_number < :dayNumber', { dayNumber })
+          .getMany();
+
+        pastQueries = pastTasks
+          .filter((t) => {
+            const m = t.metadata as Record<string, any>;
+            return t.type === 'video' && m?.searchQuery;
+          })
+          .map((t) => {
+            const m = t.metadata as Record<string, any>;
+            return m.searchQuery as string;
+          });
+
+        pastJournals = pastTasks
+          .filter(
+            (t) => t.type === 'journal' && t.content && t.content.length > 10,
+          )
+          .map((t) => `Day ${t.dayPlan.dayNumber}: "${t.content}"`);
+
+        completedTasksCount = pastTasks.filter((t) => t.completed).length;
+        missedTasksCount = pastTasks.length - completedTasksCount;
+      } catch (e) {
+        const err = e as Error;
+        this.logger.warn(
+          `Failed to fetch past context for program ${programId}: ${err.message}`,
+        );
+      }
+    }
+
     const prompt = `
       You are the Cognitive Architect for Ease. 
       USER GOAL: "${goal}"
       DAY NUMBER: ${dayNumber} (Target Intensity: ${targetIntensity}/10)
+
+      PAST PERFORMANCE CONTEXT:
+      - Completed Tasks: ${completedTasksCount}
+      - Missed Tasks: ${missedTasksCount}
+      (Adjust task intensity accordingly. If they missed tasks, pick easier or more generic templates. If they completed most, push them slightly harder.)
+
+      PAST VIDEO SEARCH QUERIES (DO NOT REPEAT):
+      ${pastQueries.length > 0 ? pastQueries.join(', ') : 'None yet.'}
+      (Ensure today's video searchQuery progresses logically from the past queries without repeating them.)
+
+      PAST JOURNAL ENTRIES:
+      ${pastJournals.length > 0 ? pastJournals.join('\n') : 'None yet.'}
+      (Use these journal entries to formulate specific, personalized prompts for today's journal task. Reflect on their struggles or progress.)
 
       TASK: Create a 5-task "Daily Shard Chain" using EXACTLY 5 templates from the list below.
       Each template represents a core functional behavior. Use the "metadata.uses" mapping to determine which template best fits the user's specific progress for today.
@@ -359,6 +429,9 @@ export class OrchestratorService {
           { "id": "1", "text": "Option 1", "feedback": "Why it's right/wrong", "correct": false },
           { "id": "2", "text": "Option 2", "feedback": "Why it's right/wrong", "correct": true }
         ],
+        "cards": [ // (if spaced-recall template)
+          { "front": "Goal-specific Concept or Question", "back": "Answer or Detail" }
+        ],
         "narrationScript": "At least 600 words of highly detailed and specific coaching. NO generic intros. Focus on 'How' and 'Why' this specific task helps with ${goal}. This must be long and comprehensive to ensure a spoken length of at least 4-5 minutes. IMPORTANT PACING: If this is a physical exercise, breathing routine, or meditation, you MUST include explicit count-downs (e.g. 'Hold for 10 seconds. 10... 9... 8...') so the user has actual time to perform the movements. Do not rush through."
       }
 
@@ -369,7 +442,10 @@ export class OrchestratorService {
       4. Intensity Alignment: Prioritize tasks that match the day's intensity (${targetIntensity}).
     `;
 
-    const result = await this.aiService.generateCustomJson<any>(prompt, []);
+    const result = await this.aiService.generateCustomJson<
+      | { tasks?: AiDraftTask[]; blueprint?: AiDraftTask[]; shardName?: string }
+      | AiDraftTask[]
+    >(prompt, []);
 
     // Handle cases where AI wraps the array in an object like { "tasks": [...] }
     if (result && !Array.isArray(result)) {
@@ -402,13 +478,17 @@ export class OrchestratorService {
 
     for (const task of sortedTasks) {
       try {
-        const shard = shards.find((s) => s.id === task.metadata.shardId);
+        const metadata = task.metadata as Record<string, any>;
+        const shard = shards.find((s) => s.id === metadata.shardId);
+        if (!shard) throw new Error(`Shard not found for task ${task.id}`);
         await this.hydrateSingleTask(task, shard, goal, dayPlanId);
 
         // Mark task as ready
-        task.metadata.status = 'ready';
+        metadata.status = 'ready';
+        task.metadata = metadata;
         await this.taskRepository.save(task);
-      } catch (err) {
+      } catch (e) {
+        const err = e as Error;
         this.logger.error(`Failed to hydrate task ${task.id}: ${err.message}`);
         task.metadata.status = 'error';
         await this.taskRepository.save(task);
@@ -421,11 +501,11 @@ export class OrchestratorService {
 
   private async hydrateSingleTask(
     task: Task,
-    shard: any,
+    shard: TaskShard,
     goal: string,
     dayPlanId: string,
   ) {
-    const metadata = task.metadata;
+    const metadata = task.metadata as Record<string, any>;
 
     // 1. Handle VIDEO Hydration (with Retry Loop)
     if (task.type === 'video' && metadata.searchQuery) {
@@ -471,7 +551,8 @@ export class OrchestratorService {
               `Successfully expanded initial script to ${metadata.narrationScript.split(/\s+/).length} words.`,
             );
           }
-        } catch (err) {
+        } catch (e) {
+          const err = e as Error;
           this.logger.error(`Failed to expand initial script: ${err.message}`);
         }
       }
@@ -516,7 +597,8 @@ export class OrchestratorService {
       const video = await this.youtubeService.getRecommendedVideo(goal, query);
       if (video?.url) return video.url;
       throw new Error('No video found');
-    } catch (err) {
+    } catch (e) {
+      const err = e as Error;
       this.logger.warn(
         `Initial video search failed for "${query}". Retrying with goal: "${goal}"`,
       );
@@ -529,7 +611,7 @@ export class OrchestratorService {
     }
   }
 
-  private resolveShard(draft: any, shards: TaskShard[]): TaskShard {
+  private resolveShard(draft: AiDraftTask, shards: TaskShard[]): TaskShard {
     const draftName = draft.shardName || '';
 
     // 1. Exact or Case-Insensitive matching
