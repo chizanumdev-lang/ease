@@ -924,10 +924,8 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
     type: 'morning' | 'night' | 'task' = 'task',
   ): Promise<AudioScriptData> {
     const typeContext = {
-      morning:
-        `an immersive morning affirmation session reinforcing a lesson about "${dayTheme}" to start the day with energy and focus`,
-      night:
-        `an immersive nightly subliminal session reinforcing a lesson about "${dayTheme}" for subconscious processing during deep rest`,
+      morning: `an immersive morning affirmation session reinforcing a lesson about "${dayTheme}" to start the day with energy and focus`,
+      night: `an immersive nightly subliminal session reinforcing a lesson about "${dayTheme}" for subconscious processing during deep rest`,
       task: `an immersive focus session reinforcing a lesson about "${dayTheme}"`,
     };
 

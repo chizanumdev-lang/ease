@@ -13,13 +13,7 @@ import { ProgramsModule } from '../programs/programs.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      CheckIn,
-      Task,
-      QuizAttempt,
-      DayPlan,
-      Program,
-    ]),
+    TypeOrmModule.forFeature([CheckIn, Task, QuizAttempt, DayPlan, Program]),
     ProgramsModule,
   ],
   controllers: [AnalyticsController],

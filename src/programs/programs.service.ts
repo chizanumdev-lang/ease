@@ -307,16 +307,12 @@ export class ProgramsService {
     return this.taskRepository.save(this.taskRepository.create(fields));
   }
 
-  async hydrateDay(
-    dayId: string,
-    goalText: string,
-    params: any,
-  ): Promise<void> {
+  async hydrateDay(dayId: string, goalText: string): Promise<void> {
     this.logger.log(
       `Hydrating Day ${dayId} via Orchestrator (Goal: ${goalText})`,
     );
     try {
-      await this.orchestratorService.orchestrateDay(dayId, goalText, params);
+      await this.orchestratorService.orchestrateDay(dayId, goalText);
 
       // Trigger ritual generation (non-blocking)
       const day = await this.dayPlanRepository.findOne({
@@ -798,7 +794,6 @@ export class ProgramsService {
         await this.orchestratorService.orchestrateDay(
           day1.id,
           generationParams.goalText,
-          generationParams,
         );
         program.status = 'ready';
         await this.programRepository.save(program);
@@ -807,7 +802,7 @@ export class ProgramsService {
           `Synchronous hydration for Day 1 failed: ${err instanceof Error ? err.message : String(err)}. Retrying locally in background...`,
         );
         this.orchestratorService
-          .orchestrateDay(day1.id, generationParams.goalText, generationParams)
+          .orchestrateDay(day1.id, generationParams.goalText)
           .catch((bgErr) =>
             this.logger.error(
               `Fallback background hydration failed: ${bgErr.message}`,
@@ -835,7 +830,7 @@ export class ProgramsService {
       if (!handle) {
         this.logger.warn(`Trigger.dev unavailable, hydrating Day 2 locally`);
         this.orchestratorService
-          .orchestrateDay(day2.id, generationParams.goalText, generationParams)
+          .orchestrateDay(day2.id, generationParams.goalText)
           .catch((e) =>
             this.logger.error(
               `Day 2 Background hydration failed: ${e instanceof Error ? e.message : String(e)}`,
@@ -928,16 +923,22 @@ export class ProgramsService {
     }
 
     const rings = {
-      morning: plan.audioTracks?.some((t) => t.type === 'morning' && t.url && !t.url.includes('generating')) || false,
+      morning:
+        plan.audioTracks?.some(
+          (t) => t.type === 'morning' && t.url && !t.url.includes('generating'),
+        ) || false,
       tasks: plan.tasks?.length > 0 && plan.tasks.every((t) => t.completed),
-      night: plan.audioTracks?.some((t) => t.type === 'night' && t.url && !t.url.includes('generating')) || false,
+      night:
+        plan.audioTracks?.some(
+          (t) => t.type === 'night' && t.url && !t.url.includes('generating'),
+        ) || false,
     };
 
     return {
       ...plan,
       masteryScore: program.masteryScore,
       competenceLevel: program.competenceLevel,
-      todayRings: rings
+      todayRings: rings,
     };
   }
 
