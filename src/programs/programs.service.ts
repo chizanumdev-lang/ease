@@ -908,6 +908,17 @@ export class ProgramsService {
       throw new NotFoundException(`No plan available for day ${dayNumber}`);
 
     // If the cron job missed this day, trigger lazy hydration
+    // Recover stalled generating plans (stuck for more than 2 minutes due to Vercel timeout)
+    if (plan.status === 'generating') {
+      const isStalled =
+        Date.now() - new Date(plan.updatedAt).getTime() > 2 * 60 * 1000;
+      if (isStalled) {
+        this.logger.warn(`Day ${dayNumber} stalled in generating. Resetting to pending.`);
+        plan.status = 'pending';
+        await this.dayPlanRepository.save(plan);
+      }
+    }
+
     if (plan.status === 'pending') {
       this.logger.log(
         `Day ${dayNumber} is pending. Triggering lazy hydration.`,
