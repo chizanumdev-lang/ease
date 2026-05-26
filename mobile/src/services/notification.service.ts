@@ -73,10 +73,8 @@ class NotificationService {
         // Cancel existing to avoid duplicates/overflow
         await this.cancelAll();
         
-        // Notifications are explicitly disabled/turned off for now as requested
-        console.log('[NotificationService] Notifications are disabled, cancelling all scheduled.');
-        return;
-
+        // Notifications are now enabled
+        console.log('[NotificationService] Scheduling notifications for the day...');
         const rawNotifications: Array<{ title: string; body: string; date: Date; type: string; data: any; category?: string; priority: number }> = [];
         const now = new Date();
 
