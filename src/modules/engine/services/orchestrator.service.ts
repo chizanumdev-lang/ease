@@ -471,29 +471,27 @@ export class OrchestratorService {
     goal: string,
     dayPlanId: string,
   ) {
-    // Sort tasks by priority for hydration (Video first)
-    const priority = (t: Task) =>
-      t.type === 'video' ? 0 : t.type === 'audio' ? 1 : 2;
-    const sortedTasks = [...tasks].sort((a, b) => priority(a) - priority(b));
+    // Execute all tasks in parallel to speed up hydration and avoid Vercel 60s timeout
+    await Promise.all(
+      tasks.map(async (task) => {
+        try {
+          const metadata = task.metadata as Record<string, any>;
+          const shard = shards.find((s) => s.id === metadata.shardId);
+          if (!shard) throw new Error(`Shard not found for task ${task.id}`);
+          await this.hydrateSingleTask(task, shard, goal, dayPlanId);
 
-    for (const task of sortedTasks) {
-      try {
-        const metadata = task.metadata as Record<string, any>;
-        const shard = shards.find((s) => s.id === metadata.shardId);
-        if (!shard) throw new Error(`Shard not found for task ${task.id}`);
-        await this.hydrateSingleTask(task, shard, goal, dayPlanId);
-
-        // Mark task as ready
-        metadata.status = 'ready';
-        task.metadata = metadata;
-        await this.taskRepository.save(task);
-      } catch (e) {
-        const err = e as Error;
-        this.logger.error(`Failed to hydrate task ${task.id}: ${err.message}`);
-        task.metadata.status = 'error';
-        await this.taskRepository.save(task);
-      }
-    }
+          // Mark task as ready
+          metadata.status = 'ready';
+          task.metadata = metadata;
+          await this.taskRepository.save(task);
+        } catch (e) {
+          const err = e as Error;
+          this.logger.error(`Failed to hydrate task ${task.id}: ${err.message}`);
+          task.metadata.status = 'error';
+          await this.taskRepository.save(task);
+        }
+      }),
+    );
 
     // Mark DayPlan as ready when all critical tasks are done
     await this.dayPlanRepository.update(dayPlanId, { status: 'ready' });
