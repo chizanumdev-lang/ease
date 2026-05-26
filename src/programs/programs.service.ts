@@ -913,20 +913,29 @@ export class ProgramsService {
         `Day ${dayNumber} is pending. Triggering lazy hydration.`,
       );
       const goalText = program.goal?.description || 'Goal';
-      triggerHydrateDay({
-        dayPlanId: plan.id,
-        goalText,
-        params: { ...program.metadata, duration: program.duration },
-      }).then(handle => {
+      
+      try {
+        const handle = await triggerHydrateDay({
+          dayPlanId: plan.id,
+          goalText,
+          params: { ...program.metadata, duration: program.duration },
+        });
+
         if (!handle) {
-          this.logger.warn(`Trigger.dev unavailable, hydrating Day ${dayNumber} locally in background`);
-          this.hydrateDay(plan.id, goalText).catch(err => 
-            this.logger.error(`Local hydration failed: ${err.message}`)
-          );
+          this.logger.warn(`Trigger.dev unavailable, hydrating Day ${dayNumber} locally and waiting for completion`);
+          // AWAIT the hydration here. Vercel freezes containers after response is sent,
+          // so background processing without external triggers will fail.
+          await this.hydrateDay(plan.id, goalText);
+          
+          // Re-fetch the plan after synchronous hydration
+          plan = await this.dayPlanRepository.findOne({
+            where: { id: plan.id },
+            relations: ['tasks'],
+          });
         }
-      }).catch((err) =>
-        this.logger.error(`Lazy hydration failed: ${err.message}`),
-      );
+      } catch (err) {
+        this.logger.error(`Hydration failed: ${(err as Error).message}`);
+      }
     }
 
     const rings = {

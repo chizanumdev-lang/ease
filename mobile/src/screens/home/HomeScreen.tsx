@@ -119,7 +119,7 @@ export default function HomeScreen({ navigation }: Props) {
   React.useEffect(() => {
     let pollInterval: NodeJS.Timeout | null = null;
 
-    if (currentProgram?.status === 'generating' || todayPlan?.status === 'pending') {
+    if (currentProgram?.status === 'generating' || todayPlan?.status === 'pending' || todayPlan?.status === 'generating') {
       console.log(
         '[HomeScreen] Program or Plan is generating, starting status poll...',
       );
@@ -130,7 +130,7 @@ export default function HomeScreen({ navigation }: Props) {
         if (updatedProgram) {
           await useProgramsStore.getState().fetchTodayPlan(updatedProgram.id);
           const state = useProgramsStore.getState();
-          if (state.currentProgram?.status !== 'generating' && state.todayPlan?.status !== 'pending') {
+          if (state.currentProgram?.status !== 'generating' && state.todayPlan?.status !== 'pending' && state.todayPlan?.status !== 'generating') {
             console.log(
               '[HomeScreen] Program and Plan are now ready, stopping poll.',
             );
@@ -286,7 +286,7 @@ export default function HomeScreen({ navigation }: Props) {
   }
 
   const sortedTasks =
-    todayPlan?.tasks && currentProgram?.status !== 'generating' && todayPlan?.status !== 'pending'
+    todayPlan?.tasks && currentProgram?.status !== 'generating' && todayPlan?.status !== 'pending' && todayPlan?.status !== 'generating'
       ? [...todayPlan.tasks].sort((a, b) => (a.order || 0) - (b.order || 0))
       : ([] as Task[]);
 
@@ -450,7 +450,7 @@ export default function HomeScreen({ navigation }: Props) {
   );
 
   const renderEmptyOrLoading = () => {
-    if (currentProgram?.status === 'generating' || todayPlan?.status === 'pending') {
+    if (currentProgram?.status === 'generating' || todayPlan?.status === 'pending' || todayPlan?.status === 'generating') {
       return (
         <View
           style={[
