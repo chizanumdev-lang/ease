@@ -119,28 +119,31 @@ export default function HomeScreen({ navigation }: Props) {
   React.useEffect(() => {
     let pollInterval: NodeJS.Timeout | null = null;
 
-    if (currentProgram?.status === 'generating') {
+    if (currentProgram?.status === 'generating' || todayPlan?.status === 'pending') {
       console.log(
-        '[HomeScreen] Program is generating, starting status poll...',
+        '[HomeScreen] Program or Plan is generating, starting status poll...',
       );
       pollInterval = setInterval(async () => {
         const updatedProgram = await useProgramsStore
           .getState()
           .fetchActiveProgram(true);
-        if (updatedProgram && updatedProgram.status === 'ready') {
-          console.log(
-            '[HomeScreen] Program is now ready, fetching plan and stopping poll.',
-          );
+        if (updatedProgram) {
           await useProgramsStore.getState().fetchTodayPlan(updatedProgram.id);
-          if (pollInterval) clearInterval(pollInterval);
+          const state = useProgramsStore.getState();
+          if (state.currentProgram?.status !== 'generating' && state.todayPlan?.status !== 'pending') {
+            console.log(
+              '[HomeScreen] Program and Plan are now ready, stopping poll.',
+            );
+            if (pollInterval) clearInterval(pollInterval);
+          }
         }
-      }, 10000); // Poll every 5 seconds
+      }, 10000); // Poll every 10 seconds
     }
 
     return () => {
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [currentProgram?.status]);
+  }, [currentProgram?.status, todayPlan?.status]);
 
   const handleTaskPress = (task: Task) => {
     // If task is completed and has a next task, navigate to the next task to maintain "Circuit Flow"
@@ -283,7 +286,7 @@ export default function HomeScreen({ navigation }: Props) {
   }
 
   const sortedTasks =
-    todayPlan?.tasks && currentProgram?.status !== 'generating'
+    todayPlan?.tasks && currentProgram?.status !== 'generating' && todayPlan?.status !== 'pending'
       ? [...todayPlan.tasks].sort((a, b) => (a.order || 0) - (b.order || 0))
       : ([] as Task[]);
 
@@ -447,7 +450,7 @@ export default function HomeScreen({ navigation }: Props) {
   );
 
   const renderEmptyOrLoading = () => {
-    if (currentProgram?.status === 'generating') {
+    if (currentProgram?.status === 'generating' || todayPlan?.status === 'pending') {
       return (
         <View
           style={[

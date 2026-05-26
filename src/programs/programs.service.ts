@@ -912,10 +912,18 @@ export class ProgramsService {
       this.logger.log(
         `Day ${dayNumber} is pending. Triggering lazy hydration.`,
       );
+      const goalText = program.goal?.description || 'Goal';
       triggerHydrateDay({
         dayPlanId: plan.id,
-        goalText: program.goal?.description || 'Goal',
+        goalText,
         params: { ...program.metadata, duration: program.duration },
+      }).then(handle => {
+        if (!handle) {
+          this.logger.warn(`Trigger.dev unavailable, hydrating Day ${dayNumber} locally in background`);
+          this.hydrateDay(plan.id, goalText).catch(err => 
+            this.logger.error(`Local hydration failed: ${err.message}`)
+          );
+        }
       }).catch((err) =>
         this.logger.error(`Lazy hydration failed: ${err.message}`),
       );
