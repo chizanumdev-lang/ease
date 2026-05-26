@@ -898,7 +898,7 @@ export class ProgramsService {
     // Clamp to [1, duration], so after the program ends day stays at the last day
     const dayNumber = Math.min(Math.max(diffDays + 1, 1), program.duration);
 
-    const plan = await this.dayPlanRepository.findOne({
+    let plan = await this.dayPlanRepository.findOne({
       where: { program: { id: programId, userId }, dayNumber },
       relations: ['tasks', 'audioTracks', 'quizzes'],
       order: { tasks: { scheduledAt: 'ASC' } },
@@ -943,26 +943,31 @@ export class ProgramsService {
             where: { id: plan.id },
             relations: ['tasks'],
           });
+          
+          if (!plan) throw new NotFoundException(`Day plan vanished during hydration`);
         }
       } catch (err) {
         this.logger.error(`Hydration failed: ${(err as Error).message}`);
       }
     }
 
+    // Force non-null assertion since we threw earlier if it was null
+    const safePlan = plan!;
+
     const rings = {
       morning:
-        plan.audioTracks?.some(
+        safePlan.audioTracks?.some(
           (t) => t.type === 'morning' && t.url && !t.url.includes('generating'),
         ) || false,
-      tasks: plan.tasks?.length > 0 && plan.tasks.every((t) => t.completed),
+      tasks: safePlan.tasks?.length > 0 && safePlan.tasks.every((t) => t.completed),
       night:
-        plan.audioTracks?.some(
+        safePlan.audioTracks?.some(
           (t) => t.type === 'night' && t.url && !t.url.includes('generating'),
         ) || false,
     };
 
     return {
-      ...plan,
+      ...safePlan,
       masteryScore: program.masteryScore,
       competenceLevel: program.competenceLevel,
       todayRings: rings,
