@@ -1237,34 +1237,82 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
       try {
         return JSON.parse(cleaned);
       } catch {
-        // Ignore and try regex
+        // Ignore and try advanced extraction
       }
 
-      // 3. Robust regex extraction (handles preamble/commentary)
-      const jsonMatch =
-        cleaned.match(/\{[\s\S]*\}/) || cleaned.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        let jsonString = jsonMatch[0];
+      // 3. Robust extraction by counting braces (handles preamble/commentary safely)
+      const firstBrace = cleaned.indexOf('{');
+      const firstBracket = cleaned.indexOf('[');
+      let startIndex = -1;
+      let isArray = false;
+      
+      if (firstBrace !== -1 && firstBracket !== -1) {
+          if (firstBrace < firstBracket) { startIndex = firstBrace; }
+          else { startIndex = firstBracket; isArray = true; }
+      } else if (firstBrace !== -1) {
+          startIndex = firstBrace;
+      } else if (firstBracket !== -1) {
+          startIndex = firstBracket;
+          isArray = true;
+      }
 
-        // Sanitization for "Bad control character in string literal"
-        // ONLY replace control characters inside double-quoted string literals!
-        jsonString = jsonString.replace(/"([^"\\]|\\.)*"/g, (match) => {
-          return match.replace(/[\u0000-\u001F]/g, (ctrl) => {
-            if (ctrl === '\n') return '\\n';
-            if (ctrl === '\r') return '\\r';
-            if (ctrl === '\t') return '\\t';
-            return '';
-          });
-        });
+      if (startIndex !== -1) {
+          let openCount = 0;
+          let endIndex = -1;
+          let inString = false;
+          let escapeNext = false;
+          const openChar = isArray ? '[' : '{';
+          const closeChar = isArray ? ']' : '}';
 
-        try {
-          return JSON.parse(jsonString);
-        } catch (innerErr) {
-          this.logger.warn(
-            `JSON parse failed after sanitization: ${innerErr.message}`,
-          );
-          return null;
-        }
+          for (let i = startIndex; i < cleaned.length; i++) {
+              const char = cleaned[i];
+              
+              if (escapeNext) {
+                  escapeNext = false;
+                  continue;
+              }
+              if (char === '\\') {
+                  escapeNext = true;
+                  continue;
+              }
+              if (char === '"') {
+                  inString = !inString;
+                  continue;
+              }
+              
+              if (!inString) {
+                  if (char === openChar) openCount++;
+                  else if (char === closeChar) openCount--;
+                  
+                  if (openCount === 0) {
+                      endIndex = i;
+                      break;
+                  }
+              }
+          }
+
+          if (endIndex !== -1) {
+              let jsonString = cleaned.substring(startIndex, endIndex + 1);
+              
+              // Sanitization for "Bad control character in string literal"
+              jsonString = jsonString.replace(/"([^"\\]|\\.)*"/g, (match) => {
+                return match.replace(/[\u0000-\u001F]/g, (ctrl) => {
+                  if (ctrl === '\n') return '\\n';
+                  if (ctrl === '\r') return '\\r';
+                  if (ctrl === '\t') return '\\t';
+                  return '';
+                });
+              });
+
+              try {
+                return JSON.parse(jsonString);
+              } catch (innerErr) {
+                this.logger.warn(
+                  `JSON parse failed after sanitization: ${innerErr.message}`,
+                );
+                return null;
+              }
+          }
       }
 
       return null;
