@@ -796,98 +796,97 @@ export class ProgramsService {
       await this.dayPlanRepository.save(newDayShells);
     }
 
-    // ─── PHASE 2: Generate Skeleton (cheap, all days at once) ────────────────
-    // This runs BEFORE Day 1 hydration so the orchestrator can use adaptive fill
-    // from the very first day.
-    this.logger.log(
-      `Generating program skeleton for all ${duration} days (program ${program.id})`,
-    );
-    try {
-      await this.skeletonService.generateProgramSkeleton(
-        program.id,
-        goal.description || goal.title || 'Goal',
-        duration,
-        goal.category || 'general',
-      );
-    } catch (err: any) {
-      this.logger.error(
-        `Skeleton generation failed: ${err instanceof Error ? err.message : String(err)}. Falling back to legacy per-day generation.`,
-      );
-      // Non-fatal — orchestrateDay will use legacy generateDayBlueprint fallback
-    }
+    // ─── PHASE 2: Background Orchestration ────────────────
+    // We run the heavy skeleton generation and Day 1 hydration in the background
+    // so the API returns immediately and the mobile app can show the polling skeleton screen.
+    const orchestrateInBackground = async () => {
+      try {
+        this.logger.log(`Generating program skeleton for all ${duration} days (program ${program.id})`);
+        try {
+          await this.skeletonService.generateProgramSkeleton(
+            program.id,
+            goal.description || goal.title || 'Goal',
+            duration,
+            goal.category || 'general',
+          );
+        } catch (err: any) {
+          this.logger.error(
+            `Skeleton generation failed: ${err instanceof Error ? err.message : String(err)}. Falling back to legacy per-day generation.`,
+          );
+        }
 
-    // ─── PHASE 3: Ensure Day 1 is Hydrating/Ready ─────────────────────────────
-    const day1 = await this.dayPlanRepository.findOne({
-      where: { programId: program.id, dayNumber: 1 },
-    });
+        // ─── PHASE 3: Ensure Day 1 is Hydrating/Ready ─────────────────────────────
+        const day1 = await this.dayPlanRepository.findOne({
+          where: { programId: program.id, dayNumber: 1 },
+        });
 
-    const generationParams = {
-      duration,
-      minutesPerDay,
-      learningStyle,
-      constraints,
-      category: goal.category,
-      wakeStart,
-      sleepStart,
-      goalText: goal.description || goal.title || 'Goal',
+        const generationParams = {
+          duration,
+          minutesPerDay,
+          learningStyle,
+          constraints,
+          category: goal.category,
+          wakeStart,
+          sleepStart,
+          goalText: goal.description || goal.title || 'Goal',
+        };
+
+        if (day1 && day1.status !== 'ready') {
+          this.logger.log(`Hydrating Day 1 in background for instant first-run availability`);
+          try {
+            await this.orchestratorService.orchestrateDay(
+              day1.id,
+              generationParams.goalText,
+            );
+            program.status = 'ready';
+            await this.programRepository.save(program);
+          } catch (err: any) {
+            this.logger.error(
+              `Background hydration for Day 1 failed: ${err instanceof Error ? err.message : String(err)}. Retrying locally in background...`,
+            );
+            this.orchestratorService
+              .orchestrateDay(day1.id, generationParams.goalText)
+              .catch((bgErr) =>
+                this.logger.error(`Fallback background hydration failed: ${bgErr.message}`),
+              );
+            program.status = 'generating';
+            await this.programRepository.save(program);
+          }
+        } else {
+          program.status = 'ready';
+          await this.programRepository.save(program);
+        }
+
+        // ─── PHASE 4: Queue Day 2 immediately ──────────────────────────────
+        const day2 = await this.dayPlanRepository.findOne({
+          where: { programId: program.id, dayNumber: 2 },
+        });
+
+        if (day2 && day2.status === 'pending') {
+          const handle = await triggerHydrateDay({
+            dayPlanId: day2.id,
+            goalText: generationParams.goalText,
+            params: generationParams,
+          });
+          if (!handle) {
+            this.logger.warn(`Trigger.dev unavailable, hydrating Day 2 locally`);
+            this.orchestratorService
+              .orchestrateDay(day2.id, generationParams.goalText)
+              .catch((e) =>
+                this.logger.error(
+                  `Day 2 Background hydration failed: ${e instanceof Error ? e.message : String(e)}`,
+                ),
+              );
+          }
+        }
+      } catch (err: any) {
+        this.logger.error(`Fatal background orchestration error: ${err.message}`);
+      }
     };
 
-    if (day1 && day1.status !== 'ready') {
-      this.logger.log(
-        `Hydrating Day 1 synchronously for instant first-run availability`,
-      );
-      try {
-        await this.orchestratorService.orchestrateDay(
-          day1.id,
-          generationParams.goalText,
-        );
-        program.status = 'ready';
-        await this.programRepository.save(program);
-      } catch (err: any) {
-        this.logger.error(
-          `Synchronous hydration for Day 1 failed: ${err instanceof Error ? err.message : String(err)}. Retrying locally in background...`,
-        );
-        this.orchestratorService
-          .orchestrateDay(day1.id, generationParams.goalText)
-          .catch((bgErr) =>
-            this.logger.error(
-              `Fallback background hydration failed: ${bgErr.message}`,
-            ),
-          );
-        program.status = 'generating';
-        await this.programRepository.save(program);
-      }
-    } else {
-      program.status = 'ready';
-      await this.programRepository.save(program);
-    }
+    // Fire and forget - do NOT await
+    orchestrateInBackground();
 
-    // ─── PHASE 4: Queue Day 2 immediately (no journal context to lose yet) ───
-    // The orchestrator's Day 1 completion will also trigger this, but we queue
-    // it here as a belt-and-suspenders guarantee.
-    const day2 = await this.dayPlanRepository.findOne({
-      where: { programId: program.id, dayNumber: 2 },
-    });
-
-    if (day2 && day2.status === 'pending') {
-      const handle = await triggerHydrateDay({
-        dayPlanId: day2.id,
-        goalText: generationParams.goalText,
-        params: generationParams,
-      });
-      if (!handle) {
-        this.logger.warn(`Trigger.dev unavailable, hydrating Day 2 locally`);
-        this.orchestratorService
-          .orchestrateDay(day2.id, generationParams.goalText)
-          .catch((e) =>
-            this.logger.error(
-              `Day 2 Background hydration failed: ${e instanceof Error ? e.message : String(e)}`,
-            ),
-          );
-      }
-    }
-
-    await this.programRepository.save(program);
     return program;
   }
 
