@@ -105,6 +105,8 @@ type DayPlan {
   id: ID!
   programId: String!
   quizzes: [Quiz!]
+  skeleton: JSON
+  skeletonStatus: String!
   status: String!
   tasks: [DailyTask!]
   theme: String

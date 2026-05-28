@@ -13,6 +13,7 @@ import { WorkflowEdge } from './entities/workflow-edge.entity';
 import { TaskDefinition } from './entities/task-definition.entity';
 import { UserProgram } from './entities/user-program.entity';
 import { OrchestratorService } from './services/orchestrator.service';
+import { SkeletonService } from './services/skeleton.service';
 import { UserCognitiveProfile } from './entities/user-cognitive-profile.entity';
 import { DayPlan } from '../../programs/entities/day-plan.entity';
 import { Program } from '../../programs/entities/program.entity';
@@ -46,8 +47,9 @@ import { AudioAsset } from './entities/audio-asset.entity';
     EngineService,
     PlannerService,
     OrchestratorService,
+    SkeletonService,
     EngineResolver,
   ],
-  exports: [EngineService, PlannerService, OrchestratorService],
+  exports: [EngineService, PlannerService, OrchestratorService, SkeletonService],
 })
 export class EngineModule {}

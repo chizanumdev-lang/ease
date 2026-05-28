@@ -39,7 +39,7 @@ import { useTheme } from '../../hooks/useTheme';
 
 const { width } = Dimensions.get('window');
 
-type Step = 'CATEGORY' | 'DEFINITION' | 'COMMITMENT' | 'REVIEW' | 'GENERATING';
+type Step = 'CATEGORY' | 'DEFINITION' | 'COMMITMENT';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'GoalWizard'>;
 
@@ -147,14 +147,12 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
   const formData = watch();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
   // Stores
   const { createGoal } = useGoalsStore();
   const { isAuthenticated } = useAuthStore();
-  const { generateProgram, fetchPreviewMetadata } = useProgramsStore();
+  const { generateProgram } = useProgramsStore();
   const { showModal } = useModalStore();
-  const [previewData, setPreviewData] = useState<any>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [draftIds, setDraftIds] = useState<{
     goalId: string;
@@ -162,7 +160,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
   } | null>(null);
 
   const animateStepChange = (newStep: Step) => {
-    const steps: Step[] = ['CATEGORY', 'DEFINITION', 'COMMITMENT', 'REVIEW'];
+    const steps: Step[] = ['CATEGORY', 'DEFINITION', 'COMMITMENT'];
     const newIndex = steps.indexOf(newStep);
     if (newIndex >= 0) {
       setStep(newStep);
@@ -205,55 +203,6 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
       animateStepChange('COMMITMENT');
     } else if (step === 'COMMITMENT') {
-      setIsLoadingPreview(true);
-      showModal({
-        type: 'loading',
-        title: 'Building Your Journey',
-        description:
-          "We're figuring out the best path and pace just for you...",
-      });
-      try {
-        // Ensure we are authenticated before proceeding
-        if (!isAuthenticated) {
-          console.error('[WIZARD] Not authenticated. Cannot fetch preview.');
-          showModal({
-            type: 'error',
-            title: 'Session Expired',
-            description:
-              'Your session has expired. Please log in again to continue manifesting your journey.',
-          });
-          return;
-        }
-
-        // Fetch preview metadata for the Review screen
-        const data = await fetchPreviewMetadata(undefined, formData.timeframe, {
-          minutesPerDay: formData.dailyMinutes,
-          category: formData.category,
-          goalDescription: formData.goalDescription.trim(),
-        });
-        setPreviewData(data);
-        useModalStore.getState().hideModal();
-        animateStepChange('REVIEW');
-      } catch (error: any) {
-        console.error('Preview error:', error);
-
-        if (error.response?.status === 401) {
-          showModal({
-            type: 'error',
-            title: 'Session Inactive',
-            description:
-              "We couldn't verify your identity. Please try logging out and back in.",
-          });
-          return;
-        }
-
-        // Fallback: Proceed to review anyway but without AI projections for generic errors
-        useModalStore.getState().hideModal();
-        animateStepChange('REVIEW');
-      } finally {
-        setIsLoadingPreview(false);
-      }
-    } else if (step === 'REVIEW') {
       handleSubmit(handleFinalSubmit)();
     }
   };
@@ -261,7 +210,6 @@ export default function GoalWizardScreen({ navigation }: Props) {
   const handleBack = () => {
     if (step === 'DEFINITION') animateStepChange('CATEGORY');
     else if (step === 'COMMITMENT') animateStepChange('DEFINITION');
-    else if (step === 'REVIEW') animateStepChange('COMMITMENT');
     else navigation.goBack();
   };
 
@@ -298,7 +246,6 @@ export default function GoalWizardScreen({ navigation }: Props) {
         minutesPerDay: data.dailyMinutes,
         learningStyle: 'mixed',
         constraints: [],
-        metadata: previewData, // Pass the AI-generated preview to be saved
       });
 
       // Close modal before navigation
@@ -336,7 +283,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
               { color: colors.textMuted, fontFamily: fonts.label },
             ]}
           >
-            OF 4
+            OF 3
           </Text>
         </View>
         <View
@@ -355,7 +302,7 @@ export default function GoalWizardScreen({ navigation }: Props) {
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={[styles.progressFill, { width: `${(stepNum / 4) * 100}%` }]}
+            style={[styles.progressFill, { width: `${(stepNum / 3) * 100}%` }]}
           />
         </View>
       </View>
@@ -385,21 +332,15 @@ export default function GoalWizardScreen({ navigation }: Props) {
       <View style={styles.footerButtons}>
         <StitchButton
           title={
-            step === 'REVIEW'
-              ? 'Manifest My Path'
-              : step === 'DEFINITION'
-                ? 'Continue to Details'
+            step === 'DEFINITION'
+              ? 'Continue to Details'
+              : step === 'COMMITMENT'
+                ? 'Manifest My Path'
                 : 'Continue'
           }
           onPress={handleNext}
-          isLoading={
-            step === 'REVIEW'
-              ? isSubmitting
-              : step === 'COMMITMENT'
-                ? isLoadingPreview
-                : false
-          }
-          showArrow={step !== 'REVIEW'}
+          isLoading={step === 'COMMITMENT' ? isSubmitting : false}
+          showArrow={step !== 'COMMITMENT'}
           style={styles.primaryFooterButton}
         />
         <TouchableOpacity
@@ -1158,212 +1099,6 @@ export default function GoalWizardScreen({ navigation }: Props) {
               </View>
             </ScrollView>
 
-            <ScrollView
-              style={{ width }}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.stepContainer}>
-                {renderHeader(
-                  4,
-                  'Your Manifesto',
-                  'Review the architecture of your journey. This is the blueprint of your evolution.',
-                )}
-
-                <View style={styles.reviewContent}>
-                  {/* Summary Card */}
-                  <View style={[styles.reviewSummaryCard, shadows.premium]}>
-                    <ImageBackground
-                      source={
-                        CATEGORIES.find((c) => c.id === formData.category)
-                          ?.bgImage
-                      }
-                      style={styles.reviewSummaryBg}
-                      imageStyle={{ borderRadius: 40 }}
-                    >
-                      <LinearGradient
-                        colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)']}
-                        style={styles.reviewSummaryOverlay}
-                      >
-                        <View
-                          style={[
-                            styles.categoryBadge,
-                            { backgroundColor: colors.primary },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.categoryBadgeText,
-                              { color: '#fff', fontFamily: fonts.label },
-                            ]}
-                          >
-                            {formData.category.toUpperCase()}
-                          </Text>
-                        </View>
-                        <Text
-                          style={[
-                            styles.reviewSummaryTitle,
-                            { color: '#fff', fontFamily: fonts.display },
-                          ]}
-                        >
-                          {formData.goalDescription.substring(0, 60) +
-                            (formData.goalDescription.length > 60 ? '...' : '')}
-                        </Text>
-                      </LinearGradient>
-                    </ImageBackground>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.intensityCard,
-                      {
-                        backgroundColor: colors.surfaceContainerLow,
-                        borderRadius: 32,
-                        padding: 24,
-                        marginBottom: 20,
-                      },
-                    ]}
-                  >
-                    <View style={styles.intensityHeader}>
-                      <Text
-                        style={[
-                          styles.gridLabel,
-                          { color: colors.textMuted, fontFamily: fonts.label },
-                        ]}
-                      >
-                        EFFORT SPECTRUM
-                      </Text>
-                      <Ionicons
-                        name="stats-chart-outline"
-                        size={16}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.chartContainer}>
-                      <BarChart
-                        data={(
-                          previewData?.weeklyIntensity || [
-                            20, 45, 60, 40, 75, 50, 30,
-                          ]
-                        ).map((val: number, i: number) => ({
-                          value: val,
-                          label: ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i],
-                          frontColor:
-                            val > 60 ? colors.primary : colors.secondary,
-                        }))}
-                        height={100}
-                        barWidth={width * 0.08}
-                        noOfSections={3}
-                        barBorderRadius={8}
-                        yAxisThickness={0}
-                        xAxisThickness={0}
-                        hideRules
-                        hideYAxisText
-                        xAxisLabelTextStyle={{
-                          color: colors.textMuted,
-                          fontSize: 10,
-                          fontWeight: '900',
-                          marginTop: 8,
-                        }}
-                        isAnimated
-                      />
-                    </View>
-                  </View>
-
-                  {/* Coach Insight */}
-                  <View
-                    style={[
-                      styles.insightPanel,
-                      {
-                        backgroundColor: colors.primary + '08',
-                        borderColor: colors.primary + '15',
-                        borderWidth: 1,
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.insightIconBox,
-                        { backgroundColor: colors.primary },
-                      ]}
-                    >
-                      <Ionicons name="sparkles" size={18} color="#fff" />
-                    </View>
-                    <View style={styles.insightContent}>
-                      <Text
-                        style={[
-                          styles.insightHeaderLabel,
-                          { color: colors.primary, fontFamily: fonts.label },
-                        ]}
-                      >
-                        AI PROJECTION
-                      </Text>
-                      <Text
-                        style={[
-                          styles.insightText,
-                          { color: colors.text, fontFamily: fonts.bodyMedium },
-                        ]}
-                      >
-                        {previewData?.coachInsight ||
-                          "Your path is optimized for sustainable progression. We've balanced deep work with restorative phases."}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Details Grid */}
-                  <View style={styles.reviewGrid}>
-                    <View
-                      style={[
-                        styles.reviewGridItem,
-                        { backgroundColor: colors.surfaceContainerLow },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.gridLabel,
-                          { color: colors.textMuted, fontFamily: fonts.label },
-                        ]}
-                      >
-                        DURATION
-                      </Text>
-                      <Text
-                        style={[
-                          styles.gridValue,
-                          { color: colors.text, fontFamily: fonts.display },
-                        ]}
-                      >
-                        {formData.timeframe} Days
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.reviewGridItem,
-                        { backgroundColor: colors.surfaceContainerLow },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.gridLabel,
-                          { color: colors.textMuted, fontFamily: fonts.label },
-                        ]}
-                      >
-                        INVESTMENT
-                      </Text>
-                      <Text
-                        style={[
-                          styles.gridValue,
-                          { color: colors.text, fontFamily: fonts.display },
-                        ]}
-                      >
-                        {formData.dailyMinutes}m/Day
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                {renderFooterActions()}
-              </View>
-            </ScrollView>
           </ScrollView>
 
           {step !== 'CATEGORY' && <View style={{ height: 20 }} />}

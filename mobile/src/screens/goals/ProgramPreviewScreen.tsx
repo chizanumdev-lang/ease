@@ -117,7 +117,7 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
 
     const metadata = currentProgram.metadata || {};
     const intensityData = metadata.weeklyIntensity || [20, 40, 60, 80, 70, 90, 100];
-    const sampleDays = metadata.sampleDays || [];
+    const dayPlans = currentProgram.dayPlans || [];
 
     const renderIntensityChart = () => (
         <View style={styles.section}>
@@ -193,38 +193,31 @@ export default function ProgramPreviewScreen({ route, navigation }: Props) {
                             <Text style={styles.dayBadgeText}>DAY 1</Text>
                         </View>
                         <Text style={[styles.mainDayTitle, { color: colors.text }]}>
-                            {sampleDays[0]?.title || currentProgram.dayPlans?.[0]?.theme || "Foundation Core"}
+                            {dayPlans[0]?.theme || "Foundation Core"}
                         </Text>
                         <View style={styles.focusList}>
-                            {sampleDays[0]?.focus ? (
-                                <View style={[styles.focusTag, { backgroundColor: colors.surfaceContainerLow }]}>
+                            {dayPlans[0]?.focusAreas?.map((area: string, i: number) => (
+                                <View key={i} style={[styles.focusTag, { backgroundColor: colors.surfaceContainerLow }]}>
                                     <View style={[styles.tagDot, { backgroundColor: colors.primary }]} />
-                                    <Text style={[styles.focusTagText, { color: colors.text }]}>{sampleDays[0].focus}</Text>
+                                    <Text style={[styles.focusTagText, { color: colors.text }]}>{area}</Text>
                                 </View>
-                            ) : (
-                                currentProgram.dayPlans?.[0]?.focusAreas?.map((area, i) => (
-                                    <View key={i} style={[styles.focusTag, { backgroundColor: colors.surfaceContainerLow }]}>
-                                        <View style={[styles.tagDot, { backgroundColor: colors.primary }]} />
-                                        <Text style={[styles.focusTagText, { color: colors.text }]}>{area}</Text>
-                                    </View>
-                                ))
-                            )}
+                            ))}
                         </View>
                     </View>
                 </View>
 
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Coming Up</Text>
-                    {sampleDays.slice(1).map((sample: any, index: number) => (
+                    {dayPlans.slice(1, 4).map((plan: any, index: number, arr: any[]) => (
                         <View key={index} style={styles.timelineItem}>
                             <View style={styles.timelineLeft}>
                                 <View style={[styles.timelineDot, { backgroundColor: colors.outlineVariant }]} />
-                                {index < sampleDays.length - 1 && <View style={[styles.timelineLine, { backgroundColor: colors.outlineVariant }]} />}
+                                {index < arr.length - 1 && <View style={[styles.timelineLine, { backgroundColor: colors.outlineVariant }]} />}
                             </View>
                             <View style={styles.timelineRight}>
-                                <Text style={[styles.dayLabelSmall, { color: colors.textMuted }]}>DAY {index + 2}</Text>
-                                <Text style={[styles.themeTitle, { color: colors.text }]}>{sample.title}</Text>
-                                <Text style={[styles.sampleDesc, { color: colors.textMuted }]}>{sample.focus}</Text>
+                                <Text style={[styles.dayLabelSmall, { color: colors.textMuted }]}>DAY {plan.dayNumber}</Text>
+                                <Text style={[styles.themeTitle, { color: colors.text }]}>{plan.theme}</Text>
+                                {plan.focusAreas?.[0] && <Text style={[styles.sampleDesc, { color: colors.textMuted }]}>{plan.focusAreas[0]}</Text>}
                             </View>
                         </View>
                     ))}

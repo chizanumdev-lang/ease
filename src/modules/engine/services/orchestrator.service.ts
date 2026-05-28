@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
+import { triggerHydrateDay } from '../../../trigger/tasks';
 import { TaskShard } from '../entities/task-shard.entity';
 import { AiService } from '../../../ai/ai.service';
 import { YoutubeService } from '../../../video/youtube/youtube.service';
@@ -106,30 +107,42 @@ export class OrchestratorService {
       return;
     }
 
-    // Lock the day plan by setting status to generating
+    // Lock the day plan
     dayPlan.status = 'generating';
     await this.dayPlanRepository.save(dayPlan);
 
     try {
-      // 0. Clean up existing tasks
+      // Clean up any existing tasks
       await this.taskRepository.delete({ dayPlanId });
 
-      // 1. PHASE: BLUEPRINTING (Thinking)
-      const blueprint = await this.generateDayBlueprint(
-        dayPlan.dayNumber,
-        goal,
-        dayPlan.programId,
-      );
+      // ── PHASE: BLUEPRINTING ──────────────────────────────────────────────
+      // Branch: use skeleton (adaptive fill) if available, otherwise fall back
+      // to legacy full-generation path.
+      let blueprint: AiDraftTask[];
 
-      // 2. PHASE: SHELL CREATION (Instant)
+      if (dayPlan.skeletonStatus === 'ready' && dayPlan.skeleton) {
+        this.logger.log(
+          `DayPlan ${dayPlanId} has skeleton — using adaptive fill path (Day ${dayPlan.dayNumber})`,
+        );
+        blueprint = await this.adaptiveFillFromSkeleton(dayPlan, goal);
+      } else {
+        this.logger.log(
+          `DayPlan ${dayPlanId} has no skeleton — using legacy full-generation path (Day ${dayPlan.dayNumber})`,
+        );
+        blueprint = await this.generateDayBlueprint(
+          dayPlan.dayNumber,
+          goal,
+          dayPlan.programId,
+        );
+      }
+
+      // ── PHASE: SHELL CREATION ────────────────────────────────────────────
       const shards = await this.shardRepository.find();
       const tasks: Task[] = [];
 
       for (let i = 0; i < blueprint.length; i++) {
         const draft = blueprint[i];
-
         const shard = this.resolveShard(draft, shards);
-
         const { mobileType, pattern } = this.detectPattern(shard);
 
         const task = this.taskRepository.create({
@@ -143,15 +156,14 @@ export class OrchestratorService {
             ...draft,
             pattern,
             shardId: shard.id,
-            status: 'hydrating', // Mark as processing
+            status: 'hydrating',
           },
         });
         tasks.push(await this.taskRepository.save(task));
       }
 
-      // 3. PHASE: HYDRATION (Resource Fetching with Retries)
-      // We do this in the background, but prioritize the first few tasks
-      await this.hydrateDayResources(tasks, shards, goal, dayPlan.id)
+      // ── PHASE: HYDRATION ─────────────────────────────────────────────────
+      await this.hydrateDayResources(tasks, shards, goal, dayPlan.id, dayPlan)
         .catch(async (err) => {
           this.logger.error(
             `Background Hydration Failed for DayPlan ${dayPlan.id}: ${err.message}`,
@@ -159,7 +171,6 @@ export class OrchestratorService {
           await this.dayPlanRepository.update(dayPlanId, { status: 'failed' });
         })
         .finally(async () => {
-          // Ensure Program is marked as ready once initial hydration attempt is done
           const program = await this.programRepository.findOne({
             where: { id: dayPlan.programId },
           });
@@ -182,7 +193,6 @@ export class OrchestratorService {
       );
       await this.dayPlanRepository.update(dayPlanId, { status: 'failed' });
 
-      // Also ensure program is marked ready if failed so user isn't stuck
       const program = await this.programRepository.findOne({
         where: { id: dayPlan.programId },
       });
@@ -195,11 +205,161 @@ export class OrchestratorService {
     }
   }
 
+  /**
+   * PHASE 2: Adaptive Fill
+   * Uses the pre-baked skeleton to skip expensive shard selection.
+   * Fetches real user context (journals, quiz scores, completion rate)
+   * so the AI generates genuinely personalised content.
+   */
+  private async adaptiveFillFromSkeleton(
+    dayPlan: DayPlan,
+    goal: string,
+  ): Promise<AiDraftTask[]> {
+    const skeleton = dayPlan.skeleton!;
+
+    // Fetch the pre-selected shards (already decided in skeleton phase)
+    const shards = await this.shardRepository.find({
+      where: { name: In(skeleton.selectedShards) },
+    });
+
+    // Fetch real user context — this is what makes personalisation work
+    const [pastJournals, pastQueries, completionStats] = await Promise.all([
+      this.fetchPastJournals(dayPlan.programId, dayPlan.dayNumber),
+      this.fetchPastVideoQueries(dayPlan.programId, dayPlan.dayNumber),
+      this.fetchCompletionStats(dayPlan.programId, dayPlan.dayNumber),
+    ]);
+
+    const shardList = shards
+      .map((s) => `- ${s.name} [${s.category}]: ${s.description}`)
+      .join('\n');
+
+    const prompt = `
+You are filling in the content for Day ${dayPlan.dayNumber} of a personalised learning program.
+
+GOAL: "${goal}"
+THEME: "${skeleton.theme}"
+FOCUS AREAS: ${skeleton.focusAreas.join(', ')}
+DAY DIFFICULTY: ${skeleton.difficultyArc}/10
+VIDEO TOPIC INTENT: "${skeleton.videoIntent}"
+JOURNAL FOCUS: "${skeleton.journalFocus}"
+
+ASSIGNED SHARDS — use EXACTLY these, in this order:
+${shardList}
+
+USER CONTEXT (use this to personalise the content):
+- Past video search queries (DO NOT repeat any): ${pastQueries.length > 0 ? pastQueries.join(', ') : 'None yet.'}
+- Past journal entries: ${pastJournals.length > 0 ? pastJournals.join('\n') : 'None yet.'}
+- Tasks completed so far: ${completionStats.completed} completed, ${completionStats.missed} missed
+${completionStats.missed > completionStats.completed ? '- They are struggling — keep today manageable and encouraging.' : '- They are doing well — push them a little harder today.'}
+
+WORDING STYLE: 5th-grade English. Punchy. NO AI jargon (embark, vital, journey, tailored).
+
+OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
+[
+  {
+    "shardName": "exact-shard-name",
+    "category": "video|audio|quiz|journal|consistency",
+    "modality": "shard modality",
+    "title": "Action Title",
+    "description": "Short summary",
+    "searchQuery": "YouTube search query (video only, not a repeat)",
+    "questions": ["Q1?", "Q2?"],
+    "narrationScript": "600+ word coaching script (audio only)",
+    "scenario": "Decision scenario (problem-solving only)",
+    "options": [{ "id": "1", "text": "...", "feedback": "...", "correct": false }]
+  }
+]`.trim();
+
+    const result = await this.aiService.generateCustomJson<
+      | { tasks?: AiDraftTask[]; blueprint?: AiDraftTask[] }
+      | AiDraftTask[]
+    >(prompt, []);
+
+    if (result && !Array.isArray(result)) {
+      if (result.tasks && Array.isArray(result.tasks)) return result.tasks;
+      if (result.blueprint && Array.isArray(result.blueprint)) return result.blueprint;
+      return [];
+    }
+    return Array.isArray(result) ? result : [];
+  }
+
+  private async fetchPastJournals(
+    programId: string,
+    currentDayNumber: number,
+  ): Promise<string[]> {
+    try {
+      const pastTasks = await this.taskRepository
+        .createQueryBuilder('task')
+        .innerJoinAndSelect('task.dayPlan', 'dayPlan')
+        .where('dayPlan.program_id = :programId', { programId })
+        .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
+        .andWhere('task.type = :type', { type: 'journal' })
+        .andWhere('task.content IS NOT NULL')
+        .orderBy('dayPlan.day_number', 'DESC')
+        .take(5)
+        .getMany();
+
+      return pastTasks
+        .filter((t) => t.content && t.content.length > 10)
+        .map((t) => `Day ${t.dayPlan.dayNumber}: "${t.content}"`);
+    } catch {
+      return [];
+    }
+  }
+
+  private async fetchPastVideoQueries(
+    programId: string,
+    currentDayNumber: number,
+  ): Promise<string[]> {
+    try {
+      const pastTasks = await this.taskRepository
+        .createQueryBuilder('task')
+        .innerJoinAndSelect('task.dayPlan', 'dayPlan')
+        .where('dayPlan.program_id = :programId', { programId })
+        .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
+        .andWhere('task.type = :type', { type: 'video' })
+        .getMany();
+
+      return pastTasks
+        .filter((t) => {
+          const m = t.metadata as Record<string, any>;
+          return m?.searchQuery;
+        })
+        .map((t) => {
+          const m = t.metadata as Record<string, any>;
+          return m.searchQuery as string;
+        });
+    } catch {
+      return [];
+    }
+  }
+
+  private async fetchCompletionStats(
+    programId: string,
+    currentDayNumber: number,
+  ): Promise<{ completed: number; missed: number }> {
+    try {
+      const pastTasks = await this.taskRepository
+        .createQueryBuilder('task')
+        .innerJoin('task.dayPlan', 'dayPlan')
+        .where('dayPlan.program_id = :programId', { programId })
+        .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
+        .select(['task.completed'])
+        .getMany();
+
+      const completed = pastTasks.filter((t) => t.completed).length;
+      return { completed, missed: pastTasks.length - completed };
+    } catch {
+      return { completed: 0, missed: 0 };
+    }
+  }
+
   private async generateDayBlueprint(
     dayNumber: number,
     goal: string,
     programId?: string,
   ): Promise<AiDraftTask[]> {
+
     /**
      * SEMANTIC MAPPING LOGIC:
      * 1. Calculate target intensity based on program progression (e.g., lower for Day 1).
@@ -470,8 +630,8 @@ export class OrchestratorService {
     shards: TaskShard[],
     goal: string,
     dayPlanId: string,
+    dayPlan?: DayPlan,
   ) {
-    // Execute all tasks in parallel to speed up hydration and avoid Vercel 60s timeout
     await Promise.all(
       tasks.map(async (task) => {
         try {
@@ -480,7 +640,6 @@ export class OrchestratorService {
           if (!shard) throw new Error(`Shard not found for task ${task.id}`);
           await this.hydrateSingleTask(task, shard, goal, dayPlanId);
 
-          // Mark task as ready
           metadata.status = 'ready';
           task.metadata = metadata;
           await this.taskRepository.save(task);
@@ -493,8 +652,55 @@ export class OrchestratorService {
       }),
     );
 
-    // Mark DayPlan as ready when all critical tasks are done
+    // Mark DayPlan as ready
     await this.dayPlanRepository.update(dayPlanId, { status: 'ready' });
+
+    // Record progress so the 8pm scheduler knows which day was last hydrated.
+    // We do NOT chain immediately (user hasn't journaled yet — no context for adaptive fill).
+    // EXCEPTION: Day 1 chains to Day 2 immediately since there's no journal to lose.
+    if (dayPlan) {
+      const program = await this.programRepository.findOne({
+        where: { id: dayPlan.programId },
+      });
+      if (program) {
+        const currentLastHydrated = program.metadata?.lastHydratedDay ?? 0;
+        if (dayPlan.dayNumber > currentLastHydrated) {
+          await this.programRepository.update(program.id, {
+            metadata: {
+              ...(program.metadata || {}),
+              lastHydratedDay: dayPlan.dayNumber,
+            },
+          });
+        }
+
+        // Chain Day 2 immediately after Day 1 — no journal context to lose yet
+        if (dayPlan.dayNumber === 1 && 2 <= program.duration) {
+          const day2 = await this.dayPlanRepository.findOne({
+            where: { programId: program.id, dayNumber: 2 },
+          });
+          if (day2 && day2.status === 'pending') {
+            this.logger.log(
+              `Day 1 complete — immediately chaining Day 2 hydration for program ${program.id}`,
+            );
+            const handle = await triggerHydrateDay({
+              dayPlanId: day2.id,
+              goalText: goal,
+              params: { ...(program.metadata || {}), duration: program.duration },
+            });
+            if (!handle) {
+              this.logger.warn(
+                `Trigger.dev unavailable — hydrating Day 2 synchronously`,
+              );
+              this.orchestrateDay(day2.id, goal).catch((e) =>
+                this.logger.error(
+                  `Day 2 sync hydration failed: ${e instanceof Error ? e.message : String(e)}`,
+                ),
+              );
+            }
+          }
+        }
+      }
+    }
   }
 
   private async hydrateSingleTask(

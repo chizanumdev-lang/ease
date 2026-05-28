@@ -10,6 +10,7 @@ import {
   Index,
 } from 'typeorm';
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
+import { GraphQLJSON } from 'graphql-type-json';
 import { Program } from './program.entity';
 import { Task } from '../../tasks/entities/task.entity';
 import { AudioTrack } from '../../audio/entities/audio-track.entity';
@@ -32,7 +33,32 @@ export class DayPlan {
 
   @Field()
   @Column({ default: 'pending' })
-  status: string; // 'pending' | 'ready' | 'failed'
+  status: string; // 'pending' | 'generating' | 'ready' | 'failed'
+
+  /**
+   * Phase 1 skeleton: pre-baked structure generated cheaply at program creation.
+   * Contains shard selections, theme, difficulty arc, and content intent.
+   * Populated before any Task records exist.
+   */
+  @Field(() => GraphQLJSON, { nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
+  skeleton: {
+    selectedShards: string[];  // exact shard names, one per category
+    theme: string;
+    focusAreas: string[];
+    videoIntent: string;       // broad topic for YouTube search
+    journalFocus: string;      // what aspect to prompt the user on
+    difficultyArc: number;     // 1–10
+  } | null;
+
+  /**
+   * Tracks whether Phase 1 skeleton has been generated for this day.
+   * 'none'  → not yet generated (use legacy generateDayBlueprint fallback)
+   * 'ready' → skeleton exists, orchestrator uses adaptiveFillFromSkeleton
+   */
+  @Field()
+  @Column({ default: 'none', name: 'skeleton_status' })
+  skeletonStatus: string;
 
   @Field(() => [String], { nullable: true })
   @Column({ type: 'jsonb', nullable: true, name: 'focus_areas' })

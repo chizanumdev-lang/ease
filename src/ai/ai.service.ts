@@ -546,6 +546,7 @@ export class AiService implements OnModuleInit {
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
+        max_tokens: 4000,
       }),
     });
     if (!res.ok)
@@ -588,6 +589,7 @@ export class AiService implements OnModuleInit {
         model: 'meta-llama/llama-3.1-8b-instruct', // Highly stable Llama-3.1-8B model on OpenRouter
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
+        max_tokens: 4000,
       }),
     });
     if (!res.ok)

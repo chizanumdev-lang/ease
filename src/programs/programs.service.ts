@@ -31,6 +31,7 @@ import { AudioService } from '../audio/audio.service';
 import { AudioMixerService } from '../audio/audio-mixer.service';
 import { RitualsService } from '../audio/rituals.service';
 import { OrchestratorService } from '../modules/engine/services/orchestrator.service';
+import { SkeletonService } from '../modules/engine/services/skeleton.service';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
@@ -98,6 +99,7 @@ export class ProgramsService {
     private ritualsService: RitualsService,
     private progressionService: ProgressionService,
     private orchestratorService: OrchestratorService,
+    private skeletonService: SkeletonService,
     private configService: ConfigService,
   ) {}
 
@@ -189,7 +191,7 @@ export class ProgramsService {
           });
 
           if (program) {
-            const todayNum = await this.calculateCurrentDayNumber(program);
+            const todayNum = this.calculateCurrentDayNumber(program);
             const tomorrowNum = todayNum + 1;
 
             if (tomorrowNum <= program.duration) {
@@ -197,27 +199,42 @@ export class ProgramsService {
                 where: { programId: program.id, dayNumber: tomorrowNum },
               });
 
-              if (tomorrow && tomorrow.status === 'pending') {
-                this.logger.log(
-                  `Scheduled hydration for user ${user.id}: Queuing Day ${tomorrowNum}`,
-                );
-                const handle = await triggerHydrateDay({
-                  dayPlanId: tomorrow.id,
-                  goalText: program.goal?.description || 'Goal',
-                  params: { ...program.metadata, duration: program.duration },
-                });
-                if (!handle) {
-                  this.logger.warn(
-                    `Trigger.dev unavailable, hydrating Day ${tomorrowNum} synchronously`,
+              if (tomorrow) {
+                const needsHydration =
+                  tomorrow.status === 'pending' || this.isDayStalled(tomorrow);
+
+                if (needsHydration) {
+                  if (this.isDayStalled(tomorrow)) {
+                    this.logger.warn(
+                      `Day ${tomorrowNum} stalled in generating state — resetting to pending before re-queue`,
+                    );
+                    tomorrow.status = 'pending';
+                    await this.dayPlanRepository.save(tomorrow);
+                  }
+
+                  this.logger.log(
+                    `Scheduled hydration for user ${user.id}: Queuing Day ${tomorrowNum}`,
                   );
-                  await this.hydrateDay(
-                    tomorrow.id,
-                    program.goal?.description || 'Goal',
-                  ).catch((e) =>
-                    this.logger.error(
-                      `Sync hydration failed for Day ${tomorrowNum}: ${e instanceof Error ? e.message : String(e)}`,
-                    ),
-                  );
+                  const handle = await triggerHydrateDay({
+                    dayPlanId: tomorrow.id,
+                    goalText: program.goal?.description || 'Goal',
+                    params: { ...program.metadata, duration: program.duration },
+                  });
+                  if (!handle) {
+                    this.logger.warn(
+                      `Trigger.dev unavailable, hydrating Day ${tomorrowNum} synchronously`,
+                    );
+                    await this.hydrateDay(
+                      tomorrow.id,
+                      program.goal?.description || 'Goal',
+                    ).catch((e) =>
+                      this.logger.error(
+                        `Sync hydration failed for Day ${tomorrowNum}: ${
+                          e instanceof Error ? e.message : String(e)
+                        }`,
+                      ),
+                    );
+                  }
                 }
               }
             }
@@ -250,12 +267,22 @@ export class ProgramsService {
     }
   }
 
-  private calculateCurrentDayNumber(program: Program): Promise<number> {
-    // Simple logic: days since program.createdAt (capped by duration)
-    const start = program.createdAt.getTime();
-    const diff = Date.now() - start;
-    return Promise.resolve(
-      Math.min(program.duration, Math.floor(diff / (1000 * 60 * 60 * 24)) + 1),
+  private calculateCurrentDayNumber(program: Program): number {
+    // Use createdAt as the source of truth — consistent with getTodaysPlan.
+    const startDate = new Date(program.createdAt);
+    startDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.floor(
+      (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    return Math.min(program.duration, Math.max(1, diffDays + 1));
+  }
+
+  private isDayStalled(day: DayPlan): boolean {
+    return (
+      day.status === 'generating' &&
+      Date.now() - new Date(day.updatedAt).getTime() > 5 * 60 * 1000 // 5 minutes
     );
   }
 
@@ -769,7 +796,27 @@ export class ProgramsService {
       await this.dayPlanRepository.save(newDayShells);
     }
 
-    // ─── PHASE 2: Ensure Day 1 is Hydrating/Ready ─────────────────────────────
+    // ─── PHASE 2: Generate Skeleton (cheap, all days at once) ────────────────
+    // This runs BEFORE Day 1 hydration so the orchestrator can use adaptive fill
+    // from the very first day.
+    this.logger.log(
+      `Generating program skeleton for all ${duration} days (program ${program.id})`,
+    );
+    try {
+      await this.skeletonService.generateProgramSkeleton(
+        program.id,
+        goal.description || goal.title || 'Goal',
+        duration,
+        goal.category || 'general',
+      );
+    } catch (err: any) {
+      this.logger.error(
+        `Skeleton generation failed: ${err instanceof Error ? err.message : String(err)}. Falling back to legacy per-day generation.`,
+      );
+      // Non-fatal — orchestrateDay will use legacy generateDayBlueprint fallback
+    }
+
+    // ─── PHASE 3: Ensure Day 1 is Hydrating/Ready ─────────────────────────────
     const day1 = await this.dayPlanRepository.findOne({
       where: { programId: program.id, dayNumber: 1 },
     });
@@ -815,7 +862,9 @@ export class ProgramsService {
       await this.programRepository.save(program);
     }
 
-    // ─── PHASE 3: Dispatch Day 2 to background queue ─────────────────────
+    // ─── PHASE 4: Queue Day 2 immediately (no journal context to lose yet) ───
+    // The orchestrator's Day 1 completion will also trigger this, but we queue
+    // it here as a belt-and-suspenders guarantee.
     const day2 = await this.dayPlanRepository.findOne({
       where: { programId: program.id, dayNumber: 2 },
     });

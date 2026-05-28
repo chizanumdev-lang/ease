@@ -33,7 +33,6 @@ interface ProgramsState {
     fetchProgram: (id: string) => Promise<void>;
     fetchTodayPlan: (programId: string) => Promise<void>;
     updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
-    fetchPreviewMetadata: (goalId?: string, duration?: number, options?: any) => Promise<any>;
     regenerateTaskAsset: (taskId: string) => Promise<Task>;
     
     // Task Chain Actions
@@ -110,23 +109,7 @@ export const useProgramsStore = create<ProgramsState>()(
                 }
             },
 
-            fetchPreviewMetadata: async (goalId, duration = 30, options) => {
-                set({ isLoading: true, error: null });
-                console.log('[Store] Fetching preview metadata:', { goalId, duration, ...options });
-                try {
-                    // Aligning arguments with the new backend DTO structure
-                    const preview = await programsService.getProgramPreview(goalId, duration, options);
-                    set({ isLoading: false });
-                    return preview;
-                } catch (error: any) {
-                    console.error('[Store] Preview fetch failed:', error.response?.data || error.message);
-                    set({
-                        error: error.response?.data?.message?.[0] || error.response?.data?.message || 'Failed to fetch preview',
-                        isLoading: false,
-                    });
-                    throw error;
-                }
-            },
+
 
             fetchActiveProgram: async (skipPlanFetch = false) => {
                 set({ isLoading: !skipPlanFetch, error: null });
