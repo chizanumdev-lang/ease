@@ -197,7 +197,7 @@ const AudioWidget = () => {
                                 morning={todayPlan?.todayRings?.morning || false}
                                 tasks={
                                     todayPlan?.tasks?.length 
-                                        ? todayPlan.tasks.filter(t => t.completed || t.status === 'COMPLETED').length / todayPlan.tasks.length 
+                                        ? todayPlan.tasks.filter(t => t.completed || t.status === 'completed' || t.status === 'skipped').length / todayPlan.tasks.length 
                                         : 0
                                 }
                                 night={todayPlan?.todayRings?.night || false}
