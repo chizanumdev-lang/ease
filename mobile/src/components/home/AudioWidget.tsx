@@ -195,7 +195,11 @@ const AudioWidget = () => {
                         >
                             <CompletionRings 
                                 morning={todayPlan?.todayRings?.morning || false}
-                                tasks={todayPlan?.todayRings?.tasks || false}
+                                tasks={
+                                    todayPlan?.tasks?.length 
+                                        ? todayPlan.tasks.filter(t => t.completed || t.status === 'COMPLETED').length / todayPlan.tasks.length 
+                                        : 0
+                                }
                                 night={todayPlan?.todayRings?.night || false}
                                 size={80}
                                 strokeWidth={8}

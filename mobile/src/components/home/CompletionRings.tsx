@@ -5,7 +5,7 @@ import Svg, { Circle } from 'react-native-svg';
 
 interface CompletionRingsProps {
     morning: boolean;
-    tasks: boolean;
+    tasks: boolean | number;
     night: boolean;
     size?: number;
     strokeWidth?: number;
@@ -27,6 +27,8 @@ export const CompletionRings: React.FC<CompletionRingsProps> = ({
     const r3 = r2 - strokeWidth - 4;
 
     const circumference = (r: number) => 2 * Math.PI * r;
+
+    const taskProgress = typeof tasks === 'number' ? tasks : (tasks ? 1 : 0);
 
     return (
         <View style={[styles.container, { width: size, height: size }]}>
@@ -58,7 +60,7 @@ export const CompletionRings: React.FC<CompletionRingsProps> = ({
                     strokeLinecap="round"
                     fill="none" 
                     strokeDasharray={`${circumference(r2)}`}
-                    strokeDashoffset={tasks ? 0 : circumference(r2)}
+                    strokeDashoffset={circumference(r2) * (1 - Math.min(1, Math.max(0, taskProgress)))}
                     transform={`rotate(-90 ${center} ${center})`}
                 />
                 <Circle 

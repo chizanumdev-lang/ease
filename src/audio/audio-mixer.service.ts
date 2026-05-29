@@ -398,7 +398,7 @@ export class AudioMixerService {
       `Setting final mixed track duration to: ${finalDuration} seconds`,
     );
 
-    const voiceVolume = isGoogleTts ? 0.8 : 0.15;
+    const voiceVolume = 0.8; // Set to 0.8 for both engines to ensure audibility
     const backgroundVolume = 0.8;
 
     return new Promise<string>((resolve, reject) => {

@@ -138,7 +138,7 @@ export const useAudioStore = create<AudioState>()(
                 for (const ritualMins of rituals) {
                     const diff = ritualMins - currentMinutes;
                     
-                    if (currentMinutes >= ritualMins && currentMinutes < ritualMins + 60) {
+                    if (currentMinutes >= ritualMins && currentMinutes < ritualMins + 240) {
                         newStatus = 'READY';
                         break;
                     } else if (diff > 0 && diff <= 30) {
