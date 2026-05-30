@@ -17,6 +17,7 @@ export const hydrateDayTask = task({
     goalText: string;
     params: Record<string, any>;
     appUrl: string;
+    internalKey?: string;
   }) => {
     // Call back to our NestJS API to perform the hydration
     // This keeps all business logic in the NestJS app
@@ -24,7 +25,7 @@ export const hydrateDayTask = task({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-key': process.env.INTERNAL_API_KEY || '',
+        'x-internal-key': payload.internalKey || process.env.INTERNAL_API_KEY || '',
       },
       body: JSON.stringify({
         dayPlanId: payload.dayPlanId,
@@ -58,12 +59,13 @@ export const generateAudioTask = task({
     theme: string;
     audioFilename: string;
     appUrl: string;
+    internalKey?: string;
   }) => {
     const res = await fetch(`${payload.appUrl}/api/internal/generate-audio`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-key': process.env.INTERNAL_API_KEY || '',
+        'x-internal-key': payload.internalKey || process.env.INTERNAL_API_KEY || '',
       },
       body: JSON.stringify({
         audioTrackId: payload.audioTrackId,
@@ -98,7 +100,9 @@ export async function triggerHydrateDay(payload: {
         ? `https://${process.env.VERCEL_URL}`
         : 'http://localhost:3000');
 
-    return await tasks.trigger('hydrate-day', { ...payload, appUrl });
+    const internalKey = process.env.INTERNAL_API_KEY || '';
+
+    return await tasks.trigger('hydrate-day', { ...payload, appUrl, internalKey });
   } catch (err) {
     // Trigger.dev not configured or unreachable — caller should handle synchronously
     return null;
@@ -117,7 +121,9 @@ export async function triggerGenerateAudio(payload: {
         ? `https://${process.env.VERCEL_URL}`
         : 'http://localhost:3000');
 
-    return await tasks.trigger('generate-audio', { ...payload, appUrl });
+    const internalKey = process.env.INTERNAL_API_KEY || '';
+
+    return await tasks.trigger('generate-audio', { ...payload, appUrl, internalKey });
   } catch (err) {
     return null;
   }
