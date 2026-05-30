@@ -193,18 +193,27 @@ const AudioWidget = () => {
                             activeOpacity={0.7}
                             style={styles.ringsContainer}
                         >
-                            <CompletionRings 
-                                morning={todayPlan?.todayRings?.morning || false}
-                                tasks={
-                                    todayPlan?.tasks?.length 
-                                        ? todayPlan.tasks.filter(t => t.completed || t.status === 'completed' || t.status === 'skipped').length / todayPlan.tasks.length 
-                                        : 0
-                                }
-                                night={todayPlan?.todayRings?.night || false}
-                                size={80}
-                                strokeWidth={8}
-                            />
-                            <Text style={[styles.ringsLabel, { color: colors.textMuted }]}>Mastery</Text>
+                            {(() => {
+                                const tasksArr = todayPlan?.tasks || [];
+                                const total = tasksArr.length;
+                                const completed = tasksArr.filter(t => t.completed || t.status === 'completed' || t.status === 'skipped').length;
+                                const fraction = total > 0 ? completed / total : 0;
+                                
+                                return (
+                                    <>
+                                        <CompletionRings 
+                                            morning={todayPlan?.todayRings?.morning || false}
+                                            tasks={fraction}
+                                            night={todayPlan?.todayRings?.night || false}
+                                            size={80}
+                                            strokeWidth={8}
+                                        />
+                                        <Text style={[styles.ringsLabel, { color: colors.textMuted, marginTop: 4, fontSize: 10 }]}>
+                                            Mastery ({completed}/{total})
+                                        </Text>
+                                    </>
+                                );
+                            })()}
                         </TouchableOpacity>
                     </View>
                 </LinearGradient>
