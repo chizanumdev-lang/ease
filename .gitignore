@@ -71,4 +71,5 @@ search-*.js
 get_transcript.js
 force-hydrate.js
 list-shards.js
-inspect-schema.js
+inspect-schema.jstests/e2e
+local_scripts/

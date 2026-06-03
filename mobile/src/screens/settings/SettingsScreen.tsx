@@ -359,18 +359,7 @@ export default function SettingsScreen({ navigation }: Props) {
                                 trackColor={{ false: isDark ? colors.outline : colors.surfaceContainerHighest, true: colors.primary }}
                             />
                         </View>
-                        <View style={[styles.divider, { backgroundColor: colors.outlineVariant }]} />
-                        <View style={styles.settingRow}>
-                            <View style={styles.settingInfo}>
-                                <Text style={[styles.settingLabel, { color: colors.text }]}>Floating Companion</Text>
-                                <Text style={[styles.settingDesc, { color: colors.textMuted }]}>Show the floating bubble when audio is active.</Text>
-                            </View>
-                            <Switch
-                                value={user?.settings?.showFloatingBubble ?? true}
-                                onValueChange={(val) => handleUpdatePreference('showFloatingBubble', val)}
-                                trackColor={{ false: isDark ? colors.outline : colors.surfaceContainerHighest, true: colors.primary }}
-                            />
-                        </View>
+
                     </View>
                 </View>
 

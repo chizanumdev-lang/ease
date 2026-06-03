@@ -938,11 +938,11 @@ You are creating ${typeContext[type]} for a highly effective, long-form session.
 
 **Session Structure**:
 1. **Introduction (approx. 1 min)**: Set the space, guide the user to take a deep breath, ground themselves, and introduce the theme: "${dayTheme}". Connect deeply with the psychological shifts and cognitive rewards of this goal.
-2. **Affirmations Block**: Provide a robust, dense block of 30-40 powerful, positive, and deeply descriptive subliminal affirmations specific to the goal. These should be long and evocative (e.g., "I am effortlessly manifesting my dreams into reality...", "My mind is a fortress of focus and unyielding calm...").
+2. **Affirmations Block**: Provide a robust, dense block of 50-70 powerful, positive, deeply hypnotic, and highly descriptive subliminal affirmations specific to the goal. These should be extremely long, evocative, and repetitive, drawing inspiration from the most popular YouTube subliminals and "Train Your Subconscious" videos (e.g., "I am effortlessly and continuously manifesting my highest visions into reality with every breath I take...", "My mind is a fortress of absolute focus, unyielding calm, and unlimited potential..."). Make them poetic, commanding, and transformative.
 3. **Closing (approx. 30 seconds)**: Gently bring the focus back while grounding the new habits, concluding with a clear, positive next step or encouragement.
 
 **Requirements**:
-1. **Pacing & Tone**: Friendly, encouraging, clear, and steady.
+1. **Pacing & Tone**: Hypnotic, friendly, encouraging, clear, and steady.
 2. **Binaural Frequency**: Specify the optimal frequency for this session type:
    ${type === 'morning' ? '- Recommended: 10-14 Hz (Alpha/Beta for alertness)' : ''}
    ${type === 'night' ? '- Recommended: 0.5-4 Hz (Delta for deep sleep preparation)' : ''}
@@ -956,7 +956,7 @@ You are creating ${typeContext[type]} for a highly effective, long-form session.
   "affirmations": [
     "I am mastering...",
     "My mind is..."
-  ], // 30-40 items
+  ], // 50-70 items
   "introNarration": "...", // 1-minute intro script
   "outroNarration": "...", // 30-second outro script
   "theme": "${dayTheme}"

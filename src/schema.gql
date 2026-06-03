@@ -89,7 +89,6 @@ type DailyTask {
   updatedAt: DateTime!
   videoUrl: String
   watchedSeconds: Int!
-  xpReward: Int!
 }
 
 """
@@ -372,8 +371,6 @@ type WeeklyAnalyticsDto {
   completionRate: Int!
   currentStreak: Int!
   dailyCompletions: [DailyCompletion!]!
-  pointsEarned: Int!
-  progression: JSON
   quizAverage: Int!
   todayCompletionRate: Int!
   weeklyCompletionRate: Int!

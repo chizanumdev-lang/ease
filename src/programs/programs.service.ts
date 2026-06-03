@@ -153,33 +153,9 @@ export class ProgramsService {
         const localHour = parseInt(partsMap.hour, 10);
         const localDateStr = `${partsMap.year}-${partsMap.month}-${partsMap.day}`;
 
-        // 1. Midnight: Generate Morning Ritual for Today
-        if (localHour === 0) {
-          this.logger.log(
-            `Generating morning ritual for user ${user.id} at midnight local time`,
-          );
-          this.ritualsService
-            .generateRitual(user.id, 'morning', localDateStr)
-            .catch((err: any) =>
-              this.logger.error(
-                `Scheduled morning ritual failed for user ${user.id}: ${err instanceof Error ? err.message : String(err)}`,
-              ),
-            );
-        }
-
-        // 2. Midday (12:00): Generate Night Ritual for Today
-        if (localHour === 12) {
-          this.logger.log(
-            `Generating night ritual for user ${user.id} at noon local time`,
-          );
-          this.ritualsService
-            .generateRitual(user.id, 'night', localDateStr)
-            .catch((err: any) =>
-              this.logger.error(
-                `Scheduled night ritual failed for user ${user.id}: ${err instanceof Error ? err.message : String(err)}`,
-              ),
-            );
-        }
+        // Midnight and Midday daily rituals generation have been removed.
+        // Rituals are now generated exactly ONCE per active program (Goal)
+        // inside the audio.resolver.ts when requested.
 
         // 3. 20:00 (8 PM): Hydrate Tomorrow's Plan
         if (localHour === 20) {
@@ -356,19 +332,8 @@ export class ProgramsService {
           );
         }
 
-        const user = await this.usersService.findById(day.program.userId);
-        const userTz = user?.settings?.timezone || 'UTC';
-        const localDateStr = new Intl.DateTimeFormat('sv-SE', {
-          timeZone: userTz,
-        }).format(new Date());
-
-        this.ritualsService
-          .generateDailyRituals(day.program.userId, localDateStr)
-          .catch((err: any) =>
-            this.logger.error(
-              `Initial ritual generation failed for user ${day.program.userId} on ${localDateStr}: ${err instanceof Error ? err.message : String(err)}`,
-            ),
-          );
+        // Daily ritual hydration inside orchestrateDay removed.
+        // Handled lazily exactly once per program via getRituals.
         this.logger.log(`Successfully hydrated Day ${dayId}`);
       }
     } catch (error) {
