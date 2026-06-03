@@ -11,7 +11,7 @@ import {
   Badge,
   DailyCompletion,
 } from './dto/weekly-analytics.dto';
-import { ProgressionService } from '../programs/progression.service';
+
 
 @Injectable()
 export class AnalyticsService {
@@ -26,7 +26,7 @@ export class AnalyticsService {
     private dayPlanRepository: Repository<DayPlan>,
     @InjectRepository(Program)
     private programRepository: Repository<Program>,
-    private progressionService: ProgressionService,
+
   ) {}
 
   async getWeeklyAnalytics(userId: string): Promise<WeeklyAnalyticsDto> {
@@ -54,15 +54,13 @@ export class AnalyticsService {
       // Calculate quiz average
       const quizAverage = await this.calculateQuizAverage(userId);
 
-      // Calculate points
-      const pointsEarned = await this.calculatePoints(userId);
+
 
       // Get badges
       const badges = await this.getBadges(userId, {
         currentStreak,
         completionRate,
         quizAverage,
-        pointsEarned,
       });
 
       // Get daily completions for chart
@@ -72,31 +70,14 @@ export class AnalyticsService {
         now,
       );
 
-      // Get Active Goal to determine progression variant
-      const activeGoal = await this.programRepository
-        .findOne({
-          where: { userId },
-          order: { createdAt: 'DESC' },
-          relations: ['goal'],
-        })
-        .then((p) => p?.goal);
-
-      // Get Progression Data
-      const progression = this.progressionService.getProgression(
-        pointsEarned,
-        activeGoal?.category,
-      );
-
       return {
         currentStreak,
         completionRate,
         todayCompletionRate,
         weeklyCompletionRate,
         quizAverage,
-        pointsEarned,
         badges,
         dailyCompletions,
-        progression,
       };
     } catch (error) {
       console.error('[AnalyticsService] Error in getWeeklyAnalytics:', error);
@@ -245,19 +226,6 @@ export class AnalyticsService {
     return Math.round(totalScore / attempts.length);
   }
 
-  private async calculatePoints(userId: string): Promise<number> {
-    const taskPointsResult = await this.taskRepository
-      .createQueryBuilder('task')
-      .innerJoin('task.dayPlan', 'dayPlan')
-      .innerJoin('dayPlan.program', 'program')
-      .where('program.userId = :userId', { userId })
-      .andWhere('task.completed = :completed', { completed: true })
-      .select('SUM(task.xp_reward)', 'sum')
-      .getRawOne();
-
-    const taskPoints = parseInt(taskPointsResult?.sum || '0', 10);
-    return taskPoints;
-  }
 
   private async getBadges(
     userId: string,
@@ -265,18 +233,10 @@ export class AnalyticsService {
       currentStreak: number;
       completionRate: number;
       quizAverage: number;
-      pointsEarned: number;
     },
   ): Promise<Badge[]> {
     const allBadges: Badge[] = [
-      {
-        id: 'first-step',
-        name: 'First Step',
-        description: 'Complete your first task',
-        icon: '🎯',
-        earned: stats.pointsEarned >= 10,
-        earnedAt: stats.pointsEarned >= 10 ? new Date() : undefined,
-      },
+
       {
         id: 'week-warrior',
         name: 'Week Warrior',
@@ -301,14 +261,7 @@ export class AnalyticsService {
         earned: stats.completionRate >= 80,
         earnedAt: stats.completionRate >= 80 ? new Date() : undefined,
       },
-      {
-        id: 'point-collector',
-        name: 'Point Collector',
-        description: 'Earn 100+ points',
-        icon: '💎',
-        earned: stats.pointsEarned >= 100,
-        earnedAt: stats.pointsEarned >= 100 ? new Date() : undefined,
-      },
+
       {
         id: 'month-master',
         name: 'Month Master',

@@ -380,7 +380,6 @@ export class AdminService {
           description: 'Immersive 3D audio experience for state-shifting',
           type: 'audio',
           defaultDuration: 12,
-          defaultXp: 60,
           promptInstructions:
             'Primary tool for meditation, focus, or sleep preparation. AI should select this when the goal requires a specific mental state shift.',
         },
@@ -389,7 +388,6 @@ export class AdminService {
           description: 'Visual lesson or instructional content',
           type: 'video',
           defaultDuration: 20,
-          defaultXp: 100,
           promptInstructions:
             'Use for skill acquisition or demonstration. Select this when the user needs to see a technique in action.',
         },
@@ -398,7 +396,6 @@ export class AdminService {
           description: 'Interactive assessment of learned material',
           type: 'quiz',
           defaultDuration: 5,
-          defaultXp: 40,
           promptInstructions:
             'Reinforcement. Place immediately following a Video Masterclass to verify comprehension.',
         },
@@ -409,7 +406,6 @@ export class AdminService {
           description: '25 min intense work, 5 min rest',
           type: 'focus',
           defaultDuration: 30,
-          defaultXp: 80,
           promptInstructions:
             'Select for high cognitive load tasks where focus is flagging or the user feels overwhelmed.',
         },
@@ -418,7 +414,6 @@ export class AdminService {
           description: 'Categorize tasks by urgency and importance',
           type: 'focus',
           defaultDuration: 15,
-          defaultXp: 50,
           promptInstructions:
             'Strategic task. Use when the user expresses decision paralysis or has too many competing priorities.',
         },
@@ -427,7 +422,6 @@ export class AdminService {
           description: 'Long-term roadmap and vision planning',
           type: 'focus',
           defaultDuration: 45,
-          defaultXp: 120,
           promptInstructions:
             'Leadership/Career shard. Use for high-level planning and big-picture thinking.',
         },
@@ -436,7 +430,6 @@ export class AdminService {
           description: 'Systematic clearance of all pending communications',
           type: 'focus',
           defaultDuration: 20,
-          defaultXp: 40,
           promptInstructions:
             'Administrative shard. Use to reduce digital clutter and communication overhead.',
         },
@@ -447,7 +440,6 @@ export class AdminService {
           description: '4-4-4-4 rhythmic breathing for nervous system reset',
           type: 'mental',
           defaultDuration: 5,
-          defaultXp: 30,
           promptInstructions:
             'Biological reset. Use for stress management or during high-pressure situations.',
         },
@@ -457,7 +449,6 @@ export class AdminService {
             'Reframe current challenges through the lens of Stoicism',
           type: 'mental',
           defaultDuration: 10,
-          defaultXp: 50,
           promptInstructions:
             'Philosophical shard. Use when the user is facing external obstacles or emotional turbulence.',
         },
@@ -466,7 +457,6 @@ export class AdminService {
           description: 'Mentally walkthrough successful goal achievement',
           type: 'mental',
           defaultDuration: 10,
-          defaultXp: 60,
           promptInstructions:
             'Performance shard. Use before major events like public speaking, competitions, or high-stakes meetings.',
         },
@@ -475,7 +465,6 @@ export class AdminService {
           description: 'Review the day and release cognitive loops',
           type: 'mental',
           defaultDuration: 10,
-          defaultXp: 40,
           promptInstructions:
             'Closure shard. Use in the final block of the day to prepare the brain for sleep.',
         },
@@ -486,7 +475,6 @@ export class AdminService {
           description: '10 mins of natural sunlight exposure',
           type: 'exercise',
           defaultDuration: 10,
-          defaultXp: 50,
           promptInstructions:
             'Biological shard. Primary placement in the first hour of waking to set circadian rhythms.',
         },
@@ -496,7 +484,6 @@ export class AdminService {
             'Specific stretches to counter desk-based sedentary stress',
           type: 'exercise',
           defaultDuration: 5,
-          defaultXp: 30,
           promptInstructions:
             'Health shard. Mandatory for users with desk-based jobs or long study blocks.',
         },
@@ -505,7 +492,6 @@ export class AdminService {
           description: 'Cold shower or plunge for metabolic and dopamine boost',
           type: 'exercise',
           defaultDuration: 5,
-          defaultXp: 100,
           promptInstructions:
             'Resilience shard. High-impact movement for morning energy or mood regulation.',
         },
@@ -514,7 +500,6 @@ export class AdminService {
           description: 'Intentional intake of 500ml water with electrolytes',
           type: 'exercise',
           defaultDuration: 2,
-          defaultXp: 20,
           promptInstructions:
             'Maintenance shard. Select periodically for general health and energy consistency.',
         },
@@ -525,7 +510,6 @@ export class AdminService {
           description: 'Active recall and flashcard review session',
           type: 'focus',
           defaultDuration: 15,
-          defaultXp: 70,
           promptInstructions:
             'Educational shard. Use for long-term memorization and knowledge retention.',
         },
@@ -534,7 +518,6 @@ export class AdminService {
           description: 'Build a low-fidelity version of an idea',
           type: 'focus',
           defaultDuration: 30,
-          defaultXp: 100,
           promptInstructions:
             'Creative shard. Use for innovation, entrepreneurship, or artistic goals.',
         },
@@ -543,7 +526,6 @@ export class AdminService {
           description: 'Active target language practice or listening',
           type: 'focus',
           defaultDuration: 20,
-          defaultXp: 80,
           promptInstructions:
             'Linguistic shard. Select for travel or cognitive development goals.',
         },
@@ -554,7 +536,6 @@ export class AdminService {
           description: 'Send a high-value note to a professional peer',
           type: 'focus',
           defaultDuration: 10,
-          defaultXp: 60,
           promptInstructions:
             'Community shard. Use for career growth and professional relationship building.',
         },
@@ -563,7 +544,6 @@ export class AdminService {
           description: 'Intentional deep conversation with zero distraction',
           type: 'mental',
           defaultDuration: 20,
-          defaultXp: 50,
           promptInstructions:
             'Relational shard. Use for improving social bonds or leadership skills.',
         },
@@ -572,7 +552,6 @@ export class AdminService {
           description: 'Express thanks to someone in your network',
           type: 'mental',
           defaultDuration: 5,
-          defaultXp: 40,
           promptInstructions:
             'Social bond shard. Enhances both user mood and network health.',
         },
@@ -583,7 +562,6 @@ export class AdminService {
           description: 'Zero screen usage for a defined period',
           type: 'mental',
           defaultDuration: 30,
-          defaultXp: 90,
           promptInstructions:
             'Cognitive recovery. Use to reduce screen fatigue or before sleep.',
         },
@@ -592,7 +570,6 @@ export class AdminService {
           description: 'Declutter and organize a specific area of your space',
           type: 'exercise',
           defaultDuration: 15,
-          defaultXp: 50,
           promptInstructions:
             'Life shard. Use to reduce environmental stress and increase focus.',
         },
@@ -601,7 +578,6 @@ export class AdminService {
           description: 'Review expenditures and financial trajectory',
           type: 'focus',
           defaultDuration: 15,
-          defaultXp: 60,
           promptInstructions:
             'Discipline shard. Use for long-term security and financial health goals.',
         },
@@ -610,7 +586,6 @@ export class AdminService {
           description: 'Optimize environment for maximum recovery',
           type: 'mental',
           defaultDuration: 5,
-          defaultXp: 30,
           promptInstructions:
             'Maintenance shard. Crucial for recovery, energy, and mental performance.',
         },

@@ -31,9 +31,6 @@ export class Task {
   @Column({ nullable: true })
   type: string;
 
-  @Field(() => Int)
-  @Column({ default: 10, name: 'xp_reward' })
-  xpReward: number;
 
   @Field(() => Int, { nullable: true })
   @Column({ nullable: true })
