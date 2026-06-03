@@ -931,26 +931,19 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
       task: `an immersive focus session reinforcing a lesson about "${dayTheme}"`,
     };
 
-    const wordCount = Math.max(750, duration * 150); // Targeting at least 750 words for 5-minute sessions to ensure valuable content
     const prompt = `
-You are creating ${typeContext[type]} for a ${duration}-minute session.
+You are creating ${typeContext[type]} for a highly effective, long-form session.
 
 **Goal/Theme**: "${dayTheme}"
 
 **Session Structure**:
-1. **Introduction (1 min)**: Set the space, guide the user to take a deep breath, ground themselves, and introduce today's masterclass theme: "${dayTheme}".
-2. **Core Masterclass & Actionable Steps (Remaining time)**:
-   - Provide high-impact, direct, and non-generic actionable advice that the user can apply immediately.
-   - You MUST include a concrete, real-world live example or a short story/scenario that beautifully illustrates this concept in action.
-   - Weave 10-15 powerful, positive subliminal affirmations specific to the goal (e.g., "I am...," "I possess...") naturally into the continuous narrative.
-   - Explore the deep psychological shifts and cognitive rewards of mastering "${dayTheme}".
-3. **Closing (1 min)**: Gently bring the focus back while grounding the new habits, concluding with a clear, positive next step.
+1. **Introduction (approx. 1 min)**: Set the space, guide the user to take a deep breath, ground themselves, and introduce the theme: "${dayTheme}". Connect deeply with the psychological shifts and cognitive rewards of this goal.
+2. **Affirmations Block**: Provide a robust, dense block of 30-40 powerful, positive, and deeply descriptive subliminal affirmations specific to the goal. These should be long and evocative (e.g., "I am effortlessly manifesting my dreams into reality...", "My mind is a fortress of focus and unyielding calm...").
+3. **Closing (approx. 30 seconds)**: Gently bring the focus back while grounding the new habits, concluding with a clear, positive next step or encouragement.
 
 **Requirements**:
-1. **Word Count**: You MUST generate at least ${wordCount} words for the "backgroundNarration" to fill the ${duration}-minute duration. Do NOT summarize or use lazy filler text; write a high-value, highly engaging, and fully realized voiceover script.
-2. **Pacing & Tone**: Friendly, encouraging, clear, and steady.
-3. **Affirmations**: Provide 10-15 powerful statements in the "affirmations" array.
-4. **Binaural Frequency**: Specify the optimal frequency for this session type:
+1. **Pacing & Tone**: Friendly, encouraging, clear, and steady.
+2. **Binaural Frequency**: Specify the optimal frequency for this session type:
    ${type === 'morning' ? '- Recommended: 10-14 Hz (Alpha/Beta for alertness)' : ''}
    ${type === 'night' ? '- Recommended: 0.5-4 Hz (Delta for deep sleep preparation)' : ''}
    ${type === 'task' ? '- Recommended: 8-12 Hz (Alpha for flow state and learning)' : ''}
@@ -963,8 +956,9 @@ You are creating ${typeContext[type]} for a ${duration}-minute session.
   "affirmations": [
     "I am mastering...",
     "My mind is..."
-  ],
-  "backgroundNarration": "...", // Rich, complete masterclass voiceover script of at least ${wordCount} words containing live examples and actionable advice
+  ], // 30-40 items
+  "introNarration": "...", // 1-minute intro script
+  "outroNarration": "...", // 30-second outro script
   "theme": "${dayTheme}"
 }
 
@@ -989,9 +983,12 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
         affirmations: Array.isArray(data.affirmations)
           ? data.affirmations
           : ['I am growing every day'],
-        backgroundNarration:
-          data.backgroundNarration ||
+        introNarration:
+          data.introNarration ||
           'Take a deep breath and settle into focus...',
+        outroNarration:
+          data.outroNarration ||
+          'Gently return your focus, feeling empowered and refreshed.',
         theme: data.theme || dayTheme,
       };
     } catch (error) {
@@ -1020,7 +1017,8 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
           `I am growing, learning, and progressing every single day`,
           `I choose to act with clarity and absolute presence`,
         ],
-        backgroundNarration,
+        introNarration: `${intro}\n\n${core}`,
+        outroNarration: integration,
         theme: dayTheme,
       };
     }

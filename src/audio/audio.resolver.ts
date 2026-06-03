@@ -23,9 +23,12 @@ export class AudioResolver {
   @Query(() => DailyRitualsResponse, { name: 'getRituals' })
   @UseGuards(JwtAuthGuard)
   async getRituals(
-    @Args('date') date: string,
+    @Args('date') clientDate: string,
     @GetUser() user: User,
   ): Promise<DailyRitualsResponse> {
+    const program = await this.ritualsService.getActiveProgram(user.id);
+    const date = program ? `program_${program.id}` : clientDate;
+
     const rituals = await this.ritualsService.findByDate(user.id, date);
 
     if (rituals.length === 0) {

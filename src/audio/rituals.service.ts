@@ -51,7 +51,7 @@ export class RitualsService {
           date,
           title: 'Generating...',
           url: '',
-          duration: 300,
+          duration: 1800,
           metadata: { status: 'generating' },
         }),
         this.ritualTrackRepository.create({
@@ -60,7 +60,7 @@ export class RitualsService {
           date,
           title: 'Generating...',
           url: '',
-          duration: 600,
+          duration: 3600,
           metadata: { status: 'generating' },
         }),
       ]);
@@ -105,6 +105,13 @@ export class RitualsService {
     }
 
     return { morning, night };
+  }
+
+  async getActiveProgram(userId: string): Promise<Program | null> {
+    return this.programRepository.findOne({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async generateRitual(
@@ -187,7 +194,7 @@ export class RitualsService {
         this.logger.log(`Generating AI ${type} ritual for ${theme}`);
         const scriptData = await this.aiService.generateAudioScript(
           theme,
-          type === 'morning' ? 5 : 10,
+          type === 'morning' ? 30 : 60,
           type,
         );
         metadata = { ...scriptData, source: 'ai' };
@@ -199,7 +206,7 @@ export class RitualsService {
           await this.audioMixerService.createBinauralSubliminalTrack(
             scriptData,
             tempDir,
-            type === 'morning' ? 5 : 10,
+            type === 'morning' ? 30 : 60,
           );
 
         publicUrl = await this.audioService.uploadToCloudinary(
@@ -213,6 +220,7 @@ export class RitualsService {
       if (existing) {
         existing.title = title;
         existing.url = publicUrl;
+        existing.duration = type === 'morning' ? 1800 : 3600;
         existing.metadata = metadata;
         return await this.ritualTrackRepository.save(existing);
       }
@@ -223,7 +231,7 @@ export class RitualsService {
         date,
         title,
         url: publicUrl,
-        duration: type === 'morning' ? 300 : 600,
+        duration: type === 'morning' ? 1800 : 3600,
         metadata,
       });
 

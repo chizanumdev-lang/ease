@@ -31,8 +31,8 @@ async function testAudioGeneration() {
         'Every breath releases tension and brings deep clarity',
         'I flow effortlessly through tasks with confidence and ease',
       ],
-      backgroundNarration:
-        'Take a deep breath. Let go of all analytical thoughts. Let your subconscious absorb the soothing frequencies.',
+      introNarration: 'Take a deep breath. Let go of all analytical thoughts. Let your subconscious absorb the soothing frequencies.',
+      outroNarration: 'Gently return to your surroundings.',
     };
 
     console.log(

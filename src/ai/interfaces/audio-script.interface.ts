@@ -3,6 +3,7 @@ export interface AudioScriptData {
   binauralFrequency: number;
   carrierFrequency: number;
   affirmations: string[];
-  backgroundNarration: string;
+  introNarration: string;
+  outroNarration: string;
   theme: string;
 }
