@@ -1,6 +1,6 @@
 const ENV = process.env.EXPO_PUBLIC_ENV || 'local';
 const LOCAL_URL = process.env.EXPO_PUBLIC_API_URL_LOCAL || 'http://localhost:3000/api';
-const STAGING_URL = process.env.EXPO_PUBLIC_API_URL_STAGING || 'https://ease-amber.vercel.app/api';
+const STAGING_URL = process.env.EXPO_PUBLIC_API_URL_STAGING || 'http://173.212.248.253:3005/api';
 
 export const API_BASE_URL = ENV === 'staging' ? STAGING_URL : LOCAL_URL;
 

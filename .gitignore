@@ -53,3 +53,22 @@ mobile/.expo-shared/
 /graphify-out
 .trigger
 stitch_ease_task_standardization_framework
+
+# Custom Test Scripts
+/performance-tests/
+test-*.ts
+test-*.js
+test_*.js
+check-*.ts
+check-*.js
+fix-*.js
+fix_*.js
+seed-*.ts
+run-*.js
+run_*.js
+debug-*.js
+search-*.js
+get_transcript.js
+force-hydrate.js
+list-shards.js
+inspect-schema.js
