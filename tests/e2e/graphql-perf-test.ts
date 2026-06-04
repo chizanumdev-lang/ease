@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://173.212.248.253:3005';
+const BASE_URL = 'https://api.easepro.app';
 const REST_API = `${BASE_URL}/api`;
 const GRAPHQL_API = `${BASE_URL}/graphql`;
 
