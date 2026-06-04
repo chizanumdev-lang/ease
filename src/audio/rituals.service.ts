@@ -255,6 +255,28 @@ export class RitualsService {
       this.logger.error(
         `Failed to generate ${type} ritual for program ${programId}: ${error.message}`,
       );
+
+      // Save failed state so UI knows not to spin forever
+      if (existing) {
+        existing.metadata = { 
+          ...(typeof existing.metadata === 'object' ? existing.metadata : {}), 
+          status: 'failed', 
+          error: error.message 
+        };
+        await this.ritualTrackRepository.save(existing).catch(e => this.logger.error('Failed to save error state', e));
+      } else {
+        const failedRitual = this.ritualTrackRepository.create({
+          userId,
+          programId,
+          ritualType: type,
+          title,
+          url: '',
+          duration: 0,
+          metadata: { status: 'failed', error: error.message },
+        });
+        await this.ritualTrackRepository.save(failedRitual).catch(e => this.logger.error('Failed to save error state', e));
+      }
+
       throw error;
     }
   }

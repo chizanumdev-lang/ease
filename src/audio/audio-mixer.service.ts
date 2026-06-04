@@ -333,52 +333,65 @@ export class AudioMixerService {
 
     // 1. Synthesize Voiceover parts (Local Files)
     const introBuffer = await this.synthesizeTextToWav(scriptData.introNarration);
-    const affsBuffer = await this.synthesizeTextToWav(scriptData.affirmations.join('... ... ... '));
     const outroBuffer = await this.synthesizeTextToWav(scriptData.outroNarration);
 
     const tempIntroPath = path.join(outputDir, `temp_intro_${Date.now()}.wav`);
-    const tempAffsPath = path.join(outputDir, `temp_affs_${Date.now()}.wav`);
     const tempOutroPath = path.join(outputDir, `temp_outro_${Date.now()}.wav`);
     const concatTxtPath = path.join(outputDir, `concat_${Date.now()}.txt`);
 
     await fs.writeFile(tempIntroPath, introBuffer);
-    await fs.writeFile(tempAffsPath, affsBuffer);
     await fs.writeFile(tempOutroPath, outroBuffer);
 
-    // Probe duration of affirmations to calculate loops
-    let affsDuration = 30; // fallback to 30s
-    try {
-      affsDuration = await new Promise<number>((resolve, reject) => {
-        ffmpeg.ffprobe(
-          tempAffsPath,
-          (err: Error | null, metadata: unknown) => {
-            if (err) {
-              reject(err);
-            } else {
-              const ffprobeData = metadata as {
-                format?: { duration?: string | number };
-              };
-              const parsed = parseFloat(String(ffprobeData?.format?.duration));
-              resolve(isNaN(parsed) ? 30 : parsed);
-            }
-          },
-        );
-      });
-      this.logger.log(`Probed affirmations duration: ${affsDuration} seconds`);
-    } catch (err: unknown) {
-      this.logger.warn(`ffprobe failed for affirmations. Falling back to default duration.`);
+    // Chunk affirmations into groups of 10 to avoid Edge TTS text limits
+    const affsTempPaths: string[] = [];
+    const chunkSize = 10;
+    
+    for (let i = 0; i < scriptData.affirmations.length; i += chunkSize) {
+      const chunkText = scriptData.affirmations.slice(i, i + chunkSize).join('... ... ... ');
+      this.logger.log(`Synthesizing affirmations chunk ${i / chunkSize + 1}`);
+      const chunkBuffer = await this.synthesizeTextToWav(chunkText);
+      const chunkPath = path.join(outputDir, `temp_affs_${Date.now()}_${i}.wav`);
+      await fs.writeFile(chunkPath, chunkBuffer);
+      affsTempPaths.push(chunkPath);
+    }
+
+    // Probe duration of first affirmation chunk to estimate loop count
+    let affsDuration = 30; // fallback
+    if (affsTempPaths.length > 0) {
+      try {
+        affsDuration = await new Promise<number>((resolve, reject) => {
+          ffmpeg.ffprobe(
+            affsTempPaths[0],
+            (err: Error | null, metadata: unknown) => {
+              if (err) {
+                reject(err);
+              } else {
+                const ffprobeData = metadata as { format?: { duration?: string | number } };
+                const parsed = parseFloat(String(ffprobeData?.format?.duration));
+                resolve(isNaN(parsed) ? 30 : parsed);
+              }
+            },
+          );
+        });
+        // Multiply by number of chunks to get total affirmation loop duration
+        affsDuration *= affsTempPaths.length;
+        this.logger.log(`Estimated total affirmations duration: ${affsDuration} seconds`);
+      } catch (err: unknown) {
+        this.logger.warn(`ffprobe failed for affirmations. Falling back to default duration.`);
+      }
     }
 
     const finalDuration = duration * 60; // target duration in seconds
     
     // We want the track to be at least finalDuration long.
-    // Intro + Outro are played once. Affirmations are looped.
     const loopsNeeded = Math.ceil(finalDuration / affsDuration) + 1;
 
     // Create FFmpeg concat demuxer text file
     let concatText = `file '${tempIntroPath}'\n`;
     for (let i = 0; i < loopsNeeded; i++) {
-      concatText += `file '${tempAffsPath}'\n`;
+      for (const affPath of affsTempPaths) {
+        concatText += `file '${affPath}'\n`;
+      }
     }
     concatText += `file '${tempOutroPath}'\n`;
 
@@ -438,7 +451,7 @@ export class AudioMixerService {
           const cleanup = async () => {
             await Promise.all([
               fs.unlink(tempIntroPath).catch(() => {}),
-              fs.unlink(tempAffsPath).catch(() => {}),
+              ...affsTempPaths.map((p) => fs.unlink(p).catch(() => {})),
               fs.unlink(tempOutroPath).catch(() => {}),
               fs.unlink(concatTxtPath).catch(() => {}),
               tempStaticPath
@@ -453,7 +466,7 @@ export class AudioMixerService {
           const cleanup = async () => {
             await Promise.all([
               fs.unlink(tempIntroPath).catch(() => {}),
-              fs.unlink(tempAffsPath).catch(() => {}),
+              ...affsTempPaths.map((p) => fs.unlink(p).catch(() => {})),
               fs.unlink(tempOutroPath).catch(() => {}),
               fs.unlink(concatTxtPath).catch(() => {}),
               tempStaticPath

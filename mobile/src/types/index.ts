@@ -168,6 +168,7 @@ export interface AudioTrack {
     type?: string;
     dayPlanId?: string;
     localUri?: string; // Path to downloaded file
+    metadata?: any;
 }
 
 export interface Quiz {

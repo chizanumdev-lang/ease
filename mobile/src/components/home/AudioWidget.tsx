@@ -25,12 +25,14 @@ const AudioWidget = () => {
         play, 
         checkProximity, 
         fetchRituals,
+        regenerateRitualAsset,
         isPlaying,
         autoPlayEnabled
     } = useAudioStore();
     const { todayPlan } = useProgramsStore();
     const navigation = useNavigation<any>();
     const [timeLeft, setTimeLeft] = useState<string>('');
+    const [isRetrying, setIsRetrying] = useState(false);
     const lastAutoplayedRef = useRef<{ date: string, type: 'morning' | 'night' } | null>(null);
 
     // Fetch rituals and start proximity checks on mount
@@ -46,6 +48,7 @@ const AudioWidget = () => {
     const morning = isCurrentlyMorning();
     const nextRitualLabel = morning ? 'Morning Affirmations' : 'Nightly Subliminals';
     const activeTrack = morning ? ritualTracks.morning : ritualTracks.night;
+    const hasFailed = activeTrack?.metadata?.status === 'failed';
     const trackReady = !!activeTrack && !!activeTrack.url && activeTrack.url.length > 0;
     const canPlay = proximityStatus === 'READY' && trackReady;
 
@@ -89,6 +92,18 @@ const AudioWidget = () => {
             return;
         }
 
+        if (hasFailed) {
+            setIsRetrying(true);
+            try {
+                await regenerateRitualAsset(track.id);
+            } catch (e) {
+                console.error('[AudioWidget] Failed to retry generation', e);
+            } finally {
+                setIsRetrying(false);
+            }
+            return;
+        }
+
         try {
             await loadTrack(track);
             await play();
@@ -100,6 +115,7 @@ const AudioWidget = () => {
 
 
     const getStatusColor = () => {
+        if (hasFailed) return '#EF4444'; // Red for failed
         if (proximityStatus === 'READY' && trackReady) return '#10B981';
         if (proximityStatus === 'APPROACHING') return '#F59E0B';
         return colors.textMuted;
@@ -119,14 +135,14 @@ const AudioWidget = () => {
                                 <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
                                 <Text style={[styles.title, { color: colors.text }]}>{nextRitualLabel}</Text>
                             </View>
-                            <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{timeLeft}</Text>
+                            <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{hasFailed ? 'Generation Failed' : timeLeft}</Text>
                             
                             <View style={styles.actionRow}>
                                 <View style={styles.ritualInfo}>
                                     <Ionicons 
                                         name={morning ? 'sunny-outline' : 'moon-outline'} 
                                         size={14} 
-                                        color={colors.primary} 
+                                        color={hasFailed ? '#EF4444' : colors.primary} 
                                     />
                                     <Text style={[styles.ritualTime, { color: colors.text }]}>
                                         {morning ? morningRitualTime : nightRitualTime}
@@ -135,24 +151,24 @@ const AudioWidget = () => {
 
                                 <TouchableOpacity 
                                     style={[styles.startButton, { 
-                                        backgroundColor: canPlay ? colors.primary : colors.surfaceContainerHigh,
-                                        opacity: canPlay ? 1 : 0.8,
-                                        borderBottomWidth: canPlay ? 4 : 0,
-                                        borderBottomColor: canPlay ? 'rgba(0,0,0,0.2)' : 'transparent'
+                                        backgroundColor: hasFailed ? '#EF4444' : canPlay ? colors.primary : colors.surfaceContainerHigh,
+                                        opacity: hasFailed || canPlay ? 1 : 0.8,
+                                        borderBottomWidth: hasFailed || canPlay ? 4 : 0,
+                                        borderBottomColor: hasFailed || canPlay ? 'rgba(0,0,0,0.2)' : 'transparent'
                                     }]}
-                                    disabled={!canPlay}
+                                    disabled={!canPlay && !hasFailed && !isRetrying}
                                     onPress={handleStartRitual}
                                 >
                                     <Text style={[styles.buttonText, { 
-                                        color: canPlay ? '#fff' : colors.textMuted,
+                                        color: hasFailed || canPlay ? '#fff' : colors.textMuted,
                                         fontFamily: fonts.label
                                     }]}>
-                                        {!trackReady ? 'GENERATING' : proximityStatus === 'READY' ? 'BEGIN' : 'LOCKED'}
+                                        {hasFailed ? (isRetrying ? 'RETRYING...' : 'RETRY') : !trackReady ? 'GENERATING' : proximityStatus === 'READY' ? 'BEGIN' : 'LOCKED'}
                                     </Text>
                                     <Ionicons 
-                                        name={canPlay ? 'play-circle' : trackReady ? 'lock-closed' : 'hourglass'} 
+                                        name={hasFailed ? 'refresh' : canPlay ? 'play-circle' : trackReady ? 'lock-closed' : 'hourglass'} 
                                         size={14} 
-                                        color={canPlay ? '#fff' : colors.textMuted} 
+                                        color={hasFailed || canPlay ? '#fff' : colors.textMuted} 
                                     />
                                 </TouchableOpacity>
                             </View>
