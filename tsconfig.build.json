@@ -6,6 +6,7 @@
     "dist",
     "**/*spec.ts",
     "mobile",
-    "admin"
+    "admin",
+    "local_scripts"
   ]
 }
