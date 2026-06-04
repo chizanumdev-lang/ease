@@ -128,3 +128,54 @@ export async function triggerGenerateAudio(payload: {
     return null;
   }
 }
+
+/**
+ * Background task: Generate rituals for a Program.
+ */
+export const generateProgramRitualsTask = task({
+  id: 'generate-program-rituals',
+  retry: {
+    maxAttempts: 3,
+    minTimeoutInMs: 10000,
+    maxTimeoutInMs: 120000,
+    factor: 2,
+  },
+  run: async (payload: {
+    programId: string;
+    appUrl: string;
+    internalKey?: string;
+  }) => {
+    const res = await fetch(`${payload.appUrl}/api/internal/generate-rituals`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-key': payload.internalKey || process.env.INTERNAL_API_KEY || '',
+      },
+      body: JSON.stringify({
+        programId: payload.programId,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Program rituals generation failed: ${res.status} ${await res.text()}`);
+    }
+
+    return await res.json();
+  },
+});
+
+export async function triggerProgramRituals(payload: { programId: string }) {
+  try {
+    const appUrl =
+      process.env.APP_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000');
+
+    const internalKey = process.env.INTERNAL_API_KEY || '';
+
+    return await tasks.trigger('generate-program-rituals', { ...payload, appUrl, internalKey });
+  } catch (err) {
+    return null;
+  }
+}

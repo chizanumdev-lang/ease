@@ -50,7 +50,7 @@ interface AudioState {
     setRitualTracks: (tracks: RitualTracks) => void;
     setEbbFactor: (factor: number) => void;
     checkProximity: () => void;
-    fetchRituals: (date: string) => Promise<void>;
+    fetchRituals: () => Promise<void>;
     regenerateRitualAsset: (trackId: string) => Promise<AudioTrack>;
     toggleAutoPlay: () => void;
     downloadTrack: (track: AudioTrack) => Promise<void>;
@@ -120,40 +120,14 @@ export const useAudioStore = create<AudioState>()(
             setEbbFactor: (factor) => set({ ebbFactor: factor }),
 
             checkProximity: () => {
-                const now = new Date();
-                const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-                const parseTime = (timeStr: string) => {
-                    const [h, m] = timeStr.split(':').map(Number);
-                    return h * 60 + m;
-                };
-
-                const rituals = [
-                    parseTime(get().morningRitualTime),
-                    parseTime(get().nightRitualTime)
-                ];
-
-                let newStatus: ProximityStatus = 'IDLE';
-
-                for (const ritualMins of rituals) {
-                    const diff = ritualMins - currentMinutes;
-                    
-                    if (currentMinutes >= ritualMins && currentMinutes < ritualMins + 240) {
-                        newStatus = 'READY';
-                        break;
-                    } else if (diff > 0 && diff <= 30) {
-                        newStatus = 'APPROACHING';
-                    }
-                }
-
-                if (get().proximityStatus !== newStatus) {
-                    set({ proximityStatus: newStatus });
+                if (get().proximityStatus !== 'READY') {
+                    set({ proximityStatus: 'READY' });
                 }
             },
 
-            fetchRituals: async (date: string) => {
+            fetchRituals: async () => {
                 try {
-                    const data = await audioService.getRituals(date);
+                    const data = await audioService.getRitualsForActiveProgram();
                     
                     // Always update the tracks we have, even if one is still null/generating
                     set({
@@ -165,17 +139,22 @@ export const useAudioStore = create<AudioState>()(
 
                     // If status is generating, retry in 10 seconds to fetch completed URLs
                     if (data.status === 'generating') {
-                        console.log('[AUDIO_STORE] Daily rituals still generating. Retrying in 10s...');
+                        console.log('[AUDIO_STORE] Program rituals still generating. Retrying in 10s...');
                         if ((global as any).ritualsPollTimeout) {
                             clearTimeout((global as any).ritualsPollTimeout);
                         }
                         (global as any).ritualsPollTimeout = setTimeout(() => {
-                            get().fetchRituals(date);
+                            get().fetchRituals();
                         }, 10000);
                     } else {
                         if ((global as any).ritualsPollTimeout) {
                             clearTimeout((global as any).ritualsPollTimeout);
                             (global as any).ritualsPollTimeout = null;
+                            
+                            // Send local notification if we were actively waiting for generation
+                            import('../services/notifee.service').then(m => {
+                                m.notifeeService.notifyRitualGenerated().catch(e => console.error('[AUDIO_STORE] Failed to send notif:', e));
+                            });
                         }
                     }
                 } catch (error) {

@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Program } from '../../programs/entities/program.entity';
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 
 import { GraphQLJSON } from 'graphql-type-json';
@@ -32,12 +33,16 @@ export class RitualTrack {
   duration: number;
 
   @Field()
-  @Column()
+  @Column({ name: 'ritual_type' })
   ritualType: string;
 
-  @Field()
-  @Column()
-  date: string; // YYYY-MM-DD
+  @Field({ nullable: true })
+  @Column({ name: 'program_id', nullable: true })
+  programId: string;
+
+  @ManyToOne(() => Program, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'program_id' })
+  program: Program;
 
   @Field(() => GraphQLJSON, { nullable: true })
   @Column({ type: 'jsonb', nullable: true })

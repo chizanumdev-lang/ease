@@ -64,6 +64,11 @@ import { StartupService } from './common/startup.service';
           autoLoadEntities: true, // More efficient for NestJS
           synchronize: false, // Automatically sync tables in local dev
           logging: isLocal, // Only log SQL queries in local development
+          extra: {
+            keepAlive: true,
+            keepAliveInitialDelayMillis: 10000,
+            idleTimeoutMillis: 30000, // Close idle connections after 30s to beat Supabase's aggressive load balancer timeout
+          },
         };
 
         if (url) {

@@ -498,8 +498,8 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
         return getScore(b) - getScore(a) || 0.5 - Math.random();
       });
 
-      // Take top 4 from each category to give AI enough options but high relevance
-      finalShards.push(...ranked.slice(0, 4));
+      // Take exactly 1 top-ranked template from each category to strictly enforce diversity
+      finalShards.push(ranked[0]);
     }
 
     // 2. PHASE: Blueprinting
@@ -561,8 +561,8 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
       ${pastJournals.length > 0 ? pastJournals.join('\n') : 'None yet.'}
       (Use these journal entries to formulate specific, personalized prompts for today's journal task. Reflect on their struggles or progress.)
 
-      TASK: Create a 5-task "Daily Shard Chain" using EXACTLY 5 templates from the list below.
-      Each template represents a core functional behavior. Use the "metadata.uses" mapping to determine which template best fits the user's specific progress for today.
+      TASK: Create a 5-task "Daily Shard Chain" using EXACTLY the 5 templates provided below.
+      Each template represents a core functional behavior. You MUST use EVERY template provided exactly once.
       
       SELECTED TEMPLATES FOR MAPPING:
       ${finalShards.map((s) => `- [${s.category.toUpperCase()}] ${s.name}: ${s.description}. Common Uses: ${s.metadata?.uses?.join(', ') || 'General'}`).join('\n')}
@@ -597,7 +597,7 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
 
       STRICT REQUIREMENTS:
       1. Exactly 5 Tasks: No more, no less.
-      2. Modality Diversity: You MUST pick exactly 1 Video, 1 Audio, 1 Quiz, 1 Journal, and 1 Consistency template from the provided list.
+      2. Modality Diversity: You MUST use ALL 5 templates provided exactly once.
       3. No Repeats: Do not use the same template twice.
       4. Intensity Alignment: Prioritize tasks that match the day's intensity (${targetIntensity}).
     `;

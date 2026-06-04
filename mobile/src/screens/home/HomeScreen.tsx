@@ -200,7 +200,7 @@ export default function HomeScreen({ navigation }: Props) {
             if (pollInterval) clearInterval(pollInterval);
           }
         }
-      }, 10000); // Poll every 10 seconds
+      }, 30000); // Poll every 30 seconds
     }
 
     return () => {

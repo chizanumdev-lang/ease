@@ -59,6 +59,30 @@ class NotifeeService {
         await notifee.cancelNotification('nightly_subliminals');
         console.log('[NotifeeService] Cancelled nightly subliminals');
     }
+
+    async notifyRitualGenerated() {
+        await notifee.requestPermission();
+        
+        const channelId = await notifee.createChannel({
+            id: 'rituals_generated',
+            name: 'Rituals Generated',
+            importance: AndroidImportance.HIGH,
+        });
+
+        await notifee.displayNotification({
+            id: 'ritual_generated_now',
+            title: '✨ Your Rituals Are Ready!',
+            body: 'Your personalized audio tracks have been successfully generated.',
+            android: {
+                channelId,
+                pressAction: {
+                    id: 'default',
+                },
+            },
+        });
+        
+        console.log('[NotifeeService] Sent generation complete notification');
+    }
 }
 
 export const notifeeService = new NotifeeService();

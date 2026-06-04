@@ -680,7 +680,6 @@ export class AiService implements OnModuleInit {
 
     const videoDuration = Math.round(minutesPerDay * 0.3);
     const quizDuration = Math.round(minutesPerDay * 0.1);
-    const audioDuration = Math.round(minutesPerDay * 0.2);
     const journalDuration = Math.round(minutesPerDay * 0.15);
     const consistencyDuration = 2; // Fixed short commitment
 
@@ -710,7 +709,6 @@ export class AiService implements OnModuleInit {
           
           "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
           "quiz": { "title": "Quick Check", "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
-          "audioTask": { "title": string, "description": "Friendly summary of what we'll practice", "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
           "consistencyTask": { "title": "Tomorrow's Promise", "description": "I'll be back tomorrow to keep going.", "duration": ${consistencyDuration} },
           "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
           "reflectionTask": { "title": "Day Wrap-up", "description": "Quick look at today", "reviewPoints": ["One win from today", "One plan for tomorrow"] }
@@ -793,7 +791,6 @@ export class AiService implements OnModuleInit {
 
     const videoDuration = Math.round(minutesPerDay * 0.3);
     const quizDuration = Math.round(minutesPerDay * 0.1);
-    const audioDuration = Math.round(minutesPerDay * 0.2);
     const journalDuration = Math.round(minutesPerDay * 0.15);
     const consistencyDuration = 2; // Fixed short commitment
 
@@ -823,8 +820,8 @@ Return a single raw JSON object — no markdown, no code fences, no commentary:
   "focusAreas": string[], (exactly 3 key points)
   
   "videoTask": { "title": string, "description": string, "searchQuery": string, "duration": ${videoDuration} },
+  "audioTask": { "title": string, "description": string, "theme": string, "duration": 5 },
   "quiz": { "title": string, "questions": [{ "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }, { "question": string, "options": string[4], "correctAnswer": integer, "explanation": string }] },
-  "audioTask": { "title": string, "description": string, "mood": "meditation"|"focus"|"ambient", "theme": string, "duration": ${audioDuration} },
   "consistencyTask": { "title": "Tomorrow's Commitment", "description": "i will complete my routine tommorrow.", "duration": ${consistencyDuration} },
   "journalTask": { "title": string, "prompt": string, "duration": ${journalDuration} },
   "reflectionTask": { "title": string, "description": string, "reviewPoints": string[2] }
@@ -965,31 +962,48 @@ You are creating ${typeContext[type]} for a highly effective, long-form session.
 Return ONLY the raw JSON object starting with { and ending with }.`;
 
     try {
-      const response = await this.callWithFallback(prompt);
-      if (!response)
-        throw new Error('AI providers failed to generate audio script');
+      let finalAffirmations: string[] = [];
+      let baseData: any = null;
 
-      const data = this.extractJson(response);
-      if (!data)
-        throw new Error('Failed to extract valid JSON from AI response');
+      // Determine how many batches based on duration (1 batch per 10 mins approx, max 6)
+      const batches = type === 'task' ? 1 : Math.max(1, Math.min(Math.ceil(duration / 10), 6));
+      this.logger.log(`Generating audio script in ${batches} batch(es) for ${duration}m duration`);
+
+      for (let i = 0; i < batches; i++) {
+        const batchPrompt = prompt + `\n\nThis is part ${i + 1} of ${batches}. Ensure you provide completely unique, non-repeating affirmations from previous parts. Provide another 50-70 fresh, powerful affirmations.`;
+        
+        const response = await this.callWithFallback(batchPrompt);
+        if (!response) {
+          this.logger.warn(`Failed to generate batch ${i + 1}`);
+          continue;
+        }
+
+        const data = this.extractJson(response);
+        if (data && Array.isArray(data.affirmations)) {
+          finalAffirmations = finalAffirmations.concat(data.affirmations);
+          if (!baseData) baseData = data;
+        }
+      }
+
+      if (!baseData || finalAffirmations.length === 0) {
+        throw new Error('Failed to extract valid JSON or affirmations from AI responses');
+      }
 
       // Validation & Sanitization
       return {
         sessionType:
-          data.sessionType || (type === 'night' ? 'sleep' : 'relaxation'),
+          baseData.sessionType || (type === 'night' ? 'sleep' : 'relaxation'),
         binauralFrequency:
-          Number(data.binauralFrequency) || (type === 'night' ? 2 : 10),
-        carrierFrequency: Number(data.carrierFrequency) || 200,
-        affirmations: Array.isArray(data.affirmations)
-          ? data.affirmations
-          : ['I am growing every day'],
+          Number(baseData.binauralFrequency) || (type === 'night' ? 2 : 10),
+        carrierFrequency: Number(baseData.carrierFrequency) || 200,
+        affirmations: finalAffirmations,
         introNarration:
-          data.introNarration ||
+          baseData.introNarration ||
           'Take a deep breath and settle into focus...',
         outroNarration:
-          data.outroNarration ||
+          baseData.outroNarration ||
           'Gently return your focus, feeling empowered and refreshed.',
-        theme: data.theme || dayTheme,
+        theme: baseData.theme || dayTheme,
       };
     } catch (error) {
       this.logger.error(
@@ -1134,7 +1148,6 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
       'focusAreas',
       'videoTask',
       'quiz',
-      'audioTask',
       'consistencyTask',
       'journalTask',
       'reflectionTask',
@@ -1187,13 +1200,6 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
             explanation: 'Action is key.',
           },
         ],
-      },
-      audioTask: {
-        title: 'Integration Audio',
-        description: "Calmly process today's insights.",
-        mood: 'meditation',
-        theme: 'Calm growth',
-        duration: 8,
       },
       consistencyTask: {
         title: "Tomorrow's Commitment",

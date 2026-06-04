@@ -107,28 +107,33 @@ export class AudioController {
 
     return { url: audioUrl };
   }
-  @Get('rituals/:date')
+  @Get('rituals/active')
   @UseGuards(JwtAuthGuard)
-  async getRituals(@Param('date') date: string, @Request() req) {
+  async getActiveProgramRituals(@Request() req) {
     const userId = req.user.id;
-    const rituals = await this.ritualsService.findByDate(userId, date);
+    
+    // Find active program
+    const program = await this.ritualsService.getActiveProgram(userId);
+    if (!program) {
+      return { morning: null, night: null, status: 'generating' };
+    }
 
-    if (rituals.length === 0) {
-      // Claim generation slot BEFORE spawning the pipeline.
-      // This prevents the thundering herd: every subsequent poll sees
-      // the placeholder and returns 'generating' instead of spawning
-      // another AI + ffmpeg pipeline.
-      const claimed = await this.ritualsService.claimGeneration(userId, date);
+    const rituals = await this.ritualsService.findByProgram(program.id);
+
+    if (rituals.length < 2) {
+      // In the new architecture, the background orchestrator triggers the rituals.
+      // But just in case, we can trigger them here if they are missing.
+      const claimed = await this.ritualsService.claimGeneration(program.id);
       if (claimed) {
         this.ritualsService
-          .generateDailyRituals(userId, date)
+          .generateProgramRituals(program.id)
           .catch((err) =>
             this.logger.error(`Lazy ritual generation failed: ${err.message}`),
           );
       }
       return {
-        morning: null,
-        night: null,
+        morning: rituals.find((r) => r.ritualType === 'morning') || null,
+        night: rituals.find((r) => r.ritualType === 'night') || null,
         status: 'generating',
       };
     }

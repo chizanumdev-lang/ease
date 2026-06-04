@@ -36,7 +36,7 @@ const AudioWidget = () => {
     // Fetch rituals and start proximity checks on mount
     useEffect(() => {
         const today = new Date().toISOString().split('T')[0];
-        fetchRituals(today);
+        fetchRituals();
         checkProximity();
         const interval = setInterval(checkProximity, 60000);
         return () => clearInterval(interval);
@@ -46,7 +46,7 @@ const AudioWidget = () => {
     const morning = isCurrentlyMorning();
     const nextRitualLabel = morning ? 'Morning Affirmations' : 'Nightly Subliminals';
     const activeTrack = morning ? ritualTracks.morning : ritualTracks.night;
-    const trackReady = !!activeTrack;
+    const trackReady = !!activeTrack && !!activeTrack.url && activeTrack.url.length > 0;
     const canPlay = proximityStatus === 'READY' && trackReady;
 
     // Autoplay when proximity becomes READY and autoplay is enabled
@@ -76,36 +76,7 @@ const AudioWidget = () => {
     }, [canPlay, autoPlayEnabled, isPlaying, activeTrack, morning]);
 
     useEffect(() => {
-        const updateTimer = () => {
-            const now = new Date();
-            const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-            const parseTime = (timeStr: string) => {
-                const [h, m] = timeStr.split(':').map(Number);
-                return h * 60 + m;
-            };
-
-            const morningMins = parseTime(morningRitualTime);
-            const nightMins = parseTime(nightRitualTime);
-
-            let nextRitualMins = morningMins;
-
-            if (currentMinutes >= morningMins && currentMinutes < nightMins) {
-                nextRitualMins = nightMins;
-            } else if (currentMinutes >= nightMins) {
-                nextRitualMins = morningMins + 1440; // Next day
-            }
-
-            const diff = nextRitualMins - currentMinutes;
-            const h = Math.floor(diff / 60);
-            const m = diff % 60;
-
-            setTimeLeft(diff <= 0 ? 'Ready' : `${h}h ${m}m`);
-        };
-
-        const interval = setInterval(updateTimer, 60000);
-        updateTimer();
-        return () => clearInterval(interval);
+        setTimeLeft('Ready');
     }, [morningRitualTime, nightRitualTime]);
 
     const handleStartRitual = async () => {

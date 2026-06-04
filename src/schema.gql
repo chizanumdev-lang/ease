@@ -241,6 +241,7 @@ type Program {
   id: ID!
   masteryScore: Float!
   metadata: JSON
+  ritualTracks: [RitualTrack!]
   status: String!
   title: String!
   updatedAt: DateTime!
@@ -274,7 +275,7 @@ type Query {
   getProgramById(id: String!): Program!
   getProgramPreview(generateProgramDto: GenerateProgramDto!): Program!
   getQuiz(id: String!): Quiz!
-  getRituals(date: String!): DailyRitualsResponse!
+  getRituals: DailyRitualsResponse!
   getShardsForPrompt(prompt: String!): [ShardSimulationResult!]!
   getTaskDefinitions: [TaskDefinition!]!
   getTodaysPlan(id: String!): DayPlan!
@@ -306,10 +307,10 @@ type QuizAttempt {
 
 type RitualTrack {
   createdAt: DateTime!
-  date: String!
   duration: Int
   id: ID!
   metadata: JSON
+  programId: String
   ritualType: String!
   title: String!
   updatedAt: DateTime!

@@ -12,6 +12,7 @@ import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { User } from '../../users/entities/user.entity';
 import { Goal } from '../../goals/entities/goal.entity';
 import { DayPlan } from './day-plan.entity';
+import { RitualTrack } from '../../audio/entities/ritual-track.entity';
 import { GraphQLJSON } from 'graphql-type-json';
 
 @ObjectType()
@@ -68,6 +69,10 @@ export class Program {
   @Field(() => [DayPlan], { nullable: true })
   @OneToMany(() => DayPlan, (dayPlan) => dayPlan.program)
   dayPlans: DayPlan[];
+
+  @Field(() => [RitualTrack], { nullable: true })
+  @OneToMany(() => RitualTrack, (ritualTrack) => ritualTrack.program)
+  ritualTracks: RitualTrack[];
 
   @Field()
   @CreateDateColumn({ name: 'created_at' })

@@ -45,7 +45,7 @@ const AudioParticle = () => {
 
     useEffect(() => {
         const todayStr = new Date().toISOString().split('T')[0];
-        fetchRituals(todayStr);
+        fetchRituals();
         checkProximity();
 
         Animated.loop(

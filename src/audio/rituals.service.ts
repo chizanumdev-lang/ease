@@ -34,58 +34,73 @@ export class RitualsService {
    * Distributed lock using the DB. Returns true if this caller "won" the
    * generation slot; false if another serverless instance already claimed it.
    */
-  async claimGeneration(userId: string, date: string): Promise<boolean> {
-    const existing = await this.ritualTrackRepository.findOne({
-      where: { userId, date },
+  async claimGeneration(programId: string): Promise<boolean> {
+    const existing = await this.ritualTrackRepository.find({
+      where: { programId },
     });
-    if (existing) return false; // Another instance already started
+    
+    const hasMorning = existing.some(r => r.ritualType === 'morning');
+    const hasNight = existing.some(r => r.ritualType === 'night');
+
+    if (hasMorning && hasNight) return false;
+
+    const placeholders: any[] = [];
+    if (!hasMorning) {
+      placeholders.push(this.ritualTrackRepository.create({
+        programId,
+        ritualType: 'morning',
+        title: 'Generating...',
+        url: '',
+        duration: 1800,
+        metadata: { status: 'generating' },
+      }));
+    }
+    
+    if (!hasNight) {
+      placeholders.push(this.ritualTrackRepository.create({
+        programId,
+        ritualType: 'night',
+        title: 'Generating...',
+        url: '',
+        duration: 3600,
+        metadata: { status: 'generating' },
+      }));
+    }
 
     try {
-      // Insert placeholder records to claim the slot.
-      // If two instances race, the unique constraint (userId+date+ritualType)
-      // will cause one to fail — that's intentional.
-      await this.ritualTrackRepository.save([
-        this.ritualTrackRepository.create({
-          userId,
-          ritualType: 'morning',
-          date,
-          title: 'Generating...',
-          url: '',
-          duration: 1800,
-          metadata: { status: 'generating' },
-        }),
-        this.ritualTrackRepository.create({
-          userId,
-          ritualType: 'night',
-          date,
-          title: 'Generating...',
-          url: '',
-          duration: 3600,
-          metadata: { status: 'generating' },
-        }),
-      ]);
-      this.logger.log(`Claimed generation slot for user ${userId} on ${date}`);
+      await this.ritualTrackRepository.save(placeholders);
+      this.logger.log(`Claimed generation slot for missing rituals in program ${programId}`);
       return true;
     } catch (err) {
       // Unique constraint violation = another instance won the race
       this.logger.debug(
-        `Generation slot already claimed for ${userId}/${date}: ${err.message}`,
+        `Generation slot already claimed for program ${programId}: ${err.message}`,
       );
       return false;
     }
   }
 
-  async generateDailyRituals(
-    userId: string,
-    date: string,
+  async generateProgramRituals(
+    programId: string,
   ): Promise<{ morning: RitualTrack | null; night: RitualTrack | null }> {
-    this.logger.log(`Syncing daily rituals for user ${userId} on date ${date}`);
+    this.logger.log(`Generating program rituals for program ${programId}`);
 
-    // Generate in parallel for the daily sync trigger
-    const [morningResult, nightResult] = await Promise.allSettled([
-      this.generateRitual(userId, 'morning', date),
-      this.generateRitual(userId, 'night', date),
-    ]);
+    const existing = await this.ritualTrackRepository.find({
+      where: { programId },
+    });
+    
+    const hasValidMorning = existing.some(r => r.ritualType === 'morning' && r.url && r.url.length > 0);
+    const hasValidNight = existing.some(r => r.ritualType === 'night' && r.url && r.url.length > 0);
+
+    const promises: Promise<any>[] = [];
+    
+    if (!hasValidMorning) promises.push(this.generateRitual(programId, 'morning'));
+    else promises.push(Promise.resolve(existing.find(r => r.ritualType === 'morning')));
+    
+    if (!hasValidNight) promises.push(this.generateRitual(programId, 'night'));
+    else promises.push(Promise.resolve(existing.find(r => r.ritualType === 'night')));
+
+    const [morningResult, nightResult] = await Promise.allSettled(promises);
 
     const morning =
       morningResult.status === 'fulfilled' ? morningResult.value : null;
@@ -93,13 +108,13 @@ export class RitualsService {
 
     if (morningResult.status === 'rejected') {
       this.logger.error(
-        `Morning ritual failed for user ${userId}`,
+        `Morning ritual failed for program ${programId}`,
         morningResult.reason,
       );
     }
     if (nightResult.status === 'rejected') {
       this.logger.error(
-        `Night ritual failed for user ${userId}`,
+        `Night ritual failed for program ${programId}`,
         nightResult.reason,
       );
     }
@@ -115,26 +130,26 @@ export class RitualsService {
   }
 
   async generateRitual(
-    userId: string,
+    programId: string,
     type: 'morning' | 'night',
-    date: string,
   ): Promise<RitualTrack> {
     // 1. Get current program to provide context
     const program = await this.programRepository.findOne({
-      where: { userId },
-      order: { createdAt: 'DESC' },
+      where: { id: programId },
     });
 
-    const theme = program?.title || 'Personal Growth';
+    if (!program) throw new Error('Program not found');
+    const userId = program.userId;
+    const theme = program.title || 'Personal Growth';
     const title =
       type === 'morning'
         ? `Morning Affirmations: ${theme}`
         : `Nightly Subliminals: ${theme}`;
-    const audioFilename = `ritual_${type}_${userId}_${date.replace(/-/g, '_')}`;
+    const audioFilename = `ritual_${type}_${programId}`;
 
     // Check if already completed (has a real URL)
     const existing = await this.ritualTrackRepository.findOne({
-      where: { userId, ritualType: type, date },
+      where: { programId, ritualType: type },
     });
     if (existing && existing.url && existing.url.length > 0) return existing;
 
@@ -227,8 +242,8 @@ export class RitualsService {
 
       const ritual = this.ritualTrackRepository.create({
         userId,
+        programId,
         ritualType: type,
-        date,
         title,
         url: publicUrl,
         duration: type === 'morning' ? 1800 : 3600,
@@ -238,15 +253,15 @@ export class RitualsService {
       return await this.ritualTrackRepository.save(ritual);
     } catch (error) {
       this.logger.error(
-        `Failed to generate ${type} ritual for user ${userId}: ${error.message}`,
+        `Failed to generate ${type} ritual for program ${programId}: ${error.message}`,
       );
       throw error;
     }
   }
 
-  async findByDate(userId: string, date: string): Promise<RitualTrack[]> {
+  async findByProgram(programId: string): Promise<RitualTrack[]> {
     return this.ritualTrackRepository.find({
-      where: { userId, date },
+      where: { programId },
     });
   }
 
@@ -257,7 +272,7 @@ export class RitualsService {
     }
 
     this.logger.log(
-      `Forced regeneration of ritual track: ${id} (${ritual.ritualType} / ${ritual.date})`,
+      `Forced regeneration of ritual track: ${id} (${ritual.ritualType})`,
     );
 
     // Reset URL so generateRitual is forced to run AI/YouTube mixing pipeline
@@ -265,9 +280,8 @@ export class RitualsService {
     await this.ritualTrackRepository.save(ritual);
 
     return this.generateRitual(
-      ritual.userId,
+      ritual.programId,
       ritual.ritualType as 'morning' | 'night',
-      ritual.date,
     );
   }
 }

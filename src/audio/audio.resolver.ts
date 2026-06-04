@@ -23,18 +23,19 @@ export class AudioResolver {
   @Query(() => DailyRitualsResponse, { name: 'getRituals' })
   @UseGuards(JwtAuthGuard)
   async getRituals(
-    @Args('date') clientDate: string,
     @GetUser() user: User,
   ): Promise<DailyRitualsResponse> {
     const program = await this.ritualsService.getActiveProgram(user.id);
-    const date = program ? `program_${program.id}` : clientDate;
+    if (!program) {
+      return { status: 'generating' };
+    }
 
-    const rituals = await this.ritualsService.findByDate(user.id, date);
+    const rituals = await this.ritualsService.findByProgram(program.id);
 
     if (rituals.length === 0) {
-      const claimed = await this.ritualsService.claimGeneration(user.id, date);
+      const claimed = await this.ritualsService.claimGeneration(program.id);
       if (claimed) {
-        this.ritualsService.generateDailyRituals(user.id, date).catch(() => {});
+        this.ritualsService.generateProgramRituals(program.id).catch(() => {});
       }
       return { status: 'generating' };
     }

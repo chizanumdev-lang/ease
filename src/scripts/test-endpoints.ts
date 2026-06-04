@@ -36,7 +36,7 @@ async function test() {
 
     console.log('\n3. Testing RitualsService.findByDate...');
     try {
-      const result = await ritualsService.findByDate(userId, '2026-05-06');
+      const result = await ritualsService.findByProgram('test-program-id');
       console.log('Result: Success! Rituals found:', result.length);
     } catch (e) {
       console.log('Result: Caught error:', e.constructor.name, e.message);

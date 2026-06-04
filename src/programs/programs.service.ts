@@ -58,7 +58,7 @@ function pickAudioUrl(mood: string, dayNumber: number): string {
 }
 
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { triggerHydrateDay, triggerGenerateAudio } from '../trigger/tasks';
+import { triggerHydrateDay, triggerGenerateAudio, triggerProgramRituals } from '../trigger/tasks';
 
 @Injectable()
 export class ProgramsService {
@@ -359,8 +359,6 @@ export class ProgramsService {
       video:
         content.videoTask?.duration || Math.max(5, Math.floor(total * 0.3)),
       quiz: Math.max(3, Math.floor(total * 0.1)),
-      audio:
-        content.audioTask?.duration || Math.max(5, Math.floor(total * 0.2)),
       consistency: 2,
       journal:
         content.journalTask?.duration || Math.max(3, Math.floor(total * 0.15)),
@@ -447,52 +445,16 @@ export class ProgramsService {
       );
     }
 
-    // 2. Audio (Integration)
     if (content.audioTask) {
       tasks.push(
         (async () => {
-          const mood = content.audioTask.mood || 'meditation';
-          const audioFilename = `program_${day.programId}_day_${day.dayNumber}`;
-          let audioTrack = await this.audioTrackRepository.findOne({
-            where: { dayPlanId: day.id },
-          });
-          if (!audioTrack) {
-            audioTrack = this.audioTrackRepository.create({
-              dayPlanId: day.id,
-              title: '',
-              url: pickAudioUrl(mood, day.dayNumber),
-              duration: 0,
-              type: '',
-            });
-          }
-          audioTrack.title = content.audioTask.title;
-          audioTrack.url = pickAudioUrl(mood, day.dayNumber);
-          audioTrack.duration = dur.audio;
-          audioTrack.type = mood;
-
-          // Save first to obtain database ID
-          const savedTrack = await this.audioTrackRepository.save(audioTrack);
-
-          try {
-            await triggerGenerateAudio({
-              audioTrackId: savedTrack.id,
-              theme: content.audioTask.theme || content.theme,
-              audioFilename,
-            });
-          } catch (queueErr) {
-            this.logger.warn(
-              `Audio trigger unavailable, track ${savedTrack.id} will use static URL: ${queueErr.message}`,
-            );
-          }
-
-          await this.upsertTask({
+          const task = await this.upsertTask({
             type: 'audio',
             dayPlanId: day.id,
             order: 2,
-            title: content.audioTask.title || 'Focus Audio',
-            description: content.audioTask.description || '',
-            duration: dur.audio,
-            completed: false,
+            title: content.audioTask.title,
+            description: content.audioTask.description,
+            duration: content.audioTask.duration || 5,
             scheduledAt: this.scheduleTask(
               'audio',
               dayOffset,
@@ -500,10 +462,27 @@ export class ProgramsService {
               sleepStart,
             ),
           });
+
+          await this.audioTrackRepository.save(
+            this.audioTrackRepository.create({
+              id: task.id,
+              dayPlan: { id: day.id },
+              type: 'task',
+              title: content.audioTask.title,
+              duration: content.audioTask.duration || 5,
+              url: '',
+              metadata: { theme: content.audioTask.theme || content.theme },
+            }),
+          );
+
+          await triggerGenerateAudio({
+            audioTrackId: task.id,
+            theme: content.audioTask.theme || content.theme,
+            audioFilename: 'audio.wav',
+          });
         })(),
       );
     }
-
     // 3. Journal (Intention)
     if (content.journalTask) {
       tasks.push(
@@ -633,6 +612,11 @@ export class ProgramsService {
           ),
         );
     }
+
+    // 5. Trigger Program Rituals Generation in background
+    triggerProgramRituals({ programId: savedProgram.id }).catch((err) =>
+      this.logger.error(`Failed to trigger program rituals: ${err.message}`),
+    );
 
     return {
       goalId: savedGoal.id,

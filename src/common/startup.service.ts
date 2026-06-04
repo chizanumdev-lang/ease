@@ -36,6 +36,22 @@ export class StartupService implements OnApplicationBootstrap {
             ) THEN 
                 ALTER TABLE reward_events ALTER COLUMN type DROP NOT NULL;
             END IF;
+
+            IF NOT EXISTS (
+                SELECT 1 
+                FROM information_schema.columns 
+                WHERE table_name='ritual_tracks' AND column_name='program_id'
+            ) THEN 
+                ALTER TABLE ritual_tracks ADD COLUMN program_id uuid;
+            END IF;
+
+            IF EXISTS (
+                SELECT 1 
+                FROM information_schema.columns 
+                WHERE table_name='ritual_tracks' AND column_name='date'
+            ) THEN 
+                ALTER TABLE ritual_tracks DROP COLUMN date;
+            END IF;
         END $$;
       `);
       this.logger.log('✅ Dynamic schema fixes completed successfully.');

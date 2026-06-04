@@ -170,10 +170,10 @@ class AudioService {
         }
     }
 
-    // Fetch rituals for a date
-    async getRituals(date: string) {
+    // Fetch rituals for active program
+    async getRitualsForActiveProgram() {
         try {
-            const response = await api.get(`/audio/rituals/${date}`);
+            const response = await api.get(`/audio/rituals/active`);
             return response.data;
         } catch (error) {
             console.error('[AUDIO_SERVICE] Failed to fetch rituals:', error);

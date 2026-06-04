@@ -65,6 +65,25 @@ export class InternalController {
     return result;
   }
 
+  @Post('generate-rituals')
+  async generateRituals(
+    @Headers('x-internal-key') key: string,
+    @Body() body: { programId: string },
+  ) {
+    this.validateKey(key);
+    this.logger.log(
+      `Received internal program rituals generation request for Program ${body.programId}`,
+    );
+
+    const claimed = await this.ritualsService.claimGeneration(body.programId);
+    if (!claimed) {
+      return { success: false, message: 'Generation already claimed' };
+    }
+
+    const result = await this.ritualsService.generateProgramRituals(body.programId);
+    return { success: true, result };
+  }
+
   @Post('users/skip-verification')
   async skipVerification(
     @Headers('x-internal-key') key: string,
