@@ -215,20 +215,12 @@ export default function GoalWizardScreen({ navigation }: Props) {
 
   const handleFinalSubmit = async (data: any) => {
     setIsSubmitting(true);
-
-    showModal({
-      type: 'loading',
-      title: 'Starting Your Journey',
-      description:
-        "We're putting your plan together and getting everything ready...",
-    });
-
     try {
       const title =
         data.goalDescription.split('.')[0].substring(0, 50) +
         (data.goalDescription.length > 50 ? '...' : '');
 
-      // Use the draft goal if it exists, otherwise create it
+      // Use the draft goal if it exists, otherwise create one now
       const goalId =
         draftIds?.goalId ||
         (
@@ -242,24 +234,47 @@ export default function GoalWizardScreen({ navigation }: Props) {
           })
         ).id;
 
-      const program = await generateProgram(goalId, data.timeframe, {
+      // Optimistically set a 'generating' program in the store so the home
+      // screen immediately shows the task-chain skeleton, then fire the real
+      // generation call in the background — no blocking the user here.
+      const { useProgramsStore: store } = await import('../../store/programsStore');
+      store.setState({
+        currentProgram: {
+          id: draftIds?.programId || 'pending',
+          status: 'generating',
+          title,
+          description: data.goalDescription,
+          duration: data.timeframe,
+          goalId,
+          dayPlans: [],
+          metadata: {},
+          mastery_score: 0,
+          competence_level: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as any,
+        todayPlan: null,
+      });
+
+      // Reset the nav stack entirely so the wizard isn't in back history
+      navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
+
+      // Fire and forget — the polling on HomeScreen picks up the result
+      generateProgram(goalId, data.timeframe, {
         minutesPerDay: data.dailyMinutes,
         learningStyle: 'mixed',
         constraints: [],
+      }).catch((err) => {
+        console.error('[Wizard] Background generation failed:', err);
       });
-
-      // Close modal before navigation
-      useModalStore.getState().hideModal();
-      navigation.replace('ProgramPreview', { programId: program.id });
     } catch (error) {
       console.error('Wizard Error:', error);
       showModal({
         type: 'error',
         title: 'Something went wrong',
         description:
-          "We couldn't put your plan together just now. Please try again.",
+          "We couldn't start your journey just now. Please try again.",
       });
-      // Stay on REVIEW step if error occurred
     } finally {
       setIsSubmitting(false);
     }

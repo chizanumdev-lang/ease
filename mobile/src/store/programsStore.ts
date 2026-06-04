@@ -216,12 +216,13 @@ export const useProgramsStore = create<ProgramsState>()(
                     const status = error.response?.status;
                     const { currentProgram } = get();
                     
-                    if (status === 404 && currentProgram?.status === 'generating') {
-                        // Expected if program is still being built in background
-                        console.log('[ProgramsStore] Plan not found but program is generating — staying in loading state');
+                    if ((status === 404 || status === 500) && currentProgram?.status === 'generating') {
+                        // Expected — program is still building, day plan doesn't exist yet
+                        // Stay in the generating skeleton, the poll will retry
+                        console.log('[ProgramsStore] /today returned', status, 'but program is still generating — holding skeleton state');
                         set({ todayPlan: null, isLoading: false, error: null });
                     } else if (status === 404 || status === 500) {
-                        // Plan doesn't exist or server error for this program — clear stale state
+                        // Genuine stale / broken state — clear it
                         console.warn('[ProgramsStore] fetchTodayPlan failed with', status, '— clearing stale program');
                         set({ currentProgram: null, todayPlan: null, isLoading: false, error: null });
                     } else {

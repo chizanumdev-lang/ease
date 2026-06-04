@@ -11,7 +11,6 @@ import {
   ScrollView,
   Dimensions,
   Image,
-  Easing,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -43,6 +42,92 @@ type Props = NativeStackScreenProps<MainStackParamList> & {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// ---------------------------------------------------------------------------
+// TaskChainSkeleton — replaces the old spinning icon while AI generates tasks
+// ---------------------------------------------------------------------------
+const TaskChainSkeleton = () => {
+  const { colors, fonts } = useTheme();
+  const pulseAnim = React.useRef(new Animated.Value(0.4)).current;
+
+  React.useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.4, duration: 900, useNativeDriver: true }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [pulseAnim]);
+
+  const Ghost = ({ width, height, radius = 10, style }: { width: number | string; height: number; radius?: number; style?: any }) => (
+    <Animated.View
+      style={[{ width, height, borderRadius: radius, backgroundColor: colors.surfaceContainerHigh, opacity: pulseAnim }, style]}
+    />
+  );
+
+  const SkeletonCard = ({ delay = 0 }: { delay?: number }) => (
+    <View
+      style={{
+        marginHorizontal: 20,
+        marginBottom: 12,
+        padding: 20,
+        borderRadius: 24,
+        backgroundColor: colors.surfaceContainerLow,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+        opacity: 1 - delay * 0.18,
+      }}
+    >
+      {/* Left icon ghost */}
+      <Ghost width={44} height={44} radius={22} />
+      {/* Text ghosts */}
+      <View style={{ flex: 1, gap: 8 }}>
+        <Ghost width="70%" height={14} />
+        <Ghost width="45%" height={10} />
+      </View>
+      {/* Right arrow ghost */}
+      <Ghost width={28} height={28} radius={14} />
+    </View>
+  );
+
+  return (
+    <View style={{ paddingTop: 8 }}>
+      {/* Notification banner */}
+      <View
+        style={{
+          marginHorizontal: 20,
+          marginBottom: 20,
+          padding: 16,
+          borderRadius: 20,
+          backgroundColor: colors.primaryContainer,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <Ionicons name="notifications-outline" size={20} color={colors.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.primary, fontFamily: fonts.display, fontSize: 13, fontWeight: '700', marginBottom: 2 }}>
+            Building your journey
+          </Text>
+          <Text style={{ color: colors.primary, fontFamily: fonts.body, fontSize: 12, opacity: 0.8 }}>
+            We’ll notify you the moment your tasks are ready.
+          </Text>
+        </View>
+      </View>
+
+      {/* Ghost task cards */}
+      <SkeletonCard delay={0} />
+      <SkeletonCard delay={1} />
+      <SkeletonCard delay={2} />
+      <SkeletonCard delay={3} />
+    </View>
+  );
+};
+
+
 export default function HomeScreen({ navigation }: Props) {
   const { colors, borderRadius, fonts, isDark } = useTheme();
 
@@ -53,28 +138,6 @@ export default function HomeScreen({ navigation }: Props) {
   const [isTutorialVisible, setIsTutorialVisible] = useState(false);
 
   const { analytics, fetchAnalytics } = useAnalyticsStore();
-
-  const spinValue = React.useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    if (currentProgram?.status === 'generating') {
-      Animated.loop(
-        Animated.timing(spinValue, {
-          toValue: 1,
-          duration: 3000,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ).start();
-    } else {
-      spinValue.setValue(0);
-    }
-  }, [currentProgram?.status]);
-
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
 
   // Trigger tutorial if not completed
   React.useEffect(() => {
@@ -451,62 +514,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   const renderEmptyOrLoading = () => {
     if (currentProgram?.status === 'generating' || todayPlan?.status === 'pending' || todayPlan?.status === 'generating') {
-      return (
-        <View
-          style={[
-            styles.generatingContainer,
-            {
-              backgroundColor: colors.surfaceContainerLow,
-              borderRadius: borderRadius.lg || 24,
-            },
-          ]}
-        >
-          <Animated.View style={{ transform: [{ rotate: spin }] }}>
-            <Ionicons
-              name="sparkles-outline"
-              size={48}
-              color={colors.primary}
-            />
-          </Animated.View>
-          <Text
-            style={[
-              styles.generatingTitle,
-              { color: colors.text, fontFamily: fonts.display },
-            ]}
-          >
-            Whispering to the stars...
-          </Text>
-          <Text
-            style={[
-              styles.generatingSubtitle,
-              { color: colors.textMuted, fontFamily: fonts.body },
-            ]}
-          >
-            We are tailoring your personalized task chain to fit your goal.
-          </Text>
-          <View
-            style={[
-              styles.notificationBox,
-              { backgroundColor: colors.surfaceContainerHigh },
-            ]}
-          >
-            <Ionicons
-              name="notifications-outline"
-              size={20}
-              color={colors.primary}
-              style={{ marginRight: 10 }}
-            />
-            <Text
-              style={[
-                styles.notificationText,
-                { color: colors.text, fontFamily: fonts.label },
-              ]}
-            >
-              We'll send you a notification when your journey is ready.
-            </Text>
-          </View>
-        </View>
-      );
+      return <TaskChainSkeleton />;
     }
     return null;
   };
