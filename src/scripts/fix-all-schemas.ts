@@ -110,9 +110,6 @@ async function fixAllSchemas() {
     // --- TABLE: tasks ---
     console.log('Checking tasks...');
     await client.query(
-      `ALTER TABLE tasks ADD COLUMN IF NOT EXISTS xp_reward INT DEFAULT 10;`,
-    );
-    await client.query(
       `ALTER TABLE tasks ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP;`,
     );
     await client.query(
