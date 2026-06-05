@@ -101,10 +101,24 @@ export class OrchestratorService {
     if (!dayPlan) throw new Error('DayPlan not found');
 
     if (dayPlan.status === 'generating') {
+      // Check if it's genuinely in-progress or stalled with no tasks
+      const existingTaskCount = await this.taskRepository.count({
+        where: { dayPlanId },
+      });
+      const stalledMs = Date.now() - new Date(dayPlan.updatedAt).getTime();
+      const isStalled = stalledMs > 5 * 60 * 1000; // 5 minutes
+
+      if (existingTaskCount > 0 && !isStalled) {
+        this.logger.warn(
+          `DayPlan ${dayPlanId} is already generating/hydrating with ${existingTaskCount} tasks. Skipping duplicate orchestration call.`,
+        );
+        return;
+      }
+
+      // Stalled or has no tasks — allow re-orchestration
       this.logger.warn(
-        `DayPlan ${dayPlanId} is already generating/hydrating. Skipping duplicate orchestration call.`,
+        `DayPlan ${dayPlanId} stuck in generating state (${existingTaskCount} tasks, ${Math.round(stalledMs / 1000)}s ago). Re-orchestrating.`,
       );
-      return;
     }
 
     // Lock the day plan
