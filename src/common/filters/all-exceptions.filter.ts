@@ -59,11 +59,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     }
 
-    // Log to console/Sentry (optional, Sentry already handles some)
-    this.logger.error(
-      `Error at ${responseBody.path}: ${responseBody.message}`,
-      exception?.stack,
-    );
+    // Log to console/Sentry — skip 404s to avoid noise from scanner/bot traffic
+    // (e.g. POST /_next, /api/route probes targeting Next.js Server Actions)
+    if (httpStatus !== HttpStatus.NOT_FOUND) {
+      this.logger.error(
+        `Error at ${responseBody.path}: ${responseBody.message}`,
+        exception?.stack,
+      );
+    }
 
     // Log to Database (Skip 401/404 to avoid noise)
     if (
