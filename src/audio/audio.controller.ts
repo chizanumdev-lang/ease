@@ -115,7 +115,7 @@ export class AudioController {
     // Find active program
     const program = await this.ritualsService.getActiveProgram(userId);
     if (!program) {
-      return { morning: null, night: null, status: 'generating' };
+      return { morning: null, night: null, status: 'none' };
     }
 
     const rituals = await this.ritualsService.findByProgram(program.id);
