@@ -672,52 +672,57 @@ export class ProgramsService {
     const sleepStart = user.settings?.sleepWindow?.start || '23:00';
     const wakeStart = user.settings?.sleepWindow?.end || '07:00';
 
-    // ─── PHASE 1: Re-use Draft or Create skeleton ───────────────────────────
-    let program = await this.programRepository.findOne({
-      where: { goalId, userId },
+    // ─── PHASE 1: Cleanup Existing Programs (One-Program-Per-User Rule) ─────
+    const existingPrograms = await this.programRepository.find({
+      where: { userId },
+      relations: ['ritualTracks', 'dayPlans', 'dayPlans.audioTracks'],
     });
+
+    for (const existingProgram of existingPrograms) {
+      this.logger.log(`Deleting existing program ${existingProgram.id} for user ${userId} to enforce one-program rule`);
+      
+      // Cleanup Cloudinary audio files
+      if (existingProgram.ritualTracks) {
+        for (const rt of existingProgram.ritualTracks) {
+          if (rt.url) await this.audioService.deleteFromCloudinary(rt.url).catch(e => this.logger.error('Failed to delete ritual from cloudinary', e));
+        }
+      }
+      if (existingProgram.dayPlans) {
+        for (const dp of existingProgram.dayPlans) {
+          if (dp.audioTracks) {
+            for (const at of dp.audioTracks) {
+              if (at.url) await this.audioService.deleteFromCloudinary(at.url).catch(e => this.logger.error('Failed to delete audio track from cloudinary', e));
+            }
+          }
+        }
+      }
+
+      // Delete the program from the database (Cascades to DayPlans, Tasks, Rituals)
+      await this.programRepository.remove(existingProgram);
+    }
+
+    // ─── PHASE 2: Create New Program ───────────────────────────
     const programTitle = generateProgramDto.metadata?.title || goal.title;
     const programDesc = `A ${duration}-day ${learningStyle} program for ${goal.title}. Daily commitment: ${minutesPerDay} min.`;
 
-    if (!program) {
-      program = this.programRepository.create({
-        title: programTitle,
-        description: programDesc,
-        duration,
-        goalId,
-        userId,
-        status: 'generating',
-        metadata: {
-          ...generateProgramDto.metadata,
-          minutesPerDay,
-          learningStyle,
-          constraints,
-        },
-      });
-      await this.programRepository.save(program);
-    } else {
-      // Convert Draft to Active Program
-      program.status = 'generating';
-      program.title = programTitle;
-      program.description = programDesc;
-      program.duration = duration;
-      program.metadata = {
-        ...program.metadata,
+    const program = this.programRepository.create({
+      title: programTitle,
+      description: programDesc,
+      duration,
+      goalId,
+      userId,
+      status: 'generating',
+      metadata: {
         ...generateProgramDto.metadata,
         minutesPerDay,
         learningStyle,
         constraints,
-      };
-      await this.programRepository.save(program);
-    }
+      },
+    });
+    await this.programRepository.save(program);
 
     // Create empty day shells for the full duration
-    const existingDays = await this.dayPlanRepository.find({
-      where: { programId: program.id },
-    });
-    const existingDayNumbers = new Set(existingDays.map((d) => d.dayNumber));
     const newDayShells = Array.from({ length: duration }, (_, i) => i + 1)
-      .filter((n) => !existingDayNumbers.has(n))
       .map((n) =>
         this.dayPlanRepository.create({
           dayNumber: n,
