@@ -168,6 +168,7 @@ export class AudioService {
           public_id: `ease/audio/${publicId}`,
           overwrite: true,
           format: 'mp3',
+          timeout: 600000, // 10 minutes timeout
         });
         this.logger.log(`Cloudinary upload success: ${result.secure_url}`);
         return result.secure_url;
