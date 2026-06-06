@@ -92,30 +92,44 @@ export class RitualsService {
     const hasValidMorning = existing.some(r => r.ritualType === 'morning' && r.url && r.url.length > 0);
     const hasValidNight = existing.some(r => r.ritualType === 'night' && r.url && r.url.length > 0);
 
-    const promises: Promise<any>[] = [];
-    
-    if (!hasValidMorning) promises.push(this.generateRitual(programId, 'morning'));
-    else promises.push(Promise.resolve(existing.find(r => r.ritualType === 'morning')));
-    
-    if (!hasValidNight) promises.push(this.generateRitual(programId, 'night'));
-    else promises.push(Promise.resolve(existing.find(r => r.ritualType === 'night')));
+    let morningResult = null;
+    let nightResult = null;
+    let morningError = null;
+    let nightError = null;
 
-    const [morningResult, nightResult] = await Promise.allSettled(promises);
+    if (!hasValidMorning) {
+      try {
+        morningResult = await this.generateRitual(programId, 'morning');
+      } catch (e) {
+        morningError = e;
+      }
+    } else {
+      morningResult = existing.find((r) => r.ritualType === 'morning');
+    }
 
-    const morning =
-      morningResult.status === 'fulfilled' ? morningResult.value : null;
-    const night = nightResult.status === 'fulfilled' ? nightResult.value : null;
+    if (!hasValidNight) {
+      try {
+        nightResult = await this.generateRitual(programId, 'night');
+      } catch (e) {
+        nightError = e;
+      }
+    } else {
+      nightResult = existing.find((r) => r.ritualType === 'night');
+    }
 
-    if (morningResult.status === 'rejected') {
+    const morning = morningResult;
+    const night = nightResult;
+
+    if (morningError) {
       this.logger.error(
         `Morning ritual failed for program ${programId}`,
-        morningResult.reason,
+        morningError,
       );
     }
-    if (nightResult.status === 'rejected') {
+    if (nightError) {
       this.logger.error(
         `Night ritual failed for program ${programId}`,
-        nightResult.reason,
+        nightError,
       );
     }
 
