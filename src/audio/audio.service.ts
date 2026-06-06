@@ -12,6 +12,8 @@ import axios from 'axios';
 export class AudioService {
   private readonly logger = new Logger(AudioService.name);
   private readonly tempDir = path.join(os.tmpdir(), 'ease-audio');
+  // Cache downloaded background files so they are only fetched once per PM2 process
+  private readonly bgCache = new Map<string, string>();
   private readonly BACKGROUND_URLS: Record<string, string> = {
     ambient:
       'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3',
@@ -144,6 +146,16 @@ export class AudioService {
       return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
     }
 
+    // Guard: ensure the file actually exists before attempting upload.
+    // Missing file causes an opaque ENOENT deep inside the Cloudinary SDK.
+    if (!fs.existsSync(filePath)) {
+      this.logger.error(
+        `uploadToCloudinary: file does not exist at ${filePath} — skipping upload for ${publicId}. ` +
+        `This usually means FFmpeg failed to produce output (check FFmpeg logs above).`,
+      );
+      return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
+    }
+
     this.logger.log(`Uploading audio to Cloudinary: ${publicId}`);
 
     let attempts = 0;
@@ -162,7 +174,7 @@ export class AudioService {
       } catch (error) {
         attempts++;
         this.logger.warn(
-          `Cloudinary upload attempt ${attempts} failed: ${error.message}`,
+          `Cloudinary upload attempt ${attempts} failed: ${(error as Error).message}`,
         );
         if (attempts >= maxAttempts) {
           this.logger.error(
@@ -170,8 +182,8 @@ export class AudioService {
           );
           return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
         }
-        // Wait 1s before retry
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Exponential backoff: 1s, 2s
+        await new Promise((resolve) => setTimeout(resolve, attempts * 1000));
       }
     }
     return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
@@ -204,29 +216,35 @@ export class AudioService {
     let isTempBg = false;
 
     if (!fs.existsSync(localBackgroundPath) && backgroundUrl) {
-      this.logger.log(
-        `Local background not found for ${mood}, downloading from ${backgroundUrl}`,
-      );
-      try {
-        const tempBgPath = path.join(
-          this.tempDir,
-          `bg_${mood}_${Date.now()}.mp3`,
+      // Check in-memory cache first — avoid re-downloading on every audio task
+      const cached = this.bgCache.get(mood);
+      if (cached && fs.existsSync(cached)) {
+        this.logger.log(`Using cached background for ${mood}: ${cached}`);
+        bgSource = cached;
+      } else {
+        this.logger.log(
+          `Local background not found for ${mood}, downloading from ${backgroundUrl}`,
         );
-        const response = await axios({
-          url: backgroundUrl,
-          method: 'GET',
-          responseType: 'arraybuffer',
-          timeout: 10000,
-        });
-        fs.writeFileSync(tempBgPath, Buffer.from(response.data));
-        bgSource = tempBgPath;
-        isTempBg = true;
-      } catch (err) {
-        this.logger.warn(
-          `Failed to download background for ${mood}, will try direct URL`,
-          err,
-        );
-        bgSource = backgroundUrl;
+        try {
+          // Persist to a stable path so subsequent tasks in the same process reuse it
+          const tempBgPath = path.join(this.tempDir, `bg_${mood}.mp3`);
+          const response = await axios({
+            url: backgroundUrl,
+            method: 'GET',
+            responseType: 'arraybuffer',
+            timeout: 15000,
+          });
+          fs.writeFileSync(tempBgPath, Buffer.from(response.data));
+          this.bgCache.set(mood, tempBgPath);
+          bgSource = tempBgPath;
+          isTempBg = false; // Don't delete — we're caching it for reuse
+        } catch (err) {
+          this.logger.warn(
+            `Failed to download background for ${mood}, will use direct URL`,
+            err,
+          );
+          bgSource = backgroundUrl;
+        }
       }
     }
 
