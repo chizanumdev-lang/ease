@@ -35,6 +35,10 @@ export class RitualsService {
    * generation slot; false if another serverless instance already claimed it.
    */
   async claimGeneration(programId: string): Promise<boolean> {
+    const program = await this.programRepository.findOne({ where: { id: programId } });
+    if (!program) return false;
+    const userId = program.userId;
+
     const existing = await this.ritualTrackRepository.find({
       where: { programId },
     });
@@ -48,6 +52,7 @@ export class RitualsService {
     if (!hasMorning) {
       placeholders.push(this.ritualTrackRepository.create({
         programId,
+        userId,
         ritualType: 'morning',
         title: 'Generating...',
         url: '',
@@ -59,6 +64,7 @@ export class RitualsService {
     if (!hasNight) {
       placeholders.push(this.ritualTrackRepository.create({
         programId,
+        userId,
         ritualType: 'night',
         title: 'Generating...',
         url: '',
@@ -252,19 +258,18 @@ export class RitualsService {
         existing.duration = type === 'morning' ? 1800 : 3600;
         existing.metadata = metadata;
         return await this.ritualTrackRepository.save(existing);
+      } else {
+        const newTrack = this.ritualTrackRepository.create({
+          programId,
+          userId,
+          ritualType: type,
+          title,
+          url: publicUrl,
+          duration: type === 'morning' ? 1800 : 3600,
+          metadata,
+        });
+        return await this.ritualTrackRepository.save(newTrack);
       }
-
-      const ritual = this.ritualTrackRepository.create({
-        userId,
-        programId,
-        ritualType: type,
-        title,
-        url: publicUrl,
-        duration: type === 'morning' ? 1800 : 3600,
-        metadata,
-      });
-
-      return await this.ritualTrackRepository.save(ritual);
     } catch (error) {
       this.logger.error(
         `Failed to generate ${type} ritual for program ${programId}: ${error.message}`,
