@@ -150,6 +150,18 @@ export class OrchestratorService {
         );
       }
 
+      // ── BUG FIX #1: Guard against empty blueprint ────────────────────────
+      // If the AI returns an empty array (malformed response, rate-limit, etc.)
+      // we must NOT proceed — doing so marks the day 'ready' with 0 tasks.
+      // Reset to 'pending' so getTodaysPlan lazy-hydration can retry next call.
+      if (!blueprint || blueprint.length === 0) {
+        this.logger.error(
+          `Blueprint generation returned 0 tasks for DayPlan ${dayPlanId}. Resetting to pending for retry.`,
+        );
+        await this.dayPlanRepository.update(dayPlanId, { status: 'pending' });
+        return;
+      }
+
       // ── PHASE: SHELL CREATION ────────────────────────────────────────────
       const shards = await this.shardRepository.find();
       const tasks: Task[] = [];
@@ -182,7 +194,8 @@ export class OrchestratorService {
           this.logger.error(
             `Background Hydration Failed for DayPlan ${dayPlan.id}: ${err.message}`,
           );
-          await this.dayPlanRepository.update(dayPlanId, { status: 'failed' });
+          // Reset to pending so the next request retries instead of staying broken
+          await this.dayPlanRepository.update(dayPlanId, { status: 'pending' });
         })
         .finally(async () => {
           const program = await this.programRepository.findOne({
@@ -205,14 +218,21 @@ export class OrchestratorService {
       this.logger.error(
         `Orchestration failed for DayPlan ${dayPlanId}: ${err.message}`,
       );
-      await this.dayPlanRepository.update(dayPlanId, { status: 'failed' });
+      // ── BUG FIX #2: Reset to pending on exception so retry is possible ───
+      // Previously this set status to 'failed' AND program to 'ready', which
+      // meant the lazy-hydration guard in getTodaysPlan would never re-trigger.
+      await this.dayPlanRepository.update(dayPlanId, { status: 'pending' });
 
       const program = await this.programRepository.findOne({
         where: { id: dayPlan.programId },
       });
+      // BUG FIX #3: Only mark program ready if it actually succeeded.
+      // On a true exception, leave it as-is so polling keeps trying.
       if (program && program.status === 'generating') {
-        program.status = 'ready';
-        await this.programRepository.save(program);
+        // Don't touch — let the poll detect it's stuck and retry
+        this.logger.warn(
+          `Orchestration failed — leaving program ${program.id} in generating state for retry.`,
+        );
       }
 
       throw err;

@@ -901,6 +901,18 @@ export class ProgramsService {
       }
     }
 
+    // ── PERMANENT FIX: Detect silently-empty 'ready' plans ─────────────────
+    // A plan can end up status='ready' with 0 tasks if the AI blueprint
+    // returned an empty array and the old code didn't guard against it.
+    // Treat these as 'pending' so lazy hydration fires and fills them properly.
+    if (plan.status === 'ready' && (!plan.tasks || plan.tasks.length === 0)) {
+      this.logger.warn(
+        `Day ${dayNumber} is marked 'ready' but has 0 tasks. Resetting to pending for re-hydration.`,
+      );
+      plan.status = 'pending';
+      await this.dayPlanRepository.save(plan);
+    }
+
     if (plan.status === 'pending') {
       this.logger.log(
         `Day ${dayNumber} is pending. Triggering lazy hydration.`,
