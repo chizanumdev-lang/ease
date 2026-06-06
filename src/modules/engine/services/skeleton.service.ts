@@ -42,6 +42,7 @@ export class SkeletonService {
     goal: string,
     duration: number,
     category: string,
+    batchesToRun?: number[],
   ): Promise<void> {
     this.logger.log(
       `Generating program skeleton for program ${programId} (${duration} days, goal: "${goal}")`,
@@ -56,8 +57,9 @@ export class SkeletonService {
       .join('\n');
 
     const totalBatches = Math.ceil(duration / this.BATCH_SIZE);
+    const batches = batchesToRun ?? Array.from({ length: totalBatches }, (_, i) => i);
 
-    for (let batch = 0; batch < totalBatches; batch++) {
+    for (const batch of batches) {
       const startDay = batch * this.BATCH_SIZE + 1;
       const endDay = Math.min(startDay + this.BATCH_SIZE - 1, duration);
       const weekNumber = batch + 1;

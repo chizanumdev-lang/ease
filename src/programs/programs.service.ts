@@ -740,17 +740,18 @@ export class ProgramsService {
     // so the API returns immediately and the mobile app can show the polling skeleton screen.
     const orchestrateInBackground = async () => {
       try {
-        this.logger.log(`Generating program skeleton for all ${duration} days (program ${program.id})`);
+        this.logger.log(`Generating program skeleton for Week 1 (Days 1-7) for program ${program.id}`);
         try {
           await this.skeletonService.generateProgramSkeleton(
             program.id,
             goal.description || goal.title || 'Goal',
             duration,
             goal.category || 'general',
+            [0] // Only Week 1
           );
         } catch (err: any) {
           this.logger.error(
-            `Skeleton generation failed: ${err instanceof Error ? err.message : String(err)}. Falling back to legacy per-day generation.`,
+            `Skeleton generation failed for Week 1: ${err instanceof Error ? err.message : String(err)}. Falling back to legacy per-day generation.`,
           );
         }
 
@@ -817,6 +818,26 @@ export class ProgramsService {
                 ),
               );
           }
+        }
+
+        // ─── PHASE 5: Generate remaining skeletons (Weeks 2+) ──────────────────────
+        const totalBatches = Math.ceil(duration / 7);
+        if (totalBatches > 1) {
+            this.logger.log(`Generating program skeleton for remaining weeks (Weeks 2+) for program ${program.id}`);
+            const remainingBatches = Array.from({ length: totalBatches - 1 }, (_, i) => i + 1);
+            try {
+              await this.skeletonService.generateProgramSkeleton(
+                program.id,
+                goal.description || goal.title || 'Goal',
+                duration,
+                goal.category || 'general',
+                remainingBatches
+              );
+            } catch (err: any) {
+              this.logger.error(
+                `Skeleton generation failed for Weeks 2+: ${err instanceof Error ? err.message : String(err)}.`,
+              );
+            }
         }
       } catch (err: any) {
         this.logger.error(`Fatal background orchestration error: ${err.message}`);
