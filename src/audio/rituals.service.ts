@@ -98,8 +98,8 @@ export class RitualsService {
     const hasValidMorning = existing.some(r => r.ritualType === 'morning' && r.url && r.url.length > 0);
     const hasValidNight = existing.some(r => r.ritualType === 'night' && r.url && r.url.length > 0);
 
-    let morningResult = null;
-    let nightResult = null;
+    let morningResult: RitualTrack | null | undefined = null;
+    let nightResult: RitualTrack | null | undefined = null;
     let morningError = null;
     let nightError = null;
 
@@ -123,8 +123,8 @@ export class RitualsService {
       nightResult = existing.find((r) => r.ritualType === 'night');
     }
 
-    const morning = morningResult;
-    const night = nightResult;
+    const morning = morningResult || null;
+    const night = nightResult || null;
 
     if (morningError) {
       this.logger.error(
