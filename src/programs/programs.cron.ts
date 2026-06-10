@@ -40,20 +40,32 @@ export class ProgramsCronService {
 
       for (const program of activePrograms) {
         try {
-          // Calculate which day the user should be on today
-          const startDate = new Date(program.createdAt);
-          startDate.setHours(0, 0, 0, 0);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const currentDay = Math.min(
-            program.duration,
-            Math.max(
-              1,
-              Math.floor(
-                (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-              ) + 1,
-            ),
+          // Calculate current day based on user progression
+          // Find all active/hydrated day plans with their tasks
+          const activeDayPlans = await this.dayPlanRepository
+            .createQueryBuilder('dayPlan')
+            .leftJoinAndSelect('dayPlan.tasks', 'task')
+            .where('dayPlan.programId = :programId', { programId: program.id })
+            .andWhere('dayPlan.status = :status', { status: 'ready' })
+            .orderBy('dayPlan.dayNumber', 'ASC')
+            .getMany();
+
+          // The current active day is the lowest day number that has at least one incomplete task
+          const firstIncompleteDayPlan = activeDayPlans.find((dp) => 
+            dp.tasks && dp.tasks.length > 0 && dp.tasks.some((t) => !t.completed)
           );
+
+          let currentDay = 1;
+          if (firstIncompleteDayPlan) {
+            // User is stuck on this day until they finish it
+            currentDay = firstIncompleteDayPlan.dayNumber;
+          } else if (activeDayPlans.length > 0) {
+            // User has completed everything hydrated so far, so they are ready for the next day
+            currentDay = activeDayPlans[activeDayPlans.length - 1].dayNumber + 1;
+          }
+          
+          // Cap at program.duration
+          currentDay = Math.min(program.duration, currentDay);
 
           // Find the earliest pending day that should already be ready
           // (i.e. day number <= currentDay + 1, meaning today or tomorrow)

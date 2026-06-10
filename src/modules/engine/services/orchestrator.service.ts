@@ -666,13 +666,36 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
     dayPlanId: string,
     dayPlan?: DayPlan,
   ) {
+    let pastVideoIds: string[] = [];
+    if (dayPlan) {
+      try {
+        const pastTasks = await this.taskRepository
+          .createQueryBuilder('task')
+          .innerJoin('task.dayPlan', 'dayPlan')
+          .where('dayPlan.program_id = :programId', { programId: dayPlan.programId })
+          .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: dayPlan.dayNumber })
+          .andWhere('task.type = :type', { type: 'video' })
+          .andWhere('task.video_url IS NOT NULL')
+          .getMany();
+          
+        pastVideoIds = pastTasks
+          .map(t => {
+             const match = t.videoUrl?.match(/v=([^&]+)/);
+             return match ? match[1] : null;
+          })
+          .filter((id): id is string => !!id);
+      } catch (e) {
+        this.logger.warn(`Failed to fetch past video IDs for deduplication: ${e}`);
+      }
+    }
+
     await Promise.all(
       tasks.map(async (task) => {
         try {
           const metadata = task.metadata as Record<string, any>;
           const shard = shards.find((s) => s.id === metadata.shardId);
           if (!shard) throw new Error(`Shard not found for task ${task.id}`);
-          await this.hydrateSingleTask(task, shard, goal, dayPlanId);
+          await this.hydrateSingleTask(task, shard, goal, dayPlanId, pastVideoIds);
 
           metadata.status = 'ready';
           task.metadata = metadata;
@@ -742,6 +765,7 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
     shard: TaskShard,
     goal: string,
     dayPlanId: string,
+    pastVideoIds: string[] = [],
   ) {
     const metadata = task.metadata as Record<string, any>;
 
@@ -750,8 +774,11 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
       const videoUrl = await this.fetchVideoWithRetry(
         goal,
         metadata.searchQuery,
+        pastVideoIds,
       );
       task.videoUrl = videoUrl;
+      const match = videoUrl.match(/v=([^&]+)/);
+      if (match) pastVideoIds.push(match[1]);
     }
 
     // Auto-expand short scripts to ensure full 4-5 mins length
@@ -830,9 +857,10 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
   private async fetchVideoWithRetry(
     goal: string,
     query: string,
+    excludeVideoIds: string[] = [],
   ): Promise<string> {
     try {
-      const video = await this.youtubeService.getRecommendedVideo(goal, query);
+      const video = await this.youtubeService.getRecommendedVideo(goal, query, excludeVideoIds);
       if (video?.url) return video.url;
       throw new Error('No video found');
     } catch (e) {
@@ -844,6 +872,7 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
       const fallback = await this.youtubeService.getRecommendedVideo(
         goal,
         goal,
+        excludeVideoIds,
       );
       return fallback?.url || 'https://www.youtube.com/watch?v=inpok4MKVLM';
     }
