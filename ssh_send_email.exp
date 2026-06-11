@@ -1,0 +1,15 @@
+#!/usr/bin/expect -f
+set timeout 20
+set password "viicsoft"
+set ip "173.212.248.253"
+set email "ichizanum@gmail.com"
+
+spawn ssh -o StrictHostKeyChecking=no root@$ip "echo 'This is a test email from staging.' | mail -s 'Test Email from Staging Server' $email"
+
+expect {
+    "*assword:*" {
+        send "$password\r"
+        exp_continue
+    }
+    eof
+}

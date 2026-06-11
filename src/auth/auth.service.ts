@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   Logger,
+  Inject,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +14,8 @@ import * as crypto from 'crypto';
 import { User } from '../users/entities/user.entity';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 import { BrevoService } from '../mail/brevo.service';
 import { VerifyEmailDto } from './dto/verify-email.dto';
@@ -26,6 +29,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private brevoService: BrevoService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async signup(signupDto: SignupDto) {
@@ -48,19 +52,20 @@ export class AuthService {
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000,
     ).toString();
-    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+    const verificationExpires = Date.now() + 15 * 60 * 1000; // 15 mins
 
-    // Create user
-    const user = this.userRepository.create({
-      email,
-      password: hashedPassword,
-      name,
-      verificationCode,
-      verificationExpires,
-      isVerified: false,
-    });
-
-    await this.userRepository.save(user);
+    // Store pending user in cache for 15 minutes
+    await this.cacheManager.set(
+      `signup:${email}`,
+      {
+        email,
+        password: hashedPassword,
+        name,
+        verificationCode,
+        verificationExpires,
+      },
+      15 * 60 * 1000, // ttl in ms
+    );
 
     // Send verification email
     try {
@@ -71,27 +76,7 @@ export class AuthService {
       );
     }
 
-    // Generate tokens
-    const tokens = await this.generateTokens(user.id, user.email);
-
-    // Save refresh token using SHA-256 for performance (random JWTs)
-    const hashedRefreshToken = crypto
-      .createHash('sha256')
-      .update(tokens.refreshToken)
-      .digest('hex');
-    user.refreshToken = hashedRefreshToken;
-    await this.userRepository.save(user);
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        isVerified: user.isVerified,
-        settings: user.settings,
-      },
-      ...tokens,
-    };
+    return { message: 'Verification code sent to your email.' };
   }
 
   async login(loginDto: LoginDto) {
@@ -187,50 +172,88 @@ export class AuthService {
 
   async verifyEmail(verifyEmailDto: VerifyEmailDto) {
     const { email, code } = verifyEmailDto;
-    const user = await this.userRepository.findOne({ where: { email } });
 
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    if (user.isVerified) {
+    // Check if user is already registered and verified
+    const existingUser = await this.userRepository.findOne({ where: { email } });
+    if (existingUser && existingUser.isVerified) {
       return { message: 'Email already verified' };
     }
 
-    if (!user.verificationCode || !user.verificationExpires) {
-      throw new UnauthorizedException('No verification code found');
+    // Get pending registration data from cache
+    const pendingData: any = await this.cacheManager.get(`signup:${email}`);
+
+    if (!pendingData) {
+      throw new UnauthorizedException('Verification code expired or invalid');
     }
 
-    if (user.verificationCode !== code) {
+    if (pendingData.verificationCode !== code) {
       throw new UnauthorizedException('Invalid verification code');
     }
 
-    if (new Date() > user.verificationExpires) {
+    if (Date.now() > pendingData.verificationExpires) {
       throw new UnauthorizedException('Verification code expired');
     }
 
-    user.isVerified = true;
-    user.verificationCode = null;
-    user.verificationExpires = null;
+    // Create user in DB
+    const user = this.userRepository.create({
+      email: pendingData.email,
+      password: pendingData.password,
+      name: pendingData.name,
+      isVerified: true,
+      verificationCode: null,
+      verificationExpires: null,
+    });
+
     await this.userRepository.save(user);
 
-    return { message: 'Email verified successfully' };
+    // Clear cache
+    await this.cacheManager.del(`signup:${email}`);
+
+    // Generate tokens
+    const tokens = await this.generateTokens(user.id, user.email);
+
+    // Save refresh token
+    const hashedRefreshToken = crypto
+      .createHash('sha256')
+      .update(tokens.refreshToken)
+      .digest('hex');
+    user.refreshToken = hashedRefreshToken;
+    await this.userRepository.save(user);
+
+    return {
+      message: 'Email verified successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isVerified: user.isVerified,
+        settings: user.settings,
+      },
+      ...tokens,
+    };
   }
 
   async resendVerificationCode(email: string) {
-    const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
+    // Check if user is already verified
+    const existingUser = await this.userRepository.findOne({ where: { email } });
+    if (existingUser && existingUser.isVerified) {
+      return { message: 'Email already verified' };
+    }
+
+    const pendingData: any = await this.cacheManager.get(`signup:${email}`);
+    if (!pendingData) {
+      throw new UnauthorizedException('User not found or registration expired. Please sign up again.');
     }
 
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000,
     ).toString();
-    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+    const verificationExpires = Date.now() + 15 * 60 * 1000;
 
-    user.verificationCode = verificationCode;
-    user.verificationExpires = verificationExpires;
-    await this.userRepository.save(user);
+    pendingData.verificationCode = verificationCode;
+    pendingData.verificationExpires = verificationExpires;
+
+    await this.cacheManager.set(`signup:${email}`, pendingData, 15 * 60 * 1000); // 15 mins
 
     await this.brevoService.sendVerificationEmail(email, verificationCode);
     return { message: 'Verification code resent' };
