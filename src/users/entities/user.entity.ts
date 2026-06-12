@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -16,39 +16,23 @@ import { Progress } from '../../progress/entities/progress.entity';
 @Entity('users')
 export class User {
   @Field(() => ID)
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryColumn('uuid')
+  id: string; // Matches auth.users.id — set by Supabase Auth
 
   @Field()
   @Column({ unique: true })
   email: string;
 
-  @Column()
-  password: string;
-
-  @Field()
-  @Column()
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   name: string;
 
   @Column({ type: 'jsonb', nullable: true })
   settings: Record<string, any> | null;
 
-  @Column({ type: 'varchar', nullable: true, name: 'refresh_token' })
-  refreshToken: string | null;
-
   @Field()
   @Column({ default: false, name: 'is_admin' })
   isAdmin: boolean;
-
-  @Field()
-  @Column({ default: false, name: 'is_verified' })
-  isVerified: boolean;
-
-  @Column({ type: 'varchar', nullable: true, name: 'verification_code' })
-  verificationCode: string | null;
-
-  @Column({ type: 'timestamp', nullable: true, name: 'verification_expires' })
-  verificationExpires: Date | null;
 
   @Field()
   @CreateDateColumn({ name: 'created_at' })

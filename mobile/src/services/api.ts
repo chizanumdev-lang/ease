@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../constants/config';
 import { secureStorage, mmkvStorage } from './storage.service';
+import { supabase } from './supabase';
 
 // Create axios instance
 const api = axios.create({
@@ -83,23 +84,27 @@ api.interceptors.response.use(
             try {
                 const refreshToken = await secureStorage.getRefreshToken();
                 if (refreshToken) {
-                    console.log(`[API] Refreshing token for ${originalRequest.url}...`);
-                    
-                    const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
-                        headers: { Authorization: `Bearer ${refreshToken}` }
+                    console.log(`[API] Refreshing Supabase session for ${originalRequest.url}...`);
+
+                    const { data, error: refreshError } = await supabase.auth.refreshSession({
+                        refresh_token: refreshToken,
                     });
 
-                    const { accessToken, refreshToken: newRefreshToken } = response.data;
-                    
-                    await secureStorage.setAccessToken(accessToken);
+                    if (refreshError || !data.session) {
+                        throw new Error(refreshError?.message || 'Refresh failed');
+                    }
+
+                    const { access_token, refresh_token: newRefreshToken } = data.session;
+
+                    await secureStorage.setAccessToken(access_token);
                     await secureStorage.setRefreshToken(newRefreshToken);
 
                     console.log(`[API] Refresh success. Retrying ${originalRequest.url}`);
-                    
-                    isRefreshing = false;
-                    onRefreshed(accessToken);
 
-                    originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                    isRefreshing = false;
+                    onRefreshed(access_token);
+
+                    originalRequest.headers.Authorization = `Bearer ${access_token}`;
                     return api(originalRequest);
                 }
             } catch (refreshError) {

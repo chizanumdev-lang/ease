@@ -42,13 +42,4 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
   }
-
-  async skipVerification(email: string): Promise<User> {
-    const user = await this.findByEmail(email);
-    if (!user) throw new NotFoundException('User not found');
-    user.isVerified = true;
-    user.verificationCode = null;
-    user.verificationExpires = null;
-    return this.userRepository.save(user);
-  }
 }

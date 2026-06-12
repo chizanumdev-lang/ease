@@ -128,16 +128,6 @@ export class ProgramsResolver {
     return true;
   }
 
-  @Mutation(() => Boolean, { name: 'devSkipVerification' })
-  async devSkipVerification(
-    @Args('email') email: string,
-    @Args('key') key: string,
-  ): Promise<boolean> {
-    const expected = process.env.INTERNAL_API_KEY || 'dev-key';
-    if (key !== expected) throw new UnauthorizedException('Invalid dev key');
-    await this.usersService.skipVerification(email);
-    return true;
-  }
 
   @Mutation(() => Boolean, { name: 'devDeleteUser' })
   async devDeleteUser(

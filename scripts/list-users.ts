@@ -7,7 +7,7 @@ async function bootstrap() {
   const usersService = app.get(UsersService);
 
   const users = await usersService.findAll();
-  console.log('All Users:', users.map(u => ({ id: u.id, email: u.email, isVerified: u.isVerified })));
+  console.log('All Users:', users.map(u => ({ id: u.id, email: u.email })));
   await app.close();
 }
 bootstrap();

@@ -2,7 +2,6 @@ export interface User {
     id: string;
     email: string;
     name: string;
-    isVerified: boolean;
     settings?: UserSettings;
     createdAt: string;
 }
@@ -207,8 +206,9 @@ export interface Progress {
 
 export interface AuthResponse {
     user: User;
-    accessToken: string;
-    refreshToken: string;
+    accessToken: string | null;
+    refreshToken: string | null;
+    requiresConfirmation?: boolean;
 }
 
 // Navigation types

@@ -16,17 +16,23 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get('JWT_SECRET') || 'default-secret',
+      // Supabase signs JWTs with SUPABASE_JWT_SECRET
+      secretOrKey:
+        configService.get<string>('SUPABASE_JWT_SECRET') || 'supabase-jwt-secret-placeholder',
     });
   }
 
-  async validate(payload: { sub: string; email: string }) {
+  /**
+   * Called after passport verifies the JWT signature.
+   * `payload.sub` contains the Supabase Auth user UUID.
+   */
+  async validate(payload: { sub: string; email: string; role?: string }) {
     const user = await this.userRepository.findOne({
       where: { id: payload.sub },
     });
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('User not found');
     }
 
     return user;

@@ -84,15 +84,14 @@ export class InternalController {
     return { success: true, result };
   }
 
-  @Post('users/skip-verification')
-  async skipVerification(
+  @Post('users/confirm-email')
+  async confirmEmail(
     @Headers('x-internal-key') key: string,
     @Body('email') email: string,
   ) {
     this.validateKey(key);
-    this.logger.log(`Skipping verification for user: ${email}`);
-    await this.usersService.skipVerification(email);
-    return { success: true, message: 'User verified' };
+    this.logger.log(`Note: email confirmation is now handled by Supabase Auth for: ${email}`);
+    return { success: true, message: 'Use Supabase dashboard to manage email confirmation' };
   }
 
   @Delete('users/:id')

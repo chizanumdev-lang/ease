@@ -12,21 +12,20 @@ import { useAuthStore } from '../store/authStore';
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthStack() {
-    const { isAuthenticated, user } = useAuthStore();
+    const { isAuthenticated, user, requiresConfirmation } = useAuthStore();
     const hasCompletedOnboarding = user?.settings?.onboardingCompleted === true;
-    const isVerified = user?.isVerified === true;
 
-    console.log('[AUTH_STACK] isAuth:', isAuthenticated, 'isVerified:', isVerified, 'hasCompletedOnboarding:', hasCompletedOnboarding);
+    console.log('[AUTH_STACK] isAuth:', isAuthenticated, 'requiresConfirmation:', requiresConfirmation, 'hasCompletedOnboarding:', hasCompletedOnboarding);
 
-    // If user is authenticated but NOT verified, show verify email screen
-    if (isAuthenticated && !isVerified) {
-        console.log('[AUTH_STACK] Showing VerifyEmail');
+    // If signup was completed but email confirmation is pending, show verify screen
+    if (requiresConfirmation && user?.email) {
+        console.log('[AUTH_STACK] Showing VerifyEmail (awaiting Supabase confirmation)');
         return (
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen
                     name="VerifyEmail"
                     component={VerifyEmailScreen}
-                    initialParams={{ email: user?.email || '' }}
+                    initialParams={{ email: user.email }}
                 />
             </Stack.Navigator>
         );
