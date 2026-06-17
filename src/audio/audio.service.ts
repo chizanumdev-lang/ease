@@ -151,7 +151,7 @@ export class AudioService {
     if (!fs.existsSync(filePath)) {
       this.logger.error(
         `uploadToCloudinary: file does not exist at ${filePath} — skipping upload for ${publicId}. ` +
-        `This usually means FFmpeg failed to produce output (check FFmpeg logs above).`,
+          `This usually means FFmpeg failed to produce output (check FFmpeg logs above).`,
       );
       return 'https://res.cloudinary.com/duooultxc/video/upload/v1773045822/ease/backgrounds/ambient.mp3';
     }
@@ -192,24 +192,32 @@ export class AudioService {
 
   public async deleteFromCloudinary(url: string): Promise<boolean> {
     if (!url || url.trim() === '') return false;
-    
+
     try {
       const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)\.[a-zA-Z0-9]+$/);
       if (!match || !match[1]) {
-        this.logger.warn(`Could not extract public ID from Cloudinary URL: ${url}`);
+        this.logger.warn(
+          `Could not extract public ID from Cloudinary URL: ${url}`,
+        );
         return false;
       }
-      
+
       const publicId = match[1];
       this.logger.log(`Deleting from Cloudinary: ${publicId}`);
-      
-      const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+
+      const result = await cloudinary.uploader.destroy(publicId, {
+        resource_type: 'video',
+      });
       if (result.result !== 'ok' && result.result !== 'not found') {
-        this.logger.warn(`Cloudinary deletion returned non-ok result for ${publicId}: ${result.result}`);
+        this.logger.warn(
+          `Cloudinary deletion returned non-ok result for ${publicId}: ${result.result}`,
+        );
       }
       return true;
     } catch (error) {
-      this.logger.error(`Failed to delete from Cloudinary (${url}): ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to delete from Cloudinary (${url}): ${(error as Error).message}`,
+      );
       return false;
     }
   }

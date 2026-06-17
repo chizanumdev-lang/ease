@@ -966,12 +966,19 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
       let baseData: any = null;
 
       // Determine how many batches based on duration (1 batch per 10 mins approx, max 6)
-      const batches = type === 'task' ? 1 : Math.max(1, Math.min(Math.ceil(duration / 10), 6));
-      this.logger.log(`Generating audio script in ${batches} batch(es) for ${duration}m duration`);
+      const batches =
+        type === 'task'
+          ? 1
+          : Math.max(1, Math.min(Math.ceil(duration / 10), 6));
+      this.logger.log(
+        `Generating audio script in ${batches} batch(es) for ${duration}m duration`,
+      );
 
       for (let i = 0; i < batches; i++) {
-        const batchPrompt = prompt + `\n\nThis is part ${i + 1} of ${batches}. Ensure you provide completely unique, non-repeating affirmations from previous parts. Provide another 50-70 fresh, powerful affirmations.`;
-        
+        const batchPrompt =
+          prompt +
+          `\n\nThis is part ${i + 1} of ${batches}. Ensure you provide completely unique, non-repeating affirmations from previous parts. Provide another 50-70 fresh, powerful affirmations.`;
+
         const response = await this.callWithFallback(batchPrompt);
         if (!response) {
           this.logger.warn(`Failed to generate batch ${i + 1}`);
@@ -986,7 +993,9 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
       }
 
       if (!baseData || finalAffirmations.length === 0) {
-        throw new Error('Failed to extract valid JSON or affirmations from AI responses');
+        throw new Error(
+          'Failed to extract valid JSON or affirmations from AI responses',
+        );
       }
 
       // Validation & Sanitization
@@ -1249,74 +1258,78 @@ Return ONLY the raw JSON object starting with { and ending with }.`;
       const firstBracket = cleaned.indexOf('[');
       let startIndex = -1;
       let isArray = false;
-      
+
       if (firstBrace !== -1 && firstBracket !== -1) {
-          if (firstBrace < firstBracket) { startIndex = firstBrace; }
-          else { startIndex = firstBracket; isArray = true; }
-      } else if (firstBrace !== -1) {
+        if (firstBrace < firstBracket) {
           startIndex = firstBrace;
-      } else if (firstBracket !== -1) {
+        } else {
           startIndex = firstBracket;
           isArray = true;
+        }
+      } else if (firstBrace !== -1) {
+        startIndex = firstBrace;
+      } else if (firstBracket !== -1) {
+        startIndex = firstBracket;
+        isArray = true;
       }
 
       if (startIndex !== -1) {
-          let openCount = 0;
-          let endIndex = -1;
-          let inString = false;
-          let escapeNext = false;
-          const openChar = isArray ? '[' : '{';
-          const closeChar = isArray ? ']' : '}';
+        let openCount = 0;
+        let endIndex = -1;
+        let inString = false;
+        let escapeNext = false;
+        const openChar = isArray ? '[' : '{';
+        const closeChar = isArray ? ']' : '}';
 
-          for (let i = startIndex; i < cleaned.length; i++) {
-              const char = cleaned[i];
-              
-              if (escapeNext) {
-                  escapeNext = false;
-                  continue;
-              }
-              if (char === '\\') {
-                  escapeNext = true;
-                  continue;
-              }
-              if (char === '"') {
-                  inString = !inString;
-                  continue;
-              }
-              
-              if (!inString) {
-                  if (char === openChar) openCount++;
-                  else if (char === closeChar) openCount--;
-                  
-                  if (openCount === 0) {
-                      endIndex = i;
-                      break;
-                  }
-              }
+        for (let i = startIndex; i < cleaned.length; i++) {
+          const char = cleaned[i];
+
+          if (escapeNext) {
+            escapeNext = false;
+            continue;
+          }
+          if (char === '\\') {
+            escapeNext = true;
+            continue;
+          }
+          if (char === '"') {
+            inString = !inString;
+            continue;
           }
 
-          if (endIndex !== -1) {
-              let jsonString = cleaned.substring(startIndex, endIndex + 1);
-              
-              // Sanitization for "Bad control character in string literal"
-              jsonString = jsonString.replace(/"([^"\\]|\\.)*"/g, (match) => {
-                return match.replace(/[\u0000-\u001F]/g, (ctrl) => {
-                  if (ctrl === '\n') return '\\n';
-                  if (ctrl === '\r') return '\\r';
-                  if (ctrl === '\t') return '\\t';
-                  return '';
-                });
-              });
+          if (!inString) {
+            if (char === openChar) openCount++;
+            else if (char === closeChar) openCount--;
 
-              try {
-                return JSON.parse(jsonString);
-              } catch (innerErr) {
-                this.logger.warn(
-                  `JSON parse failed after sanitization: ${innerErr.message}`,
-                );
-                return null;
-              }
+            if (openCount === 0) {
+              endIndex = i;
+              break;
+            }
           }
+        }
+
+        if (endIndex !== -1) {
+          let jsonString = cleaned.substring(startIndex, endIndex + 1);
+
+          // Sanitization for "Bad control character in string literal"
+          jsonString = jsonString.replace(/"([^"\\]|\\.)*"/g, (match) => {
+            return match.replace(/[\u0000-\u001F]/g, (ctrl) => {
+              if (ctrl === '\n') return '\\n';
+              if (ctrl === '\r') return '\\r';
+              if (ctrl === '\t') return '\\t';
+              return '';
+            });
+          });
+
+          try {
+            return JSON.parse(jsonString);
+          } catch (innerErr) {
+            this.logger.warn(
+              `JSON parse failed after sanitization: ${innerErr.message}`,
+            );
+            return null;
+          }
+        }
       }
 
       return null;

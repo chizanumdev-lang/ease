@@ -31,12 +31,13 @@ export class AuthService {
     const { email, password, name } = signupDto;
     this.logger.log(`Attempting signup for: ${email}`);
 
-    const { data, error } = await this.supabaseService.adminClient.auth.admin.createUser({
-      email,
-      password,
-      user_metadata: { name },
-      email_confirm: false, // Supabase will send confirmation email
-    });
+    const { data, error } =
+      await this.supabaseService.adminClient.auth.admin.createUser({
+        email,
+        password,
+        user_metadata: { name },
+        email_confirm: false, // Supabase will send confirmation email
+      });
 
     if (error) {
       this.logger.error(`Supabase signup error: ${error.message}`);
@@ -64,7 +65,9 @@ export class AuthService {
       );
     }
 
-    return { message: 'Account created. Check your email to confirm your address.' };
+    return {
+      message: 'Account created. Check your email to confirm your address.',
+    };
   }
 
   /**
@@ -90,7 +93,9 @@ export class AuthService {
 
     if (!user) {
       // Edge case: auth user exists but public row missing — create it
-      this.logger.warn(`public.users row missing for auth user ${data.user.id}, creating...`);
+      this.logger.warn(
+        `public.users row missing for auth user ${data.user.id}, creating...`,
+      );
       const newUser = this.userRepository.create({
         id: data.user.id,
         email: data.user.email,
@@ -142,7 +147,9 @@ export class AuthService {
 
     if (error) {
       this.logger.error(`Resend confirmation error: ${error.message}`);
-      throw new InternalServerErrorException('Failed to resend confirmation email');
+      throw new InternalServerErrorException(
+        'Failed to resend confirmation email',
+      );
     }
 
     return { message: 'Confirmation email resent.' };

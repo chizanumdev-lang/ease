@@ -125,9 +125,7 @@ export class AudioMixerService {
   /**
    * Synthesize text to WAV buffer using TTS
    */
-  async synthesizeTextToWav(
-    text: string,
-  ): Promise<Buffer> {
+  async synthesizeTextToWav(text: string): Promise<Buffer> {
     // Prefer Google if configured, otherwise use Edge TTS (No Key Required)
     if (this.ttsClient) {
       try {
@@ -332,8 +330,12 @@ export class AudioMixerService {
     );
 
     // 1. Synthesize Voiceover parts (Local Files)
-    const introBuffer = await this.synthesizeTextToWav(scriptData.introNarration);
-    const outroBuffer = await this.synthesizeTextToWav(scriptData.outroNarration);
+    const introBuffer = await this.synthesizeTextToWav(
+      scriptData.introNarration,
+    );
+    const outroBuffer = await this.synthesizeTextToWav(
+      scriptData.outroNarration,
+    );
 
     const tempIntroPath = path.join(outputDir, `temp_intro_${Date.now()}.wav`);
     const tempOutroPath = path.join(outputDir, `temp_outro_${Date.now()}.wav`);
@@ -345,12 +347,17 @@ export class AudioMixerService {
     // Chunk affirmations into groups of 10 to avoid Edge TTS text limits
     const affsTempPaths: string[] = [];
     const chunkSize = 10;
-    
+
     for (let i = 0; i < scriptData.affirmations.length; i += chunkSize) {
-      const chunkText = scriptData.affirmations.slice(i, i + chunkSize).join('... ... ... ');
+      const chunkText = scriptData.affirmations
+        .slice(i, i + chunkSize)
+        .join('... ... ... ');
       this.logger.log(`Synthesizing affirmations chunk ${i / chunkSize + 1}`);
       const chunkBuffer = await this.synthesizeTextToWav(chunkText);
-      const chunkPath = path.join(outputDir, `temp_affs_${Date.now()}_${i}.wav`);
+      const chunkPath = path.join(
+        outputDir,
+        `temp_affs_${Date.now()}_${i}.wav`,
+      );
       await fs.writeFile(chunkPath, chunkBuffer);
       affsTempPaths.push(chunkPath);
     }
@@ -366,8 +373,12 @@ export class AudioMixerService {
               if (err) {
                 reject(err);
               } else {
-                const ffprobeData = metadata as { format?: { duration?: string | number } };
-                const parsed = parseFloat(String(ffprobeData?.format?.duration));
+                const ffprobeData = metadata as {
+                  format?: { duration?: string | number };
+                };
+                const parsed = parseFloat(
+                  String(ffprobeData?.format?.duration),
+                );
                 resolve(isNaN(parsed) ? 30 : parsed);
               }
             },
@@ -375,14 +386,18 @@ export class AudioMixerService {
         });
         // Multiply by number of chunks to get total affirmation loop duration
         affsDuration *= affsTempPaths.length;
-        this.logger.log(`Estimated total affirmations duration: ${affsDuration} seconds`);
+        this.logger.log(
+          `Estimated total affirmations duration: ${affsDuration} seconds`,
+        );
       } catch (err: unknown) {
-        this.logger.warn(`ffprobe failed for affirmations. Falling back to default duration.`);
+        this.logger.warn(
+          `ffprobe failed for affirmations. Falling back to default duration.`,
+        );
       }
     }
 
     const finalDuration = duration * 60; // target duration in seconds
-    
+
     // We want the track to be at least finalDuration long.
     const loopsNeeded = Math.ceil(finalDuration / affsDuration) + 1;
 
@@ -430,7 +445,9 @@ export class AudioMixerService {
         // Background track (input 0)
         command.input(tempStaticPath);
         // Concatenated voiceover track (input 1)
-        command.input(concatTxtPath).inputOptions(['-f', 'concat', '-safe', '0']);
+        command
+          .input(concatTxtPath)
+          .inputOptions(['-f', 'concat', '-safe', '0']);
       } else {
         reject(new Error(`No static beat available for ${targetFreq}Hz`));
         return;

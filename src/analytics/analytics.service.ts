@@ -12,7 +12,6 @@ import {
   DailyCompletion,
 } from './dto/weekly-analytics.dto';
 
-
 @Injectable()
 export class AnalyticsService {
   constructor(
@@ -26,7 +25,6 @@ export class AnalyticsService {
     private dayPlanRepository: Repository<DayPlan>,
     @InjectRepository(Program)
     private programRepository: Repository<Program>,
-
   ) {}
 
   async getWeeklyAnalytics(userId: string): Promise<WeeklyAnalyticsDto> {
@@ -53,8 +51,6 @@ export class AnalyticsService {
 
       // Calculate quiz average
       const quizAverage = await this.calculateQuizAverage(userId);
-
-
 
       // Get badges
       const badges = await this.getBadges(userId, {
@@ -226,7 +222,6 @@ export class AnalyticsService {
     return Math.round(totalScore / attempts.length);
   }
 
-
   private async getBadges(
     userId: string,
     stats: {
@@ -236,7 +231,6 @@ export class AnalyticsService {
     },
   ): Promise<Badge[]> {
     const allBadges: Badge[] = [
-
       {
         id: 'week-warrior',
         name: 'Week Warrior',

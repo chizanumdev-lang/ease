@@ -18,7 +18,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ignoreExpiration: false,
       // Supabase signs JWTs with SUPABASE_JWT_SECRET
       secretOrKey:
-        configService.get<string>('SUPABASE_JWT_SECRET') || 'supabase-jwt-secret-placeholder',
+        configService.get<string>('SUPABASE_JWT_SECRET') ||
+        'supabase-jwt-secret-placeholder',
     });
   }
 

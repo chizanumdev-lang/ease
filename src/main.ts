@@ -44,23 +44,11 @@ async function bootstrap(): Promise<INestApplication> {
   return cachedApp;
 }
 
-// For Vercel Serverless environment
-export default async (req: any, res: any) => {
-  try {
-    const app = await bootstrap();
-    const instance = app.getHttpAdapter().getInstance();
-    return instance(req, res);
-  } catch (err) {
-    console.error('Vercel Handler Error:', err);
-    res.status(500).send('Internal Server Error during bootstrap');
-  }
-};
-
-// For local development or non-Vercel environments
-if (!process.env.VERCEL) {
-  bootstrap().then(async (app) => {
-    const port = process.env.PORT ?? 3000;
-    await app.listen(port, '0.0.0.0');
-    console.log(`Application is running on: http://localhost:${port}`);
-  });
+async function start() {
+  const app = await bootstrap();
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port, '0.0.0.0');
+  console.log(`Application is running on: http://localhost:${port}`);
 }
+
+start();

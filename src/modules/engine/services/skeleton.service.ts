@@ -8,12 +8,12 @@ import { AiService } from '../../../ai/ai.service';
 
 export interface DaySkeleton {
   dayNumber: number;
-  selectedShards: string[];  // exact shard names, one per category
+  selectedShards: string[]; // exact shard names, one per category
   theme: string;
   focusAreas: string[];
-  videoIntent: string;       // broad topic for YouTube search
-  journalFocus: string;      // what aspect to prompt the user on
-  difficultyArc: number;     // 1-10
+  videoIntent: string; // broad topic for YouTube search
+  journalFocus: string; // what aspect to prompt the user on
+  difficultyArc: number; // 1-10
 }
 
 @Injectable()
@@ -57,7 +57,8 @@ export class SkeletonService {
       .join('\n');
 
     const totalBatches = Math.ceil(duration / this.BATCH_SIZE);
-    const batches = batchesToRun ?? Array.from({ length: totalBatches }, (_, i) => i);
+    const batches =
+      batchesToRun ?? Array.from({ length: totalBatches }, (_, i) => i);
 
     for (const batch of batches) {
       const startDay = batch * this.BATCH_SIZE + 1;
@@ -96,9 +97,7 @@ export class SkeletonService {
       }
     }
 
-    this.logger.log(
-      `Skeleton generation complete for program ${programId}`,
-    );
+    this.logger.log(`Skeleton generation complete for program ${programId}`);
   }
 
   private async generateWeekSkeleton(
@@ -162,24 +161,35 @@ RULES:
 5. videoIntent must be a real search topic a human would type into YouTube.
 `.trim();
 
-    const result = await this.aiService.generateCustomJson<any>(
-      prompt,
-      [],
-    );
+    const result = await this.aiService.generateCustomJson<any>(prompt, []);
 
     let skeletons: DaySkeleton[] = [];
     if (Array.isArray(result)) {
       skeletons = result;
-    } else if (result && typeof result === 'object' && Array.isArray(result.skeleton)) {
+    } else if (
+      result &&
+      typeof result === 'object' &&
+      Array.isArray(result.skeleton)
+    ) {
       skeletons = result.skeleton;
-    } else if (result && typeof result === 'object' && Array.isArray(result.dayPlans)) {
+    } else if (
+      result &&
+      typeof result === 'object' &&
+      Array.isArray(result.dayPlans)
+    ) {
       skeletons = result.dayPlans;
-    } else if (result && typeof result === 'object' && Array.isArray(result.days)) {
+    } else if (
+      result &&
+      typeof result === 'object' &&
+      Array.isArray(result.days)
+    ) {
       skeletons = result.days;
     }
 
     if (skeletons.length === 0) {
-      throw new Error(`AI returned empty or unparseable skeleton for Week ${weekNumber}`);
+      throw new Error(
+        `AI returned empty or unparseable skeleton for Week ${weekNumber}`,
+      );
     }
 
     // Validate and store each day's skeleton
@@ -202,9 +212,9 @@ RULES:
 
       // Validate shard names exist
       const validShardNames = new Set(
-        (await this.shardRepository.findBy({ name: In(skel.selectedShards) })).map(
-          (s) => s.name,
-        ),
+        (
+          await this.shardRepository.findBy({ name: In(skel.selectedShards) })
+        ).map((s) => s.name),
       );
       const resolvedShards = skel.selectedShards.filter((name) =>
         validShardNames.has(name),
@@ -217,7 +227,7 @@ RULES:
             theme: skel.theme || `Day ${skel.dayNumber}`,
             focusAreas: skel.focusAreas || [],
             videoIntent: skel.videoIntent || goal,
-            journalFocus: skel.journalFocus || 'today\'s progress',
+            journalFocus: skel.journalFocus || "today's progress",
             difficultyArc: Math.min(10, Math.max(1, skel.difficultyArc || 5)),
           },
           theme: skel.theme || `Day ${skel.dayNumber}`,

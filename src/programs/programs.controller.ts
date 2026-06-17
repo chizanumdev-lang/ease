@@ -9,6 +9,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ProgramsService } from './programs.service';
+import { ProgramSetupService } from './program-setup.service';
 import { GenerateProgramDto } from './dto/generate-program.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
@@ -22,6 +23,7 @@ export class ProgramsController {
 
   constructor(
     private readonly programsService: ProgramsService,
+    private readonly programSetupService: ProgramSetupService,
     private readonly orchestratorService: OrchestratorService,
   ) {}
 
@@ -31,7 +33,7 @@ export class ProgramsController {
     @GetUser() user: User,
   ) {
     this.logger.log(`Initiating early program generation for user ${user.id}`);
-    return this.programsService.initiateDraft(
+    return this.programSetupService.initiateDraft(
       user.id,
       body.goalDescription,
       body.category,
@@ -48,7 +50,7 @@ export class ProgramsController {
     @Body() generateProgramDto: GenerateProgramDto,
     @GetUser() user: User,
   ) {
-    return this.programsService.getProgramPreview(user.id, generateProgramDto);
+    return this.programSetupService.getProgramPreview(user.id, generateProgramDto);
   }
 
   @Post('generate')
@@ -56,7 +58,7 @@ export class ProgramsController {
     @Body() generateProgramDto: GenerateProgramDto,
     @GetUser() user: User,
   ) {
-    return this.programsService.generateProgram(user.id, generateProgramDto);
+    return this.programSetupService.generateProgram(user.id, generateProgramDto);
   }
 
   @Get(':id')

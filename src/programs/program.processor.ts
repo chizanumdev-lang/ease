@@ -13,6 +13,7 @@ import { Quiz } from '../quizzes/entities/quiz.entity';
 import { AiService } from '../ai/ai.service';
 import { YoutubeService } from '../video/youtube/youtube.service';
 import { ProgramsService } from './programs.service';
+import { OrchestratorService } from '../modules/engine/services/orchestrator.service';
 
 @Processor('program-generation', {
   concurrency: 2,
@@ -39,6 +40,7 @@ export class ProgramProcessor extends WorkerHost {
     private aiService: AiService,
     private youtubeService: YoutubeService,
     private programsService: ProgramsService,
+    private orchestratorService: OrchestratorService,
   ) {
     super();
   }
@@ -74,7 +76,7 @@ export class ProgramProcessor extends WorkerHost {
 
       try {
         await this.dayPlanRepository.update(dayPlanId, { status: 'hydrating' });
-        await this.programsService.hydrateDay(dayPlanId, goalText);
+        await this.orchestratorService.orchestrateDay(dayPlanId, goalText);
         this.logger.log(`DayPlan ${dayPlanId} hydrated successfully`);
       } catch (error) {
         this.logger.error(

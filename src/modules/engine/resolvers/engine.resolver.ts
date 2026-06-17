@@ -1,7 +1,7 @@
 import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
 import { EngineService } from '../services/engine.service';
 import { PlannerService } from '../services/planner.service';
-import { OrchestratorService } from '../services/orchestrator.service';
+import { AiPromptingService } from '../services/ai-prompting.service';
 import { GoalCategory } from '../entities/goal-category.entity';
 import { UserProgram, ProgramStatus } from '../entities/user-program.entity';
 import { PubSub } from 'graphql-subscriptions';
@@ -18,7 +18,7 @@ export class EngineResolver {
   constructor(
     private readonly engineService: EngineService,
     private readonly plannerService: PlannerService,
-    private readonly orchestratorService: OrchestratorService,
+    private readonly aiPromptingService: AiPromptingService,
   ) {}
 
   @Query(() => [GoalCategory])
@@ -66,8 +66,8 @@ export class EngineResolver {
   }
 
   @Query(() => [ShardSimulationResult])
-  async getShardsForPrompt(@Args('prompt') prompt: string) {
-    return this.orchestratorService.simulateBlueprintSelection(prompt);
+  async simulateBlueprint(@Args('prompt') prompt: string) {
+    return this.aiPromptingService.simulateBlueprintSelection(prompt);
   }
 
   @Query(() => String)

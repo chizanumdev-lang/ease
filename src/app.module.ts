@@ -13,7 +13,6 @@ import { TasksModule } from './tasks/tasks.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { ProgressModule } from './progress/progress.module';
 import { AnalyticsModule } from './analytics/analytics.module';
-import { VideosModule } from './videos/videos.module';
 import { CoachModule } from './coach/coach.module';
 import { AiModule } from './ai/ai.module';
 import { VideoModule } from './video/video.module';
@@ -23,6 +22,7 @@ import { MailModule } from './mail/mail.module';
 
 import { ScheduleModule } from '@nestjs/schedule';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
+import { BullModule } from '@nestjs/bullmq';
 import { APP_FILTER } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -85,6 +85,16 @@ import { StartupService } from './common/startup.service';
       },
       inject: [ConfigService],
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('REDIS_HOST', 'localhost'),
+          port: configService.get('REDIS_PORT', 6379),
+        },
+      }),
+      inject: [ConfigService],
+    }),
     AuthModule,
     UsersModule,
     GoalsModule,
@@ -93,7 +103,6 @@ import { StartupService } from './common/startup.service';
     QuizzesModule,
     ProgressModule,
     AnalyticsModule,
-    VideosModule,
     CoachModule,
     AiModule,
     VideoModule,

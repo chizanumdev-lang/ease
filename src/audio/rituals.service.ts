@@ -35,47 +35,55 @@ export class RitualsService {
    * generation slot; false if another serverless instance already claimed it.
    */
   async claimGeneration(programId: string): Promise<boolean> {
-    const program = await this.programRepository.findOne({ where: { id: programId } });
+    const program = await this.programRepository.findOne({
+      where: { id: programId },
+    });
     if (!program) return false;
     const userId = program.userId;
 
     const existing = await this.ritualTrackRepository.find({
       where: { programId },
     });
-    
-    const hasMorning = existing.some(r => r.ritualType === 'morning');
-    const hasNight = existing.some(r => r.ritualType === 'night');
+
+    const hasMorning = existing.some((r) => r.ritualType === 'morning');
+    const hasNight = existing.some((r) => r.ritualType === 'night');
 
     if (hasMorning && hasNight) return false;
 
     const placeholders: any[] = [];
     if (!hasMorning) {
-      placeholders.push(this.ritualTrackRepository.create({
-        programId,
-        userId,
-        ritualType: 'morning',
-        title: 'Generating...',
-        url: '',
-        duration: 1800,
-        metadata: { status: 'generating' },
-      }));
+      placeholders.push(
+        this.ritualTrackRepository.create({
+          programId,
+          userId,
+          ritualType: 'morning',
+          title: 'Generating...',
+          url: '',
+          duration: 1800,
+          metadata: { status: 'generating' },
+        }),
+      );
     }
-    
+
     if (!hasNight) {
-      placeholders.push(this.ritualTrackRepository.create({
-        programId,
-        userId,
-        ritualType: 'night',
-        title: 'Generating...',
-        url: '',
-        duration: 3600,
-        metadata: { status: 'generating' },
-      }));
+      placeholders.push(
+        this.ritualTrackRepository.create({
+          programId,
+          userId,
+          ritualType: 'night',
+          title: 'Generating...',
+          url: '',
+          duration: 3600,
+          metadata: { status: 'generating' },
+        }),
+      );
     }
 
     try {
       await this.ritualTrackRepository.save(placeholders);
-      this.logger.log(`Claimed generation slot for missing rituals in program ${programId}`);
+      this.logger.log(
+        `Claimed generation slot for missing rituals in program ${programId}`,
+      );
       return true;
     } catch (err) {
       // Unique constraint violation = another instance won the race
@@ -94,9 +102,13 @@ export class RitualsService {
     const existing = await this.ritualTrackRepository.find({
       where: { programId },
     });
-    
-    const hasValidMorning = existing.some(r => r.ritualType === 'morning' && r.url && r.url.length > 0);
-    const hasValidNight = existing.some(r => r.ritualType === 'night' && r.url && r.url.length > 0);
+
+    const hasValidMorning = existing.some(
+      (r) => r.ritualType === 'morning' && r.url && r.url.length > 0,
+    );
+    const hasValidNight = existing.some(
+      (r) => r.ritualType === 'night' && r.url && r.url.length > 0,
+    );
 
     let morningResult: RitualTrack | null | undefined = null;
     let nightResult: RitualTrack | null | undefined = null;
@@ -277,12 +289,14 @@ export class RitualsService {
 
       // Save failed state so UI knows not to spin forever
       if (existing) {
-        existing.metadata = { 
-          ...(typeof existing.metadata === 'object' ? existing.metadata : {}), 
-          status: 'failed', 
-          error: error.message 
+        existing.metadata = {
+          ...(typeof existing.metadata === 'object' ? existing.metadata : {}),
+          status: 'failed',
+          error: error.message,
         };
-        await this.ritualTrackRepository.save(existing).catch(e => this.logger.error('Failed to save error state', e));
+        await this.ritualTrackRepository
+          .save(existing)
+          .catch((e) => this.logger.error('Failed to save error state', e));
       } else {
         const failedRitual = this.ritualTrackRepository.create({
           userId,
@@ -293,7 +307,9 @@ export class RitualsService {
           duration: 0,
           metadata: { status: 'failed', error: error.message },
         });
-        await this.ritualTrackRepository.save(failedRitual).catch(e => this.logger.error('Failed to save error state', e));
+        await this.ritualTrackRepository
+          .save(failedRitual)
+          .catch((e) => this.logger.error('Failed to save error state', e));
       }
 
       throw error;

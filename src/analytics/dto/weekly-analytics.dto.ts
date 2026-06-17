@@ -1,7 +1,6 @@
 import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 
-
 @ObjectType()
 export class Badge {
   @Field()
@@ -49,11 +48,9 @@ export class WeeklyAnalyticsDto {
   @Field(() => Int)
   quizAverage: number;
 
-
   @Field(() => [Badge])
   badges: Badge[];
 
   @Field(() => [DailyCompletion])
   dailyCompletions: DailyCompletion[];
-
 }

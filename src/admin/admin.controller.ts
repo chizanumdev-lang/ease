@@ -8,22 +8,28 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { AdminService } from './admin.service';
+import { AdminObservabilityService } from './admin-observability.service';
+import { AdminUserManagementService } from './admin-user-management.service';
+import { AdminContentService } from './admin-content.service';
 import { AdminGuard } from './guards/admin.guard';
 
 @Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminObservabilityService: AdminObservabilityService,
+    private readonly adminUserManagementService: AdminUserManagementService,
+    private readonly adminContentService: AdminContentService,
+  ) {}
 
   @Get('dashboard/pulse')
   getDashboardPulse() {
-    return this.adminService.getDashboardPulse();
+    return this.adminObservabilityService.getDashboardPulse();
   }
 
   @Get('dashboard/trends')
   getTrends(@Query('days') days: number = 30) {
-    return this.adminService.getTrends(Number(days));
+    return this.adminObservabilityService.getTrends(Number(days));
   }
 
   @Get('users')
@@ -33,7 +39,7 @@ export class AdminController {
     @Query('search') search?: string,
     @Query('status') status?: string,
   ) {
-    return this.adminService.getUserMetrics(
+    return this.adminUserManagementService.getUserMetrics(
       Number(page),
       Number(limit),
       search,
@@ -43,27 +49,27 @@ export class AdminController {
 
   @Get('system/health')
   getSystemHealth() {
-    return this.adminService.getSystemHealth();
+    return this.adminObservabilityService.getSystemHealth();
   }
 
   @Get('users/:id')
   getUserDetail(@Param('id') id: string) {
-    return this.adminService.getUserDetails(id);
+    return this.adminUserManagementService.getUserDetails(id);
   }
 
   @Delete('users/:id')
   deleteUser(@Param('id') id: string) {
-    return this.adminService.deleteUser(id);
+    return this.adminUserManagementService.deleteUser(id);
   }
 
   @Patch('users/:id/role')
   toggleAdmin(@Param('id') id: string) {
-    return this.adminService.toggleAdminStatus(id);
+    return this.adminUserManagementService.toggleAdminStatus(id);
   }
 
   @Get('system/queue')
   getQueueStats() {
-    return this.adminService.getQueueStats();
+    return this.adminObservabilityService.getQueueStats();
   }
 
   @Get('ai/logs')
@@ -71,21 +77,21 @@ export class AdminController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
   ) {
-    return this.adminService.getAiLogs(Number(page), Number(limit));
+    return this.adminObservabilityService.getAiLogs(Number(page), Number(limit));
   }
 
   @Post('programs/hydrate/:dayId')
   retryHydration(@Param('dayId') dayId: string) {
-    return this.adminService.retryDayHydration(dayId);
+    return this.adminObservabilityService.retryDayHydration(dayId);
   }
 
   @Get('task-templates')
   getTaskTemplates() {
-    return this.adminService.getTaskTemplates();
+    return this.adminContentService.getTaskTemplates();
   }
 
   @Get('debug/tables')
   debugTables() {
-    return this.adminService.debugTables();
+    return this.adminObservabilityService.debugTables();
   }
 }

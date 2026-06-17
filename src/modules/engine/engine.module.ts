@@ -14,6 +14,8 @@ import { TaskDefinition } from './entities/task-definition.entity';
 import { UserProgram } from './entities/user-program.entity';
 import { OrchestratorService } from './services/orchestrator.service';
 import { SkeletonService } from './services/skeleton.service';
+import { AiPromptingService } from './services/ai-prompting.service';
+import { MediaHydrationService } from './services/media-hydration.service';
 import { UserCognitiveProfile } from './entities/user-cognitive-profile.entity';
 import { DayPlan } from '../../programs/entities/day-plan.entity';
 import { Program } from '../../programs/entities/program.entity';
@@ -48,8 +50,17 @@ import { AudioAsset } from './entities/audio-asset.entity';
     PlannerService,
     OrchestratorService,
     SkeletonService,
+    AiPromptingService,
+    MediaHydrationService,
     EngineResolver,
   ],
-  exports: [EngineService, PlannerService, OrchestratorService, SkeletonService],
+  exports: [
+    EngineService,
+    PlannerService,
+    OrchestratorService,
+    SkeletonService,
+    AiPromptingService,
+    MediaHydrationService,
+  ],
 })
 export class EngineModule {}

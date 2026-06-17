@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AdminService } from './admin.service';
+import { AdminObservabilityService } from './admin-observability.service';
+import { AdminUserManagementService } from './admin-user-management.service';
+import { AdminContentService } from './admin-content.service';
 import { AdminController } from './admin.controller';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from '../common/filters/all-exceptions.filter';
@@ -14,6 +16,7 @@ import { Task } from '../tasks/entities/task.entity';
 import { Program } from '../programs/entities/program.entity';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { TaskTemplate } from '../tasks/entities/task-template.entity';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -29,15 +32,17 @@ import { TaskTemplate } from '../tasks/entities/task-template.entity';
       DayPlan,
       TaskTemplate,
     ]),
+    BullModule.registerQueue({
+      name: 'background-jobs',
+    }),
   ],
   controllers: [AdminController],
   providers: [
-    AdminService,
-    {
+        {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
     },
   ],
-  exports: [AdminService],
+  exports: [AdminObservabilityService, AdminUserManagementService, AdminContentService],
 })
 export class AdminModule {}

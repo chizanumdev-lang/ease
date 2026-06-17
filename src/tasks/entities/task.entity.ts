@@ -12,6 +12,33 @@ import { DayPlan } from '../../programs/entities/day-plan.entity';
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-type-json';
 
+export interface BaseTaskMetadata {
+  shardId?: string;
+  status?: 'hydrating' | 'ready' | 'error';
+  pattern?: string;
+}
+
+export interface VideoTaskMetadata extends BaseTaskMetadata {
+  searchQuery?: string;
+}
+
+export interface AudioTaskMetadata extends BaseTaskMetadata {
+  narrationScript?: string;
+  targetScript?: string;
+  audioUrl?: string;
+}
+
+export interface QuizTaskMetadata extends BaseTaskMetadata {
+  questions?: string[];
+  scenario?: string;
+  options?: any[];
+  cards?: any[];
+}
+
+export type TaskMetadata = VideoTaskMetadata &
+  AudioTaskMetadata &
+  QuizTaskMetadata & { [key: string]: any };
+
 @ObjectType('DailyTask')
 @Entity('tasks')
 export class Task {
@@ -30,7 +57,6 @@ export class Task {
   @Field({ nullable: true })
   @Column({ nullable: true })
   type: string;
-
 
   @Field(() => Int, { nullable: true })
   @Column({ nullable: true })
@@ -74,7 +100,7 @@ export class Task {
 
   @Field(() => GraphQLJSON, { nullable: true })
   @Column({ type: 'jsonb', nullable: true })
-  metadata?: any;
+  metadata?: TaskMetadata;
 
   @Field()
   @Index()

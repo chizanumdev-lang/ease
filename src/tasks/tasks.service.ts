@@ -6,11 +6,11 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { DayPlan } from '../programs/entities/day-plan.entity';
 import { ProgressService } from '../progress/progress.service';
 import { Program } from '../programs/entities/program.entity';
-import { triggerHydrateDay } from '../trigger/tasks';
 import { YoutubeService } from '../video/youtube/youtube.service';
 import { AudioService } from '../audio/audio.service';
 import { AiService } from '../ai/ai.service';
 import { OrchestratorService } from '../modules/engine/services/orchestrator.service';
+import { BackgroundService } from '../modules/worker/background.service';
 
 @Injectable()
 export class TasksService {
@@ -28,6 +28,7 @@ export class TasksService {
     private audioService: AudioService,
     private aiService: AiService,
     private orchestratorService: OrchestratorService,
+    private backgroundService: BackgroundService,
   ) {}
 
   async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
@@ -109,7 +110,7 @@ export class TasksService {
         });
 
         if (nextDay && nextDay.status === 'pending') {
-          const handle = await triggerHydrateDay({
+          const handle = await this.backgroundService.triggerHydrateDay({
             dayPlanId: nextDay.id,
             goalText: program.goal?.description || program.title || 'Goal',
             params: {
@@ -120,7 +121,7 @@ export class TasksService {
 
           if (!handle) {
             this.logger.warn(
-              `Trigger.dev unavailable, hydrating Day ${nextDayNumber} locally`,
+              `Background queue unavailable, hydrating Day ${nextDayNumber} locally`,
             );
             this.orchestratorService
               .orchestrateDay(
@@ -188,15 +189,7 @@ export class TasksService {
       task.dayPlan?.program?.title ||
       'Goal';
     const dayPlanId = task.dayPlanId;
-    const metadata = (task.metadata || {}) as {
-      searchQuery?: string;
-      status?: string;
-      pattern?: string;
-      narrationScript?: string;
-      targetScript?: string;
-      description?: string;
-      audioUrl?: string;
-    };
+    const metadata = task.metadata || {};
 
     if (task.type === 'video' && metadata.searchQuery) {
       this.logger.log(

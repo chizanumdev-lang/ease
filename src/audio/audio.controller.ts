@@ -111,7 +111,7 @@ export class AudioController {
   @UseGuards(JwtAuthGuard)
   async getActiveProgramRituals(@Request() req) {
     const userId = req.user.id;
-    
+
     // Find active program
     const program = await this.ritualsService.getActiveProgram(userId);
     if (!program) {

@@ -9,14 +9,18 @@ async function run() {
 
   console.log('Running ALTER TABLE statements...');
   try {
-    await dataSource.query('ALTER TABLE "tasks" DROP COLUMN IF EXISTS "xp_reward";');
+    await dataSource.query(
+      'ALTER TABLE "tasks" DROP COLUMN IF EXISTS "xp_reward";',
+    );
     console.log('Dropped xp_reward from tasks.');
   } catch (e) {
     console.log('Failed to drop xp_reward from tasks:', e.message);
   }
 
   try {
-    await dataSource.query('ALTER TABLE "task_templates" DROP COLUMN IF EXISTS "default_xp";');
+    await dataSource.query(
+      'ALTER TABLE "task_templates" DROP COLUMN IF EXISTS "default_xp";',
+    );
     console.log('Dropped default_xp from task_templates.');
   } catch (e) {
     console.log('Failed to drop default_xp from task_templates:', e.message);

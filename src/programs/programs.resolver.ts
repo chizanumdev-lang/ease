@@ -1,6 +1,7 @@
 import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
 import { Logger, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { ProgramsService } from './programs.service';
+import { ProgramSetupService } from './program-setup.service';
 import { UsersService } from '../users/users.service';
 import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
@@ -13,6 +14,7 @@ import { PubSub } from 'graphql-subscriptions';
 const pubSub = new PubSub();
 
 import { OrchestratorService } from '../modules/engine/services/orchestrator.service';
+import { ProgramAdaptationService } from './program-adaptation.service';
 
 @Resolver(() => Program)
 export class ProgramsResolver {
@@ -20,8 +22,10 @@ export class ProgramsResolver {
 
   constructor(
     private readonly programsService: ProgramsService,
+    private readonly programSetupService: ProgramSetupService,
     private readonly usersService: UsersService,
     private readonly orchestratorService: OrchestratorService,
+    private readonly programAdaptationService: ProgramAdaptationService,
   ) {}
 
   @Query(() => Program, { name: 'getActiveProgram' })
@@ -57,7 +61,7 @@ export class ProgramsResolver {
   ): Promise<Program> {
     this.logger.log(`Generating program for user: ${user.id}`);
     try {
-      const program = await this.programsService.generateProgram(
+      const program = await this.programSetupService.generateProgram(
         user.id,
         generateProgramDto,
       );
@@ -90,7 +94,7 @@ export class ProgramsResolver {
     @GetUser() user: User,
   ): Promise<Program> {
     this.logger.log(`Generating preview for user: ${user.id}`);
-    return this.programsService.getProgramPreview(user.id, generateProgramDto);
+    return this.programSetupService.getProgramPreview(user.id, generateProgramDto);
   }
 
   @Mutation(() => Program)
@@ -100,7 +104,7 @@ export class ProgramsResolver {
     @GetUser() user: User,
   ): Promise<Program> {
     this.logger.log(`Evaluating performance for program: ${id}`);
-    return this.programsService.evaluatePerformance(id);
+    return this.programAdaptationService.evaluatePerformance(id);
   }
 
   @Subscription(() => Program, {
@@ -127,7 +131,6 @@ export class ProgramsResolver {
       );
     return true;
   }
-
 
   @Mutation(() => Boolean, { name: 'devDeleteUser' })
   async devDeleteUser(

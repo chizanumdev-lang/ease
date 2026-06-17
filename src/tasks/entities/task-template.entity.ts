@@ -31,7 +31,6 @@ export class TaskTemplate {
   @Column({ default: 15, name: 'default_duration' })
   defaultDuration: number; // in minutes
 
-
   @Field({ nullable: true })
   @Column({ type: 'text', nullable: true, name: 'prompt_instructions' })
   promptInstructions: string;

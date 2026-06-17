@@ -22,9 +22,7 @@ export class AudioResolver {
 
   @Query(() => DailyRitualsResponse, { name: 'getRituals' })
   @UseGuards(JwtAuthGuard)
-  async getRituals(
-    @GetUser() user: User,
-  ): Promise<DailyRitualsResponse> {
+  async getRituals(@GetUser() user: User): Promise<DailyRitualsResponse> {
     const program = await this.ritualsService.getActiveProgram(user.id);
     if (!program) {
       return { status: 'generating' };

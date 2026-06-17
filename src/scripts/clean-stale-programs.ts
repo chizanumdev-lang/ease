@@ -7,9 +7,11 @@ async function cleanStalePrograms() {
   const connectionString = process.env.DATABASE_URL || '';
   const client = new Client({
     connectionString,
-    ssl: connectionString.includes('supabase') || connectionString.includes('pooler')
-      ? { rejectUnauthorized: false }
-      : false,
+    ssl:
+      connectionString.includes('supabase') ||
+      connectionString.includes('pooler')
+        ? { rejectUnauthorized: false }
+        : false,
   });
 
   try {
@@ -34,7 +36,9 @@ async function cleanStalePrograms() {
         AND created_at < NOW() - INTERVAL '30 minutes'
       RETURNING id, user_id, status, created_at;
     `);
-    console.log(`\n✅ Deleted ${staleDeleted.rowCount} stale generating/pending programs`);
+    console.log(
+      `\n✅ Deleted ${staleDeleted.rowCount} stale generating/pending programs`,
+    );
     if (staleDeleted.rows.length > 0) {
       console.table(staleDeleted.rows);
     }
@@ -53,7 +57,9 @@ async function cleanStalePrograms() {
       )
       RETURNING id, user_id, status, created_at;
     `);
-    console.log(`\n✅ Deleted ${duplicateReady.rowCount} duplicate ready programs (kept most recent per user)`);
+    console.log(
+      `\n✅ Deleted ${duplicateReady.rowCount} duplicate ready programs (kept most recent per user)`,
+    );
     if (duplicateReady.rows.length > 0) {
       console.table(duplicateReady.rows);
     }
@@ -67,7 +73,6 @@ async function cleanStalePrograms() {
     `);
     console.log('\nPrograms after cleanup:');
     console.table(after.rows);
-
   } catch (err) {
     console.error('Error:', err);
     process.exit(1);

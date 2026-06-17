@@ -7,6 +7,6 @@
     "**/*spec.ts",
     "mobile",
     "admin",
-    "local_scripts"
+    "local_scripts", "src/scripts"
   ]
 }

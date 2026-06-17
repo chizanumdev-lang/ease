@@ -43,12 +43,12 @@ export class DayPlan {
   @Field(() => GraphQLJSON, { nullable: true })
   @Column({ type: 'jsonb', nullable: true })
   skeleton: {
-    selectedShards: string[];  // exact shard names, one per category
+    selectedShards: string[]; // exact shard names, one per category
     theme: string;
     focusAreas: string[];
-    videoIntent: string;       // broad topic for YouTube search
-    journalFocus: string;      // what aspect to prompt the user on
-    difficultyArc: number;     // 1–10
+    videoIntent: string; // broad topic for YouTube search
+    journalFocus: string; // what aspect to prompt the user on
+    difficultyArc: number; // 1–10
   } | null;
 
   /**
@@ -63,6 +63,10 @@ export class DayPlan {
   @Field(() => [String], { nullable: true })
   @Column({ type: 'jsonb', nullable: true, name: 'focus_areas' })
   focusAreas: string[];
+
+  @Field(() => Date, { nullable: true })
+  @Column({ type: 'timestamp', nullable: true, name: 'locked_at' })
+  lockedAt: Date | null;
 
   @Field()
   @Index()

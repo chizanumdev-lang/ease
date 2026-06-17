@@ -7,9 +7,11 @@ async function dropXpReward() {
   const connectionString = process.env.DATABASE_URL || '';
   const client = new Client({
     connectionString,
-    ssl: connectionString.includes('supabase') || connectionString.includes('pooler')
-      ? { rejectUnauthorized: false }
-      : false,
+    ssl:
+      connectionString.includes('supabase') ||
+      connectionString.includes('pooler')
+        ? { rejectUnauthorized: false }
+        : false,
   });
 
   try {
@@ -24,7 +26,9 @@ async function dropXpReward() {
     `);
 
     if (check.rows.length === 0) {
-      console.log('✅ xp_reward column does not exist on tasks table — nothing to do.');
+      console.log(
+        '✅ xp_reward column does not exist on tasks table — nothing to do.',
+      );
       return;
     }
 
