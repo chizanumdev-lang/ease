@@ -5,6 +5,7 @@ import { Repository, In } from 'typeorm';
 import { AiService } from '../../../ai/ai.service';
 import { TaskShard } from '../entities/task-shard.entity';
 import { DayPlan } from '../../../programs/entities/day-plan.entity';
+import { SchemaType } from '@google/generative-ai';
 
 export interface AiDraftTask {
   shardName?: string;
@@ -20,6 +21,48 @@ export interface AiDraftTask {
   narrationScript?: string;
   targetScript?: string;
 }
+
+const blueprintSchema = {
+  type: SchemaType.ARRAY,
+  items: {
+    type: SchemaType.OBJECT,
+    properties: {
+      shardName: { type: SchemaType.STRING },
+      category: { type: SchemaType.STRING },
+      modality: { type: SchemaType.STRING },
+      title: { type: SchemaType.STRING },
+      description: { type: SchemaType.STRING },
+      searchQuery: { type: SchemaType.STRING },
+      questions: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+      scenario: { type: SchemaType.STRING },
+      options: { 
+        type: SchemaType.ARRAY, 
+        items: { 
+          type: SchemaType.OBJECT,
+          properties: {
+            id: { type: SchemaType.STRING },
+            text: { type: SchemaType.STRING },
+            feedback: { type: SchemaType.STRING },
+            correct: { type: SchemaType.BOOLEAN }
+          }
+        } 
+      },
+      cards: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            front: { type: SchemaType.STRING },
+            back: { type: SchemaType.STRING }
+          }
+        }
+      },
+      narrationScript: { type: SchemaType.STRING },
+      targetScript: { type: SchemaType.STRING },
+    },
+    required: ["shardName", "category", "modality", "title", "description"]
+  }
+};
 
 @Injectable()
 export class AiPromptingService {
@@ -124,7 +167,7 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
 
     const result = await this.aiService.generateCustomJson<
       { tasks?: AiDraftTask[]; blueprint?: AiDraftTask[] } | AiDraftTask[]
-    >(prompt, []);
+    >(prompt, [], undefined, blueprintSchema);
 
     if (result && !Array.isArray(result)) {
       if (result.tasks && Array.isArray(result.tasks)) return result.tasks;
@@ -199,15 +242,11 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
     let missedTasksCount = 0;
 
     if (programId && dayNumber > 1) {
-      try {
-        const pastTasks = await this.tasksService.getPastTaskHistory(programId, dayNumber);
-        pastQueries = pastTasks.filter((t) => t.type === 'video' && t.metadata?.searchQuery).map((t) => t.metadata?.searchQuery as string);
-        pastJournals = pastTasks.filter((t) => t.type === 'journal' && t.content && t.content.length > 10).map((t) => `Day ${t.dayPlan.dayNumber}: "${t.content}"`);
-        completedTasksCount = pastTasks.filter((t) => t.completed).length;
-        missedTasksCount = pastTasks.length - completedTasksCount;
-      } catch (e) {
-        this.logger.warn(`Failed to fetch past context: ${(e as Error).message}`);
-      }
+      const pastTasks = await this.tasksService.getPastTaskHistory(programId, dayNumber);
+      pastQueries = pastTasks.filter((t) => t.type === 'video' && t.metadata?.searchQuery).map((t) => t.metadata?.searchQuery as string);
+      pastJournals = pastTasks.filter((t) => t.type === 'journal' && t.content && t.content.length > 10).map((t) => `Day ${t.dayPlan.dayNumber}: "${t.content}"`);
+      completedTasksCount = pastTasks.filter((t) => t.completed).length;
+      missedTasksCount = pastTasks.length - completedTasksCount;
     }
 
     const prompt = `
@@ -257,7 +296,7 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
       }
     `;
 
-    const result = await this.aiService.generateCustomJson<any>(prompt, []);
+    const result = await this.aiService.generateCustomJson<any>(prompt, [], undefined, blueprintSchema);
     if (result && !Array.isArray(result)) {
       if (result.tasks && Array.isArray(result.tasks)) return result.tasks;
       if (result.blueprint && Array.isArray(result.blueprint)) return result.blueprint;
@@ -346,34 +385,22 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
   }
 
   private async fetchPastJournals(programId: string, currentDayNumber: number): Promise<string[]> {
-    try {
-      const pastTasks = await this.tasksService.getPastTaskHistory(programId, currentDayNumber);
-      return pastTasks
-        .filter((t) => t.type === 'journal' && t.content && t.content.length > 10)
-        .sort((a, b) => b.dayPlan.dayNumber - a.dayPlan.dayNumber)
-        .slice(0, 5)
-        .map((t) => `Day ${t.dayPlan.dayNumber}: "${t.content}"`);
-    } catch {
-      return [];
-    }
+    const pastTasks = await this.tasksService.getPastTaskHistory(programId, currentDayNumber);
+    return pastTasks
+      .filter((t) => t.type === 'journal' && t.content && t.content.length > 10)
+      .sort((a, b) => b.dayPlan.dayNumber - a.dayPlan.dayNumber)
+      .slice(0, 5)
+      .map((t) => `Day ${t.dayPlan.dayNumber}: "${t.content}"`);
   }
 
   private async fetchPastVideoQueries(programId: string, currentDayNumber: number): Promise<string[]> {
-    try {
-      const pastTasks = await this.tasksService.getPastTaskHistory(programId, currentDayNumber);
-      return pastTasks.filter((t) => t.type === 'video' && t.metadata?.searchQuery).map((t) => t.metadata?.searchQuery as string);
-    } catch {
-      return [];
-    }
+    const pastTasks = await this.tasksService.getPastTaskHistory(programId, currentDayNumber);
+    return pastTasks.filter((t) => t.type === 'video' && t.metadata?.searchQuery).map((t) => t.metadata?.searchQuery as string);
   }
 
   private async fetchCompletionStats(programId: string, currentDayNumber: number): Promise<{ completed: number; missed: number }> {
-    try {
-      const pastTasks = await this.tasksService.getPastTaskHistory(programId, currentDayNumber);
-      const completed = pastTasks.filter((t) => t.completed).length;
-      return { completed, missed: pastTasks.length - completed };
-    } catch {
-      return { completed: 0, missed: 0 };
-    }
+    const pastTasks = await this.tasksService.getPastTaskHistory(programId, currentDayNumber);
+    const completed = pastTasks.filter((t) => t.completed).length;
+    return { completed, missed: pastTasks.length - completed };
   }
 }

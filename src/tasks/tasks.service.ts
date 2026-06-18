@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Task } from './entities/task.entity';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { DayPlan } from '../programs/entities/day-plan.entity';
@@ -17,6 +17,7 @@ export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
   constructor(
+    private dataSource: DataSource,
     @InjectRepository(Task)
     private taskRepository: Repository<Task>,
     @InjectRepository(DayPlan)
@@ -103,6 +104,16 @@ export class TasksService {
 
   async deleteByDayPlanId(dayPlanId: string): Promise<void> {
     await this.taskRepository.delete({ dayPlanId });
+  }
+
+  async replaceTasksForDayPlan(dayPlanId: string, taskDataList: Partial<Task>[]): Promise<Task[]> {
+    return this.dataSource.transaction(async (manager) => {
+      // 1. Delete old tasks atomically
+      await manager.delete(Task, { dayPlanId });
+      // 2. Create and save new tasks atomically
+      const tasks = taskDataList.map(data => manager.create(Task, data));
+      return manager.save(tasks);
+    });
   }
 
   async createTask(taskData: Partial<Task>): Promise<Task> {
@@ -280,30 +291,24 @@ export class TasksService {
       );
 
       let excludeVideoIds: string[] = [];
-      try {
-        if (task.dayPlan?.program?.id) {
-          const pastVideoTasks = await this.taskRepository
-            .createQueryBuilder('task')
-            .innerJoin('task.dayPlan', 'dayPlan')
-            .where('dayPlan.program_id = :programId', {
-              programId: task.dayPlan.program.id,
-            })
-            .andWhere('task.type = :type', { type: 'video' })
-            .andWhere('task.id != :taskId', { taskId: task.id })
-            .getMany();
+      if (task.dayPlan?.program?.id) {
+        const pastVideoTasks = await this.taskRepository
+          .createQueryBuilder('task')
+          .innerJoin('task.dayPlan', 'dayPlan')
+          .where('dayPlan.program_id = :programId', {
+            programId: task.dayPlan.program.id,
+          })
+          .andWhere('task.type = :type', { type: 'video' })
+          .andWhere('task.id != :taskId', { taskId: task.id })
+          .getMany();
 
-          excludeVideoIds = pastVideoTasks
-            .filter((t) => t.videoUrl)
-            .map((t) => {
-              const match = t.videoUrl?.match(/v=([^&]+)/);
-              return match ? match[1] : null;
-            })
-            .filter(Boolean) as string[];
-        }
-      } catch (err) {
-        this.logger.warn(
-          `Could not fetch past videos to exclude: ${(err as Error).message}`,
-        );
+        excludeVideoIds = pastVideoTasks
+          .filter((t) => t.videoUrl)
+          .map((t) => {
+            const match = t.videoUrl?.match(/v=([^&]+)/);
+            return match ? match[1] : null;
+          })
+          .filter(Boolean) as string[];
       }
 
       let videoUrl: string;
@@ -316,14 +321,18 @@ export class TasksService {
         videoUrl =
           video?.url ||
           `https://www.youtube.com/results?search_query=${encodeURIComponent(metadata.searchQuery)}`;
-      } catch {
+      } catch (err) {
+        this.logger.warn(`Primary YouTube search failed, attempting fallback: ${(err as Error).message}`);
         // Fallback search
         const fallback = (await this.youtubeService.getRecommendedVideo(
           goal,
           goal,
         )) as { url?: string } | undefined;
-        videoUrl =
-          fallback?.url || 'https://www.youtube.com/watch?v=inpok4MKVLM';
+        
+        if (!fallback?.url) {
+          throw new Error('Failed to find any relevant videos. YouTube API may be unavailable or quota exceeded.');
+        }
+        videoUrl = fallback.url;
       }
       task.videoUrl = videoUrl;
       if (metadata.status) {
@@ -364,11 +373,14 @@ export class TasksService {
             this.logger.log(
               `Successfully expanded script to ${metadata.narrationScript.split(/\s+/).length} words.`,
             );
+          } else {
+             throw new Error('AI returned an empty or overly short script');
           }
         } catch (err) {
           this.logger.error(
             `Failed to expand script: ${(err as Error).message}`,
           );
+          throw err;
         }
       }
     }

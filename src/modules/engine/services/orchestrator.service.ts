@@ -45,8 +45,7 @@ export class OrchestratorService {
     if (!dayPlan) throw new Error('DayPlan not found');
 
     try {
-      // Clean up any existing tasks
-      await this.tasksService.deleteByDayPlanId(dayPlanId);
+      // Deletion of old tasks is now handled atomically inside replaceTasksForDayPlan
 
       // ── PHASE: BLUEPRINTING ──────────────────────────────────────────────
       // Branch: use skeleton (adaptive fill) if available, otherwise fall back
@@ -81,16 +80,16 @@ export class OrchestratorService {
         return;
       }
 
-      // ── PHASE: SHELL CREATION ────────────────────────────────────────────
+      // ── PHASE: SHELL CREATION (ATOMIC) ───────────────────────────────────
       const shards = await this.shardRepository.find();
-      const tasks: Task[] = [];
+      const taskDataList: Partial<Task>[] = [];
 
       for (let i = 0; i < blueprint.length; i++) {
         const draft = blueprint[i];
         const shard = this.aiPromptingService.resolveShard(draft, shards);
         const { mobileType, pattern } = this.aiPromptingService.detectPattern(shard);
 
-        const taskData = {
+        taskDataList.push({
           dayPlanId: dayPlan.id,
           type: mobileType,
           title: draft.title || shard.displayName,
@@ -103,9 +102,11 @@ export class OrchestratorService {
             shardId: shard.id,
             status: 'hydrating' as any,
           },
-        };
-        tasks.push(await this.tasksService.createTask(taskData));
+        });
       }
+
+      // Atomically replace all existing tasks with the new ones
+      const tasks = await this.tasksService.replaceTasksForDayPlan(dayPlanId, taskDataList);
 
       // ── PHASE: HYDRATION ─────────────────────────────────────────────────
       await this.hydrateDayResources(tasks, goal, dayPlan.id, dayPlan)

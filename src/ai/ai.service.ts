@@ -48,7 +48,7 @@ interface AiProvider {
   name: string;
   priority: number;
   cooldownUntil: Date | null;
-  generate: (prompt: string) => Promise<string>;
+  generate: (prompt: string, schema?: any) => Promise<string>;
 }
 
 const DAILY_LIMITS: Record<string, number> = {
@@ -117,7 +117,7 @@ export class AiService implements OnModuleInit {
         name: 'gemini',
         priority: 4,
         cooldownUntil: null,
-        generate: (prompt) => this.callGemini(prompt),
+        generate: (prompt, schema) => this.callGemini(prompt, schema),
       },
       {
         name: 'cohere',
@@ -210,9 +210,10 @@ export class AiService implements OnModuleInit {
     prompt: string,
     fallback: T,
     metadata?: any,
+    schema?: any,
   ): Promise<T> {
     try {
-      const result = await this.callWithFallback(prompt, metadata);
+      const result = await this.callWithFallback(prompt, metadata, schema);
       if (!result) return fallback;
 
       const extracted = this.extractJson(result);
@@ -233,6 +234,7 @@ export class AiService implements OnModuleInit {
   private async callWithFallback(
     prompt: string,
     metadata?: any,
+    schema?: any,
   ): Promise<string | null> {
     // ── Prompt caching: hash the prompt and check in-memory cache ──
     const cacheKey = `ai:${createHash('md5').update(prompt).digest('hex')}`;
@@ -265,7 +267,7 @@ export class AiService implements OnModuleInit {
       const startTime = Date.now();
       try {
         this.logger.log(`Calling provider: ${provider.name}`);
-        const result = await provider.generate(prompt);
+        const result = await provider.generate(prompt, schema);
         const latency = Date.now() - startTime;
 
         this.incrementUsage(provider.name);
@@ -315,10 +317,18 @@ export class AiService implements OnModuleInit {
     return null;
   }
 
-  private async callGemini(prompt: string): Promise<string> {
+  private async callGemini(prompt: string, schema?: any): Promise<string> {
     if (!this.genAI) throw new Error('Gemini not configured');
+    
+    const config: any = {};
+    if (schema) {
+      config.responseMimeType = 'application/json';
+      config.responseSchema = schema;
+    }
+
     const model = this.genAI.getGenerativeModel({
       model: 'gemini-1.5-flash-latest',
+      generationConfig: config,
     });
     const result = await model.generateContent(prompt);
     return result.response.text();
