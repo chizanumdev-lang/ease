@@ -7,6 +7,8 @@
     "**/*spec.ts",
     "mobile",
     "admin",
-    "local_scripts", "src/scripts"
+    "local_scripts",
+    "scripts",
+    "templates"
   ]
 }

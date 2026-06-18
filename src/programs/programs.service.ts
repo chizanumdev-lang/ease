@@ -30,6 +30,54 @@ export class ProgramsService {
     private backgroundService: BackgroundService,
   ) {}
 
+  
+  
+  
+  async findDayPlansByProgramId(programId: string): Promise<DayPlan[]> {
+    return this.dayPlanRepository.find({
+      where: { programId },
+      select: ['id', 'dayNumber', 'skeletonStatus'],
+    });
+  }
+
+  async updateDayPlanSkeleton(id: string, skeletonData: any): Promise<void> {
+    await this.dayPlanRepository.update(id, skeletonData);
+  }
+
+  async findDayPlanById(id: string): Promise<DayPlan | null> {
+    return this.dayPlanRepository.findOne({ where: { id }, relations: ['program'] });
+  }
+
+  async findDayPlanByProgramAndDay(programId: string, dayNumber: number): Promise<DayPlan | null> {
+    return this.dayPlanRepository.findOne({ where: { programId, dayNumber } });
+  }
+
+  async lockDayPlan(dayPlanId: string): Promise<boolean> {
+    const updateResult = await this.dayPlanRepository
+      .createQueryBuilder()
+      .update(DayPlan)
+      .set({ status: 'generating', lockedAt: () => 'NOW()' })
+      .where(
+        "id = :id AND (status = 'pending' OR locked_at < NOW() - INTERVAL '5 minutes')",
+        { id: dayPlanId },
+      )
+      .returning('id')
+      .execute();
+    return !!(updateResult && updateResult.affected && updateResult.affected > 0);
+  }
+
+  async updateDayPlanStatus(dayPlanId: string, status: string): Promise<void> {
+    await this.dayPlanRepository.update(dayPlanId, { status });
+  }
+
+  async findProgramById(id: string): Promise<Program | null> {
+    return this.programRepository.findOne({ where: { id } });
+  }
+
+  async saveProgram(program: Program): Promise<Program> {
+    return this.programRepository.save(program);
+  }
+
   async findActive(userId: string): Promise<Program> {
     const program = await this.programRepository.findOne({
       where: { userId },

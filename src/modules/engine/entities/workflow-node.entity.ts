@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ObjectType, Field, ID, Float } from '@nestjs/graphql';
-import { GoalTemplate } from './goal-template.entity';
+import { WorkflowTemplate } from './workflow-template.entity';
 import { TaskDefinition } from './task-definition.entity';
 
 @ObjectType()
@@ -21,9 +21,9 @@ export class WorkflowNode {
   @Column({ name: 'template_id' })
   templateId: string;
 
-  @ManyToOne(() => GoalTemplate, (template) => template.nodes)
+  @ManyToOne(() => WorkflowTemplate, (template) => template.nodes)
   @JoinColumn({ name: 'template_id' })
-  template: GoalTemplate;
+  template: WorkflowTemplate;
 
   @Field()
   @Column({ name: 'task_definition_id' })

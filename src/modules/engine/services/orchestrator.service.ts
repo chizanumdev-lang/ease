@@ -1,10 +1,11 @@
+import { DayPlan } from '../../../programs/entities/day-plan.entity';
+import { ProgramsService } from '../../../programs/programs.service';
+import { TasksService } from '../../../tasks/tasks.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BackgroundService } from '../../worker/background.service';
 import { TaskShard } from '../entities/task-shard.entity';
-import { DayPlan } from '../../../programs/entities/day-plan.entity';
-import { Program } from '../../../programs/entities/program.entity';
 import { Task } from '../../../tasks/entities/task.entity';
 import { AiPromptingService, AiDraftTask } from './ai-prompting.service';
 import { MediaHydrationService } from './media-hydration.service';
@@ -16,12 +17,8 @@ export class OrchestratorService {
   constructor(
     @InjectRepository(TaskShard)
     private shardRepository: Repository<TaskShard>,
-    @InjectRepository(Task)
-    private taskRepository: Repository<Task>,
-    @InjectRepository(DayPlan)
-    private dayPlanRepository: Repository<DayPlan>,
-    @InjectRepository(Program)
-    private programRepository: Repository<Program>,
+    private tasksService: TasksService,
+    private programsService: ProgramsService,
     private backgroundService: BackgroundService,
     private aiPromptingService: AiPromptingService,
     private mediaHydrationService: MediaHydrationService,
@@ -35,33 +32,21 @@ export class OrchestratorService {
     this.logger.log(`Starting Pipeline Orchestration for DayPlan ${dayPlanId}`);
 
     // Atomic lock to prevent race conditions
-    const updateResult = await this.dayPlanRepository
-      .createQueryBuilder()
-      .update(DayPlan)
-      .set({ status: 'generating', lockedAt: () => 'NOW()' })
-      .where(
-        "id = :id AND (status = 'pending' OR locked_at < NOW() - INTERVAL '5 minutes')",
-        { id: dayPlanId },
-      )
-      .returning('id')
-      .execute();
+    const locked = await this.programsService.lockDayPlan(dayPlanId);
 
-    if (!updateResult || updateResult.affected === 0) {
+    if (!locked) {
       this.logger.warn(
         `DayPlan ${dayPlanId} is currently locked or already processing. Skipping duplicate orchestration call.`,
       );
       return;
     }
 
-    const dayPlan = await this.dayPlanRepository.findOne({
-      where: { id: dayPlanId },
-      relations: ['program'],
-    });
+    const dayPlan = await this.programsService.findDayPlanById(dayPlanId);
     if (!dayPlan) throw new Error('DayPlan not found');
 
     try {
       // Clean up any existing tasks
-      await this.taskRepository.delete({ dayPlanId });
+      await this.tasksService.deleteByDayPlanId(dayPlanId);
 
       // ── PHASE: BLUEPRINTING ──────────────────────────────────────────────
       // Branch: use skeleton (adaptive fill) if available, otherwise fall back
@@ -92,7 +77,7 @@ export class OrchestratorService {
         this.logger.error(
           `Blueprint generation returned 0 tasks for DayPlan ${dayPlanId}. Resetting to pending for retry.`,
         );
-        await this.dayPlanRepository.update(dayPlanId, { status: 'pending' });
+        await this.programsService.updateDayPlanStatus(dayPlanId, 'pending');
         return;
       }
 
@@ -105,7 +90,7 @@ export class OrchestratorService {
         const shard = this.aiPromptingService.resolveShard(draft, shards);
         const { mobileType, pattern } = this.aiPromptingService.detectPattern(shard);
 
-        const task = this.taskRepository.create({
+        const taskData = {
           dayPlanId: dayPlan.id,
           type: mobileType,
           title: draft.title || shard.displayName,
@@ -116,10 +101,10 @@ export class OrchestratorService {
             ...draft,
             pattern,
             shardId: shard.id,
-            status: 'hydrating',
+            status: 'hydrating' as any,
           },
-        });
-        tasks.push(await this.taskRepository.save(task));
+        };
+        tasks.push(await this.tasksService.createTask(taskData));
       }
 
       // ── PHASE: HYDRATION ─────────────────────────────────────────────────
@@ -129,15 +114,13 @@ export class OrchestratorService {
             `Background Hydration Failed for DayPlan ${dayPlan.id}: ${err.message}`,
           );
           // Reset to pending so the next request retries instead of staying broken
-          await this.dayPlanRepository.update(dayPlanId, { status: 'pending' });
+          await this.programsService.updateDayPlanStatus(dayPlanId, 'pending');
         })
         .finally(async () => {
-          const program = await this.programRepository.findOne({
-            where: { id: dayPlan.programId },
-          });
+          const program = await this.programsService.findProgramById(dayPlan.programId);
           if (program && program.status === 'generating') {
             program.status = 'ready';
-            await this.programRepository.save(program);
+            await this.programsService.saveProgram(program);
             this.logger.log(
               `Program ${program.id} marked as READY after hydration attempt.`,
             );
@@ -155,11 +138,9 @@ export class OrchestratorService {
       // ── BUG FIX #2: Reset to pending on exception so retry is possible ───
       // Previously this set status to 'failed' AND program to 'ready', which
       // meant the lazy-hydration guard in getTodaysPlan would never re-trigger.
-      await this.dayPlanRepository.update(dayPlanId, { status: 'pending' });
+      await this.programsService.updateDayPlanStatus(dayPlanId, 'pending');
 
-      const program = await this.programRepository.findOne({
-        where: { id: dayPlan.programId },
-      });
+      const program = await this.programsService.findProgramById(dayPlan.programId);
       // BUG FIX #3: Only mark program ready if it actually succeeded.
       // On a true exception, leave it as-is so polling keeps trying.
       if (program && program.status === 'generating') {
@@ -182,25 +163,7 @@ export class OrchestratorService {
     let pastVideoIds: string[] = [];
     if (dayPlan) {
       try {
-        const pastTasks = await this.taskRepository
-          .createQueryBuilder('task')
-          .innerJoin('task.dayPlan', 'dayPlan')
-          .where('dayPlan.program_id = :programId', {
-            programId: dayPlan.programId,
-          })
-          .andWhere('dayPlan.day_number < :dayNumber', {
-            dayNumber: dayPlan.dayNumber,
-          })
-          .andWhere('task.type = :type', { type: 'video' })
-          .andWhere('task.video_url IS NOT NULL')
-          .getMany();
-
-        pastVideoIds = pastTasks
-          .map((t) => {
-            const match = t.videoUrl?.match(/v=([^&]+)/);
-            return match ? match[1] : null;
-          })
-          .filter((id): id is string => !!id);
+        pastVideoIds = await this.tasksService.findPastVideoTaskIds(dayPlan.programId, dayPlan.dayNumber);
       } catch (e) {
         this.logger.warn(
           `Failed to fetch past video IDs for deduplication: ${e}`,
@@ -221,7 +184,7 @@ export class OrchestratorService {
           if (task.metadata) {
             task.metadata.status = 'ready';
           }
-          await this.taskRepository.save(task);
+          await this.tasksService.saveTask(task);
         } catch (e) {
           const err = e as Error;
           this.logger.error(
@@ -230,37 +193,29 @@ export class OrchestratorService {
           if (task.metadata) {
             task.metadata.status = 'error';
           }
-          await this.taskRepository.save(task);
+          await this.tasksService.saveTask(task);
         }
       }),
     );
 
     // Mark DayPlan as ready
-    await this.dayPlanRepository.update(dayPlanId, { status: 'ready' });
+    await this.programsService.updateDayPlanStatus(dayPlanId, 'ready');
 
     // Record progress so the 8pm scheduler knows which day was last hydrated.
     // We do NOT chain immediately (user hasn't journaled yet — no context for adaptive fill).
     // EXCEPTION: Day 1 chains to Day 2 immediately since there's no journal to lose.
     if (dayPlan) {
-      const program = await this.programRepository.findOne({
-        where: { id: dayPlan.programId },
-      });
+      const program = await this.programsService.findProgramById(dayPlan.programId);
       if (program) {
         const currentLastHydrated = program.metadata?.lastHydratedDay ?? 0;
         if (dayPlan.dayNumber > currentLastHydrated) {
-          await this.programRepository.update(program.id, {
-            metadata: {
-              ...(program.metadata || {}),
-              lastHydratedDay: dayPlan.dayNumber,
-            },
-          });
+          program.metadata = { ...(program.metadata || {}), lastHydratedDay: dayPlan.dayNumber };
+          await this.programsService.saveProgram(program);
         }
 
         // Chain Day 2 immediately after Day 1 — no journal context to lose yet
         if (dayPlan.dayNumber === 1 && 2 <= program.duration) {
-          const day2 = await this.dayPlanRepository.findOne({
-            where: { programId: program.id, dayNumber: 2 },
-          });
+          const day2 = await this.programsService.findDayPlanByProgramAndDay(program.id, 2);
           if (day2 && day2.status === 'pending') {
             this.logger.log(
               `Day 1 complete — immediately chaining Day 2 hydration for program ${program.id}`,

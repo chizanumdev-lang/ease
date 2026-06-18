@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ObjectType, Field, ID, Float } from '@nestjs/graphql';
-import { EngineTask } from './task.entity';
+import { WorkflowTask } from './workflow-task.entity';
 
 @ObjectType()
 @Entity('audio_assets')
@@ -20,9 +20,9 @@ export class AudioAsset {
   @Column({ name: 'task_id' })
   taskId: string;
 
-  @ManyToOne(() => EngineTask, (task) => task.audioAssets)
+  @ManyToOne(() => WorkflowTask, (task) => task.audioAssets)
   @JoinColumn({ name: 'task_id' })
-  task: EngineTask;
+  task: WorkflowTask;
 
   @Field()
   @Column({ name: 'storage_path' })

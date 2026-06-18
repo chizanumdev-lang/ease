@@ -2,14 +2,14 @@ import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
 import { EngineService } from '../services/engine.service';
 import { PlannerService } from '../services/planner.service';
 import { AiPromptingService } from '../services/ai-prompting.service';
-import { GoalCategory } from '../entities/goal-category.entity';
-import { UserProgram, ProgramStatus } from '../entities/user-program.entity';
+import { WorkflowCategory } from '../entities/workflow-category.entity';
+import { WorkflowInstance } from '../entities/workflow-instance.entity';
 import { PubSub } from 'graphql-subscriptions';
 
 const pubSub = new PubSub() as any;
 
 import { TaskDefinition } from '../entities/task-definition.entity';
-import { GoalTemplate } from '../entities/goal-template.entity';
+import { WorkflowTemplate } from '../entities/workflow-template.entity';
 import { NodeInput, EdgeInput } from '../dto/blueprint-input';
 import { ShardSimulationResult } from '../dto/shard-simulation.dto';
 
@@ -21,7 +21,7 @@ export class EngineResolver {
     private readonly aiPromptingService: AiPromptingService,
   ) {}
 
-  @Query(() => [GoalCategory])
+  @Query(() => [WorkflowCategory])
   async getCategories() {
     return this.engineService.findAllCategories();
   }
@@ -31,12 +31,12 @@ export class EngineResolver {
     return this.engineService.findAllTaskDefinitions();
   }
 
-  @Query(() => UserProgram)
+  @Query(() => WorkflowInstance)
   async getProgram(@Args('id') id: string) {
     return this.engineService.findProgramById(id);
   }
 
-  @Mutation(() => UserProgram)
+  @Mutation(() => WorkflowInstance)
   async createProgram(
     @Args('templateId') templateId: string,
     @Args('userGoal') userGoal: string,
@@ -51,7 +51,7 @@ export class EngineResolver {
     return program;
   }
 
-  @Mutation(() => GoalTemplate)
+  @Mutation(() => WorkflowTemplate)
   async saveBlueprint(
     @Args('templateId') templateId: string,
     @Args({ name: 'nodes', type: () => [NodeInput] }) nodes: NodeInput[],
@@ -60,7 +60,7 @@ export class EngineResolver {
     return this.engineService.saveBlueprint(templateId, nodes, edges);
   }
 
-  @Subscription(() => UserProgram)
+  @Subscription(() => WorkflowInstance)
   programCreated() {
     return pubSub.asyncIterator('programCreated');
   }

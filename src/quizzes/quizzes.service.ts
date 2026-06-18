@@ -61,6 +61,13 @@ export class QuizzesService {
     return this.quizAttemptRepository.save(attempt);
   }
 
+  
+  async findAttemptsSince(userId: string, date: Date): Promise<QuizAttempt[]> {
+    return this.quizAttemptRepository.find({
+      where: { userId, createdAt: require('typeorm').MoreThan(date) },
+    });
+  }
+
   async findRecentAttempts(userId: string): Promise<QuizAttempt[]> {
     return this.quizAttemptRepository.find({
       where: { userId },

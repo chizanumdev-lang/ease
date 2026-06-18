@@ -15,23 +15,23 @@ import {
   Float,
   registerEnumType,
 } from '@nestjs/graphql';
-import { GoalTemplate } from './goal-template.entity';
-import { EngineTask } from './task.entity';
+import { WorkflowTemplate } from './workflow-template.entity';
+import { WorkflowTask } from './workflow-task.entity';
 
-export enum ProgramStatus {
+export enum WorkflowStatus {
   PENDING = 'PENDING',
   ACTIVE = 'ACTIVE',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
 }
 
-registerEnumType(ProgramStatus, {
-  name: 'ProgramStatus',
+registerEnumType(WorkflowStatus, {
+  name: 'WorkflowStatus',
 });
 
 @ObjectType()
-@Entity('user_programs_engine')
-export class UserProgram {
+@Entity('engine_workflow_instances')
+export class WorkflowInstance {
   @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -44,22 +44,22 @@ export class UserProgram {
   @Column({ name: 'template_id' })
   templateId: string;
 
-  @Field(() => GoalTemplate)
-  @ManyToOne(() => GoalTemplate)
+  @Field(() => WorkflowTemplate)
+  @ManyToOne(() => WorkflowTemplate)
   @JoinColumn({ name: 'template_id' })
-  template: GoalTemplate;
+  template: WorkflowTemplate;
 
   @Field()
   @Column({ name: 'user_goal', type: 'text' })
   userGoal: string;
 
-  @Field(() => ProgramStatus)
+  @Field(() => WorkflowStatus)
   @Column({
     type: 'enum',
-    enum: ProgramStatus,
-    default: ProgramStatus.PENDING,
+    enum: WorkflowStatus,
+    default: WorkflowStatus.PENDING,
   })
-  status: ProgramStatus;
+  status: WorkflowStatus;
 
   @Field(() => Float)
   @Column({ type: 'float', default: 0 })
@@ -69,9 +69,9 @@ export class UserProgram {
   @Column({ type: 'jsonb', default: {} })
   metadata: any;
 
-  @Field(() => [EngineTask])
-  @OneToMany(() => EngineTask, (task) => task.program)
-  tasks: EngineTask[];
+  @Field(() => [WorkflowTask])
+  @OneToMany(() => WorkflowTask, (task) => task.program)
+  tasks: WorkflowTask[];
 
   @Field()
   @CreateDateColumn({ name: 'created_at' })

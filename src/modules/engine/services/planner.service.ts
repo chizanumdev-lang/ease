@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AiService } from '../../../ai/ai.service';
-import { UserProgram, ProgramStatus } from '../entities/user-program.entity';
-import { GoalTemplate } from '../entities/goal-template.entity';
-import { EngineTask, ExecutionStatus } from '../entities/task.entity';
+import { WorkflowInstance, WorkflowStatus } from '../entities/workflow-instance.entity';
+import { WorkflowTemplate } from '../entities/workflow-template.entity';
+import { WorkflowTask, ExecutionStatus } from '../entities/workflow-task.entity';
 import { WorkflowNode } from '../entities/workflow-node.entity';
 import { WorkflowEdge } from '../entities/workflow-edge.entity';
 import {
@@ -17,12 +17,12 @@ export class PlannerService {
   private readonly logger = new Logger(PlannerService.name);
 
   constructor(
-    @InjectRepository(UserProgram)
-    private programRepo: Repository<UserProgram>,
-    @InjectRepository(GoalTemplate)
-    private templateRepo: Repository<GoalTemplate>,
-    @InjectRepository(EngineTask)
-    private taskRepo: Repository<EngineTask>,
+    @InjectRepository(WorkflowInstance)
+    private programRepo: Repository<WorkflowInstance>,
+    @InjectRepository(WorkflowTemplate)
+    private templateRepo: Repository<WorkflowTemplate>,
+    @InjectRepository(WorkflowTask)
+    private taskRepo: Repository<WorkflowTask>,
     private aiService: AiService,
   ) {}
 
@@ -30,7 +30,7 @@ export class PlannerService {
     userId: string,
     templateId: string,
     userGoal: string,
-  ): Promise<UserProgram> {
+  ): Promise<WorkflowInstance> {
     this.logger.log(
       `Planning program for user ${userId} with goal: "${userGoal}"`,
     );
@@ -45,12 +45,12 @@ export class PlannerService {
       throw new Error('Goal template not found or inactive');
     }
 
-    // 2. Create the UserProgram instance
+    // 2. Create the WorkflowInstance instance
     const program = this.programRepo.create({
       userId,
       templateId,
       userGoal,
-      status: ProgramStatus.PENDING,
+      status: WorkflowStatus.PENDING,
       progress: 0,
       metadata: {
         plannedAt: new Date().toISOString(),
@@ -67,7 +67,7 @@ export class PlannerService {
 
     const sortedNodes = this.topologicalSort(uniqueNodes, template.edges);
     const plannedContext = new Map<string, any>();
-    const tasks: EngineTask[] = [];
+    const tasks: WorkflowTask[] = [];
 
     for (const node of sortedNodes) {
       this.logger.debug(
@@ -116,14 +116,14 @@ export class PlannerService {
     const savedTasks = await this.taskRepo.save(tasks);
 
     // 4. Update program status to ACTIVE
-    savedProgram.status = ProgramStatus.ACTIVE;
+    savedProgram.status = WorkflowStatus.ACTIVE;
     await this.programRepo.save(savedProgram);
 
     return this.findFullProgram(savedProgram.id);
   }
 
   private async generateNodeInput(
-    template: GoalTemplate,
+    template: WorkflowTemplate,
     node: WorkflowNode,
     userGoal: string,
     context: any[],
@@ -199,7 +199,7 @@ export class PlannerService {
     return sorted;
   }
 
-  private async findFullProgram(id: string): Promise<UserProgram> {
+  private async findFullProgram(id: string): Promise<WorkflowInstance> {
     const program = await this.programRepo.findOne({
       where: { id },
       relations: [

@@ -1,3 +1,6 @@
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AudioTrack } from './entities/audio-track.entity';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
@@ -23,7 +26,10 @@ export class AudioService {
       'https://res.cloudinary.com/duooultxc/video/upload/v1773045929/ease/backgrounds/meditation.mp3',
   };
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    @InjectRepository(AudioTrack) private audioTrackRepository: Repository<AudioTrack>,
+    private configService: ConfigService,
+  ) {
     // Ensure temp directory exists (writable in Vercel)
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir, { recursive: true });
@@ -34,6 +40,23 @@ export class AudioService {
       api_key: this.configService.get<string>('CLOUDINARY_API_KEY'),
       api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET'),
     });
+  }
+
+  
+  
+  async findTracksForProgram(programId: string, trackType: string, limit: number): Promise<AudioTrack[]> {
+    return this.audioTrackRepository.find({
+      where: { dayPlan: { programId }, type: trackType },
+      take: limit,
+    });
+  }
+
+  async getAudioTrack(id: string): Promise<AudioTrack | null> {
+    return this.audioTrackRepository.findOne({ where: { id } });
+  }
+
+  async updateAudioTrack(track: AudioTrack): Promise<AudioTrack> {
+    return this.audioTrackRepository.save(track);
   }
 
   async generateAudioTrack(

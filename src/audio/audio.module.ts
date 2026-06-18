@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AudioProcessor } from './audio.processor';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AudioService } from './audio.service';
 import { AudioController } from './audio.controller';
@@ -24,6 +25,7 @@ import { RitualsService } from './rituals.service';
   ],
   controllers: [AudioController],
   providers: [
+    AudioProcessor,
     AudioService,
     AudioMixerService,
     RitualsService,

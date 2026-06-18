@@ -9,13 +9,13 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
-import { GoalCategory } from './goal-category.entity';
+import { WorkflowCategory } from './workflow-category.entity';
 import { WorkflowNode } from './workflow-node.entity';
 import { WorkflowEdge } from './workflow-edge.entity';
 
 @ObjectType()
 @Entity('goal_templates')
-export class GoalTemplate {
+export class WorkflowTemplate {
   @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -24,10 +24,10 @@ export class GoalTemplate {
   @Column({ name: 'category_id' })
   categoryId: string;
 
-  @Field(() => GoalCategory)
-  @ManyToOne(() => GoalCategory, (category) => category.templates)
+  @Field(() => WorkflowCategory)
+  @ManyToOne(() => WorkflowCategory, (category) => category.templates)
   @JoinColumn({ name: 'category_id' })
-  category: GoalCategory;
+  category: WorkflowCategory;
 
   @Field()
   @Column()

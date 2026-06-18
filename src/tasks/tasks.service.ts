@@ -31,6 +31,89 @@ export class TasksService {
     private backgroundService: BackgroundService,
   ) {}
 
+  
+  
+  
+  async getPastTaskHistory(programId: string, currentDayNumber: number): Promise<Task[]> {
+    return this.taskRepository.createQueryBuilder('task')
+      .innerJoinAndSelect('task.dayPlan', 'dayPlan')
+      .where('dayPlan.program_id = :programId', { programId })
+      .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
+      .orderBy('dayPlan.day_number', 'ASC')
+      .addOrderBy('task.order', 'ASC')
+      .getMany();
+  }
+
+  async getPastJournals(programId: string, currentDayNumber: number): Promise<string[]> {
+    const pastTasks = await this.taskRepository.createQueryBuilder('task')
+      .innerJoinAndSelect('task.dayPlan', 'dayPlan')
+      .where('dayPlan.program_id = :programId', { programId })
+      .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
+      .andWhere('task.type = :type', { type: 'reflection' })
+      .andWhere("task.metadata->>'journalEntry' IS NOT NULL")
+      .orderBy('dayPlan.day_number', 'DESC')
+      .take(3)
+      .getMany();
+    
+    return pastTasks.map(t => t.metadata?.journalEntry as string).filter(Boolean);
+  }
+
+  async getPastVideoQueries(programId: string, currentDayNumber: number): Promise<string[]> {
+    const pastTasks = await this.taskRepository.createQueryBuilder('task')
+      .innerJoinAndSelect('task.dayPlan', 'dayPlan')
+      .where('dayPlan.program_id = :programId', { programId })
+      .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
+      .andWhere('task.type = :type', { type: 'video' })
+      .andWhere("task.metadata->>'searchQuery' IS NOT NULL")
+      .orderBy('dayPlan.day_number', 'DESC')
+      .getMany();
+
+    return pastTasks.map(t => t.metadata?.searchQuery as string).filter(Boolean);
+  }
+
+  async getCompletionStats(programId: string, currentDayNumber: number): Promise<{ completed: number; missed: number }> {
+    const pastTasks = await this.taskRepository.createQueryBuilder('task')
+      .innerJoin('task.dayPlan', 'dayPlan')
+      .where('dayPlan.program_id = :programId', { programId })
+      .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
+      .getMany();
+
+    const completed = pastTasks.filter(t => t.completed).length;
+    const missed = pastTasks.length - completed;
+    return { completed, missed };
+  }
+
+  async findPastVideoTaskIds(programId: string, currentDayNumber: number): Promise<string[]> {
+    const pastTasks = await this.taskRepository
+      .createQueryBuilder('task')
+      .innerJoin('task.dayPlan', 'dayPlan')
+      .where('dayPlan.program_id = :programId', { programId })
+      .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
+      .andWhere('task.type = :type', { type: 'video' })
+      .andWhere('task.video_url IS NOT NULL')
+      .getMany();
+
+    return pastTasks
+      .map((t) => {
+        const match = t.videoUrl?.match(/v=([^&]+)/);
+        return match ? match[1] : null;
+      })
+      .filter((id): id is string => !!id);
+  }
+
+  async deleteByDayPlanId(dayPlanId: string): Promise<void> {
+    await this.taskRepository.delete({ dayPlanId });
+  }
+
+  async createTask(taskData: Partial<Task>): Promise<Task> {
+    const task = this.taskRepository.create(taskData);
+    return this.taskRepository.save(task);
+  }
+
+  async saveTask(task: Task): Promise<Task> {
+    return this.taskRepository.save(task);
+  }
+
   async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
     const task = await this.taskRepository.findOne({
       where: { id },

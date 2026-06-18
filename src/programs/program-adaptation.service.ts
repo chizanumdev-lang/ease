@@ -1,3 +1,6 @@
+import { AudioService } from '../audio/audio.service';
+import { ProgressService } from '../progress/progress.service';
+import { QuizzesService } from '../quizzes/quizzes.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
@@ -5,8 +8,6 @@ import { Program } from './entities/program.entity';
 import { DayPlan } from './entities/day-plan.entity';
 import { Task } from '../tasks/entities/task.entity';
 import { AudioTrack } from '../audio/entities/audio-track.entity';
-import { QuizAttempt } from '../quizzes/entities/quiz-attempt.entity';
-import { Progress } from '../progress/entities/progress.entity';
 import { AdaptationLog } from './entities/adaptation-log.entity';
 import { UsersService } from '../users/users.service';
 
@@ -18,12 +19,9 @@ export class ProgramAdaptationService {
     @InjectRepository(Program) private programRepository: Repository<Program>,
     @InjectRepository(DayPlan) private dayPlanRepository: Repository<DayPlan>,
     @InjectRepository(Task) private taskRepository: Repository<Task>,
-    @InjectRepository(AudioTrack)
-    private audioTrackRepository: Repository<AudioTrack>,
-    @InjectRepository(QuizAttempt)
-    private quizAttemptRepository: Repository<QuizAttempt>,
-    @InjectRepository(Progress)
-    private progressRepository: Repository<Progress>,
+    private audioService: AudioService,
+    private quizzesService: QuizzesService,
+    private progressService: ProgressService,
     @InjectRepository(AdaptationLog)
     private adaptationLogRepository: Repository<AdaptationLog>,
     private usersService: UsersService,
@@ -52,9 +50,7 @@ export class ProgramAdaptationService {
       ? completedCount / recentTasks.length
       : 1;
 
-    const recentAttempts = await this.quizAttemptRepository.find({
-      where: { userId: program.userId, createdAt: MoreThan(sevenDaysAgo) },
-    });
+    const recentAttempts = await this.quizzesService.findAttemptsSince(program.userId, sevenDaysAgo);
     const quizAvg = recentAttempts.length
       ? recentAttempts.reduce((acc, curr) => acc + curr.score, 0) /
         recentAttempts.length
@@ -67,9 +63,7 @@ export class ProgramAdaptationService {
       .slice(0, 3)
       .filter((t) => !t.completed).length;
 
-    const recentProgress = await this.progressRepository.find({
-      where: { userId: program.userId, checkinDate: MoreThan(sevenDaysAgo) },
-    });
+    const recentProgress = await this.progressService.findProgressSince(program.userId, sevenDaysAgo);
     const checkinCount = recentProgress.length;
     const streakBroken = checkinCount < 4;
 
@@ -122,15 +116,12 @@ export class ProgramAdaptationService {
     }
 
     if (skippedAudioCount >= 3) {
-      const futureTracks = await this.audioTrackRepository.find({
-        where: { dayPlan: { programId: program.id }, type: 'meditation' },
-        take: 10,
-      });
+      const futureTracks = await this.audioService.findTracksForProgram(program.id, 'meditation', 10);
 
       for (const track of futureTracks) {
         track.type = 'ambient';
         track.url = 'https://example.com/ambient-rain.mp3';
-        await this.audioTrackRepository.save(track);
+        await this.audioService.updateAudioTrack(track);
       }
       if (futureTracks.length > 0) {
         await this.logAdaptation(
@@ -179,11 +170,7 @@ export class ProgramAdaptationService {
   }
 
   private async calculateCurrentStreak(userId: string): Promise<number> {
-    const checkIns = await this.progressRepository.find({
-      where: { userId },
-      order: { checkinDate: 'DESC' },
-      take: 30,
-    });
+    const checkIns = await this.progressService.findRecent(userId);
 
     if (checkIns.length === 0) return 0;
     const today = new Date();

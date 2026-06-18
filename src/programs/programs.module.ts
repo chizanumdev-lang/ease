@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ProgramsProcessor } from './programs.processor';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProgramsService } from './programs.service';
 import { ProgramSetupService } from './program-setup.service';
@@ -46,6 +47,7 @@ import { ProgramsController } from './programs.controller';
   ],
   controllers: [ProgramsController],
   providers: [
+    ProgramsProcessor,
     ProgramSetupService,
     ProgramAudioService,
     ProgramsService,

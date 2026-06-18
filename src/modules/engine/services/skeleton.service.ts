@@ -1,8 +1,8 @@
+import { ProgramsService } from '../../../programs/programs.service';
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { DayPlan } from '../../../programs/entities/day-plan.entity';
 import { TaskShard } from '../entities/task-shard.entity';
 import { AiService } from '../../../ai/ai.service';
 
@@ -24,8 +24,7 @@ export class SkeletonService {
   // one call gives the AI full visibility of the progression arc and is cheaper.
 
   constructor(
-    @InjectRepository(DayPlan)
-    private dayPlanRepository: Repository<DayPlan>,
+    private programsService: ProgramsService,
     @InjectRepository(TaskShard)
     private shardRepository: Repository<TaskShard>,
     private aiService: AiService,
@@ -193,10 +192,7 @@ RULES:
     }
 
     // Validate and store each day's skeleton
-    const dayPlans = await this.dayPlanRepository.find({
-      where: { programId },
-      select: ['id', 'dayNumber', 'skeletonStatus'],
-    });
+    const dayPlans = await this.programsService.findDayPlansByProgramId(programId);
 
     const dayPlanMap = new Map(dayPlans.map((d) => [d.dayNumber, d]));
 
@@ -221,7 +217,7 @@ RULES:
       );
 
       updates.push(
-        this.dayPlanRepository.update(day.id, {
+        this.programsService.updateDayPlanSkeleton(day.id, {
           skeleton: {
             selectedShards: resolvedShards,
             theme: skel.theme || `Day ${skel.dayNumber}`,

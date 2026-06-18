@@ -3,8 +3,8 @@ import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { EngineTask, ExecutionStatus } from '../../engine/entities/task.entity';
-import { UserProgram } from '../../engine/entities/user-program.entity';
+import { WorkflowTask, ExecutionStatus } from '../../engine/entities/workflow-task.entity';
+import { WorkflowInstance } from '../../engine/entities/workflow-instance.entity';
 import { CapabilityType } from '../../engine/entities/task-definition.entity';
 
 @Processor('engine_queue')
@@ -13,10 +13,10 @@ export class TaskProcessor extends WorkerHost {
   private readonly isVercel = !!process.env.VERCEL;
 
   constructor(
-    @InjectRepository(EngineTask)
-    private taskRepo: Repository<EngineTask>,
-    @InjectRepository(UserProgram)
-    private programRepo: Repository<UserProgram>,
+    @InjectRepository(WorkflowTask)
+    private taskRepo: Repository<WorkflowTask>,
+    @InjectRepository(WorkflowInstance)
+    private programRepo: Repository<WorkflowInstance>,
   ) {
     super();
   }
@@ -79,14 +79,14 @@ export class TaskProcessor extends WorkerHost {
     }
   }
 
-  private async handleTextTask(task: EngineTask): Promise<any> {
+  private async handleTextTask(task: WorkflowTask): Promise<any> {
     // Placeholder for text/scripting logic
     // In a real scenario, this might call another service to refine a script
     this.logger.debug(`Handling TEXT task for ${task.id}`);
     return { ...task.inputData, status: 'text_processed' };
   }
 
-  private async handleAudioTask(task: EngineTask): Promise<any> {
+  private async handleAudioTask(task: WorkflowTask): Promise<any> {
     // Placeholder for audio/TTS logic
     this.logger.debug(`Handling AUDIO task for ${task.id}`);
     return {

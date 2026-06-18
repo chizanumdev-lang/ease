@@ -1,8 +1,8 @@
+import { AudioTrack } from '../audio/entities/audio-track.entity';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DayPlan } from './entities/day-plan.entity';
-import { AudioTrack } from '../audio/entities/audio-track.entity';
 import { AiService } from '../ai/ai.service';
 import { AudioService } from '../audio/audio.service';
 import { AudioMixerService } from '../audio/audio-mixer.service';
@@ -34,7 +34,6 @@ export class ProgramAudioService {
   private readonly logger = new Logger(ProgramAudioService.name);
 
   constructor(
-    @InjectRepository(AudioTrack) private audioTrackRepository: Repository<AudioTrack>,
     @InjectRepository(DayPlan) private dayPlanRepository: Repository<DayPlan>,
     private aiService: AiService,
     private audioService: AudioService,
@@ -48,7 +47,7 @@ export class ProgramAudioService {
   ): Promise<any> {
     this.logger.log(`Generating audio for track ${audioTrackId} (theme: ${theme})`);
     try {
-      const track = await this.audioTrackRepository.findOne({ where: { id: audioTrackId } });
+      const track = await this.audioService.getAudioTrack(audioTrackId);
       if (!track) {
         this.logger.warn(`AudioTrack ${audioTrackId} not found in DB`);
         return { success: false, reason: 'not_found' };
@@ -66,7 +65,7 @@ export class ProgramAudioService {
       }
 
       track.url = 'generating...';
-      await this.audioTrackRepository.save(track);
+      await this.audioService.updateAudioTrack(track);
 
       const scriptData = await this.aiService.generateAudioScript(theme, 5, 'task');
 
@@ -82,7 +81,7 @@ export class ProgramAudioService {
         frequency: scriptData.binauralFrequency,
         affirmations: scriptData.affirmations,
       };
-      await this.audioTrackRepository.save(track);
+      await this.audioService.updateAudioTrack(track);
       this.logger.log(`Successfully generated and saved binaural track ${audioTrackId}`);
 
       try {
@@ -94,14 +93,14 @@ export class ProgramAudioService {
       return { success: true, url: publicUrl };
     } catch (error: any) {
       this.logger.error(`Failed to generate audio track ${audioTrackId}: ${error.message}`);
-      const track = await this.audioTrackRepository.findOne({ where: { id: audioTrackId } });
+      const track = await this.audioService.getAudioTrack(audioTrackId);
       if (track) {
         const mood = track.type || 'meditation';
         const dayNumber = track.dayPlanId
           ? (await this.dayPlanRepository.findOne({ where: { id: track.dayPlanId } }))?.dayNumber || 1
           : 1;
         track.url = pickAudioUrl(mood, dayNumber);
-        await this.audioTrackRepository.save(track);
+        await this.audioService.updateAudioTrack(track);
       }
       return { success: false, error: error.message };
     }

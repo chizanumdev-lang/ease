@@ -63,6 +63,13 @@ export class ProgressService {
     return this.progressRepository.save(progress);
   }
 
+  
+  async findProgressSince(userId: string, date: Date): Promise<Progress[]> {
+    return this.progressRepository.find({
+      where: { userId, checkinDate: require('typeorm').MoreThan(date) },
+    });
+  }
+
   async findRecent(userId: string): Promise<Progress[]> {
     return this.progressRepository.find({
       where: { userId },

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GoalCategory } from '../entities/goal-category.entity';
-import { UserProgram, ProgramStatus } from '../entities/user-program.entity';
-import { GoalTemplate } from '../entities/goal-template.entity';
+import { WorkflowCategory } from '../entities/workflow-category.entity';
+import { WorkflowInstance, WorkflowStatus } from '../entities/workflow-instance.entity';
+import { WorkflowTemplate } from '../entities/workflow-template.entity';
 import { WorkflowNode } from '../entities/workflow-node.entity';
 import { WorkflowEdge } from '../entities/workflow-edge.entity';
 import { TaskDefinition } from '../entities/task-definition.entity';
@@ -11,12 +11,12 @@ import { TaskDefinition } from '../entities/task-definition.entity';
 @Injectable()
 export class EngineService {
   constructor(
-    @InjectRepository(GoalCategory)
-    private categoryRepo: Repository<GoalCategory>,
-    @InjectRepository(UserProgram)
-    private programRepo: Repository<UserProgram>,
-    @InjectRepository(GoalTemplate)
-    private templateRepo: Repository<GoalTemplate>,
+    @InjectRepository(WorkflowCategory)
+    private categoryRepo: Repository<WorkflowCategory>,
+    @InjectRepository(WorkflowInstance)
+    private programRepo: Repository<WorkflowInstance>,
+    @InjectRepository(WorkflowTemplate)
+    private templateRepo: Repository<WorkflowTemplate>,
     @InjectRepository(TaskDefinition)
     private taskDefRepo: Repository<TaskDefinition>,
     @InjectRepository(WorkflowNode)
@@ -25,7 +25,7 @@ export class EngineService {
     private edgeRepo: Repository<WorkflowEdge>,
   ) {}
 
-  async findAllCategories(): Promise<GoalCategory[]> {
+  async findAllCategories(): Promise<WorkflowCategory[]> {
     return this.categoryRepo.find({ relations: ['templates'] });
   }
 
@@ -37,18 +37,18 @@ export class EngineService {
     userId: string,
     templateId: string,
     userGoal: string,
-  ): Promise<UserProgram> {
+  ): Promise<WorkflowInstance> {
     const program = this.programRepo.create({
       userId,
       templateId,
       userGoal,
-      status: ProgramStatus.PENDING,
+      status: WorkflowStatus.PENDING,
       progress: 0,
     });
     return this.programRepo.save(program);
   }
 
-  async findProgramById(id: string): Promise<UserProgram> {
+  async findProgramById(id: string): Promise<WorkflowInstance> {
     const program = await this.programRepo.findOne({
       where: { id },
       relations: [
@@ -67,7 +67,7 @@ export class EngineService {
     templateId: string,
     nodes: any[],
     edges: any[],
-  ): Promise<GoalTemplate> {
+  ): Promise<WorkflowTemplate> {
     const template = await this.templateRepo.findOne({
       where: { id: templateId },
     });

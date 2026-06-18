@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ObjectType, Field, ID, registerEnumType } from '@nestjs/graphql';
-import { UserProgram } from './user-program.entity';
+import { WorkflowInstance } from './workflow-instance.entity';
 import { WorkflowNode } from './workflow-node.entity';
 import { AudioAsset } from './audio-asset.entity';
 
@@ -24,8 +24,8 @@ registerEnumType(ExecutionStatus, {
 });
 
 @ObjectType()
-@Entity('engine_tasks')
-export class EngineTask {
+@Entity('engine_workflow_tasks')
+export class WorkflowTask {
   @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -34,9 +34,9 @@ export class EngineTask {
   @Column({ name: 'program_id' })
   programId: string;
 
-  @ManyToOne(() => UserProgram, (program) => program.tasks)
+  @ManyToOne(() => WorkflowInstance, (program) => program.tasks)
   @JoinColumn({ name: 'programId' })
-  program: UserProgram;
+  program: WorkflowInstance;
 
   @Field()
   @Column({ name: 'node_id' })

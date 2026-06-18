@@ -1,9 +1,9 @@
+import { TasksService } from '../../../tasks/tasks.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { AiService } from '../../../ai/ai.service';
 import { TaskShard } from '../entities/task-shard.entity';
-import { Task } from '../../../tasks/entities/task.entity';
 import { DayPlan } from '../../../programs/entities/day-plan.entity';
 
 export interface AiDraftTask {
@@ -51,8 +51,7 @@ export class AiPromptingService {
     private aiService: AiService,
     @InjectRepository(TaskShard)
     private shardRepository: Repository<TaskShard>,
-    @InjectRepository(Task)
-    private taskRepository: Repository<Task>,
+    private tasksService: TasksService,
   ) {}
 
   async simulateBlueprintSelection(goal: string): Promise<Record<string, unknown>[]> {
@@ -201,13 +200,7 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
 
     if (programId && dayNumber > 1) {
       try {
-        const pastTasks = await this.taskRepository
-          .createQueryBuilder('task')
-          .innerJoinAndSelect('task.dayPlan', 'dayPlan')
-          .where('dayPlan.program_id = :programId', { programId })
-          .andWhere('dayPlan.day_number < :dayNumber', { dayNumber })
-          .getMany();
-
+        const pastTasks = await this.tasksService.getPastTaskHistory(programId, dayNumber);
         pastQueries = pastTasks.filter((t) => t.type === 'video' && t.metadata?.searchQuery).map((t) => t.metadata?.searchQuery as string);
         pastJournals = pastTasks.filter((t) => t.type === 'journal' && t.content && t.content.length > 10).map((t) => `Day ${t.dayPlan.dayNumber}: "${t.content}"`);
         completedTasksCount = pastTasks.filter((t) => t.completed).length;
@@ -354,16 +347,12 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
 
   private async fetchPastJournals(programId: string, currentDayNumber: number): Promise<string[]> {
     try {
-      const pastTasks = await this.taskRepository.createQueryBuilder('task')
-        .innerJoinAndSelect('task.dayPlan', 'dayPlan')
-        .where('dayPlan.program_id = :programId', { programId })
-        .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
-        .andWhere('task.type = :type', { type: 'journal' })
-        .andWhere('task.content IS NOT NULL')
-        .orderBy('dayPlan.day_number', 'DESC')
-        .take(5).getMany();
-
-      return pastTasks.filter((t) => t.content && t.content.length > 10).map((t) => `Day ${t.dayPlan.dayNumber}: "${t.content}"`);
+      const pastTasks = await this.tasksService.getPastTaskHistory(programId, currentDayNumber);
+      return pastTasks
+        .filter((t) => t.type === 'journal' && t.content && t.content.length > 10)
+        .sort((a, b) => b.dayPlan.dayNumber - a.dayPlan.dayNumber)
+        .slice(0, 5)
+        .map((t) => `Day ${t.dayPlan.dayNumber}: "${t.content}"`);
     } catch {
       return [];
     }
@@ -371,14 +360,8 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
 
   private async fetchPastVideoQueries(programId: string, currentDayNumber: number): Promise<string[]> {
     try {
-      const pastTasks = await this.taskRepository.createQueryBuilder('task')
-        .innerJoinAndSelect('task.dayPlan', 'dayPlan')
-        .where('dayPlan.program_id = :programId', { programId })
-        .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
-        .andWhere('task.type = :type', { type: 'video' })
-        .getMany();
-
-      return pastTasks.filter((t) => t.metadata?.searchQuery).map((t) => t.metadata?.searchQuery as string);
+      const pastTasks = await this.tasksService.getPastTaskHistory(programId, currentDayNumber);
+      return pastTasks.filter((t) => t.type === 'video' && t.metadata?.searchQuery).map((t) => t.metadata?.searchQuery as string);
     } catch {
       return [];
     }
@@ -386,13 +369,7 @@ OUTPUT SCHEMA: Return ONLY a raw JSON array of exactly ${shards.length} objects:
 
   private async fetchCompletionStats(programId: string, currentDayNumber: number): Promise<{ completed: number; missed: number }> {
     try {
-      const pastTasks = await this.taskRepository.createQueryBuilder('task')
-        .innerJoin('task.dayPlan', 'dayPlan')
-        .where('dayPlan.program_id = :programId', { programId })
-        .andWhere('dayPlan.day_number < :dayNumber', { dayNumber: currentDayNumber })
-        .select(['task.completed'])
-        .getMany();
-
+      const pastTasks = await this.tasksService.getPastTaskHistory(programId, currentDayNumber);
       const completed = pastTasks.filter((t) => t.completed).length;
       return { completed, missed: pastTasks.length - completed };
     } catch {

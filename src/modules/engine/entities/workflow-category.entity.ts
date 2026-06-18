@@ -7,11 +7,11 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { GoalTemplate } from './goal-template.entity';
+import { WorkflowTemplate } from './workflow-template.entity';
 
 @ObjectType()
 @Entity('goal_categories')
-export class GoalCategory {
+export class WorkflowCategory {
   @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -32,9 +32,9 @@ export class GoalCategory {
   @Column({ nullable: true })
   icon: string;
 
-  @Field(() => [GoalTemplate])
-  @OneToMany(() => GoalTemplate, (template) => template.category)
-  templates: GoalTemplate[];
+  @Field(() => [WorkflowTemplate])
+  @OneToMany(() => WorkflowTemplate, (template) => template.category)
+  templates: WorkflowTemplate[];
 
   @Field()
   @CreateDateColumn({ name: 'created_at' })
